@@ -4,8 +4,10 @@
 #include <windows.h>
 #else
 #include <dirent.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <unistd.h>
 #endif
 
 #include <cstdio>
@@ -55,6 +57,66 @@ bool DirectoryExists(const char* path)
 #else
     struct stat status;
     return GetPathStatus(path, &status) && S_ISDIR(status.st_mode);
+#endif
+}
+
+bool CreateDirectoryIfMissing(const char* path, bool* outCreated)
+{
+    if (outCreated != nullptr)
+    {
+        *outCreated = false;
+    }
+    if (path == nullptr || path[0] == '\0')
+    {
+        return false;
+    }
+
+#ifdef _WINDOWS64
+    DWORD attribs = GetFileAttributesA(path);
+    if (attribs != INVALID_FILE_ATTRIBUTES)
+    {
+        return (attribs & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    }
+
+    if (CreateDirectoryA(path, nullptr))
+    {
+        if (outCreated != nullptr)
+        {
+            *outCreated = true;
+        }
+        return true;
+    }
+
+    if (GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+        attribs = GetFileAttributesA(path);
+        return attribs != INVALID_FILE_ATTRIBUTES &&
+            (attribs & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    }
+
+    return false;
+#else
+    struct stat status;
+    if (GetPathStatus(path, &status))
+    {
+        return S_ISDIR(status.st_mode);
+    }
+
+    if (mkdir(path, 0755) == 0)
+    {
+        if (outCreated != nullptr)
+        {
+            *outCreated = true;
+        }
+        return true;
+    }
+
+    if (errno == EEXIST && GetPathStatus(path, &status))
+    {
+        return S_ISDIR(status.st_mode);
+    }
+
+    return false;
 #endif
 }
 

@@ -6,6 +6,7 @@
 #include "MinecraftServer.h"
 #include "ServerLogger.h"
 #include "Common\\StringUtils.h"
+#include <lce_filesystem/lce_filesystem.h>
 #include <lce_time/lce_time.h>
 
 #include <stdio.h>
@@ -85,7 +86,7 @@ static void LogSaveFilename(const char *prefix, const std::string &saveFilename)
  * - Returns whether the directory had to be created
  * ディレクトリ存在保証の補助処理
  */
-static bool EnsureDirectoryExists(const std::wstring &directoryPath, bool *outCreated)
+static bool EnsureDirectoryExists(const std::string &directoryPath, bool *outCreated)
 {
 	if (outCreated != NULL)
 	{
@@ -96,68 +97,55 @@ static bool EnsureDirectoryExists(const std::wstring &directoryPath, bool *outCr
 		return false;
 	}
 
-	DWORD attrs = GetFileAttributesW(directoryPath.c_str());
-	if (attrs != INVALID_FILE_ATTRIBUTES)
+	if (DirectoryExists(directoryPath.c_str()))
 	{
-		if ((attrs & FILE_ATTRIBUTE_DIRECTORY) != 0)
-		{
-			return true;
-		}
-
-		LogErrorf("world-io", "path exists but is not a directory: %s", WideToUtf8(directoryPath).c_str());
-		return false;
-	}
-
-	if (CreateDirectoryW(directoryPath.c_str(), NULL))
-	{
-		if (outCreated != NULL)
-		{
-			*outCreated = true;
-		}
 		return true;
 	}
 
-	DWORD error = GetLastError();
-	if (error == ERROR_ALREADY_EXISTS)
+	if (FileExists(directoryPath.c_str()))
 	{
-		attrs = GetFileAttributesW(directoryPath.c_str());
-		if (attrs != INVALID_FILE_ATTRIBUTES && ((attrs & FILE_ATTRIBUTE_DIRECTORY) != 0))
-		{
-			return true;
-		}
+		LogErrorf(
+			"world-io",
+			"path exists but is not a directory: %s",
+			directoryPath.c_str());
+		return false;
+	}
+
+	if (CreateDirectoryIfMissing(directoryPath.c_str(), outCreated))
+	{
+		return true;
 	}
 
 	LogErrorf(
 		"world-io",
-		"failed to create directory %s (error=%lu)",
-		WideToUtf8(directoryPath).c_str(),
-		(unsigned long)error);
+		"failed to create directory %s",
+		directoryPath.c_str());
 	return false;
 }
 
 /**
  * Prepares the save root used by the Windows64 storage layout
- * - Creates `Windows64` first because `CreateDirectoryW` is not recursive
- * - Creates `Windows64\\GameHDD` when missing before world bootstrap starts
+ * - Creates `Windows64` first because the directory helper is not recursive
+ * - Creates `Windows64/GameHDD` when missing before world bootstrap starts
  * Windows64用保存先ディレクトリの存在保証
  */
 static bool EnsureGameHddRootExists()
 {
 	bool windows64Created = false;
-	if (!EnsureDirectoryExists(L"Windows64", &windows64Created))
+	if (!EnsureDirectoryExists("Windows64", &windows64Created))
 	{
 		return false;
 	}
 
 	bool gameHddCreated = false;
-	if (!EnsureDirectoryExists(L"Windows64\\GameHDD", &gameHddCreated))
+	if (!EnsureDirectoryExists("Windows64/GameHDD", &gameHddCreated))
 	{
 		return false;
 	}
 
 	if (windows64Created || gameHddCreated)
 	{
-		LogWorldIO("created missing Windows64\\GameHDD storage directories");
+		LogWorldIO("created missing Windows64/GameHDD storage directories");
 	}
 
 	return true;

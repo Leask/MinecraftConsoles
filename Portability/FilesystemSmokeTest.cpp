@@ -7,6 +7,10 @@ int main(int argc, char* argv[])
 {
     const char* path = argc > 1 ? argv[1] : ".";
     char firstFile[4096] = {};
+    bool createdDirectory = false;
+    const bool smokeDirectoryReady = CreateDirectoryIfMissing(
+        "build/portability-smoke-dir",
+        &createdDirectory);
     const std::uint64_t monotonicMsBefore = LceGetMonotonicMilliseconds();
     const std::uint64_t monotonicNsBefore = LceGetMonotonicNanoseconds();
     const std::uint64_t unixMs = LceGetUnixTimeMilliseconds();
@@ -26,6 +30,9 @@ int main(int argc, char* argv[])
 
     printf("path=%s\n", path);
     printf("exists=%d file=%d directory=%d\n", exists, isFile, isDirectory);
+    printf("smoke_directory_ready=%d created=%d\n",
+        smokeDirectoryReady,
+        createdDirectory);
     if (foundFirstFile)
     {
         printf("first_file=%s\n", firstFile);
@@ -39,5 +46,7 @@ int main(int argc, char* argv[])
         static_cast<unsigned long long>(deltaMs),
         static_cast<unsigned long long>(deltaNs));
 
-    return (exists && deltaMs > 0 && deltaNs > 0) ? 0 : 1;
+    return (exists && smokeDirectoryReady && deltaMs > 0 && deltaNs > 0)
+        ? 0
+        : 1;
 }
