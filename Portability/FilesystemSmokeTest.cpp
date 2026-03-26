@@ -2,9 +2,11 @@
 #include <cstring>
 #include <filesystem>
 
+#include "Minecraft.Client/Common/App_Defines.h"
 #include "Minecraft.Server/Access/Access.h"
 #include "Minecraft.Server/Access/BanManager.h"
 #include "Minecraft.Server/Common/DedicatedServerBootstrap.h"
+#include "Minecraft.Server/Common/DedicatedServerSessionConfig.h"
 #include "Minecraft.Server/Common/DedicatedServerSocketBootstrap.h"
 #include "lce_filesystem/lce_filesystem.h"
 #include "lce_net/lce_net.h"
@@ -327,6 +329,42 @@ int main(int argc, char* argv[])
             &dedicatedInvalidError);
     std::vector<std::string> dedicatedUsageLines;
     ServerRuntime::BuildDedicatedServerUsageLines(&dedicatedUsageLines);
+    ServerRuntime::ServerPropertiesConfig sessionProperties = {};
+    sessionProperties.difficulty = 2;
+    sessionProperties.gameMode = 1;
+    sessionProperties.friendsOfFriends = true;
+    sessionProperties.gamertags = true;
+    sessionProperties.bedrockFog = true;
+    sessionProperties.levelTypeFlat = true;
+    sessionProperties.generateStructures = false;
+    sessionProperties.bonusChest = true;
+    sessionProperties.pvp = true;
+    sessionProperties.trustPlayers = false;
+    sessionProperties.fireSpreads = false;
+    sessionProperties.tnt = true;
+    sessionProperties.hostCanFly = true;
+    sessionProperties.hostCanChangeHunger = false;
+    sessionProperties.hostCanBeInvisible = true;
+    sessionProperties.disableSaving = true;
+    sessionProperties.mobGriefing = false;
+    sessionProperties.keepInventory = true;
+    sessionProperties.doMobSpawning = true;
+    sessionProperties.doMobLoot = false;
+    sessionProperties.doTileDrops = true;
+    sessionProperties.naturalRegeneration = false;
+    sessionProperties.doDaylightCycle = true;
+    ServerRuntime::DedicatedServerConfig sessionDedicatedConfig =
+        defaultDedicatedConfig;
+    sessionDedicatedConfig.maxPlayers = 256;
+    sessionDedicatedConfig.hasSeed = true;
+    sessionDedicatedConfig.seed = 4444;
+    sessionDedicatedConfig.worldSize = 4;
+    sessionDedicatedConfig.worldSizeChunks = 320;
+    sessionDedicatedConfig.worldHellScale = 8;
+    const ServerRuntime::DedicatedServerSessionConfig sessionConfig =
+        ServerRuntime::BuildDedicatedServerSessionConfig(
+            sessionDedicatedConfig,
+            sessionProperties);
     const std::string smokeFilePath = "build/portability-smoke-file.txt";
     const std::string smokeFileText = "native smoke file\n";
     ServerRuntime::ServerPropertiesConfig runtimeProperties = {};
@@ -694,6 +732,67 @@ int main(int argc, char* argv[])
         !dedicatedInvalidOk &&
             !dedicatedInvalidError.empty(),
         dedicatedUsageLines.size());
+    printf("session_config=%d host_settings=0x%08x network_max_players=%u "
+        "seed=%lld size=%u hell=%u\n",
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_DIFFICULTY) ==
+                2U &&
+            ((sessionConfig.hostSettings &
+                    GAME_HOST_OPTION_BITMASK_GAMETYPE) >>
+                4U) == 1U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_FRIENDSOFFRIENDS) != 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_GAMERTAGS) != 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_LEVELTYPE) != 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_STRUCTURES) == 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_BONUSCHEST) != 0U &&
+            (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_PVP) != 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_TRUSTPLAYERS) == 0U &&
+            (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_TNT) != 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_FIRESPREADS) == 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_HOSTFLY) != 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_HOSTHUNGER) == 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_HOSTINVISIBLE) != 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_BEDROCKFOG) != 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_DISABLESAVE) != 0U &&
+            ((sessionConfig.hostSettings &
+                    GAME_HOST_OPTION_BITMASK_WORLDSIZE) >>
+                GAME_HOST_OPTION_BITMASK_WORLDSIZE_BITSHIFT) == 4U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_MOBGRIEFING) != 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_KEEPINVENTORY) != 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_DOMOBSPAWNING) == 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_DOMOBLOOT) != 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_DOTILEDROPS) == 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_NATURALREGEN) != 0U &&
+            (sessionConfig.hostSettings &
+                GAME_HOST_OPTION_BITMASK_DODAYLIGHTCYCLE) == 0U &&
+            sessionConfig.maxPlayers == 256 &&
+            sessionConfig.networkMaxPlayers == 255U &&
+            sessionConfig.hasSeed &&
+            sessionConfig.seed == 4444 &&
+            sessionConfig.worldSizeChunks == 320U &&
+            sessionConfig.worldHellScale == 8U,
+        sessionConfig.hostSettings,
+        static_cast<unsigned int>(sessionConfig.networkMaxPlayers),
+        static_cast<long long>(sessionConfig.seed),
+        sessionConfig.worldSizeChunks,
+        static_cast<unsigned int>(sessionConfig.worldHellScale));
     printf("file_write=%d file_read=%d file_readback_match=%d utc_file_time=%llu\n",
         wroteSmokeFile,
         readSmokeFile,
@@ -934,6 +1033,58 @@ int main(int argc, char* argv[])
         !dedicatedInvalidOk && !dedicatedInvalidError.empty() &&
         !dedicatedUsageLines.empty() &&
         dedicatedUsageLines[0].find("Minecraft.Server") != std::string::npos &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_DIFFICULTY) ==
+            2U &&
+        ((sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_GAMETYPE) >>
+            4U) == 1U &&
+        (sessionConfig.hostSettings &
+            GAME_HOST_OPTION_BITMASK_FRIENDSOFFRIENDS) != 0U &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_GAMERTAGS) !=
+            0U &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_LEVELTYPE) !=
+            0U &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_STRUCTURES) ==
+            0U &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_BONUSCHEST) !=
+            0U &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_PVP) != 0U &&
+        (sessionConfig.hostSettings &
+            GAME_HOST_OPTION_BITMASK_TRUSTPLAYERS) == 0U &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_TNT) != 0U &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_FIRESPREADS) ==
+            0U &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_HOSTFLY) !=
+            0U &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_HOSTHUNGER) ==
+            0U &&
+        (sessionConfig.hostSettings &
+            GAME_HOST_OPTION_BITMASK_HOSTINVISIBLE) != 0U &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_BEDROCKFOG) !=
+            0U &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_DISABLESAVE) !=
+            0U &&
+        ((sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_WORLDSIZE) >>
+            GAME_HOST_OPTION_BITMASK_WORLDSIZE_BITSHIFT) == 4U &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_MOBGRIEFING) !=
+            0U &&
+        (sessionConfig.hostSettings &
+            GAME_HOST_OPTION_BITMASK_KEEPINVENTORY) != 0U &&
+        (sessionConfig.hostSettings &
+            GAME_HOST_OPTION_BITMASK_DOMOBSPAWNING) == 0U &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_DOMOBLOOT) !=
+            0U &&
+        (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_DOTILEDROPS) ==
+            0U &&
+        (sessionConfig.hostSettings &
+            GAME_HOST_OPTION_BITMASK_NATURALREGEN) != 0U &&
+        (sessionConfig.hostSettings &
+            GAME_HOST_OPTION_BITMASK_DODAYLIGHTCYCLE) == 0U &&
+        sessionConfig.maxPlayers == 256 &&
+        sessionConfig.networkMaxPlayers == 255U &&
+        sessionConfig.hasSeed &&
+        sessionConfig.seed == 4444 &&
+        sessionConfig.worldSizeChunks == 320U &&
+        sessionConfig.worldHellScale == 8U &&
         wroteSmokeFile && readSmokeFile && smokeFileReadback == smokeFileText &&
         runtimeState.hostNameUtf8 == "RuntimeHost" &&
         runtimeState.hostNameWide == L"RuntimeHost" &&

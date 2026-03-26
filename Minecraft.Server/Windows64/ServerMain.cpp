@@ -8,6 +8,7 @@
 #include "..\Common\DedicatedServerBootstrap.h"
 #include "..\Common\DedicatedServerOptions.h"
 #include "..\Common\DedicatedServerRuntime.h"
+#include "..\Common\DedicatedServerSessionConfig.h"
 #include "..\Common\StringUtils.h"
 #include "..\ServerLogger.h"
 #include "..\ServerLogManager.h"
@@ -368,44 +369,22 @@ int main(int argc, char **argv)
 
 	app.InitGameSettings();
 
+	const ServerRuntime::DedicatedServerSessionConfig sessionConfig =
+		ServerRuntime::BuildDedicatedServerSessionConfig(
+			config,
+			serverProperties);
 	MinecraftServer::resetFlags();
 	app.SetTutorialMode(false);
 	app.SetCorruptSaveDeleted(false);
-	app.SetGameHostOption(eGameHostOption_Difficulty, serverProperties.difficulty);
-	app.SetGameHostOption(eGameHostOption_FriendsOfFriends, serverProperties.friendsOfFriends ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_Gamertags, serverProperties.gamertags ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_BedrockFog, serverProperties.bedrockFog ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_GameType, serverProperties.gameMode);
-	app.SetGameHostOption(eGameHostOption_LevelType, serverProperties.levelTypeFlat ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_Structures, serverProperties.generateStructures ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_BonusChest, serverProperties.bonusChest ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_PvP, serverProperties.pvp ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_TrustPlayers, serverProperties.trustPlayers ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_FireSpreads, serverProperties.fireSpreads ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_TNT, serverProperties.tnt ? 1 : 0);
-	app.SetGameHostOption(
-		eGameHostOption_CheatsEnabled,
-		(serverProperties.hostCanFly || serverProperties.hostCanChangeHunger || serverProperties.hostCanBeInvisible) ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_HostCanFly, serverProperties.hostCanFly ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_HostCanChangeHunger, serverProperties.hostCanChangeHunger ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_HostCanBeInvisible, serverProperties.hostCanBeInvisible ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_DisableSaving, serverProperties.disableSaving ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_MobGriefing, serverProperties.mobGriefing ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_KeepInventory, serverProperties.keepInventory ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_DoMobSpawning, serverProperties.doMobSpawning ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_DoMobLoot, serverProperties.doMobLoot ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_DoTileDrops, serverProperties.doTileDrops ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_NaturalRegeneration, serverProperties.naturalRegeneration ? 1 : 0);
-	app.SetGameHostOption(eGameHostOption_DoDaylightCycle, serverProperties.doDaylightCycle ? 1 : 0);
+	app.SetGameHostOption(eGameHostOption_All, sessionConfig.hostSettings);
 #ifdef _LARGE_WORLDS
-	app.SetGameHostOption(eGameHostOption_WorldSize, serverProperties.worldSize);
 	// Apply desired target size for loading existing worlds.
 	// Expansion happens only when target size is larger than current level size.
-	app.SetGameNewWorldSize(serverProperties.worldSizeChunks, true);
-	app.SetGameNewHellScale(serverProperties.worldHellScale);
+	app.SetGameNewWorldSize(sessionConfig.worldSizeChunks, true);
+	app.SetGameNewHellScale(sessionConfig.worldHellScale);
 #endif
 
-	StorageManager.SetSaveDisabled(serverProperties.disableSaving);
+	StorageManager.SetSaveDisabled(sessionConfig.saveDisabled);
 	// Read world name and fixed save-id from server.properties
 	// Delegate load-vs-create decision to WorldManager
 	std::wstring targetWorldName = serverProperties.worldName;
@@ -440,24 +419,29 @@ int main(int argc, char **argv)
 	}
 
 	NetworkGameInitData *param = new NetworkGameInitData();
-	if (config.hasSeed)
+	if (sessionConfig.hasSeed)
 	{
-		param->seed = config.seed;
+		param->seed = sessionConfig.seed;
 	}
 	else
 	{
 		param->seed = (new Random())->nextLong();
 	}
 #ifdef _LARGE_WORLDS
-	param->xzSize = (unsigned int)config.worldSizeChunks;
-	param->hellScale = (unsigned char)config.worldHellScale;
+	param->xzSize = sessionConfig.worldSizeChunks;
+	param->hellScale = sessionConfig.worldHellScale;
 #endif
 	param->saveData = worldBootstrap.saveData;
-	param->settings = app.GetGameHostOption(eGameHostOption_All);
+	param->settings = sessionConfig.hostSettings;
 	param->dedicatedNoLocalHostPlayer = true;
 
 	LogStartupStep("starting hosted network game thread");
-	g_NetworkManager.HostGame(0, true, false, (unsigned char)config.maxPlayers, 0);
+	g_NetworkManager.HostGame(
+		0,
+		true,
+		false,
+		sessionConfig.networkMaxPlayers,
+		0);
 	g_NetworkManager.FakeLocalPlayerJoined();
 
 	C4JThread *startThread = new C4JThread(&CGameNetworkManager::RunNetworkGameThreadProc, (LPVOID)param, "RunNetworkGame");

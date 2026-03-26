@@ -281,6 +281,12 @@ This iteration starts with:
   `Minecraft.Server/Common/DedicatedServerSocketBootstrap.cpp`, and native
   smoke validates the bind/listen/loopback-accept path so the non-Windows
   server shell no longer only logs a target port but actually owns one
+- dedicated server host/game session parameters are now being moved behind
+  `Minecraft.Server/Common/DedicatedServerSessionConfig.cpp`, so
+  `ServerMain.cpp` no longer open-codes the entire host-option bitfield and
+  network bootstrap parameter build; native smoke now validates the encoded
+  host settings, world-size/seed flow, and clamps the legacy `256` player
+  default to `255` before it crosses the `unsigned char` network boundary
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native
