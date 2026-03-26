@@ -1,5 +1,7 @@
 #include "linenoise.h"
 
+#if defined(_WINDOWS64) || defined(_WIN32)
+
 #include <conio.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -647,3 +649,196 @@ void linenoiseExternalWriteEnd(void)
     }
     linenoiseUnlockIo();
 }
+
+#else
+
+#include <ctype.h>
+#include <poll.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#define LINENOISE_MAX_LINE 4096
+
+typedef struct linenoiseHistory {
+    char **items;
+    int len;
+    int cap;
+    int maxLen;
+} linenoiseHistory;
+
+static linenoiseCompletionCallback *g_completionCallback = NULL;
+static volatile int g_stopRequested = 0;
+static linenoiseHistory g_history = { NULL, 0, 0, 128 };
+
+static char *linenoiseStrdup(const char *src)
+{
+    size_t n = strlen(src) + 1;
+    char *out = (char *)malloc(n);
+    if (out == NULL)
+        return NULL;
+    memcpy(out, src, n);
+    return out;
+}
+
+static void linenoiseEnsureHistoryCapacity(int wanted)
+{
+    if (wanted <= g_history.cap)
+        return;
+
+    int newCap = g_history.cap == 0 ? 32 : g_history.cap;
+    while (newCap < wanted)
+        newCap *= 2;
+
+    char **newItems =
+        (char **)realloc(g_history.items, sizeof(char *) * (size_t)newCap);
+    if (newItems == NULL)
+        return;
+
+    g_history.items = newItems;
+    g_history.cap = newCap;
+}
+
+void linenoiseAddCompletion(linenoiseCompletions *lc, const char *str)
+{
+    char **newVec = (char **)realloc(
+        lc->cvec,
+        sizeof(char *) * (lc->len + 1));
+    if (newVec == NULL)
+        return;
+
+    lc->cvec = newVec;
+    lc->cvec[lc->len] = linenoiseStrdup(str);
+    if (lc->cvec[lc->len] == NULL)
+        return;
+
+    lc->len += 1;
+}
+
+void linenoiseSetCompletionCallback(linenoiseCompletionCallback *fn)
+{
+    g_completionCallback = fn;
+}
+
+void linenoiseFree(void *ptr)
+{
+    free(ptr);
+}
+
+int linenoiseHistorySetMaxLen(int len)
+{
+    if (len <= 0)
+        return 0;
+
+    g_history.maxLen = len;
+    while (g_history.len > g_history.maxLen)
+    {
+        free(g_history.items[0]);
+        memmove(
+            g_history.items,
+            g_history.items + 1,
+            sizeof(char *) * (size_t)(g_history.len - 1));
+        g_history.len -= 1;
+    }
+
+    return 1;
+}
+
+int linenoiseHistoryAdd(const char *line)
+{
+    if (line == NULL || line[0] == 0)
+        return 0;
+
+    if (g_history.len > 0)
+    {
+        const char *last = g_history.items[g_history.len - 1];
+        if (last != NULL && strcmp(last, line) == 0)
+            return 1;
+    }
+
+    linenoiseEnsureHistoryCapacity(g_history.len + 1);
+    if (g_history.cap <= g_history.len)
+        return 0;
+
+    g_history.items[g_history.len] = linenoiseStrdup(line);
+    if (g_history.items[g_history.len] == NULL)
+        return 0;
+
+    g_history.len += 1;
+    while (g_history.len > g_history.maxLen)
+    {
+        free(g_history.items[0]);
+        memmove(
+            g_history.items,
+            g_history.items + 1,
+            sizeof(char *) * (size_t)(g_history.len - 1));
+        g_history.len -= 1;
+    }
+
+    return 1;
+}
+
+void linenoiseRequestStop(void)
+{
+    g_stopRequested = 1;
+}
+
+void linenoiseResetStop(void)
+{
+    g_stopRequested = 0;
+}
+
+char *linenoise(const char *prompt)
+{
+    char buffer[LINENOISE_MAX_LINE] = { 0 };
+
+    if (prompt != NULL && prompt[0] != 0)
+    {
+        fputs(prompt, stdout);
+        fflush(stdout);
+    }
+
+    while (!g_stopRequested)
+    {
+        struct pollfd input = { STDIN_FILENO, POLLIN, 0 };
+        const int pollResult = poll(&input, 1, 50);
+        if (pollResult < 0)
+        {
+            return NULL;
+        }
+        if (pollResult == 0 || (input.revents & POLLIN) == 0)
+        {
+            continue;
+        }
+
+        if (fgets(buffer, sizeof(buffer), stdin) == NULL)
+        {
+            return NULL;
+        }
+
+        {
+            size_t len = strlen(buffer);
+            while (len > 0 &&
+                (buffer[len - 1] == '\n' || buffer[len - 1] == '\r'))
+            {
+                buffer[len - 1] = 0;
+                --len;
+            }
+        }
+
+        return linenoiseStrdup(buffer);
+    }
+
+    return NULL;
+}
+
+void linenoiseExternalWriteBegin(void)
+{
+}
+
+void linenoiseExternalWriteEnd(void)
+{
+}
+
+#endif

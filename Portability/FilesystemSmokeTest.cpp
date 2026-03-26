@@ -7,17 +7,39 @@
 #include "lce_time/lce_time.h"
 #include "lce_win32/lce_win32.h"
 #include "Minecraft.Server/Common/FileUtils.h"
+#include "Minecraft.Server/Console/IServerCliInputSink.h"
+#include "Minecraft.Server/Console/ServerCliInput.h"
 #include "Minecraft.Server/Common/StringUtils.h"
 #include "Minecraft.Server/ServerLogger.h"
-
-extern "C"
-{
-    void linenoiseExternalWriteBegin(void) {}
-    void linenoiseExternalWriteEnd(void) {}
-}
+#include "Minecraft.Server/vendor/linenoise/linenoise.h"
 
 namespace
 {
+    class SmokeCliInputSink : public ServerRuntime::IServerCliInputSink
+    {
+    public:
+        void EnqueueCommandLine(const std::string &line) override
+        {
+            queuedLines.push_back(line);
+        }
+
+        void BuildCompletions(
+            const std::string &line,
+            std::vector<std::string> *out) const override
+        {
+            if (out == nullptr)
+            {
+                return;
+            }
+
+            out->clear();
+            out->push_back("stop");
+            out->push_back(line + "_status");
+        }
+
+        std::vector<std::string> queuedLines;
+    };
+
     DWORD WINAPI SmokeThreadMain(LPVOID lpThreadParameter)
     {
         int* value = static_cast<int*>(lpThreadParameter);
@@ -102,6 +124,28 @@ int main(int argc, char* argv[])
         ServerRuntime::TryParseServerLogLevel("Warn", &parsedLogLevel);
     ServerRuntime::SetServerLogLevel(ServerRuntime::eServerLogLevel_Warn);
     const int currentLogLevel = (int)ServerRuntime::GetServerLogLevel();
+    linenoiseResetStop();
+    const int historyMaxLenSet = linenoiseHistorySetMaxLen(8);
+    const int historyAddFirst = linenoiseHistoryAdd("say native");
+    const int historyAddSecond = linenoiseHistoryAdd("stop");
+    linenoiseCompletions completions = {};
+    linenoiseAddCompletion(&completions, "stop");
+    linenoiseAddCompletion(&completions, "status");
+    const bool completionEntriesOk = completions.len == 2 &&
+        completions.cvec != nullptr &&
+        completions.cvec[0] != nullptr &&
+        completions.cvec[1] != nullptr;
+    linenoiseExternalWriteBegin();
+    linenoiseExternalWriteEnd();
+    linenoiseRequestStop();
+    linenoiseResetStop();
+    SmokeCliInputSink cliSink;
+    ServerRuntime::ServerCliInput cliInput;
+    cliInput.Start(&cliSink);
+    LceSleepMilliseconds(20);
+    const bool cliRunning = cliInput.IsRunning();
+    cliInput.Stop();
+    const bool cliStopped = !cliInput.IsRunning();
     CRITICAL_SECTION criticalSection = {};
     InitializeCriticalSection(&criticalSection);
     const ULONG recursiveEnter1 = TryEnterCriticalSection(&criticalSection);
@@ -193,6 +237,15 @@ int main(int argc, char* argv[])
     printf("log_parse=%d log_level=%d\n",
         parsedWarnLogLevel,
         currentLogLevel);
+    printf("linenoise_history=%d,%d,%d completion_entries=%d\n",
+        historyMaxLenSet,
+        historyAddFirst,
+        historyAddSecond,
+        completionEntriesOk);
+    printf("cli_running=%d cli_stopped=%d queued_lines=%zu\n",
+        cliRunning,
+        cliStopped,
+        cliSink.queuedLines.size());
     printf("critical_section_try=%lu recursive_try=%lu\n",
         static_cast<unsigned long>(recursiveEnter1),
         static_cast<unsigned long>(recursiveEnter2));
@@ -231,6 +284,14 @@ int main(int argc, char* argv[])
     CloseHandle(eventA);
     CloseHandle(eventB);
     DeleteCriticalSection(&criticalSection);
+    if (completions.cvec != nullptr)
+    {
+        for (size_t i = 0; i < completions.len; ++i)
+        {
+            linenoiseFree(completions.cvec[i]);
+        }
+        linenoiseFree(completions.cvec);
+    }
 
     return (exists && smokeDirectoryReady && netInitialized && ipv4Literal &&
         ipv6Literal && !invalidLiteral && recursiveEnter1 == TRUE &&
@@ -248,6 +309,9 @@ int main(int argc, char* argv[])
         parsedWarnLogLevel &&
         parsedLogLevel == ServerRuntime::eServerLogLevel_Warn &&
         currentLogLevel == (int)ServerRuntime::eServerLogLevel_Warn &&
+        historyMaxLenSet == 1 && historyAddFirst == 1 &&
+        historyAddSecond == 1 && completionEntriesOk &&
+        cliRunning && cliStopped && cliSink.queuedLines.empty() &&
         utcTimestamp.size() == 20 && utcTimestamp[10] == 'T' &&
         utcTimestamp[19] == 'Z' &&
         waitAny == WAIT_OBJECT_0 + 1 && waitAllBefore == WAIT_TIMEOUT &&

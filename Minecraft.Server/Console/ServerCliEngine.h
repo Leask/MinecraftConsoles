@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "IServerCliInputSink.h"
 #include "..\..\Minecraft.World\ArrayWithLength.h"
 #include "..\..\Minecraft.World\CommandsEnum.h"
 
@@ -23,7 +24,7 @@ namespace ServerRuntime
 	 * Handles parsing, command dispatch, completion suggestions, and server-side helpers.
 	 * 解析・実行・補完エンジン
 	 */
-	class ServerCliEngine
+	class ServerCliEngine : public IServerCliInputSink
 	{
 	public:
 		ServerCliEngine();
@@ -35,7 +36,7 @@ namespace ServerRuntime
 		 * Called by input thread; execution is deferred to `Poll()`.
 		 * 入力行を実行キューに追加
 		 */
-		void EnqueueCommandLine(const std::string &line);
+		void EnqueueCommandLine(const std::string &line) override;
 
 		/**
 		 * **Execute queued commands**
@@ -59,7 +60,9 @@ namespace ServerRuntime
 		 * Produces command or argument suggestions based on parser context.
 		 * 現在入力に対する補完候補を作成
 		 */
-		void BuildCompletions(const std::string &line, std::vector<std::string> *out) const;
+		void BuildCompletions(
+			const std::string &line,
+			std::vector<std::string> *out) const override;
 
 		void LogInfo(const std::string &message) const;
 		void LogWarn(const std::string &message) const;

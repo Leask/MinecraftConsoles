@@ -7,7 +7,7 @@ struct linenoiseCompletions;
 
 namespace ServerRuntime
 {
-	class ServerCliEngine;
+	class IServerCliInputSink;
 
 	/**
 	 * **CLI input worker**
@@ -27,7 +27,7 @@ namespace ServerRuntime
 		 * Binds to an engine and starts reading user input from the console.
 		 * エンジンに接続して入力ループを開始
 		 */
-		void Start(ServerCliEngine *engine);
+		void Start(IServerCliInputSink *engine);
 
 		/**
 		 * **Stop input loop**
@@ -56,7 +56,7 @@ namespace ServerRuntime
 	private:
 		std::atomic<bool> m_running;
 		std::thread m_inputThread;
-		ServerCliEngine *m_engine;
+		IServerCliInputSink *m_engine;
 
 		static ServerCliInput *s_instance;
 	};

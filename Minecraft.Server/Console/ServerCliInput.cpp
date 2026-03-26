@@ -1,15 +1,17 @@
-#include "stdafx.h"
-
 #include "ServerCliInput.h"
 
-#include "ServerCliEngine.h"
-#include "..\ServerLogger.h"
-#include "..\vendor\linenoise\linenoise.h"
+#include "IServerCliInputSink.h"
+#include "../ServerLogger.h"
+#include "../vendor/linenoise/linenoise.h"
 #include <lce_stdin/lce_stdin.h>
 #include <lce_time/lce_time.h>
+#include <lce_win32/lce_win32.h>
 
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string>
+#include <vector>
 #if !defined(_WINDOWS64) && !defined(_WIN32)
 #include <strings.h>
 #endif
@@ -35,11 +37,21 @@ namespace
 		const char *mode = getenv("SERVER_CLI_INPUT_MODE");
 		if (mode != NULL)
 		{
+			if (EqualsIgnoreCase(mode, "interactive")
+				|| EqualsIgnoreCase(mode, "linenoise"))
+			{
+				return false;
+			}
+
 			return EqualsIgnoreCase(mode, "stream")
 				|| EqualsIgnoreCase(mode, "stdin");
 		}
 
+#if !defined(_WINDOWS64) && !defined(_WIN32)
+		return true;
+#else
 		return false;
+#endif
 	}
 }
 
@@ -59,7 +71,7 @@ namespace ServerRuntime
 		Stop();
 	}
 
-	void ServerCliInput::Start(ServerCliEngine *engine)
+	void ServerCliInput::Start(IServerCliInputSink *engine)
 	{
 		if (engine == NULL || m_running.exchange(true))
 		{
@@ -151,8 +163,11 @@ namespace ServerRuntime
 	{
 		if (!LceStdinIsAvailable())
 		{
-			LogWarn("console", "stream input mode requested but STDIN handle is unavailable; falling back to linenoise.");
+			LogWarn("console", "stream input mode requested but STDIN handle is unavailable.");
+#if defined(_WINDOWS64) || defined(_WIN32)
+			LogWarn("console", "falling back to linenoise interactive mode.");
 			RunLinenoiseLoop();
+#endif
 			return;
 		}
 

@@ -146,8 +146,9 @@ Current server blockers already visible in the active tree:
 - `Minecraft.Server/Windows64/ServerMain.cpp` still pulls in `4J_Render`,
   `Windows64_UIController`, `UI`, `Input`, and D3D device globals
 - world save bootstrap still assumes `Windows64\\GameHDD` layout
-- stream-mode stdin now has a portability layer, but interactive console and
-  console-color paths still depend on Win32 console semantics
+- server CLI input now has a native smoke path, but the full interactive
+  console stack is still only partially detached from legacy dedicated-server
+  startup
 - networking still enters through `WinsockNetLayer`
 - `Minecraft.World/stdafx.h` still routes non-Windows builds into legacy
   console platform include trees instead of a dedicated `NativeDesktop`
@@ -191,6 +192,9 @@ This iteration starts with:
   compiling and running in the native smoke target with native JSON/file paths
 - first server logging source (`Minecraft.Server/ServerLogger.cpp`)
   compiling and running in the native smoke target with non-Windows time/color paths
+- first server CLI input source (`Minecraft.Server/Console/ServerCliInput.cpp`)
+  compiling and running in the native smoke target through a narrow
+  `IServerCliInputSink` interface and a native `linenoise` fallback
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native
