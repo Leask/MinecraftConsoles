@@ -2,6 +2,7 @@
 #ifdef __PS3__
 #include <sys/sys_time.h>
 #endif
+#include <lce_time/lce_time.h>
 #include "System.h"
 
 template <class T> void System::arraycopy(arrayWithLength<T> src, unsigned int srcPos, arrayWithLength<T> *dst, unsigned int dstPos, unsigned int length)
@@ -52,22 +53,7 @@ void System::arraycopy(arrayWithLength<int> src, unsigned int srcPos, arrayWithL
 //The current value of the system timer, in nanoseconds.
 int64_t System::nanoTime()
 {
-#if defined _WINDOWS64 || defined _XBOX || defined _WIN32
-	static LARGE_INTEGER s_frequency = { 0 };
-	if (s_frequency.QuadPart == 0)
-	{
-		QueryPerformanceFrequency(&s_frequency);
-	}
-
-	LARGE_INTEGER counter;
-	QueryPerformanceCounter(&counter);
-
-	// Using double to avoid 64-bit overflow during multiplication for long uptime
-	// Precision is sufficient for ~100 days of uptime.
-	return static_cast<int64_t>(static_cast<double>(counter.QuadPart) * 1000000000.0 / static_cast<double>(s_frequency.QuadPart));
-#else
-	return GetTickCount() * 1000000LL;
-#endif
+	return static_cast<int64_t>(LceGetMonotonicNanoseconds());
 }
 
 //Returns the current time in milliseconds. Note that while the unit of time of the return value is a millisecond,
@@ -104,19 +90,7 @@ int64_t System::currentTimeMillis()
 	return systTime;*/
 
 #else
-
-	SYSTEMTIME UTCSysTime;
-    GetSystemTime( &UTCSysTime );
-
-	//Represents as a 64-bit value the number of 100-nanosecond intervals since January 1, 1601
-    FILETIME UTCFileTime;
-    SystemTimeToFileTime( &UTCSysTime, &UTCFileTime );
-
-	LARGE_INTEGER li;
-	li.HighPart = UTCFileTime.dwHighDateTime;
-	li.LowPart = UTCFileTime.dwLowDateTime;
-
-	return li.QuadPart/10000;
+	return static_cast<int64_t>(LceGetUnixTimeMilliseconds());
 #endif // __PS3__
 }
 

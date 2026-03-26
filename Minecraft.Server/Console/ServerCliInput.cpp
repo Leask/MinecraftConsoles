@@ -5,6 +5,7 @@
 #include "ServerCliEngine.h"
 #include "..\ServerLogger.h"
 #include "..\vendor\linenoise\linenoise.h"
+#include <lce_time/lce_time.h>
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -150,7 +151,7 @@ namespace ServerRuntime
 				{
 					break;
 				}
-				Sleep(10);
+				LceSleepMilliseconds(10);
 				continue;
 			}
 
@@ -184,7 +185,7 @@ namespace ServerRuntime
 			int readable = WaitForStdinReadable(stdinHandle, 50);
 			if (readable <= 0)
 			{
-				Sleep(10);
+				LceSleepMilliseconds(10);
 				continue;
 			}
 
@@ -192,7 +193,7 @@ namespace ServerRuntime
 			DWORD bytesRead = 0;
 			if (!ReadFile(stdinHandle, &ch, 1, &bytesRead, NULL) || bytesRead == 0)
 			{
-				Sleep(10);
+				LceSleepMilliseconds(10);
 				continue;
 			}
 

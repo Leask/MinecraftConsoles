@@ -13,6 +13,7 @@
 #include "..\ServerShutdown.h"
 #include "..\WorldManager.h"
 #include "..\Console\ServerCli.h"
+#include <lce_time/lce_time.h>
 #include "Tesselator.h"
 #include "Windows64/4JLibs/inc/4J_Render.h"
 #include "Windows64/GameConfig/Minecraft.spa.h"
@@ -598,7 +599,7 @@ int main(int argc, char **argv)
 	while (startThread->isRunning() && !IsShutdownRequested())
 	{
 		TickCoreSystems();
-		Sleep(10);
+		LceSleepMilliseconds(10);
 	}
 
 	startThread->WaitForCompletion(INFINITE);
@@ -639,7 +640,8 @@ int main(int argc, char **argv)
 	{
 		autosaveIntervalMs = (DWORD)(serverProperties.autosaveIntervalSeconds * 1000);
 	}
-	DWORD nextAutosaveTick = GetTickCount() + autosaveIntervalMs;
+	std::uint64_t nextAutosaveTick =
+		LceGetMonotonicMilliseconds() + autosaveIntervalMs;
 	bool autosaveRequested = false;
 	ServerRuntime::ServerCli serverCli;
 	serverCli.Start();
@@ -666,8 +668,8 @@ int main(int argc, char **argv)
 			break;
 		}
 
-		DWORD now = GetTickCount();
-		if ((LONG)(now - nextAutosaveTick) >= 0)
+		const std::uint64_t now = LceGetMonotonicMilliseconds();
+		if (now >= nextAutosaveTick)
 		{
 			if (app.GetXuiServerAction(kServerActionPad) == eXuiServerAction_Idle)
 			{
@@ -678,7 +680,7 @@ int main(int argc, char **argv)
 			nextAutosaveTick = now + autosaveIntervalMs;
 		}
 
-		Sleep(10);
+		LceSleepMilliseconds(10);
 	}
 	serverCli.Stop();
 	app.m_bShutdown = true;
@@ -715,4 +717,3 @@ int main(int argc, char **argv)
 
 	return 0;
 }
-

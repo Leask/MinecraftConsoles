@@ -6,6 +6,7 @@
 #include "MinecraftServer.h"
 #include "ServerLogger.h"
 #include "Common\\StringUtils.h"
+#include <lce_time/lce_time.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -228,8 +229,8 @@ static int LoadSaveDataCallbackProc(LPVOID lpParam, const bool bIsCorrupt, const
  */
 static bool WaitForSaveInfoResult(SaveInfoQueryContext *context, DWORD timeoutMs, WorldManagerTickProc tickProc)
 {
-	DWORD start = GetTickCount();
-	while ((GetTickCount() - start) < timeoutMs)
+	const std::uint64_t start = LceGetMonotonicMilliseconds();
+	while ((LceGetMonotonicMilliseconds() - start) < timeoutMs)
 	{
 		if (context->done)
 		{
@@ -254,7 +255,7 @@ static bool WaitForSaveInfoResult(SaveInfoQueryContext *context, DWORD timeoutMs
 		{
 			tickProc();
 		}
-		Sleep(10);
+		LceSleepMilliseconds(10);
 	}
 
 	return context->done;
@@ -270,8 +271,8 @@ static bool WaitForSaveInfoResult(SaveInfoQueryContext *context, DWORD timeoutMs
  */
 static bool WaitForSaveLoadResult(SaveDataLoadContext *context, DWORD timeoutMs, WorldManagerTickProc tickProc)
 {
-	DWORD start = GetTickCount();
-	while ((GetTickCount() - start) < timeoutMs)
+	const std::uint64_t start = LceGetMonotonicMilliseconds();
+	while ((LceGetMonotonicMilliseconds() - start) < timeoutMs)
 	{
 		if (context->done)
 		{
@@ -282,7 +283,7 @@ static bool WaitForSaveLoadResult(SaveDataLoadContext *context, DWORD timeoutMs,
 		{
 			tickProc();
 		}
-		Sleep(10);
+		LceSleepMilliseconds(10);
 	}
 
 	return context->done;
@@ -615,7 +616,7 @@ bool WaitForWorldActionIdle(
 	WorldManagerTickProc tickProc,
 	WorldManagerHandleActionsProc handleActionsProc)
 {
-	DWORD start = GetTickCount();
+	const std::uint64_t start = LceGetMonotonicMilliseconds();
 	while (app.GetXuiServerAction(actionPad) != eXuiServerAction_Idle && !MinecraftServer::serverHalted())
 	{
 		// Keep network and storage progressing while waiting
@@ -628,14 +629,13 @@ bool WaitForWorldActionIdle(
 		{
 			handleActionsProc();
 		}
-		if ((GetTickCount() - start) >= timeoutMs)
+		if ((LceGetMonotonicMilliseconds() - start) >= timeoutMs)
 		{
 			return false;
 		}
-		Sleep(10);
+		LceSleepMilliseconds(10);
 	}
 
 	return (app.GetXuiServerAction(actionPad) == eXuiServerAction_Idle);
 }
 }
-

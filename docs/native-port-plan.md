@@ -141,6 +141,14 @@ Reason:
 - make server boot, generate worlds, and save on macOS/Linux
 - restore multiplayer and LAN behavior using native sockets
 
+Current server blockers already visible in the active tree:
+
+- `Minecraft.Server/Windows64/ServerMain.cpp` still pulls in `4J_Render`,
+  `Windows64_UIController`, `UI`, `Input`, and D3D device globals
+- world save bootstrap still assumes `Windows64\\GameHDD` layout
+- CLI stream handling still depends on Win32 `HANDLE` semantics
+- networking still enters through `WinsockNetLayer`
+
 ### Phase 3: Native client bootstrap
 
 - add SDL2 desktop app bootstrap
@@ -167,6 +175,7 @@ This iteration starts with:
 - native presets
 - native portability library target
 - first cross-platform filesystem implementation
+- first cross-platform time and sleep implementation
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

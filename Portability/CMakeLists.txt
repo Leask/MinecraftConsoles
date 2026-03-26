@@ -1,6 +1,8 @@
 set(MINECRAFT_PORTABILITY_SOURCES
   "${CMAKE_SOURCE_DIR}/include/lce_filesystem/lce_filesystem.cpp"
   "${CMAKE_SOURCE_DIR}/include/lce_filesystem/lce_filesystem.h"
+  "${CMAKE_SOURCE_DIR}/include/lce_time/lce_time.cpp"
+  "${CMAKE_SOURCE_DIR}/include/lce_time/lce_time.h"
 )
 
 add_library(Minecraft.Portability STATIC ${MINECRAFT_PORTABILITY_SOURCES})
