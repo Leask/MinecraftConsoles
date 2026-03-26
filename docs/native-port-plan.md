@@ -287,6 +287,13 @@ This iteration starts with:
   network bootstrap parameter build; native smoke now validates the encoded
   host settings, world-size/seed flow, and clamps the legacy `256` player
   default to `255` before it crosses the `unsigned char` network boundary
+- world-bootstrap result handling and autosave scheduling are now also being
+  pulled behind shared server modules
+  (`Minecraft.Server/Common/DedicatedServerWorldBootstrap.cpp` and
+  `Minecraft.Server/Common/DedicatedServerRuntime.cpp`), so `ServerMain.cpp`
+  is shrinking toward a thin coordinator while native smoke verifies
+  save-id persistence decisions, initial-save gating, and autosave deadline
+  transitions without depending on D3D/UI startup
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

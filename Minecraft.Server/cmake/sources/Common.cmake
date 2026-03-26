@@ -535,6 +535,8 @@ set(_MINECRAFT_SERVER_COMMON_SERVER_COMMON
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerSessionConfig.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerSocketBootstrap.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerSocketBootstrap.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerWorldBootstrap.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerWorldBootstrap.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/FileUtils.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/FileUtils.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/NetworkUtils.h"

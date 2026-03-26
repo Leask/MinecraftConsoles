@@ -51,4 +51,54 @@ namespace ServerRuntime
     {
         return nowMs + GetDedicatedServerAutosaveIntervalMs(serverProperties);
     }
+
+    DedicatedServerAutosaveState CreateDedicatedServerAutosaveState(
+        std::uint64_t nowMs,
+        const ServerPropertiesConfig &serverProperties)
+    {
+        DedicatedServerAutosaveState autosaveState = {};
+        autosaveState.intervalMs =
+            GetDedicatedServerAutosaveIntervalMs(serverProperties);
+        autosaveState.nextTickMs =
+            ComputeNextDedicatedServerAutosaveDeadlineMs(
+                nowMs,
+                serverProperties);
+        autosaveState.autosaveRequested = false;
+        return autosaveState;
+    }
+
+    bool ShouldTriggerDedicatedServerAutosave(
+        const DedicatedServerAutosaveState &autosaveState,
+        std::uint64_t nowMs)
+    {
+        return nowMs >= autosaveState.nextTickMs;
+    }
+
+    void MarkDedicatedServerAutosaveRequested(
+        DedicatedServerAutosaveState *autosaveState,
+        std::uint64_t nowMs,
+        const ServerPropertiesConfig &serverProperties)
+    {
+        if (autosaveState == nullptr)
+        {
+            return;
+        }
+
+        autosaveState->autosaveRequested = true;
+        autosaveState->nextTickMs =
+            ComputeNextDedicatedServerAutosaveDeadlineMs(
+                nowMs,
+                serverProperties);
+    }
+
+    void MarkDedicatedServerAutosaveCompleted(
+        DedicatedServerAutosaveState *autosaveState)
+    {
+        if (autosaveState == nullptr)
+        {
+            return;
+        }
+
+        autosaveState->autosaveRequested = false;
+    }
 }

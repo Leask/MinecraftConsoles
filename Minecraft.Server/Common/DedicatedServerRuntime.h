@@ -21,6 +21,13 @@ namespace ServerRuntime
         bool lanAdvertise;
     };
 
+    struct DedicatedServerAutosaveState
+    {
+        std::uint64_t intervalMs;
+        std::uint64_t nextTickMs;
+        bool autosaveRequested;
+    };
+
     DedicatedServerRuntimeState BuildDedicatedServerRuntimeState(
         const DedicatedServerConfig &config,
         const ServerPropertiesConfig &serverProperties);
@@ -31,4 +38,20 @@ namespace ServerRuntime
     std::uint64_t ComputeNextDedicatedServerAutosaveDeadlineMs(
         std::uint64_t nowMs,
         const ServerPropertiesConfig &serverProperties);
+
+    DedicatedServerAutosaveState CreateDedicatedServerAutosaveState(
+        std::uint64_t nowMs,
+        const ServerPropertiesConfig &serverProperties);
+
+    bool ShouldTriggerDedicatedServerAutosave(
+        const DedicatedServerAutosaveState &autosaveState,
+        std::uint64_t nowMs);
+
+    void MarkDedicatedServerAutosaveRequested(
+        DedicatedServerAutosaveState *autosaveState,
+        std::uint64_t nowMs,
+        const ServerPropertiesConfig &serverProperties);
+
+    void MarkDedicatedServerAutosaveCompleted(
+        DedicatedServerAutosaveState *autosaveState);
 }

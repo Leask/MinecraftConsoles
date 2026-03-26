@@ -8,6 +8,7 @@
 #include "Minecraft.Server/Common/DedicatedServerBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerSessionConfig.h"
 #include "Minecraft.Server/Common/DedicatedServerSocketBootstrap.h"
+#include "Minecraft.Server/Common/DedicatedServerWorldBootstrap.h"
 #include "lce_filesystem/lce_filesystem.h"
 #include "lce_net/lce_net.h"
 #include "lce_process/lce_process.h"
@@ -365,6 +366,46 @@ int main(int argc, char* argv[])
         ServerRuntime::BuildDedicatedServerSessionConfig(
             sessionDedicatedConfig,
             sessionProperties);
+    ServerRuntime::ServerPropertiesConfig worldBootstrapProperties = {};
+    worldBootstrapProperties.worldName = L"";
+    worldBootstrapProperties.worldSaveId = "WORLD";
+    ServerRuntime::WorldBootstrapResult loadedWorldBootstrap;
+    loadedWorldBootstrap.status = ServerRuntime::eWorldBootstrap_Loaded;
+    loadedWorldBootstrap.resolvedSaveId = "world_loaded";
+    const ServerRuntime::DedicatedServerWorldBootstrapPlan loadedWorldPlan =
+        ServerRuntime::BuildDedicatedServerWorldBootstrapPlan(
+            worldBootstrapProperties,
+            loadedWorldBootstrap);
+    ServerRuntime::WorldBootstrapResult createdWorldBootstrap;
+    createdWorldBootstrap.status = ServerRuntime::eWorldBootstrap_CreatedNew;
+    createdWorldBootstrap.resolvedSaveId = "world";
+    const ServerRuntime::DedicatedServerWorldBootstrapPlan createdWorldPlan =
+        ServerRuntime::BuildDedicatedServerWorldBootstrapPlan(
+            worldBootstrapProperties,
+            createdWorldBootstrap);
+    ServerRuntime::WorldBootstrapResult failedWorldBootstrap;
+    failedWorldBootstrap.status = ServerRuntime::eWorldBootstrap_Failed;
+    const ServerRuntime::DedicatedServerWorldBootstrapPlan failedWorldPlan =
+        ServerRuntime::BuildDedicatedServerWorldBootstrapPlan(
+            worldBootstrapProperties,
+            failedWorldBootstrap);
+    const bool shouldRunInitialSave =
+        ServerRuntime::ShouldRunDedicatedServerInitialSave(
+            createdWorldPlan,
+            false,
+            false);
+    const bool shouldSkipInitialSaveWhenStopping =
+        !ServerRuntime::ShouldRunDedicatedServerInitialSave(
+            createdWorldPlan,
+            true,
+            false);
+    LoadSaveDataThreadParam *fakeSaveData =
+        reinterpret_cast<LoadSaveDataThreadParam *>(0x1234);
+    const ServerRuntime::DedicatedServerNetworkInitPlan networkInitPlan =
+        ServerRuntime::BuildDedicatedServerNetworkInitPlan(
+            sessionConfig,
+            fakeSaveData,
+            7777);
     const std::string smokeFilePath = "build/portability-smoke-file.txt";
     const std::string smokeFileText = "native smoke file\n";
     ServerRuntime::ServerPropertiesConfig runtimeProperties = {};
@@ -397,6 +438,26 @@ int main(int argc, char* argv[])
         ServerRuntime::ComputeNextDedicatedServerAutosaveDeadlineMs(
             1000,
             runtimeProperties);
+    ServerRuntime::DedicatedServerAutosaveState autosaveState =
+        ServerRuntime::CreateDedicatedServerAutosaveState(
+            1000,
+            runtimeProperties);
+    const bool autosaveTriggerBefore =
+        !ServerRuntime::ShouldTriggerDedicatedServerAutosave(
+            autosaveState,
+            45000);
+    const bool autosaveTriggerAtDeadline =
+        ServerRuntime::ShouldTriggerDedicatedServerAutosave(
+            autosaveState,
+            46000);
+    ServerRuntime::MarkDedicatedServerAutosaveRequested(
+        &autosaveState,
+        46000,
+        runtimeProperties);
+    const bool autosaveRequested = autosaveState.autosaveRequested;
+    const bool autosaveNextAdvanced = autosaveState.nextTickMs == 91000U;
+    ServerRuntime::MarkDedicatedServerAutosaveCompleted(&autosaveState);
+    const bool autosaveCompleted = !autosaveState.autosaveRequested;
     const char* storagePlatformDirectory =
         ServerRuntime::GetServerStoragePlatformDirectory();
     const std::string storageGameHddRoot =
@@ -793,6 +854,38 @@ int main(int argc, char* argv[])
         static_cast<long long>(sessionConfig.seed),
         sessionConfig.worldSizeChunks,
         static_cast<unsigned int>(sessionConfig.worldHellScale));
+    printf("world_bootstrap_plan=%d loaded_persist=%d created_new=%d "
+        "failed=%d init_plan=%d init_seed=%lld init_players=%u\n",
+        loadedWorldPlan.targetWorldName == L"world" &&
+            loadedWorldPlan.shouldPersistResolvedSaveId &&
+            loadedWorldPlan.resolvedSaveId == "world_loaded" &&
+            !loadedWorldPlan.createdNewWorld &&
+            !loadedWorldPlan.loadFailed,
+        loadedWorldPlan.shouldPersistResolvedSaveId,
+        createdWorldPlan.createdNewWorld,
+        failedWorldPlan.loadFailed,
+        networkInitPlan.seed == 7777 &&
+            networkInitPlan.saveData == fakeSaveData &&
+            networkInitPlan.settings == sessionConfig.hostSettings &&
+            networkInitPlan.dedicatedNoLocalHostPlayer &&
+            networkInitPlan.worldSizeChunks == sessionConfig.worldSizeChunks &&
+            networkInitPlan.worldHellScale == sessionConfig.worldHellScale &&
+        networkInitPlan.networkMaxPlayers ==
+                sessionConfig.networkMaxPlayers,
+        static_cast<long long>(networkInitPlan.seed),
+        static_cast<unsigned int>(networkInitPlan.networkMaxPlayers));
+    printf("autosave_state=%d initial_save=%d skip_initial_save=%d "
+        "requested=%d next_advanced=%d completed=%d\n",
+        autosaveState.intervalMs == 45000U &&
+            autosaveState.nextTickMs == 91000U &&
+            !autosaveState.autosaveRequested &&
+            autosaveTriggerBefore &&
+            autosaveTriggerAtDeadline,
+        shouldRunInitialSave,
+        shouldSkipInitialSaveWhenStopping,
+        autosaveRequested,
+        autosaveNextAdvanced,
+        autosaveCompleted);
     printf("file_write=%d file_read=%d file_readback_match=%d utc_file_time=%llu\n",
         wroteSmokeFile,
         readSmokeFile,
@@ -1085,6 +1178,35 @@ int main(int argc, char* argv[])
         sessionConfig.seed == 4444 &&
         sessionConfig.worldSizeChunks == 320U &&
         sessionConfig.worldHellScale == 8U &&
+        loadedWorldPlan.targetWorldName == L"world" &&
+        loadedWorldPlan.shouldPersistResolvedSaveId &&
+        loadedWorldPlan.resolvedSaveId == "world_loaded" &&
+        !loadedWorldPlan.createdNewWorld &&
+        !loadedWorldPlan.loadFailed &&
+        !createdWorldPlan.shouldPersistResolvedSaveId &&
+        createdWorldPlan.createdNewWorld &&
+        !createdWorldPlan.loadFailed &&
+        !failedWorldPlan.shouldPersistResolvedSaveId &&
+        !failedWorldPlan.createdNewWorld &&
+        failedWorldPlan.loadFailed &&
+        networkInitPlan.seed == 7777 &&
+        networkInitPlan.saveData == fakeSaveData &&
+        networkInitPlan.settings == sessionConfig.hostSettings &&
+        networkInitPlan.dedicatedNoLocalHostPlayer &&
+        networkInitPlan.worldSizeChunks == sessionConfig.worldSizeChunks &&
+        networkInitPlan.worldHellScale == sessionConfig.worldHellScale &&
+        networkInitPlan.networkMaxPlayers ==
+            sessionConfig.networkMaxPlayers &&
+        shouldRunInitialSave &&
+        shouldSkipInitialSaveWhenStopping &&
+        autosaveState.intervalMs == 45000U &&
+        autosaveState.nextTickMs == 91000U &&
+        !autosaveState.autosaveRequested &&
+        autosaveTriggerBefore &&
+        autosaveTriggerAtDeadline &&
+        autosaveRequested &&
+        autosaveNextAdvanced &&
+        autosaveCompleted &&
         wroteSmokeFile && readSmokeFile && smokeFileReadback == smokeFileText &&
         runtimeState.hostNameUtf8 == "RuntimeHost" &&
         runtimeState.hostNameWide == L"RuntimeHost" &&

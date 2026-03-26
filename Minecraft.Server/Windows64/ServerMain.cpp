@@ -9,6 +9,7 @@
 #include "..\Common\DedicatedServerOptions.h"
 #include "..\Common\DedicatedServerRuntime.h"
 #include "..\Common\DedicatedServerSessionConfig.h"
+#include "..\Common\DedicatedServerWorldBootstrap.h"
 #include "..\Common\StringUtils.h"
 #include "..\ServerLogger.h"
 #include "..\ServerLogManager.h"
@@ -387,30 +388,28 @@ int main(int argc, char **argv)
 	StorageManager.SetSaveDisabled(sessionConfig.saveDisabled);
 	// Read world name and fixed save-id from server.properties
 	// Delegate load-vs-create decision to WorldManager
-	std::wstring targetWorldName = serverProperties.worldName;
-	if (targetWorldName.empty())
-	{
-		targetWorldName = L"world"; // Default world name
-	}
 	WorldBootstrapResult worldBootstrap = BootstrapWorldForServer(serverProperties, kServerActionPad, &TickCoreSystems);
-	if (worldBootstrap.status == eWorldBootstrap_Loaded)
+	const ServerRuntime::DedicatedServerWorldBootstrapPlan worldBootstrapPlan =
+		ServerRuntime::BuildDedicatedServerWorldBootstrapPlan(
+			serverProperties,
+			worldBootstrap);
+	if (worldBootstrapPlan.shouldPersistResolvedSaveId)
 	{
-		const std::string &loadedSaveFilename = worldBootstrap.resolvedSaveId;
-		if (!loadedSaveFilename.empty() && _stricmp(loadedSaveFilename.c_str(), serverProperties.worldSaveId.c_str()) != 0)
+		// Persist the actually loaded save-id back to config
+		// Keep lookup keys aligned for next startup
+		LogWorldIO("updating level-id to loaded save filename");
+		serverProperties.worldSaveId = worldBootstrapPlan.resolvedSaveId;
+		if (!SaveServerPropertiesConfig(serverProperties))
 		{
-			// Persist the actually loaded save-id back to config
-			// Keep lookup keys aligned for next startup
-			LogWorldIO("updating level-id to loaded save filename");
-			serverProperties.worldSaveId = loadedSaveFilename;
-			if (!SaveServerPropertiesConfig(serverProperties))
-			{
-				LogWorldIO("failed to persist updated level-id");
-			}
+			LogWorldIO("failed to persist updated level-id");
 		}
 	}
-	else if (worldBootstrap.status == eWorldBootstrap_Failed)
+	else if (worldBootstrapPlan.loadFailed)
 	{
-		LogErrorf("world-io", "Failed to load configured world \"%s\".", WideToUtf8(targetWorldName).c_str());
+		LogErrorf(
+			"world-io",
+			"Failed to load configured world \"%s\".",
+			WideToUtf8(worldBootstrapPlan.targetWorldName).c_str());
 		WinsockNetLayer::Shutdown();
 		g_NetworkManager.Terminate();
 		CleanupDevice();
@@ -418,29 +417,31 @@ int main(int argc, char **argv)
 		return 4;
 	}
 
+	const std::int64_t resolvedSeed = sessionConfig.hasSeed
+		? sessionConfig.seed
+		: (new Random())->nextLong();
+	const ServerRuntime::DedicatedServerNetworkInitPlan networkInitPlan =
+		ServerRuntime::BuildDedicatedServerNetworkInitPlan(
+			sessionConfig,
+			worldBootstrap.saveData,
+			resolvedSeed);
 	NetworkGameInitData *param = new NetworkGameInitData();
-	if (sessionConfig.hasSeed)
-	{
-		param->seed = sessionConfig.seed;
-	}
-	else
-	{
-		param->seed = (new Random())->nextLong();
-	}
+	param->seed = networkInitPlan.seed;
 #ifdef _LARGE_WORLDS
-	param->xzSize = sessionConfig.worldSizeChunks;
-	param->hellScale = sessionConfig.worldHellScale;
+	param->xzSize = networkInitPlan.worldSizeChunks;
+	param->hellScale = networkInitPlan.worldHellScale;
 #endif
-	param->saveData = worldBootstrap.saveData;
-	param->settings = sessionConfig.hostSettings;
-	param->dedicatedNoLocalHostPlayer = true;
+	param->saveData = networkInitPlan.saveData;
+	param->settings = networkInitPlan.settings;
+	param->dedicatedNoLocalHostPlayer =
+		networkInitPlan.dedicatedNoLocalHostPlayer;
 
 	LogStartupStep("starting hosted network game thread");
 	g_NetworkManager.HostGame(
 		0,
 		true,
 		false,
-		sessionConfig.networkMaxPlayers,
+		networkInitPlan.networkMaxPlayers,
 		0);
 	g_NetworkManager.FakeLocalPlayerJoined();
 
@@ -469,7 +470,10 @@ int main(int argc, char **argv)
 
 	LogStartupStep("server startup complete");
 	LogInfof("startup", "Dedicated server listening on %s:%d", g_Win64MultiplayerIP, g_Win64MultiplayerPort);
-	if (worldBootstrap.status == eWorldBootstrap_CreatedNew && !IsShutdownRequested() && !app.m_bShutdown)
+	if (ServerRuntime::ShouldRunDedicatedServerInitialSave(
+		worldBootstrapPlan,
+		IsShutdownRequested(),
+		app.m_bShutdown))
 	{
 		// Windows64 suppresses saveToDisc right after new world creation
 		// Dedicated Server explicitly runs the initial save here
@@ -486,13 +490,10 @@ int main(int argc, char **argv)
 			LogWorldIO("initial save completed");
 		}
 	}
-	const std::uint64_t autosaveIntervalMs =
-		ServerRuntime::GetDedicatedServerAutosaveIntervalMs(serverProperties);
-	std::uint64_t nextAutosaveTick =
-		ServerRuntime::ComputeNextDedicatedServerAutosaveDeadlineMs(
+	ServerRuntime::DedicatedServerAutosaveState autosaveState =
+		ServerRuntime::CreateDedicatedServerAutosaveState(
 			LceGetMonotonicMilliseconds(),
 			serverProperties);
-	bool autosaveRequested = false;
 	ServerRuntime::ServerCli serverCli;
 	serverCli.Start();
 
@@ -507,10 +508,11 @@ int main(int argc, char **argv)
 			break;
 		}
 
-		if (autosaveRequested && app.GetXuiServerAction(kServerActionPad) == eXuiServerAction_Idle)
+		if (autosaveState.autosaveRequested &&
+			app.GetXuiServerAction(kServerActionPad) == eXuiServerAction_Idle)
 		{
 			LogWorldIO("autosave completed");
-			autosaveRequested = false;
+			ServerRuntime::MarkDedicatedServerAutosaveCompleted(&autosaveState);
 		}
 
 		if (MinecraftServer::serverHalted())
@@ -519,18 +521,26 @@ int main(int argc, char **argv)
 		}
 
 		const std::uint64_t now = LceGetMonotonicMilliseconds();
-		if (now >= nextAutosaveTick)
+		if (ServerRuntime::ShouldTriggerDedicatedServerAutosave(
+			autosaveState,
+			now))
 		{
 			if (app.GetXuiServerAction(kServerActionPad) == eXuiServerAction_Idle)
 			{
 				LogWorldIO("requesting autosave");
 				app.SetXuiServerAction(kServerActionPad, eXuiServerAction_AutoSaveGame);
-				autosaveRequested = true;
-			}
-			nextAutosaveTick =
-				ServerRuntime::ComputeNextDedicatedServerAutosaveDeadlineMs(
+				ServerRuntime::MarkDedicatedServerAutosaveRequested(
+					&autosaveState,
 					now,
 					serverProperties);
+			}
+			else
+			{
+				autosaveState.nextTickMs =
+					ServerRuntime::ComputeNextDedicatedServerAutosaveDeadlineMs(
+						now,
+						serverProperties);
+			}
 		}
 
 		LceSleepMilliseconds(10);
