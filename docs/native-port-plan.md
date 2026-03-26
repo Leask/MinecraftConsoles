@@ -195,6 +195,9 @@ This iteration starts with:
 - first server CLI input source (`Minecraft.Server/Console/ServerCliInput.cpp`)
   compiling and running in the native smoke target through a narrow
   `IServerCliInputSink` interface and a native `linenoise` fallback
+- first world utility source (`Minecraft.World/ThreadName.cpp`)
+  compiling and running in the native smoke target with a native
+  pthread-based thread-name path
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

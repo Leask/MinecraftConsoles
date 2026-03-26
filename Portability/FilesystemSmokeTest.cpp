@@ -12,6 +12,7 @@
 #include "Minecraft.Server/Common/StringUtils.h"
 #include "Minecraft.Server/ServerLogger.h"
 #include "Minecraft.Server/vendor/linenoise/linenoise.h"
+#include "Minecraft.World/ThreadName.h"
 
 namespace
 {
@@ -42,6 +43,7 @@ namespace
 
     DWORD WINAPI SmokeThreadMain(LPVOID lpThreadParameter)
     {
+        SetThreadName(static_cast<DWORD>(-1), "smoke-worker");
         int* value = static_cast<int*>(lpThreadParameter);
         *value += 1;
         return 7;
@@ -62,6 +64,7 @@ int main(int argc, char* argv[])
     const bool invalidLiteral = LceNetStringIsIpLiteral("not-an-ip");
     const bool stdinAvailable = LceStdinIsAvailable();
     const int stdinReadableNow = stdinAvailable ? LceWaitForStdinReadable(0) : -1;
+    SetThreadName(GetCurrentThreadId(), "smoke-main");
     const std::uint64_t monotonicMsBefore = LceGetMonotonicMilliseconds();
     const std::uint64_t monotonicNsBefore = LceGetMonotonicNanoseconds();
     const std::uint64_t unixMs = LceGetUnixTimeMilliseconds();
