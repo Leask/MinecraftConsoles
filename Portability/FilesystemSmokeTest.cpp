@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <cstring>
 
 #include "Minecraft.Server/Access/BanManager.h"
 #include "lce_filesystem/lce_filesystem.h"
@@ -63,6 +64,36 @@ int main(int argc, char* argv[])
     const bool ipv4Literal = LceNetStringIsIpLiteral("127.0.0.1");
     const bool ipv6Literal = LceNetStringIsIpLiteral("::1");
     const bool invalidLiteral = LceNetStringIsIpLiteral("not-an-ip");
+    const LceSocketHandle udpReceiver = LceNetOpenUdpSocket();
+    const bool udpReceiverReuse =
+        LceNetSetSocketReuseAddress(udpReceiver, true);
+    const bool udpReceiverTimeout =
+        LceNetSetSocketRecvTimeout(udpReceiver, 1000);
+    const bool udpReceiverBound =
+        LceNetBindIpv4(udpReceiver, "127.0.0.1", 0);
+    const int udpReceiverPort = LceNetGetBoundPort(udpReceiver);
+    const LceSocketHandle udpSender = LceNetOpenUdpSocket();
+    const bool udpSenderBroadcast =
+        LceNetSetSocketBroadcast(udpSender, true);
+    const char udpPayload[] = "udp-smoke";
+    const int udpSent = LceNetSendToIpv4(
+        udpSender,
+        "127.0.0.1",
+        udpReceiverPort,
+        udpPayload,
+        static_cast<int>(sizeof(udpPayload) - 1));
+    char udpRecvBuf[64] = {};
+    char udpSenderIp[64] = {};
+    int udpSenderPort = 0;
+    const int udpRecv = LceNetRecvFromIpv4(
+        udpReceiver,
+        udpRecvBuf,
+        sizeof(udpRecvBuf),
+        udpSenderIp,
+        sizeof(udpSenderIp),
+        &udpSenderPort);
+    const bool udpPayloadOk = udpRecv == static_cast<int>(sizeof(udpPayload) - 1) &&
+        std::memcmp(udpRecvBuf, udpPayload, sizeof(udpPayload) - 1) == 0;
     const bool lanWireSizeOk = sizeof(LceLanBroadcast) == 84;
     LceLanBroadcast lanBroadcast = {};
     const bool lanBroadcastBuilt = LceLanBuildBroadcast(
@@ -241,6 +272,19 @@ int main(int argc, char* argv[])
         ipv4Literal,
         ipv6Literal,
         invalidLiteral);
+    printf("udp_receiver=%d,%d,%d port=%d udp_sender_broadcast=%d "
+        "udp_sent=%d udp_recv=%d udp_payload_ok=%d udp_sender_ip=%s "
+        "udp_sender_port=%d\n",
+        udpReceiver != LCE_INVALID_SOCKET,
+        udpReceiverReuse,
+        udpReceiverTimeout && udpReceiverBound,
+        udpReceiverPort,
+        udpSenderBroadcast,
+        udpSent,
+        udpRecv,
+        udpPayloadOk,
+        udpSenderIp,
+        udpSenderPort);
     printf("lan_broadcast=%d lan_decode=%d lan_added=%d lan_updated_added=%d "
         "lan_count=%zu lan_expired=%zu lan_max_players=%u lan_wire_size=%d\n",
         lanBroadcastBuilt,
@@ -325,6 +369,14 @@ int main(int argc, char* argv[])
         static_cast<unsigned long long>(deltaMs),
         static_cast<unsigned long long>(deltaNs));
 
+    if (udpSender != LCE_INVALID_SOCKET)
+    {
+        LceNetCloseSocket(udpSender);
+    }
+    if (udpReceiver != LCE_INVALID_SOCKET)
+    {
+        LceNetCloseSocket(udpReceiver);
+    }
     LceNetShutdown();
     TlsFree(tlsSlot);
     CloseHandle(workerThread);
@@ -342,6 +394,12 @@ int main(int argc, char* argv[])
 
     return (exists && smokeDirectoryReady && netInitialized && ipv4Literal &&
         ipv6Literal && !invalidLiteral &&
+        udpReceiver != LCE_INVALID_SOCKET &&
+        udpReceiverReuse && udpReceiverTimeout && udpReceiverBound &&
+        udpReceiverPort > 0 && udpSender != LCE_INVALID_SOCKET &&
+        udpSenderBroadcast &&
+        udpSent == static_cast<int>(sizeof(udpPayload) - 1) &&
+        udpPayloadOk && udpSenderIp[0] != '\0' && udpSenderPort > 0 &&
         lanBroadcastBuilt && lanBroadcastDecoded && lanAdded &&
         !lanUpdatedAdded && lanSessions.empty() &&
         expiredLanSessions.size() == 1 &&

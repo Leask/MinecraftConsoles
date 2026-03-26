@@ -1114,15 +1114,22 @@ bool WinsockNetLayer::StartAdvertising(int gamePort, const wchar_t* hostName, un
 		return false;
 	}
 
-	s_advertiseSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (s_advertiseSock == INVALID_SOCKET)
+	const LceSocketHandle advertiseSocket = LceNetOpenUdpSocket();
+	if (advertiseSocket == LCE_INVALID_SOCKET)
 	{
 		app.DebugPrintf("Win64 LAN: Failed to create advertise socket: %d\n", GetNetLastError());
 		return false;
 	}
+	s_advertiseSock = static_cast<SOCKET>(advertiseSocket);
 
-	BOOL broadcast = TRUE;
-	setsockopt(s_advertiseSock, SOL_SOCKET, SO_BROADCAST, (const char*)&broadcast, sizeof(broadcast));
+	if (!LceNetSetSocketBroadcast(advertiseSocket, true))
+	{
+		app.DebugPrintf("Win64 LAN: Failed to enable broadcast on advertise socket: %d\n",
+			GetNetLastError());
+		CloseNetSocket(s_advertiseSock);
+		s_advertiseSock = INVALID_SOCKET;
+		return false;
+	}
 
 	s_advertising = true;
 	s_advertiseThread = CreateThread(nullptr, 0, AdvertiseThreadProc, nullptr, 0, nullptr);
@@ -1173,22 +1180,20 @@ void WinsockNetLayer::UpdateAdvertiseJoinable(bool joinable)
 
 DWORD WINAPI WinsockNetLayer::AdvertiseThreadProc(LPVOID param)
 {
-	struct sockaddr_in broadcastAddr;
-	memset(&broadcastAddr, 0, sizeof(broadcastAddr));
-	broadcastAddr.sin_family = AF_INET;
-	broadcastAddr.sin_port = htons(LCE_LAN_DISCOVERY_PORT);
-	broadcastAddr.sin_addr.s_addr = INADDR_BROADCAST;
-
 	while (s_advertising)
 	{
 		EnterCriticalSection(&s_advertiseLock);
 		Win64LANBroadcast data = s_advertiseData;
 		LeaveCriticalSection(&s_advertiseLock);
 
-		int sent = sendto(s_advertiseSock, (const char*)&data, sizeof(data), 0,
-			(struct sockaddr*)&broadcastAddr, sizeof(broadcastAddr));
+		const int sent = LceNetSendToIpv4(
+			static_cast<LceSocketHandle>(s_advertiseSock),
+			"255.255.255.255",
+			LCE_LAN_DISCOVERY_PORT,
+			&data,
+			static_cast<int>(sizeof(data)));
 
-		if (sent == SOCKET_ERROR && s_advertising)
+		if (sent < 0 && s_advertising)
 		{
 			app.DebugPrintf("Win64 LAN: Broadcast sendto failed: %d\n", GetNetLastError());
 		}
@@ -1204,23 +1209,16 @@ bool WinsockNetLayer::StartDiscovery()
 	if (s_discovering) return true;
 	if (!s_initialized) return false;
 
-	s_discoverySock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (s_discoverySock == INVALID_SOCKET)
+	const LceSocketHandle discoverySocket = LceNetOpenUdpSocket();
+	if (discoverySocket == LCE_INVALID_SOCKET)
 	{
 		app.DebugPrintf("Win64 LAN: Failed to create discovery socket: %d\n", GetNetLastError());
 		return false;
 	}
+	s_discoverySock = static_cast<SOCKET>(discoverySocket);
 
-	BOOL reuseAddr = TRUE;
-	setsockopt(s_discoverySock, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuseAddr, sizeof(reuseAddr));
-
-	struct sockaddr_in bindAddr;
-	memset(&bindAddr, 0, sizeof(bindAddr));
-	bindAddr.sin_family = AF_INET;
-	bindAddr.sin_port = htons(LCE_LAN_DISCOVERY_PORT);
-	bindAddr.sin_addr.s_addr = INADDR_ANY;
-
-	if (::bind(s_discoverySock, (struct sockaddr*)&bindAddr, sizeof(bindAddr)) == SOCKET_ERROR)
+	if (!LceNetSetSocketReuseAddress(discoverySocket, true) ||
+		!LceNetBindIpv4(discoverySocket, nullptr, LCE_LAN_DISCOVERY_PORT))
 	{
 		app.DebugPrintf("Win64 LAN: Discovery bind failed: %d\n", GetNetLastError());
 		CloseNetSocket(s_discoverySock);
@@ -1228,8 +1226,14 @@ bool WinsockNetLayer::StartDiscovery()
 		return false;
 	}
 
-	DWORD timeout = 500;
-	setsockopt(s_discoverySock, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+	if (!LceNetSetSocketRecvTimeout(discoverySocket, 500))
+	{
+		app.DebugPrintf("Win64 LAN: Discovery timeout setup failed: %d\n",
+			GetNetLastError());
+		CloseNetSocket(s_discoverySock);
+		s_discoverySock = INVALID_SOCKET;
+		return false;
+	}
 
 	s_discovering = true;
 	s_discoveryThread = CreateThread(nullptr, 0, DiscoveryThreadProc, nullptr, 0, nullptr);
@@ -1245,7 +1249,7 @@ void WinsockNetLayer::StopDiscovery()
 
 	if (s_discoverySock != INVALID_SOCKET)
 	{
-		closesocket(s_discoverySock);
+		CloseNetSocket(s_discoverySock);
 		s_discoverySock = INVALID_SOCKET;
 	}
 
@@ -1276,13 +1280,17 @@ DWORD WINAPI WinsockNetLayer::DiscoveryThreadProc(LPVOID param)
 
 	while (s_discovering)
 	{
-		struct sockaddr_in senderAddr;
-		int senderLen = sizeof(senderAddr);
+		char senderIP[64] = {};
+		int senderPort = 0;
+		const int recvLen = LceNetRecvFromIpv4(
+			static_cast<LceSocketHandle>(s_discoverySock),
+			recvBuf,
+			sizeof(recvBuf),
+			senderIP,
+			sizeof(senderIP),
+			&senderPort);
 
-		int recvLen = recvfrom(s_discoverySock, recvBuf, sizeof(recvBuf), 0,
-			(struct sockaddr*)&senderAddr, &senderLen);
-
-		if (recvLen == SOCKET_ERROR)
+		if (recvLen < 0)
 		{
 			continue;
 		}
@@ -1290,8 +1298,6 @@ DWORD WINAPI WinsockNetLayer::DiscoveryThreadProc(LPVOID param)
 		if (recvLen < static_cast<int>(sizeof(Win64LANBroadcast)))
 			continue;
 
-		char senderIP[64];
-		inet_ntop(AF_INET, &senderAddr.sin_addr, senderIP, sizeof(senderIP));
 		const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
 		Win64LANSession session = {};
 		if (!LceLanDecodeBroadcast(
