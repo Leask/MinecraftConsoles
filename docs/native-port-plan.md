@@ -146,7 +146,8 @@ Current server blockers already visible in the active tree:
 - `Minecraft.Server/Windows64/ServerMain.cpp` still pulls in `4J_Render`,
   `Windows64_UIController`, `UI`, `Input`, and D3D device globals
 - world save bootstrap still assumes `Windows64\\GameHDD` layout
-- CLI stream handling still depends on Win32 `HANDLE` semantics
+- stream-mode stdin now has a portability layer, but interactive console and
+  console-color paths still depend on Win32 console semantics
 - networking still enters through `WinsockNetLayer`
 
 ### Phase 3: Native client bootstrap

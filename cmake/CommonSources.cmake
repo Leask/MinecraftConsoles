@@ -10,6 +10,12 @@ set(_INCLUDE_LCE_TIME
 )
 source_group("include/lce_time" FILES ${_INCLUDE_LCE_TIME})
 
+set(_INCLUDE_LCE_STDIN
+  "${CMAKE_SOURCE_DIR}/include/lce_stdin/lce_stdin.cpp"
+  "${CMAKE_SOURCE_DIR}/include/lce_stdin/lce_stdin.h"
+)
+source_group("include/lce_stdin" FILES ${_INCLUDE_LCE_STDIN})
+
 set(_INCLUDE_BUILDVER
   "${CMAKE_SOURCE_DIR}/include/Common/BuildVer.h"
 )
@@ -18,5 +24,6 @@ source_group("Common" FILES ${_INCLUDE_BUILDVER})
 set(SOURCES_COMMON
 	${_INCLUDE_LCE_FILESYSTEM}
 	${_INCLUDE_LCE_TIME}
+	${_INCLUDE_LCE_STDIN}
 	${_INCLUDE_BUILDVER}
 )

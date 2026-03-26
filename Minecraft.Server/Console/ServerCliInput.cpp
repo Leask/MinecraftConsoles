@@ -5,60 +5,41 @@
 #include "ServerCliEngine.h"
 #include "..\ServerLogger.h"
 #include "..\vendor\linenoise\linenoise.h"
+#include <lce_stdin/lce_stdin.h>
 #include <lce_time/lce_time.h>
 
 #include <ctype.h>
 #include <stdlib.h>
+#if !defined(_WINDOWS64) && !defined(_WIN32)
+#include <strings.h>
+#endif
 
 namespace
 {
+	bool EqualsIgnoreCase(const char *lhs, const char *rhs)
+	{
+		if (lhs == NULL || rhs == NULL)
+		{
+			return false;
+		}
+
+#if defined(_WINDOWS64) || defined(_WIN32)
+		return _stricmp(lhs, rhs) == 0;
+#else
+		return strcasecmp(lhs, rhs) == 0;
+#endif
+	}
+
 	bool UseStreamInputMode()
 	{
 		const char *mode = getenv("SERVER_CLI_INPUT_MODE");
 		if (mode != NULL)
 		{
-			return _stricmp(mode, "stream") == 0
-				|| _stricmp(mode, "stdin") == 0;
+			return EqualsIgnoreCase(mode, "stream")
+				|| EqualsIgnoreCase(mode, "stdin");
 		}
 
 		return false;
-	}
-
-	int WaitForStdinReadable(HANDLE stdinHandle, DWORD waitMs)
-	{
-		if (stdinHandle == NULL || stdinHandle == INVALID_HANDLE_VALUE)
-		{
-			return -1;
-		}
-
-		DWORD fileType = GetFileType(stdinHandle);
-		if (fileType == FILE_TYPE_PIPE)
-		{
-			DWORD available = 0;
-			if (!PeekNamedPipe(stdinHandle, NULL, 0, NULL, &available, NULL))
-			{
-				return -1;
-			}
-			return available > 0 ? 1 : 0;
-		}
-
-		if (fileType == FILE_TYPE_CHAR)
-		{
-			// console/pty char handles are often not waitable across Wine+Docker.
-			return 1;
-		}
-
-		DWORD waitResult = WaitForSingleObject(stdinHandle, waitMs);
-		if (waitResult == WAIT_OBJECT_0)
-		{
-			return 1;
-		}
-		if (waitResult == WAIT_TIMEOUT)
-		{
-			return 0;
-		}
-
-		return -1;
 	}
 }
 
@@ -105,7 +86,9 @@ namespace ServerRuntime
 		linenoiseRequestStop();
 		if (m_inputThread.joinable())
 		{
+#if defined(_WINDOWS64) || defined(_WIN32)
 			CancelSynchronousIo((HANDLE)m_inputThread.native_handle());
+#endif
 			m_inputThread.join();
 		}
 		linenoiseSetCompletionCallback(NULL);
@@ -166,8 +149,7 @@ namespace ServerRuntime
 	 */
 	void ServerCliInput::RunStreamInputLoop()
 	{
-		HANDLE stdinHandle = GetStdHandle(STD_INPUT_HANDLE);
-		if (stdinHandle == NULL || stdinHandle == INVALID_HANDLE_VALUE)
+		if (!LceStdinIsAvailable())
 		{
 			LogWarn("console", "stream input mode requested but STDIN handle is unavailable; falling back to linenoise.");
 			RunLinenoiseLoop();
@@ -182,7 +164,7 @@ namespace ServerRuntime
 
 		while (m_running)
 		{
-			int readable = WaitForStdinReadable(stdinHandle, 50);
+			int readable = LceWaitForStdinReadable(50);
 			if (readable <= 0)
 			{
 				LceSleepMilliseconds(10);
@@ -190,8 +172,7 @@ namespace ServerRuntime
 			}
 
 			char ch = 0;
-			DWORD bytesRead = 0;
-			if (!ReadFile(stdinHandle, &ch, 1, &bytesRead, NULL) || bytesRead == 0)
+			if (!LceReadStdinByte(&ch))
 			{
 				LceSleepMilliseconds(10);
 				continue;

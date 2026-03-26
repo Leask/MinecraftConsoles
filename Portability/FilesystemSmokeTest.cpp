@@ -1,6 +1,7 @@
 #include <cstdio>
 
 #include "lce_filesystem/lce_filesystem.h"
+#include "lce_stdin/lce_stdin.h"
 #include "lce_time/lce_time.h"
 
 int main(int argc, char* argv[])
@@ -11,6 +12,8 @@ int main(int argc, char* argv[])
     const bool smokeDirectoryReady = CreateDirectoryIfMissing(
         "build/portability-smoke-dir",
         &createdDirectory);
+    const bool stdinAvailable = LceStdinIsAvailable();
+    const int stdinReadableNow = stdinAvailable ? LceWaitForStdinReadable(0) : -1;
     const std::uint64_t monotonicMsBefore = LceGetMonotonicMilliseconds();
     const std::uint64_t monotonicNsBefore = LceGetMonotonicNanoseconds();
     const std::uint64_t unixMs = LceGetUnixTimeMilliseconds();
@@ -33,6 +36,9 @@ int main(int argc, char* argv[])
     printf("smoke_directory_ready=%d created=%d\n",
         smokeDirectoryReady,
         createdDirectory);
+    printf("stdin_available=%d stdin_readable_now=%d\n",
+        stdinAvailable,
+        stdinReadableNow);
     if (foundFirstFile)
     {
         printf("first_file=%s\n", firstFile);
