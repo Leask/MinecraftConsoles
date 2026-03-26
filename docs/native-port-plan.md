@@ -256,6 +256,10 @@ This iteration starts with:
   `include/lce_process/lce_process.cpp`, so dedicated server startup can
   resolve config and save files from the executable directory without
   directly open-coding `GetModuleFileName` / `SetCurrentDirectory`
+- dedicated server runtime state and autosave scheduling are now moving out
+  of `ServerMain.cpp` into
+  `Minecraft.Server/Common/DedicatedServerRuntime.cpp`, with native smoke
+  verifying host name/bind IP flags and autosave deadline calculation
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

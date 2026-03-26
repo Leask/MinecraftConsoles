@@ -53,9 +53,10 @@ configure_compiler_target(Minecraft.Portability.Zlib)
 
 add_executable(Minecraft.Portability.SmokeTest
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/BanManager.cpp"
-  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/ServerStoragePaths.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerOptions.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerRuntime.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/FileUtils.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/ServerStoragePaths.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/StringUtils.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Console/ServerCliInput.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/ServerLogger.cpp"

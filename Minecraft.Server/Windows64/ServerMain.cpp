@@ -7,6 +7,7 @@
 #include "MinecraftServer.h"
 #include "..\Access\Access.h"
 #include "..\Common\DedicatedServerOptions.h"
+#include "..\Common\DedicatedServerRuntime.h"
 #include "..\Common\StringUtils.h"
 #include "..\ServerLogger.h"
 #include "..\ServerLogManager.h"
@@ -39,6 +40,7 @@
 #include <string.h>
 
 #include <atomic>
+#include <cwchar>
 
 extern ATOM MyRegisterClass(HINSTANCE hInstance);
 extern BOOL InitInstance(HINSTANCE hInstance, int nCmdShow);
@@ -61,7 +63,6 @@ extern DWORD dwProfileSettingsA[];
 static const int kProfileValueCount = 5;
 static const int kProfileSettingCount = 4;
 static std::atomic<bool> g_shutdownRequested(false);
-static const DWORD kDefaultAutosaveIntervalMs = 60 * 1000;
 static const int kServerActionPad = 0;
 
 static bool IsShutdownRequested()
@@ -250,17 +251,39 @@ int main(int argc, char **argv)
 	g_iScreenWidth = 1280;
 	g_iScreenHeight = 720;
 
-	strncpy_s(g_Win64Username, sizeof(g_Win64Username), config.name, _TRUNCATE);
-	MultiByteToWideChar(CP_ACP, 0, g_Win64Username, -1, g_Win64UsernameW, 17);
-
-	g_Win64MultiplayerHost = true;
-	g_Win64MultiplayerJoin = false;
-	g_Win64MultiplayerPort = config.port;
-	strncpy_s(g_Win64MultiplayerIP, sizeof(g_Win64MultiplayerIP), config.bindIP, _TRUNCATE);
-	g_Win64DedicatedServer = true;
-	g_Win64DedicatedServerPort = config.port;
-	strncpy_s(g_Win64DedicatedServerBindIP, sizeof(g_Win64DedicatedServerBindIP), config.bindIP, _TRUNCATE);
-	g_Win64DedicatedServerLanAdvertise = serverProperties.lanAdvertise;
+	const DedicatedServerRuntimeState runtimeState =
+		ServerRuntime::BuildDedicatedServerRuntimeState(
+			config,
+			serverProperties);
+	strncpy_s(
+		g_Win64Username,
+		sizeof(g_Win64Username),
+		runtimeState.hostNameUtf8.c_str(),
+		_TRUNCATE);
+	wmemset(
+		g_Win64UsernameW,
+		0,
+		sizeof(g_Win64UsernameW) / sizeof(g_Win64UsernameW[0]));
+	wcsncpy(
+		g_Win64UsernameW,
+		runtimeState.hostNameWide.c_str(),
+		(sizeof(g_Win64UsernameW) / sizeof(g_Win64UsernameW[0])) - 1);
+	g_Win64MultiplayerHost = runtimeState.multiplayerHost;
+	g_Win64MultiplayerJoin = runtimeState.multiplayerJoin;
+	g_Win64MultiplayerPort = runtimeState.multiplayerPort;
+	strncpy_s(
+		g_Win64MultiplayerIP,
+		sizeof(g_Win64MultiplayerIP),
+		runtimeState.bindIp.c_str(),
+		_TRUNCATE);
+	g_Win64DedicatedServer = runtimeState.dedicatedServer;
+	g_Win64DedicatedServerPort = runtimeState.dedicatedServerPort;
+	strncpy_s(
+		g_Win64DedicatedServerBindIP,
+		sizeof(g_Win64DedicatedServerBindIP),
+		runtimeState.bindIp.c_str(),
+		_TRUNCATE);
+	g_Win64DedicatedServerLanAdvertise = runtimeState.lanAdvertise;
 	LogStartupStep("initializing server log manager");
 	ServerRuntime::ServerLogManager::Initialize();
 	LogStartupStep("initializing dedicated access control");
@@ -497,13 +520,12 @@ int main(int argc, char **argv)
 			LogWorldIO("initial save completed");
 		}
 	}
-	DWORD autosaveIntervalMs = kDefaultAutosaveIntervalMs;
-	if (serverProperties.autosaveIntervalSeconds > 0)
-	{
-		autosaveIntervalMs = (DWORD)(serverProperties.autosaveIntervalSeconds * 1000);
-	}
+	const std::uint64_t autosaveIntervalMs =
+		ServerRuntime::GetDedicatedServerAutosaveIntervalMs(serverProperties);
 	std::uint64_t nextAutosaveTick =
-		LceGetMonotonicMilliseconds() + autosaveIntervalMs;
+		ServerRuntime::ComputeNextDedicatedServerAutosaveDeadlineMs(
+			LceGetMonotonicMilliseconds(),
+			serverProperties);
 	bool autosaveRequested = false;
 	ServerRuntime::ServerCli serverCli;
 	serverCli.Start();
@@ -539,7 +561,10 @@ int main(int argc, char **argv)
 				app.SetXuiServerAction(kServerActionPad, eXuiServerAction_AutoSaveGame);
 				autosaveRequested = true;
 			}
-			nextAutosaveTick = now + autosaveIntervalMs;
+			nextAutosaveTick =
+				ServerRuntime::ComputeNextDedicatedServerAutosaveDeadlineMs(
+					now,
+					serverProperties);
 		}
 
 		LceSleepMilliseconds(10);

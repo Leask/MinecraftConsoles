@@ -9,6 +9,7 @@
 #include "lce_time/lce_time.h"
 #include "lce_win32/lce_win32.h"
 #include "Minecraft.Server/Common/DedicatedServerOptions.h"
+#include "Minecraft.Server/Common/DedicatedServerRuntime.h"
 #include "Minecraft.Server/Common/FileUtils.h"
 #include "Minecraft.Server/Common/ServerStoragePaths.h"
 #include "Minecraft.Server/Console/IServerCliInputSink.h"
@@ -319,6 +320,36 @@ int main(int argc, char* argv[])
     ServerRuntime::BuildDedicatedServerUsageLines(&dedicatedUsageLines);
     const std::string smokeFilePath = "build/portability-smoke-file.txt";
     const std::string smokeFileText = "native smoke file\n";
+    ServerRuntime::ServerPropertiesConfig runtimeProperties = {};
+    runtimeProperties.lanAdvertise = true;
+    runtimeProperties.autosaveIntervalSeconds = 45;
+    ServerRuntime::DedicatedServerConfig runtimeConfig =
+        defaultDedicatedConfig;
+    std::snprintf(
+        runtimeConfig.bindIP,
+        sizeof(runtimeConfig.bindIP),
+        "%s",
+        "192.168.0.8");
+    std::snprintf(
+        runtimeConfig.name,
+        sizeof(runtimeConfig.name),
+        "%s",
+        "RuntimeHost");
+    runtimeConfig.port = 25590;
+    const ServerRuntime::DedicatedServerRuntimeState runtimeState =
+        ServerRuntime::BuildDedicatedServerRuntimeState(
+            runtimeConfig,
+            runtimeProperties);
+    const std::uint64_t defaultAutosaveMs =
+        ServerRuntime::GetDedicatedServerAutosaveIntervalMs(
+            dedicatedProperties);
+    const std::uint64_t configuredAutosaveMs =
+        ServerRuntime::GetDedicatedServerAutosaveIntervalMs(
+            runtimeProperties);
+    const std::uint64_t nextAutosaveTick =
+        ServerRuntime::ComputeNextDedicatedServerAutosaveDeadlineMs(
+            1000,
+            runtimeProperties);
     const char* storagePlatformDirectory =
         ServerRuntime::GetServerStoragePlatformDirectory();
     const std::string storageGameHddRoot =
@@ -555,6 +586,20 @@ int main(int argc, char* argv[])
         readSmokeFile,
         smokeFileReadback == smokeFileText,
         utcFileTime);
+    printf("server_runtime_host=%s bind_ip=%s port=%d dedicated_port=%d "
+        "host=%d join=%d dedicated=%d lan=%d default_autosave_ms=%llu "
+        "configured_autosave_ms=%llu next_autosave_tick=%llu\n",
+        runtimeState.hostNameUtf8.c_str(),
+        runtimeState.bindIp.c_str(),
+        runtimeState.multiplayerPort,
+        runtimeState.dedicatedServerPort,
+        runtimeState.multiplayerHost,
+        runtimeState.multiplayerJoin,
+        runtimeState.dedicatedServer,
+        runtimeState.lanAdvertise,
+        static_cast<unsigned long long>(defaultAutosaveMs),
+        static_cast<unsigned long long>(configuredAutosaveMs),
+        static_cast<unsigned long long>(nextAutosaveTick));
     printf("server_storage_platform=%s game_hdd_root=%s\n",
         storagePlatformDirectory,
         storageGameHddRoot.c_str());
@@ -750,6 +795,18 @@ int main(int argc, char* argv[])
         !dedicatedUsageLines.empty() &&
         dedicatedUsageLines[0].find("Minecraft.Server") != std::string::npos &&
         wroteSmokeFile && readSmokeFile && smokeFileReadback == smokeFileText &&
+        runtimeState.hostNameUtf8 == "RuntimeHost" &&
+        runtimeState.hostNameWide == L"RuntimeHost" &&
+        runtimeState.bindIp == "192.168.0.8" &&
+        runtimeState.multiplayerPort == 25590 &&
+        runtimeState.dedicatedServerPort == 25590 &&
+        runtimeState.multiplayerHost &&
+        !runtimeState.multiplayerJoin &&
+        runtimeState.dedicatedServer &&
+        runtimeState.lanAdvertise &&
+        defaultAutosaveMs == 60000U &&
+        configuredAutosaveMs == 45000U &&
+        nextAutosaveTick == 46000U &&
         std::strcmp(storagePlatformDirectory, "NativeDesktop") == 0 &&
         storageGameHddRoot == "NativeDesktop/GameHDD" &&
         utcFileTime > 0 &&
