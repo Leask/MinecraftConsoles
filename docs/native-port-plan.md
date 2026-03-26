@@ -187,6 +187,8 @@ This iteration starts with:
   compiling in the native smoke target without `stdafx.h`
 - first server file I/O utility source (`Minecraft.Server/Common/FileUtils.cpp`)
   compiling and running in the native smoke target without Win32 file APIs
+- first access-control manager source (`Minecraft.Server/Access/BanManager.cpp`)
+  compiling and running in the native smoke target with native JSON/file paths
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

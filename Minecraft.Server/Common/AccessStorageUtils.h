@@ -3,8 +3,9 @@
 #include "FileUtils.h"
 #include "StringUtils.h"
 
-#include "..\vendor\nlohmann\json.hpp"
+#include "../vendor/nlohmann/json.hpp"
 
+#include <filesystem>
 #include <stdio.h>
 
 namespace ServerRuntime
@@ -13,14 +14,10 @@ namespace ServerRuntime
 	{
 		inline bool IsRegularFile(const std::string &path)
 		{
-			const std::wstring widePath = StringUtils::Utf8ToWide(path);
-			if (widePath.empty())
-			{
-				return false;
-			}
-
-			const DWORD attributes = GetFileAttributesW(widePath.c_str());
-			return (attributes != INVALID_FILE_ATTRIBUTES) && ((attributes & FILE_ATTRIBUTE_DIRECTORY) == 0);
+			std::error_code error;
+			return std::filesystem::is_regular_file(
+				std::filesystem::u8path(path),
+				error);
 		}
 
 		inline bool EnsureJsonListFileExists(const std::string &path)
@@ -62,7 +59,7 @@ namespace ServerRuntime
 				}
 
 				char buffer[32] = {};
-				sprintf_s(buffer, sizeof(buffer), "0x%016llx", numericXuid);
+				snprintf(buffer, sizeof(buffer), "0x%016llx", numericXuid);
 				return buffer;
 			}
 
@@ -76,30 +73,14 @@ namespace ServerRuntime
 				return "";
 			}
 
-			const std::wstring wideFileName = StringUtils::Utf8ToWide(fileName);
-			if (wideFileName.empty())
-			{
-				return "";
-			}
-
 			if (baseDirectory.empty() || baseDirectory == ".")
 			{
-				return StringUtils::WideToUtf8(wideFileName);
+				return std::filesystem::u8path(fileName).u8string();
 			}
 
-			const std::wstring wideBaseDirectory = StringUtils::Utf8ToWide(baseDirectory);
-			if (wideBaseDirectory.empty())
-			{
-				return StringUtils::WideToUtf8(wideFileName);
-			}
-
-			const wchar_t last = wideBaseDirectory[wideBaseDirectory.size() - 1];
-			if (last == L'\\' || last == L'/')
-			{
-				return StringUtils::WideToUtf8(wideBaseDirectory + wideFileName);
-			}
-
-			return StringUtils::WideToUtf8(wideBaseDirectory + L"\\" + wideFileName);
+			std::filesystem::path basePath = std::filesystem::u8path(baseDirectory);
+			basePath /= std::filesystem::u8path(fileName);
+			return basePath.u8string();
 		}
 	}
 }

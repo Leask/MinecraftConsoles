@@ -405,5 +405,66 @@ namespace ServerRuntime
 				(unsigned)utc.tm_sec);
 			return created;
 		}
+
+		bool TryParseUtcTimestampIso8601(
+			const std::string &value,
+			unsigned long long *outFileTime)
+		{
+			if (outFileTime == nullptr)
+			{
+				return false;
+			}
+
+			const std::string trimmed = TrimAscii(value);
+			if (trimmed.empty())
+			{
+				return false;
+			}
+
+			unsigned year = 0;
+			unsigned month = 0;
+			unsigned day = 0;
+			unsigned hour = 0;
+			unsigned minute = 0;
+			unsigned second = 0;
+			if (sscanf(
+					trimmed.c_str(),
+					"%4u-%2u-%2uT%2u:%2u:%2uZ",
+					&year,
+					&month,
+					&day,
+					&hour,
+					&minute,
+					&second) != 6)
+			{
+				return false;
+			}
+
+			std::tm utc = {};
+			utc.tm_year = (int)year - 1900;
+			utc.tm_mon = (int)month - 1;
+			utc.tm_mday = (int)day;
+			utc.tm_hour = (int)hour;
+			utc.tm_min = (int)minute;
+			utc.tm_sec = (int)second;
+			utc.tm_isdst = 0;
+
+#if defined(_WIN32)
+			const std::time_t seconds = _mkgmtime(&utc);
+#else
+			const std::time_t seconds = timegm(&utc);
+#endif
+			if (seconds < 0)
+			{
+				return false;
+			}
+
+			static const unsigned long long kWindowsToUnixEpoch100Ns =
+				116444736000000000ULL;
+			*outFileTime =
+				(static_cast<unsigned long long>(seconds) * 10000000ULL) +
+				kWindowsToUnixEpoch100Ns;
+			return true;
+		}
 	}
 }

@@ -18,6 +18,8 @@ namespace ServerRuntime
 		bool StartsWithIgnoreCase(const std::string &value, const std::string &prefix);
 		bool TryParseUnsignedLongLong(const std::string &value, unsigned long long *outValue);
 		std::string GetCurrentUtcTimestampIso8601();
+		bool TryParseUtcTimestampIso8601(
+			const std::string &value,
+			unsigned long long *outFileTime);
 	}
 }
-

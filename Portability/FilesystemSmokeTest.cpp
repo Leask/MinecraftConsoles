@@ -1,5 +1,6 @@
 #include <cstdio>
 
+#include "Minecraft.Server/Access/BanManager.h"
 #include "lce_filesystem/lce_filesystem.h"
 #include "lce_net/lce_net.h"
 #include "lce_stdin/lce_stdin.h"
@@ -7,6 +8,18 @@
 #include "lce_win32/lce_win32.h"
 #include "Minecraft.Server/Common/FileUtils.h"
 #include "Minecraft.Server/Common/StringUtils.h"
+
+namespace ServerRuntime
+{
+    void LogDebug(const char*, const char*) {}
+    void LogInfo(const char*, const char*) {}
+    void LogWarn(const char*, const char*) {}
+    void LogError(const char*, const char*) {}
+    void LogDebugf(const char*, const char*, ...) {}
+    void LogInfof(const char*, const char*, ...) {}
+    void LogWarnf(const char*, const char*, ...) {}
+    void LogErrorf(const char*, const char*, ...) {}
+}
 
 namespace
 {
@@ -46,6 +59,11 @@ int main(int argc, char* argv[])
             &parsedUnsigned);
     const std::string utcTimestamp =
         ServerRuntime::StringUtils::GetCurrentUtcTimestampIso8601();
+    unsigned long long parsedUtcFileTime = 0;
+    const bool parsedUtcOk =
+        ServerRuntime::StringUtils::TryParseUtcTimestampIso8601(
+            utcTimestamp,
+            &parsedUtcFileTime);
     const std::string smokeFilePath = "build/portability-smoke-file.txt";
     const std::string smokeFileText = "native smoke file\n";
     const bool wroteSmokeFile =
@@ -59,6 +77,31 @@ int main(int argc, char* argv[])
             &smokeFileReadback);
     const unsigned long long utcFileTime =
         ServerRuntime::FileUtils::GetCurrentUtcFileTime();
+    const std::string smokeBanDirectory = "build/portability-ban-smoke";
+    const bool createdBanDirectory =
+        CreateDirectoryIfMissing(smokeBanDirectory.c_str(), nullptr);
+    ServerRuntime::Access::BanManager banManager(smokeBanDirectory);
+    const bool ensuredBanFiles = banManager.EnsureBanFilesExist();
+    ServerRuntime::Access::BannedPlayerEntry playerBan = {};
+    playerBan.xuid = "12345";
+    playerBan.name = "Smoke";
+    playerBan.metadata =
+        ServerRuntime::Access::BanManager::BuildDefaultMetadata("smoke");
+    ServerRuntime::Access::BannedIpEntry ipBan = {};
+    ipBan.ip = " 127.0.0.1 ";
+    ipBan.metadata =
+        ServerRuntime::Access::BanManager::BuildDefaultMetadata("smoke");
+    const bool addedPlayerBan = banManager.AddPlayerBan(playerBan);
+    const bool addedIpBan = banManager.AddIpBan(ipBan);
+    const bool reloadedBans = banManager.Reload();
+    const bool isPlayerBanned = banManager.IsPlayerBannedByXuid("12345");
+    const bool isIpBanned = banManager.IsIpBanned("127.0.0.1");
+    std::vector<ServerRuntime::Access::BannedPlayerEntry> snapshotPlayers;
+    std::vector<ServerRuntime::Access::BannedIpEntry> snapshotIps;
+    const bool snapshotPlayersOk =
+        banManager.SnapshotBannedPlayers(&snapshotPlayers);
+    const bool snapshotIpsOk =
+        banManager.SnapshotBannedIps(&snapshotIps);
     CRITICAL_SECTION criticalSection = {};
     InitializeCriticalSection(&criticalSection);
     const ULONG recursiveEnter1 = TryEnterCriticalSection(&criticalSection);
@@ -121,17 +164,32 @@ int main(int argc, char* argv[])
         stdinAvailable,
         stdinReadableNow);
     printf("string_utf8_size=%zu string_round_trip=%d parsed_unsigned_ok=%d "
-        "parsed_unsigned=%llu utc_timestamp=%s\n",
+        "parsed_unsigned=%llu utc_timestamp=%s parsed_utc_ok=%d\n",
         smokeUtf8.size(),
         smokeRoundTrip == smokeWide,
         parsedUnsignedOk,
         parsedUnsigned,
-        utcTimestamp.c_str());
+        utcTimestamp.c_str(),
+        parsedUtcOk);
     printf("file_write=%d file_read=%d file_readback_match=%d utc_file_time=%llu\n",
         wroteSmokeFile,
         readSmokeFile,
         smokeFileReadback == smokeFileText,
         utcFileTime);
+    printf("ban_dir=%d ban_files=%d add_player=%d add_ip=%d reload=%d "
+        "player_banned=%d ip_banned=%d snapshot_players=%d snapshot_ips=%d "
+        "snapshot_player_count=%zu snapshot_ip_count=%zu\n",
+        createdBanDirectory,
+        ensuredBanFiles,
+        addedPlayerBan,
+        addedIpBan,
+        reloadedBans,
+        isPlayerBanned,
+        isIpBanned,
+        snapshotPlayersOk,
+        snapshotIpsOk,
+        snapshotPlayers.size(),
+        snapshotIps.size());
     printf("critical_section_try=%lu recursive_try=%lu\n",
         static_cast<unsigned long>(recursiveEnter1),
         static_cast<unsigned long>(recursiveEnter2));
@@ -176,8 +234,14 @@ int main(int argc, char* argv[])
         recursiveEnter2 == TRUE && tlsSet == TRUE && tlsResolved == 1 &&
         !smokeUtf8.empty() && smokeRoundTrip == smokeWide &&
         parsedUnsignedOk && parsedUnsigned == 12345ULL &&
+        parsedUtcOk && parsedUtcFileTime > 0 && parsedUtcFileTime <= utcFileTime &&
         wroteSmokeFile && readSmokeFile && smokeFileReadback == smokeFileText &&
         utcFileTime > 0 &&
+        createdBanDirectory && ensuredBanFiles &&
+        addedPlayerBan && addedIpBan && reloadedBans &&
+        isPlayerBanned && isIpBanned &&
+        snapshotPlayersOk && snapshotIpsOk &&
+        snapshotPlayers.size() == 1 && snapshotIps.size() == 1 &&
         utcTimestamp.size() == 20 && utcTimestamp[10] == 'T' &&
         utcTimestamp[19] == 'Z' &&
         waitAny == WAIT_OBJECT_0 + 1 && waitAllBefore == WAIT_TIMEOUT &&

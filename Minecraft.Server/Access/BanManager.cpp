@@ -1,16 +1,13 @@
-#include "stdafx.h"
-
 #include "BanManager.h"
 
-#include "..\Common\AccessStorageUtils.h"
-#include "..\Common\FileUtils.h"
-#include "..\Common\NetworkUtils.h"
-#include "..\Common\StringUtils.h"
-#include "..\ServerLogger.h"
-#include "..\vendor\nlohmann\json.hpp"
+#include "../Common/AccessStorageUtils.h"
+#include "../Common/FileUtils.h"
+#include "../Common/NetworkUtils.h"
+#include "../Common/StringUtils.h"
+#include "../ServerLogger.h"
+#include "../vendor/nlohmann/json.hpp"
 
 #include <algorithm>
-#include <stdio.h>
 
 namespace ServerRuntime
 {
@@ -25,47 +22,9 @@ namespace ServerRuntime
 
 			static bool TryParseUtcTimestamp(const std::string &text, unsigned long long *outFileTime)
 			{
-				if (outFileTime == nullptr)
-				{
-					return false;
-				}
-
-				std::string trimmed = StringUtils::TrimAscii(text);
-				if (trimmed.empty())
-				{
-					return false;
-				}
-
-				unsigned year = 0;
-				unsigned month = 0;
-				unsigned day = 0;
-				unsigned hour = 0;
-				unsigned minute = 0;
-				unsigned second = 0;
-				if (sscanf_s(trimmed.c_str(), "%4u-%2u-%2uT%2u:%2u:%2uZ", &year, &month, &day, &hour, &minute, &second) != 6)
-				{
-					return false;
-				}
-
-				SYSTEMTIME utc = {};
-				utc.wYear = (WORD)year;
-				utc.wMonth = (WORD)month;
-				utc.wDay = (WORD)day;
-				utc.wHour = (WORD)hour;
-				utc.wMinute = (WORD)minute;
-				utc.wSecond = (WORD)second;
-
-				FILETIME fileTime = {};
-				if (!SystemTimeToFileTime(&utc, &fileTime))
-				{
-					return false;
-				}
-
-				ULARGE_INTEGER value = {};
-				value.LowPart = fileTime.dwLowDateTime;
-				value.HighPart = fileTime.dwHighDateTime;
-				*outFileTime = value.QuadPart;
-				return true;
+				return StringUtils::TryParseUtcTimestampIso8601(
+					text,
+					outFileTime);
 			}
 
 			static bool IsMetadataExpired(const BanMetadata &metadata, unsigned long long nowFileTime)
