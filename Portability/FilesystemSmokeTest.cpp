@@ -94,6 +94,63 @@ int main(int argc, char* argv[])
         &udpSenderPort);
     const bool udpPayloadOk = udpRecv == static_cast<int>(sizeof(udpPayload) - 1) &&
         std::memcmp(udpRecvBuf, udpPayload, sizeof(udpPayload) - 1) == 0;
+    const LceSocketHandle tcpListener = LceNetOpenTcpSocket();
+    const bool tcpListenerReuse =
+        LceNetSetSocketReuseAddress(tcpListener, true);
+    const bool tcpListenerBound =
+        LceNetBindIpv4(tcpListener, "127.0.0.1", 0);
+    const int tcpListenerPort = LceNetGetBoundPort(tcpListener);
+    const bool tcpListening = LceNetListen(tcpListener, 4);
+    const LceSocketHandle tcpClient = LceNetOpenTcpSocket();
+    const bool tcpClientNoDelay =
+        LceNetSetSocketNoDelay(tcpClient, true);
+    const bool tcpClientTimeout =
+        LceNetSetSocketRecvTimeout(tcpClient, 1000);
+    const bool tcpConnected = LceNetConnectIpv4(
+        tcpClient,
+        "127.0.0.1",
+        tcpListenerPort);
+    char tcpAcceptedIp[64] = {};
+    int tcpAcceptedPort = 0;
+    const LceSocketHandle tcpAccepted = LceNetAcceptIpv4(
+        tcpListener,
+        tcpAcceptedIp,
+        sizeof(tcpAcceptedIp),
+        &tcpAcceptedPort);
+    const bool tcpAcceptedNoDelay =
+        LceNetSetSocketNoDelay(tcpAccepted, true);
+    const bool tcpAcceptedTimeout =
+        LceNetSetSocketRecvTimeout(tcpAccepted, 1000);
+    const char tcpClientPayload[] = "tcp-client";
+    const bool tcpClientSent = LceNetSendAll(
+        tcpClient,
+        tcpClientPayload,
+        static_cast<int>(sizeof(tcpClientPayload) - 1));
+    char tcpServerBuf[64] = {};
+    const bool tcpServerReceived = LceNetRecvAll(
+        tcpAccepted,
+        tcpServerBuf,
+        static_cast<int>(sizeof(tcpClientPayload) - 1));
+    const bool tcpServerPayloadOk =
+        std::memcmp(
+            tcpServerBuf,
+            tcpClientPayload,
+            sizeof(tcpClientPayload) - 1) == 0;
+    const char tcpServerPayload[] = "tcp-server";
+    const bool tcpServerSent = LceNetSendAll(
+        tcpAccepted,
+        tcpServerPayload,
+        static_cast<int>(sizeof(tcpServerPayload) - 1));
+    char tcpClientBuf[64] = {};
+    const bool tcpClientReceived = LceNetRecvAll(
+        tcpClient,
+        tcpClientBuf,
+        static_cast<int>(sizeof(tcpServerPayload) - 1));
+    const bool tcpClientPayloadOk =
+        std::memcmp(
+            tcpClientBuf,
+            tcpServerPayload,
+            sizeof(tcpServerPayload) - 1) == 0;
     const bool lanWireSizeOk = sizeof(LceLanBroadcast) == 84;
     LceLanBroadcast lanBroadcast = {};
     const bool lanBroadcastBuilt = LceLanBuildBroadcast(
@@ -285,6 +342,28 @@ int main(int argc, char* argv[])
         udpPayloadOk,
         udpSenderIp,
         udpSenderPort);
+    printf("tcp_listener=%d,%d,%d port=%d listening=%d tcp_client=%d,%d,%d "
+        "connected=%d tcp_accepted=%d,%d,%d ip=%s port=%d "
+        "server_recv=%d server_payload_ok=%d client_recv=%d "
+        "client_payload_ok=%d\n",
+        tcpListener != LCE_INVALID_SOCKET,
+        tcpListenerReuse,
+        tcpListenerBound,
+        tcpListenerPort,
+        tcpListening,
+        tcpClient != LCE_INVALID_SOCKET,
+        tcpClientNoDelay,
+        tcpClientTimeout,
+        tcpConnected,
+        tcpAccepted != LCE_INVALID_SOCKET,
+        tcpAcceptedNoDelay,
+        tcpAcceptedTimeout,
+        tcpAcceptedIp,
+        tcpAcceptedPort,
+        tcpServerReceived,
+        tcpServerPayloadOk,
+        tcpClientReceived,
+        tcpClientPayloadOk);
     printf("lan_broadcast=%d lan_decode=%d lan_added=%d lan_updated_added=%d "
         "lan_count=%zu lan_expired=%zu lan_max_players=%u lan_wire_size=%d\n",
         lanBroadcastBuilt,
@@ -377,6 +456,18 @@ int main(int argc, char* argv[])
     {
         LceNetCloseSocket(udpReceiver);
     }
+    if (tcpAccepted != LCE_INVALID_SOCKET)
+    {
+        LceNetCloseSocket(tcpAccepted);
+    }
+    if (tcpClient != LCE_INVALID_SOCKET)
+    {
+        LceNetCloseSocket(tcpClient);
+    }
+    if (tcpListener != LCE_INVALID_SOCKET)
+    {
+        LceNetCloseSocket(tcpListener);
+    }
     LceNetShutdown();
     TlsFree(tlsSlot);
     CloseHandle(workerThread);
@@ -400,6 +491,15 @@ int main(int argc, char* argv[])
         udpSenderBroadcast &&
         udpSent == static_cast<int>(sizeof(udpPayload) - 1) &&
         udpPayloadOk && udpSenderIp[0] != '\0' && udpSenderPort > 0 &&
+        tcpListener != LCE_INVALID_SOCKET && tcpListenerReuse &&
+        tcpListenerBound && tcpListenerPort > 0 && tcpListening &&
+        tcpClient != LCE_INVALID_SOCKET && tcpClientNoDelay &&
+        tcpClientTimeout && tcpConnected &&
+        tcpAccepted != LCE_INVALID_SOCKET && tcpAcceptedNoDelay &&
+        tcpAcceptedTimeout && tcpAcceptedIp[0] != '\0' &&
+        tcpAcceptedPort > 0 && tcpClientSent && tcpServerReceived &&
+        tcpServerPayloadOk && tcpServerSent && tcpClientReceived &&
+        tcpClientPayloadOk &&
         lanBroadcastBuilt && lanBroadcastDecoded && lanAdded &&
         !lanUpdatedAdded && lanSessions.empty() &&
         expiredLanSessions.size() == 1 &&

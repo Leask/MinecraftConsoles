@@ -189,6 +189,9 @@ This iteration starts with:
 - first cross-platform UDP socket runtime in `lce_net`
   covering UDP open/bind/send/receive, socket options, and bound-port
   discovery for native LAN discovery plumbing
+- first cross-platform TCP socket runtime in `lce_net`
+  covering listen/connect/accept/send/receive helpers for native host/join
+  groundwork
 - first non-Windows Win32 compatibility shim for
   `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
 - first server-common utility source (`Minecraft.Server/Common/StringUtils.cpp`)
@@ -214,6 +217,8 @@ This iteration starts with:
 - `WinsockNetLayer` LAN advertise/discovery now routes through the shared
   `lce_net` UDP helpers instead of directly open-coding UDP socket setup and
   `sendto`/`recvfrom`
+- `WinsockNetLayer` packet framing and accepted-socket setup now partially
+  route through shared `lce_net` TCP helpers (`accept`, `send`, `recv`)
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

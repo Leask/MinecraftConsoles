@@ -21,9 +21,6 @@
 #include <string>
 
 static bool RecvExact(SOCKET sock, BYTE* buf, int len);
-#if defined(MINECRAFT_SERVER_BUILD)
-static bool TryGetNumericRemoteIp(const sockaddr_in &remoteAddress, std::string *outIp);
-#endif
 
 namespace
 {
@@ -455,34 +452,17 @@ bool WinsockNetLayer::SendOnSocket(SOCKET sock, const void* data, int dataSize)
 	header[1] = static_cast<BYTE>((dataSize >> 16) & 0xFF);
 	header[2] = static_cast<BYTE>((dataSize >> 8) & 0xFF);
 	header[3] = static_cast<BYTE>(dataSize & 0xFF);
-
-	int totalSent = 0;
-	int toSend = 4;
-	while (totalSent < toSend)
-	{
-		int sent = send(sock, (const char*)header + totalSent, toSend - totalSent, 0);
-		if (sent == SOCKET_ERROR || sent == 0)
-		{
-			LeaveCriticalSection(&s_sendLock);
-			return false;
-		}
-		totalSent += sent;
-	}
-
-	totalSent = 0;
-	while (totalSent < dataSize)
-	{
-		int sent = send(sock, static_cast<const char *>(data) + totalSent, dataSize - totalSent, 0);
-		if (sent == SOCKET_ERROR || sent == 0)
-		{
-			LeaveCriticalSection(&s_sendLock);
-			return false;
-		}
-		totalSent += sent;
-	}
+	const bool sentHeader = LceNetSendAll(
+		static_cast<LceSocketHandle>(sock),
+		header,
+		sizeof(header));
+	const bool sentPayload = sentHeader && LceNetSendAll(
+		static_cast<LceSocketHandle>(sock),
+		data,
+		dataSize);
 
 	LeaveCriticalSection(&s_sendLock);
-	return true;
+	return sentPayload;
 }
 
 bool WinsockNetLayer::SendToSmallId(BYTE targetSmallId, const void* data, int dataSize)
@@ -527,41 +507,13 @@ static void SendRejectWithReason(SOCKET clientSocket, DisconnectPacket::eDisconn
 	buf[3] = (BYTE)((r >> 16) & 0xff);
 	buf[4] = (BYTE)((r >> 8) & 0xff);
 	buf[5] = (BYTE)(r & 0xff);
-	send(clientSocket, (const char*)buf, sizeof(buf), 0);
+	LceNetSendAll(static_cast<LceSocketHandle>(clientSocket), buf, sizeof(buf));
 }
 
 static bool RecvExact(SOCKET sock, BYTE* buf, int len)
 {
-	int totalRecv = 0;
-	while (totalRecv < len)
-	{
-		int r = recv(sock, (char*)buf + totalRecv, len - totalRecv, 0);
-		if (r <= 0) return false;
-		totalRecv += r;
-	}
-	return true;
+	return LceNetRecvAll(static_cast<LceSocketHandle>(sock), buf, len);
 }
-
-#if defined(MINECRAFT_SERVER_BUILD)
-static bool TryGetNumericRemoteIp(const sockaddr_in &remoteAddress, std::string *outIp)
-{
-	if (outIp == nullptr)
-	{
-		return false;
-	}
-
-	outIp->clear();
-	char ipBuffer[64] = {};
-	const char *ip = inet_ntop(AF_INET, (void *)&remoteAddress.sin_addr, ipBuffer, sizeof(ipBuffer));
-	if (ip == nullptr || ip[0] == 0)
-	{
-		return false;
-	}
-
-	*outIp = ip;
-	return true;
-}
-#endif
 
 void WinsockNetLayer::HandleDataReceived(BYTE fromSmallId, BYTE toSmallId, unsigned char* data, unsigned int dataSize)
 {
@@ -597,23 +549,27 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 {
 	while (s_active)
 	{
-		sockaddr_in remoteAddress;
-		ZeroMemory(&remoteAddress, sizeof(remoteAddress));
-		int remoteAddressLength = sizeof(remoteAddress);
-		SOCKET clientSocket = accept(s_listenSocket, (sockaddr*)&remoteAddress, &remoteAddressLength);
-		if (clientSocket == INVALID_SOCKET)
+		char remoteIpBuffer[64] = {};
+		int remotePort = 0;
+		const LceSocketHandle acceptedHandle = LceNetAcceptIpv4(
+			static_cast<LceSocketHandle>(s_listenSocket),
+			remoteIpBuffer,
+			sizeof(remoteIpBuffer),
+			&remotePort);
+		(void)remotePort;
+		SOCKET clientSocket = static_cast<SOCKET>(acceptedHandle);
+		if (acceptedHandle == LCE_INVALID_SOCKET)
 		{
 			if (s_active)
 				app.DebugPrintf("accept() failed: %d\n", GetNetLastError());
 			break;
 		}
 
-		int noDelay = 1;
-		setsockopt(clientSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&noDelay, sizeof(noDelay));
+		LceNetSetSocketNoDelay(acceptedHandle, true);
 
 #if defined(MINECRAFT_SERVER_BUILD)
-		std::string remoteIp;
-		const bool hasRemoteIp = TryGetNumericRemoteIp(remoteAddress, &remoteIp);
+		const std::string remoteIp = remoteIpBuffer;
+		const bool hasRemoteIp = !remoteIp.empty();
 		const char *remoteIpForLog = hasRemoteIp ? remoteIp.c_str() : "unknown";
 		if (g_Win64DedicatedServer)
 		{
