@@ -1,6 +1,7 @@
 #include <cstdio>
 
 #include "lce_filesystem/lce_filesystem.h"
+#include "lce_net/lce_net.h"
 #include "lce_stdin/lce_stdin.h"
 #include "lce_time/lce_time.h"
 
@@ -12,6 +13,10 @@ int main(int argc, char* argv[])
     const bool smokeDirectoryReady = CreateDirectoryIfMissing(
         "build/portability-smoke-dir",
         &createdDirectory);
+    const bool netInitialized = LceNetInitialize();
+    const bool ipv4Literal = LceNetStringIsIpLiteral("127.0.0.1");
+    const bool ipv6Literal = LceNetStringIsIpLiteral("::1");
+    const bool invalidLiteral = LceNetStringIsIpLiteral("not-an-ip");
     const bool stdinAvailable = LceStdinIsAvailable();
     const int stdinReadableNow = stdinAvailable ? LceWaitForStdinReadable(0) : -1;
     const std::uint64_t monotonicMsBefore = LceGetMonotonicMilliseconds();
@@ -36,6 +41,11 @@ int main(int argc, char* argv[])
     printf("smoke_directory_ready=%d created=%d\n",
         smokeDirectoryReady,
         createdDirectory);
+    printf("net_initialized=%d ipv4_literal=%d ipv6_literal=%d invalid_literal=%d\n",
+        netInitialized,
+        ipv4Literal,
+        ipv6Literal,
+        invalidLiteral);
     printf("stdin_available=%d stdin_readable_now=%d\n",
         stdinAvailable,
         stdinReadableNow);
@@ -52,7 +62,10 @@ int main(int argc, char* argv[])
         static_cast<unsigned long long>(deltaMs),
         static_cast<unsigned long long>(deltaNs));
 
-    return (exists && smokeDirectoryReady && deltaMs > 0 && deltaNs > 0)
+    LceNetShutdown();
+
+    return (exists && smokeDirectoryReady && netInitialized && ipv4Literal &&
+        ipv6Literal && !invalidLiteral && deltaMs > 0 && deltaNs > 0)
         ? 0
         : 1;
 }

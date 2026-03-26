@@ -177,6 +177,7 @@ This iteration starts with:
 - native portability library target
 - first cross-platform filesystem implementation
 - first cross-platform time and sleep implementation
+- first cross-platform stdin and socket utility implementation
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

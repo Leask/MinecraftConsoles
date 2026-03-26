@@ -16,6 +16,12 @@ set(_INCLUDE_LCE_STDIN
 )
 source_group("include/lce_stdin" FILES ${_INCLUDE_LCE_STDIN})
 
+set(_INCLUDE_LCE_NET
+  "${CMAKE_SOURCE_DIR}/include/lce_net/lce_net.cpp"
+  "${CMAKE_SOURCE_DIR}/include/lce_net/lce_net.h"
+)
+source_group("include/lce_net" FILES ${_INCLUDE_LCE_NET})
+
 set(_INCLUDE_BUILDVER
   "${CMAKE_SOURCE_DIR}/include/Common/BuildVer.h"
 )
@@ -25,5 +31,6 @@ set(SOURCES_COMMON
 	${_INCLUDE_LCE_FILESYSTEM}
 	${_INCLUDE_LCE_TIME}
 	${_INCLUDE_LCE_STDIN}
+	${_INCLUDE_LCE_NET}
 	${_INCLUDE_BUILDVER}
 )

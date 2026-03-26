@@ -1,8 +1,7 @@
 #pragma once
 
 #include "StringUtils.h"
-
-#include <WS2tcpip.h>
+#include <lce_net/lce_net.h>
 
 namespace ServerRuntime
 {
@@ -16,14 +15,7 @@ namespace ServerRuntime
 		inline bool IsIpLiteral(const std::string &text)
 		{
 			const std::string trimmed = StringUtils::TrimAscii(text);
-			if (trimmed.empty())
-			{
-				return false;
-			}
-
-			IN_ADDR ipv4 = {};
-			IN6_ADDR ipv6 = {};
-			return InetPtonA(AF_INET, trimmed.c_str(), &ipv4) == 1 || InetPtonA(AF_INET6, trimmed.c_str(), &ipv6) == 1;
+			return LceNetStringIsIpLiteral(trimmed.c_str());
 		}
 	}
 }

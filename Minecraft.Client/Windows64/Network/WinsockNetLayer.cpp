@@ -8,6 +8,7 @@
 #include "WinsockNetLayer.h"
 #include "..\..\Common\Network\PlatformNetworkManagerStub.h"
 #include "..\..\..\Minecraft.World\Socket.h"
+#include <lce_net/lce_net.h>
 #if defined(MINECRAFT_SERVER_BUILD)
 #include "..\..\..\Minecraft.Server\Access\Access.h"
 #include "..\..\..\Minecraft.Server\ServerLogManager.h"
@@ -22,6 +23,22 @@ static bool RecvExact(SOCKET sock, BYTE* buf, int len);
 #if defined(MINECRAFT_SERVER_BUILD)
 static bool TryGetNumericRemoteIp(const sockaddr_in &remoteAddress, std::string *outIp);
 #endif
+
+namespace
+{
+int GetNetLastError()
+{
+	return LceNetGetLastError();
+}
+
+void CloseNetSocket(SOCKET socketHandle)
+{
+	if (socketHandle != INVALID_SOCKET)
+	{
+		LceNetCloseSocket(static_cast<LceSocketHandle>(socketHandle));
+	}
+}
+}
 
 SOCKET WinsockNetLayer::s_listenSocket = INVALID_SOCKET;
 SOCKET WinsockNetLayer::s_hostConnectionSocket = INVALID_SOCKET;
@@ -80,11 +97,9 @@ bool WinsockNetLayer::Initialize()
 {
 	if (s_initialized) return true;
 
-	WSADATA wsaData;
-	int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
-	if (result != 0)
+	if (!LceNetInitialize())
 	{
-		app.DebugPrintf("WSAStartup failed: %d\n", result);
+		app.DebugPrintf("Network initialization failed: %d\n", GetNetLastError());
 		return false;
 	}
 
@@ -206,7 +221,7 @@ void WinsockNetLayer::Shutdown()
 		DeleteCriticalSection(&s_disconnectLock);
 		DeleteCriticalSection(&s_freeSmallIdLock);
 		DeleteCriticalSection(&s_smallIdToSocketLock);
-		WSACleanup();
+		LceNetShutdown();
 		s_initialized = false;
 	}
 }
@@ -254,7 +269,7 @@ bool WinsockNetLayer::HostGame(int port, const char* bindIp)
 	s_listenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 	if (s_listenSocket == INVALID_SOCKET)
 	{
-		app.DebugPrintf("socket() failed: %d\n", WSAGetLastError());
+		app.DebugPrintf("socket() failed: %d\n", GetNetLastError());
 		freeaddrinfo(result);
 		return false;
 	}
@@ -266,8 +281,8 @@ bool WinsockNetLayer::HostGame(int port, const char* bindIp)
 	freeaddrinfo(result);
 	if (iResult == SOCKET_ERROR)
 	{
-		app.DebugPrintf("bind() failed: %d\n", WSAGetLastError());
-		closesocket(s_listenSocket);
+		app.DebugPrintf("bind() failed: %d\n", GetNetLastError());
+		CloseNetSocket(s_listenSocket);
 		s_listenSocket = INVALID_SOCKET;
 		return false;
 	}
@@ -275,8 +290,8 @@ bool WinsockNetLayer::HostGame(int port, const char* bindIp)
 	iResult = listen(s_listenSocket, SOMAXCONN);
 	if (iResult == SOCKET_ERROR)
 	{
-		app.DebugPrintf("listen() failed: %d\n", WSAGetLastError());
-		closesocket(s_listenSocket);
+		app.DebugPrintf("listen() failed: %d\n", GetNetLastError());
+		CloseNetSocket(s_listenSocket);
 		s_listenSocket = INVALID_SOCKET;
 		return false;
 	}
@@ -344,7 +359,7 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 		s_hostConnectionSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
 		if (s_hostConnectionSocket == INVALID_SOCKET)
 		{
-			app.DebugPrintf("socket() failed: %d\n", WSAGetLastError());
+			app.DebugPrintf("socket() failed: %d\n", GetNetLastError());
 			break;
 		}
 
@@ -354,9 +369,9 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 		iResult = connect(s_hostConnectionSocket, result->ai_addr, static_cast<int>(result->ai_addrlen));
 		if (iResult == SOCKET_ERROR)
 		{
-			int err = WSAGetLastError();
+			int err = GetNetLastError();
 			app.DebugPrintf("connect() to %s:%d failed (attempt %d/%d): %d\n", ip, port, attempt + 1, maxAttempts, err);
-			closesocket(s_hostConnectionSocket);
+			CloseNetSocket(s_hostConnectionSocket);
 			s_hostConnectionSocket = INVALID_SOCKET;
 			Sleep(200);
 			continue;
@@ -367,7 +382,7 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 		if (bytesRecv != 1)
 		{
 			app.DebugPrintf("Failed to receive small ID assignment from host (attempt %d/%d)\n", attempt + 1, maxAttempts);
-			closesocket(s_hostConnectionSocket);
+			CloseNetSocket(s_hostConnectionSocket);
 			s_hostConnectionSocket = INVALID_SOCKET;
 			Sleep(200);
 			continue;
@@ -379,7 +394,7 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 			if (!RecvExact(s_hostConnectionSocket, rejectBuf, 5))
 			{
 				app.DebugPrintf("Failed to receive reject reason from host\n");
-				closesocket(s_hostConnectionSocket);
+				CloseNetSocket(s_hostConnectionSocket);
 				s_hostConnectionSocket = INVALID_SOCKET;
 				Sleep(200);
 				continue;
@@ -388,7 +403,7 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 			int reason = ((rejectBuf[1] & 0xff) << 24) | ((rejectBuf[2] & 0xff) << 16) |
 				((rejectBuf[3] & 0xff) << 8) | (rejectBuf[4] & 0xff);
 			Minecraft::GetInstance()->connectionDisconnected(ProfileManager.GetPrimaryPad(), (DisconnectPacket::eDisconnectReason)reason);
-			closesocket(s_hostConnectionSocket);
+			CloseNetSocket(s_hostConnectionSocket);
 			s_hostConnectionSocket = INVALID_SOCKET;
 			freeaddrinfo(result);
 			return false;
@@ -588,7 +603,7 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 		if (clientSocket == INVALID_SOCKET)
 		{
 			if (s_active)
-				app.DebugPrintf("accept() failed: %d\n", WSAGetLastError());
+				app.DebugPrintf("accept() failed: %d\n", GetNetLastError());
 			break;
 		}
 
@@ -918,8 +933,8 @@ bool WinsockNetLayer::JoinSplitScreen(int padIndex, BYTE* outSmallId)
 
 	if (connect(sock, result->ai_addr, (int)result->ai_addrlen) == SOCKET_ERROR)
 	{
-		app.DebugPrintf("Win64 LAN: Split-screen connect() failed: %d\n", WSAGetLastError());
-		closesocket(sock);
+		app.DebugPrintf("Win64 LAN: Split-screen connect() failed: %d\n", GetNetLastError());
+		CloseNetSocket(sock);
 		freeaddrinfo(result);
 		return false;
 	}
@@ -929,7 +944,7 @@ bool WinsockNetLayer::JoinSplitScreen(int padIndex, BYTE* outSmallId)
 	if (!RecvExact(sock, assignBuf, 1))
 	{
 		app.DebugPrintf("Win64 LAN: Split-screen failed to receive smallId\n");
-		closesocket(sock);
+		CloseNetSocket(sock);
 		return false;
 	}
 
@@ -938,7 +953,7 @@ bool WinsockNetLayer::JoinSplitScreen(int padIndex, BYTE* outSmallId)
 		BYTE rejectBuf[5];
 		RecvExact(sock, rejectBuf, 5);
 		app.DebugPrintf("Win64 LAN: Split-screen connection rejected\n");
-		closesocket(sock);
+		CloseNetSocket(sock);
 		return false;
 	}
 
@@ -1095,7 +1110,7 @@ bool WinsockNetLayer::StartAdvertising(int gamePort, const wchar_t* hostName, un
 	s_advertiseSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (s_advertiseSock == INVALID_SOCKET)
 	{
-		app.DebugPrintf("Win64 LAN: Failed to create advertise socket: %d\n", WSAGetLastError());
+		app.DebugPrintf("Win64 LAN: Failed to create advertise socket: %d\n", GetNetLastError());
 		return false;
 	}
 
@@ -1115,7 +1130,7 @@ void WinsockNetLayer::StopAdvertising()
 
 	if (s_advertiseSock != INVALID_SOCKET)
 	{
-		closesocket(s_advertiseSock);
+		CloseNetSocket(s_advertiseSock);
 		s_advertiseSock = INVALID_SOCKET;
 	}
 
@@ -1167,7 +1182,7 @@ DWORD WINAPI WinsockNetLayer::AdvertiseThreadProc(LPVOID param)
 
 		if (sent == SOCKET_ERROR && s_advertising)
 		{
-			app.DebugPrintf("Win64 LAN: Broadcast sendto failed: %d\n", WSAGetLastError());
+			app.DebugPrintf("Win64 LAN: Broadcast sendto failed: %d\n", GetNetLastError());
 		}
 
 		Sleep(1000);
@@ -1184,7 +1199,7 @@ bool WinsockNetLayer::StartDiscovery()
 	s_discoverySock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (s_discoverySock == INVALID_SOCKET)
 	{
-		app.DebugPrintf("Win64 LAN: Failed to create discovery socket: %d\n", WSAGetLastError());
+		app.DebugPrintf("Win64 LAN: Failed to create discovery socket: %d\n", GetNetLastError());
 		return false;
 	}
 
@@ -1199,8 +1214,8 @@ bool WinsockNetLayer::StartDiscovery()
 
 	if (::bind(s_discoverySock, (struct sockaddr*)&bindAddr, sizeof(bindAddr)) == SOCKET_ERROR)
 	{
-		app.DebugPrintf("Win64 LAN: Discovery bind failed: %d\n", WSAGetLastError());
-		closesocket(s_discoverySock);
+		app.DebugPrintf("Win64 LAN: Discovery bind failed: %d\n", GetNetLastError());
+		CloseNetSocket(s_discoverySock);
 		s_discoverySock = INVALID_SOCKET;
 		return false;
 	}
