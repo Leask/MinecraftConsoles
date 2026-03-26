@@ -183,6 +183,8 @@ This iteration starts with:
 - first cross-platform stdin and socket utility implementation
 - first non-Windows Win32 compatibility shim for
   `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
+- first server-common utility source (`Minecraft.Server/Common/StringUtils.cpp`)
+  compiling in the native smoke target without `stdafx.h`
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

@@ -29,6 +29,7 @@ target_compile_definitions(Minecraft.Portability PRIVATE
 configure_compiler_target(Minecraft.Portability)
 
 add_executable(Minecraft.Portability.SmokeTest
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/StringUtils.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/FilesystemSmokeTest.cpp"
 )
 
@@ -37,6 +38,7 @@ target_link_libraries(Minecraft.Portability.SmokeTest PRIVATE
 )
 
 target_include_directories(Minecraft.Portability.SmokeTest PRIVATE
+  "${CMAKE_SOURCE_DIR}"
   "${CMAKE_SOURCE_DIR}/include"
 )
 

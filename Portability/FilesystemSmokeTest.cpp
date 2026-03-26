@@ -5,6 +5,7 @@
 #include "lce_stdin/lce_stdin.h"
 #include "lce_time/lce_time.h"
 #include "lce_win32/lce_win32.h"
+#include "Minecraft.Server/Common/StringUtils.h"
 
 namespace
 {
@@ -33,6 +34,17 @@ int main(int argc, char* argv[])
     const std::uint64_t monotonicMsBefore = LceGetMonotonicMilliseconds();
     const std::uint64_t monotonicNsBefore = LceGetMonotonicNanoseconds();
     const std::uint64_t unixMs = LceGetUnixTimeMilliseconds();
+    const std::wstring smokeWide = L"native \u4e16\u754c";
+    const std::string smokeUtf8 = ServerRuntime::StringUtils::WideToUtf8(smokeWide);
+    const std::wstring smokeRoundTrip =
+        ServerRuntime::StringUtils::Utf8ToWide(smokeUtf8);
+    unsigned long long parsedUnsigned = 0;
+    const bool parsedUnsignedOk =
+        ServerRuntime::StringUtils::TryParseUnsignedLongLong(
+            " 12345 ",
+            &parsedUnsigned);
+    const std::string utcTimestamp =
+        ServerRuntime::StringUtils::GetCurrentUtcTimestampIso8601();
     CRITICAL_SECTION criticalSection = {};
     InitializeCriticalSection(&criticalSection);
     const ULONG recursiveEnter1 = TryEnterCriticalSection(&criticalSection);
@@ -94,6 +106,13 @@ int main(int argc, char* argv[])
     printf("stdin_available=%d stdin_readable_now=%d\n",
         stdinAvailable,
         stdinReadableNow);
+    printf("string_utf8_size=%zu string_round_trip=%d parsed_unsigned_ok=%d "
+        "parsed_unsigned=%llu utc_timestamp=%s\n",
+        smokeUtf8.size(),
+        smokeRoundTrip == smokeWide,
+        parsedUnsignedOk,
+        parsedUnsigned,
+        utcTimestamp.c_str());
     printf("critical_section_try=%lu recursive_try=%lu\n",
         static_cast<unsigned long>(recursiveEnter1),
         static_cast<unsigned long>(recursiveEnter2));
@@ -136,6 +155,10 @@ int main(int argc, char* argv[])
     return (exists && smokeDirectoryReady && netInitialized && ipv4Literal &&
         ipv6Literal && !invalidLiteral && recursiveEnter1 == TRUE &&
         recursiveEnter2 == TRUE && tlsSet == TRUE && tlsResolved == 1 &&
+        !smokeUtf8.empty() && smokeRoundTrip == smokeWide &&
+        parsedUnsignedOk && parsedUnsigned == 12345ULL &&
+        utcTimestamp.size() == 20 && utcTimestamp[10] == 'T' &&
+        utcTimestamp[19] == 'Z' &&
         waitAny == WAIT_OBJECT_0 + 1 && waitAllBefore == WAIT_TIMEOUT &&
         waitAllAfter == WAIT_OBJECT_0 && resumed == 0 &&
         threadWait == WAIT_OBJECT_0 && gotExitCode == TRUE &&
