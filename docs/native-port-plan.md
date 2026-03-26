@@ -248,6 +248,10 @@ This iteration starts with:
   exercised by automation instead of only ad hoc manual runs
 - a dedicated `.github/workflows/native-smoke.yml` workflow now runs the
   same native smoke presets on macOS and Linux in CI
+- dedicated server storage layout no longer hard-codes `Windows64/GameHDD`
+  inside `WorldManager`; it now resolves through
+  `Minecraft.Server/Common/ServerStoragePaths.cpp`, with native smoke
+  asserting the `NativeDesktop/GameHDD` path for macOS/Linux work
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

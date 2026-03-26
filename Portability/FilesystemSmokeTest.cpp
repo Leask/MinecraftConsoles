@@ -9,6 +9,7 @@
 #include "lce_win32/lce_win32.h"
 #include "Minecraft.Server/Common/DedicatedServerOptions.h"
 #include "Minecraft.Server/Common/FileUtils.h"
+#include "Minecraft.Server/Common/ServerStoragePaths.h"
 #include "Minecraft.Server/Console/IServerCliInputSink.h"
 #include "Minecraft.Server/Console/ServerCliInput.h"
 #include "Minecraft.Server/Common/StringUtils.h"
@@ -314,6 +315,10 @@ int main(int argc, char* argv[])
     ServerRuntime::BuildDedicatedServerUsageLines(&dedicatedUsageLines);
     const std::string smokeFilePath = "build/portability-smoke-file.txt";
     const std::string smokeFileText = "native smoke file\n";
+    const char* storagePlatformDirectory =
+        ServerRuntime::GetServerStoragePlatformDirectory();
+    const std::string storageGameHddRoot =
+        ServerRuntime::GetServerGameHddRootPath();
     const bool wroteSmokeFile =
         ServerRuntime::FileUtils::WriteTextFileAtomic(
             smokeFilePath,
@@ -543,6 +548,9 @@ int main(int argc, char* argv[])
         readSmokeFile,
         smokeFileReadback == smokeFileText,
         utcFileTime);
+    printf("server_storage_platform=%s game_hdd_root=%s\n",
+        storagePlatformDirectory,
+        storageGameHddRoot.c_str());
     printf("ban_dir=%d ban_files=%d add_player=%d add_ip=%d reload=%d "
         "player_banned=%d ip_banned=%d snapshot_players=%d snapshot_ips=%d "
         "snapshot_player_count=%zu snapshot_ip_count=%zu\n",
@@ -731,6 +739,8 @@ int main(int argc, char* argv[])
         !dedicatedUsageLines.empty() &&
         dedicatedUsageLines[0].find("Minecraft.Server") != std::string::npos &&
         wroteSmokeFile && readSmokeFile && smokeFileReadback == smokeFileText &&
+        std::strcmp(storagePlatformDirectory, "NativeDesktop") == 0 &&
+        storageGameHddRoot == "NativeDesktop/GameHDD" &&
         utcFileTime > 0 &&
         createdBanDirectory && ensuredBanFiles &&
         addedPlayerBan && addedIpBan && reloadedBans &&

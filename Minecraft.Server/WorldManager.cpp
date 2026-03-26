@@ -5,6 +5,7 @@
 #include "Minecraft.h"
 #include "MinecraftServer.h"
 #include "ServerLogger.h"
+#include "Common\\ServerStoragePaths.h"
 #include "Common\\StringUtils.h"
 #include <lce_filesystem/lce_filesystem.h>
 #include <lce_time/lce_time.h>
@@ -124,28 +125,36 @@ static bool EnsureDirectoryExists(const std::string &directoryPath, bool *outCre
 }
 
 /**
- * Prepares the save root used by the Windows64 storage layout
- * - Creates `Windows64` first because the directory helper is not recursive
- * - Creates `Windows64/GameHDD` when missing before world bootstrap starts
- * Windows64用保存先ディレクトリの存在保証
+ * Prepares the save root used by the current platform storage layout
+ * - Creates the platform root first because the directory helper is not recursive
+ * - Creates `{platform}/GameHDD` when missing before world bootstrap starts
+ * プラットフォーム保存先ディレクトリの存在保証
  */
 static bool EnsureGameHddRootExists()
 {
+	const std::string platformDirectory =
+		ServerRuntime::GetServerStoragePlatformDirectory();
+	const std::string gameHddRoot =
+		ServerRuntime::GetServerGameHddRootPath();
+
 	bool windows64Created = false;
-	if (!EnsureDirectoryExists("Windows64", &windows64Created))
+	if (!EnsureDirectoryExists(platformDirectory, &windows64Created))
 	{
 		return false;
 	}
 
 	bool gameHddCreated = false;
-	if (!EnsureDirectoryExists("Windows64/GameHDD", &gameHddCreated))
+	if (!EnsureDirectoryExists(gameHddRoot, &gameHddCreated))
 	{
 		return false;
 	}
 
 	if (windows64Created || gameHddCreated)
 	{
-		LogWorldIO("created missing Windows64/GameHDD storage directories");
+		LogInfof(
+			"world-io",
+			"created missing %s storage directories",
+			gameHddRoot.c_str());
 	}
 
 	return true;
@@ -540,7 +549,10 @@ WorldBootstrapResult BootstrapWorldForServer(
 	WorldBootstrapResult result;
 	if (!EnsureGameHddRootExists())
 	{
-		LogWorldIO("failed to prepare Windows64\\GameHDD storage root");
+		LogErrorf(
+			"world-io",
+			"failed to prepare %s storage root",
+			GetServerGameHddRootPath().c_str());
 		return result;
 	}
 
