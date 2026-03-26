@@ -4,6 +4,7 @@
 #include "Minecraft.Server/Access/BanManager.h"
 #include "lce_filesystem/lce_filesystem.h"
 #include "lce_net/lce_net.h"
+#include "lce_process/lce_process.h"
 #include "lce_stdin/lce_stdin.h"
 #include "lce_time/lce_time.h"
 #include "lce_win32/lce_win32.h"
@@ -65,6 +66,9 @@ int main(int argc, char* argv[])
     const bool smokeDirectoryReady = CreateDirectoryIfMissing(
         "build/portability-smoke-dir",
         &createdDirectory);
+    std::string executableDirectory;
+    const bool resolvedExecutableDirectory =
+        LceGetExecutableDirectory(&executableDirectory);
     const bool netInitialized = LceNetInitialize();
     const bool ipv4Literal = LceNetStringIsIpLiteral("127.0.0.1");
     const bool ipv6Literal = LceNetStringIsIpLiteral("::1");
@@ -436,6 +440,9 @@ int main(int argc, char* argv[])
     printf("smoke_directory_ready=%d created=%d\n",
         smokeDirectoryReady,
         createdDirectory);
+    printf("executable_directory_ok=%d executable_directory=%s\n",
+        resolvedExecutableDirectory,
+        executableDirectory.c_str());
     printf("net_initialized=%d ipv4_literal=%d ipv6_literal=%d invalid_literal=%d\n",
         netInitialized,
         ipv4Literal,
@@ -666,7 +673,11 @@ int main(int argc, char* argv[])
         linenoiseFree(completions.cvec);
     }
 
-    return (exists && smokeDirectoryReady && netInitialized && ipv4Literal &&
+    return (exists && smokeDirectoryReady &&
+        resolvedExecutableDirectory &&
+        !executableDirectory.empty() &&
+        DirectoryExists(executableDirectory.c_str()) &&
+        netInitialized && ipv4Literal &&
         ipv6Literal && !invalidLiteral &&
         udpReceiver != LCE_INVALID_SOCKET &&
         udpReceiverReuse && udpReceiverTimeout && udpReceiverBound &&

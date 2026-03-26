@@ -14,6 +14,7 @@
 #include "..\ServerShutdown.h"
 #include "..\WorldManager.h"
 #include "..\Console\ServerCli.h"
+#include <lce_process/lce_process.h>
 #include <lce_time/lce_time.h>
 #include "Tesselator.h"
 #include "Windows64/4JLibs/inc/4J_Render.h"
@@ -165,16 +166,9 @@ using ServerRuntime::eWorldBootstrap_Loaded;
 using ServerRuntime::WaitForWorldActionIdle;
 using ServerRuntime::WorldBootstrapResult;
 
-static void SetExeWorkingDirectory()
+static bool SetExeWorkingDirectory()
 {
-	char exePath[MAX_PATH] = {};
-	GetModuleFileNameA(NULL, exePath, MAX_PATH);
-	char *slash = strrchr(exePath, '\\');
-	if (slash != NULL)
-	{
-		*(slash + 1) = 0;
-		SetCurrentDirectoryA(exePath);
-	}
+	return LceSetCurrentDirectoryToExecutable();
 }
 
 /**
@@ -217,7 +211,11 @@ int main(int argc, char **argv)
 		ServerRuntime::CreateDefaultDedicatedServerConfig();
 
 	SetConsoleCtrlHandler(ConsoleCtrlHandlerProc, TRUE);
-	SetExeWorkingDirectory();
+	if (!SetExeWorkingDirectory())
+	{
+		LogError("startup", "Failed to switch working directory to executable folder.");
+		return 1;
+	}
 
 	// Load base settings from server.properties, then override with CLI values when provided
 	ServerPropertiesConfig serverProperties = LoadServerPropertiesConfig();

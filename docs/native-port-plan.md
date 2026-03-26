@@ -252,6 +252,10 @@ This iteration starts with:
   inside `WorldManager`; it now resolves through
   `Minecraft.Server/Common/ServerStoragePaths.cpp`, with native smoke
   asserting the `NativeDesktop/GameHDD` path for macOS/Linux work
+- process working-directory bootstrap is now moving behind
+  `include/lce_process/lce_process.cpp`, so dedicated server startup can
+  resolve config and save files from the executable directory without
+  directly open-coding `GetModuleFileName` / `SetCurrentDirectory`
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native
