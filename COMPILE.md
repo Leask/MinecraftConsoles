@@ -71,8 +71,45 @@ cd .\build\windows64\Minecraft.Server\Debug
 .\Minecraft.Server.exe -port 25565 -bind 0.0.0.0 -name DedicatedServer
 ```
 
+## Native Porting Bootstrap (macOS / Linux)
+
+The project now includes an early native porting preset set for contributors
+working on shared platform code. This does not build the full game client yet;
+it builds native portability modules that are intended to grow into the future
+macOS/Linux runtime.
+
+Configure on macOS:
+
+```bash
+cmake --preset macos-native
+```
+
+Build the smoke test:
+
+```bash
+cmake --build --preset macos-native-debug --target Minecraft.Portability.SmokeTest
+```
+
+Run the smoke test from the repository root:
+
+```bash
+./build/macos-native/Portability/Debug/Minecraft.Portability.SmokeTest .
+```
+
+Equivalent Linux commands:
+
+```bash
+cmake --preset linux-native
+cmake --build --preset linux-native-debug --target Minecraft.Portability.SmokeTest
+./build/linux-native/Portability/Debug/Minecraft.Portability.SmokeTest .
+```
+
 Notes:
-- The CMake build is Windows-only and x64-only.
-- Contributors on macOS or Linux need a Windows machine or VM to build the project. Running the game via Wine is separate from having a supported build environment.
-- Post-build asset copy is automatic for `Minecraft.Client` in CMake (Debug and Release variants).
-- The game relies on relative paths (for example `Common\Media\...`), so launching from the output directory is required.
+- The Windows64 client and dedicated server remain the only supported gameplay
+  targets today.
+- Native presets currently exist to validate shared portability code and to
+  support iterative migration work.
+- Post-build asset copy is automatic for `Minecraft.Client` in CMake (Debug and
+  Release variants).
+- The game relies on relative paths (for example `Common\Media\...`), so
+  launching from the output directory is required.

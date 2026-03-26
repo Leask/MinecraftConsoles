@@ -1,11 +1,29 @@
-#include "stdafx.h"
 #include "lce_filesystem.h"
 
 #ifdef _WINDOWS64
 #include <windows.h>
-#endif // TODO: More os' filesystem handling for when the project moves away from only Windows
+#else
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#endif
 
-#include <stdio.h>
+#include <cstdio>
+
+namespace
+{
+#ifndef _WINDOWS64
+bool GetPathStatus(const char* path, struct stat* outStatus)
+{
+    if (path == nullptr || outStatus == nullptr)
+    {
+        return false;
+    }
+
+    return stat(path, outStatus) == 0;
+}
+#endif
+}
 
 bool FileOrDirectoryExists(const char* path)
 {
@@ -13,8 +31,8 @@ bool FileOrDirectoryExists(const char* path)
     DWORD attribs = GetFileAttributesA(path);
     return (attribs != INVALID_FILE_ATTRIBUTES);
 #else
-    #error "FileOrDirectoryExists not implemented for this platform"
-    return false;
+    struct stat status;
+    return GetPathStatus(path, &status);
 #endif
 }
 
@@ -24,8 +42,8 @@ bool FileExists(const char* path)
     DWORD attribs = GetFileAttributesA(path);
     return (attribs != INVALID_FILE_ATTRIBUTES && !(attribs & FILE_ATTRIBUTE_DIRECTORY));
 #else
-    #error "FileExists not implemented for this platform"
-    return false;
+    struct stat status;
+    return GetPathStatus(path, &status) && S_ISREG(status.st_mode);
 #endif
 }
 
@@ -35,8 +53,8 @@ bool DirectoryExists(const char* path)
     DWORD attribs = GetFileAttributesA(path);
     return (attribs != INVALID_FILE_ATTRIBUTES && (attribs & FILE_ATTRIBUTE_DIRECTORY));
 #else
-    #error "DirectoryExists not implemented for this platform"
-    return false;
+    struct stat status;
+    return GetPathStatus(path, &status) && S_ISDIR(status.st_mode);
 #endif
 }
 
@@ -68,7 +86,50 @@ bool GetFirstFileInDirectory(const char* directory, char* outFilePath, size_t ou
     FindClose(hFind);
     return false; // No files found in the directory
 #else
-    #error "GetFirstFileInDirectory not implemented for this platform"
-    return false;
+    if (directory == nullptr || outFilePath == nullptr || outFilePathSize == 0)
+    {
+        return false;
+    }
+
+    DIR* handle = opendir(directory);
+    if (handle == nullptr)
+    {
+        return false;
+    }
+
+    bool found = false;
+    struct dirent* entry = nullptr;
+    while ((entry = readdir(handle)) != nullptr)
+    {
+        if (entry->d_name[0] == '.')
+        {
+            continue;
+        }
+
+        const int written = snprintf(
+            outFilePath,
+            outFilePathSize,
+            "%s/%s",
+            directory,
+            entry->d_name);
+        if (written < 0 || static_cast<size_t>(written) >= outFilePathSize)
+        {
+            continue;
+        }
+
+        if (FileExists(outFilePath))
+        {
+            found = true;
+            break;
+        }
+    }
+
+    closedir(handle);
+    if (!found)
+    {
+        outFilePath[0] = '\0';
+    }
+
+    return found;
 #endif
 }

@@ -1,12 +1,38 @@
 cmake_minimum_required(VERSION 3.24)
 
-project(MinecraftConsoles LANGUAGES C CXX RC ASM_MASM)
+if(WIN32)
+  project(MinecraftConsoles LANGUAGES C CXX RC ASM_MASM)
+else()
+  project(MinecraftConsoles LANGUAGES C CXX)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-if(NOT WIN32)
-  message(FATAL_ERROR "This CMake build currently supports Windows only.")
+option(MINECRAFT_BUILD_PORTABILITY
+  "Build shared native portability modules."
+  ON
+)
+option(MINECRAFT_BUILD_WORLD
+  "Build the Minecraft.World static library."
+  ${WIN32}
+)
+option(MINECRAFT_BUILD_CLIENT
+  "Build the desktop client target."
+  ${WIN32}
+)
+option(MINECRAFT_BUILD_SERVER
+  "Build the dedicated server target."
+  ${WIN32}
+)
+
+if(NOT DEFINED PLATFORM_NAME)
+  if(WIN32)
+    set(PLATFORM_NAME "Windows64" CACHE STRING "Target platform name")
+  else()
+    set(PLATFORM_NAME "NativeDesktop" CACHE STRING "Target platform name")
+  endif()
 endif()
 
 if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -66,19 +92,40 @@ set(MINECRAFT_SHARED_DEFINES
   _LARGE_WORLDS
   _DEBUG_MENUS_ENABLED
   $<$<CONFIG:Debug>:_DEBUG>
-  _CRT_NON_CONFORMING_SWPRINTFS
-  _CRT_SECURE_NO_WARNINGS
 )
+
+if(WIN32)
+  list(APPEND MINECRAFT_SHARED_DEFINES
+    _CRT_NON_CONFORMING_SWPRINTFS
+    _CRT_SECURE_NO_WARNINGS
+  )
+endif()
 
 # Add platform-specific defines
 list(APPEND MINECRAFT_SHARED_DEFINES ${PLATFORM_DEFINES})
 
+message(STATUS "Platform name: ${PLATFORM_NAME}")
+message(STATUS "Build portability target: ${MINECRAFT_BUILD_PORTABILITY}")
+message(STATUS "Build Minecraft.World: ${MINECRAFT_BUILD_WORLD}")
+message(STATUS "Build Minecraft.Client: ${MINECRAFT_BUILD_CLIENT}")
+message(STATUS "Build Minecraft.Server: ${MINECRAFT_BUILD_SERVER}")
+
 # ---
 # Sources
 # ---
-add_subdirectory(Minecraft.World)
-add_subdirectory(Minecraft.Client)
-if(PLATFORM_NAME STREQUAL "Windows64") # Server is only supported on Windows for now
+if(MINECRAFT_BUILD_PORTABILITY)
+  add_subdirectory(Portability)
+endif()
+
+if(MINECRAFT_BUILD_WORLD)
+  add_subdirectory(Minecraft.World)
+endif()
+
+if(MINECRAFT_BUILD_CLIENT)
+  add_subdirectory(Minecraft.Client)
+endif()
+
+if(MINECRAFT_BUILD_SERVER AND PLATFORM_NAME STREQUAL "Windows64")
   add_subdirectory(Minecraft.Server)
 endif()
 
@@ -96,9 +143,13 @@ add_custom_target(GenerateBuildVer
   VERBATIM
 )
 
-add_dependencies(Minecraft.World GenerateBuildVer)
-add_dependencies(Minecraft.Client GenerateBuildVer)
-if(PLATFORM_NAME STREQUAL "Windows64")
+if(TARGET Minecraft.World)
+  add_dependencies(Minecraft.World GenerateBuildVer)
+endif()
+if(TARGET Minecraft.Client)
+  add_dependencies(Minecraft.Client GenerateBuildVer)
+endif()
+if(TARGET Minecraft.Server)
   add_dependencies(Minecraft.Server GenerateBuildVer)
 endif()
 
@@ -106,7 +157,11 @@ endif()
 # Project organisation
 # ---
 # Set the startup project for Visual Studio
-set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT Minecraft.Client)
+if(TARGET Minecraft.Client)
+  set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT Minecraft.Client)
+elseif(TARGET Minecraft.Portability.SmokeTest)
+  set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT Minecraft.Portability.SmokeTest)
+endif()
 
 # Setup folders for Visual Studio, just hides the build targets under a sub folder
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

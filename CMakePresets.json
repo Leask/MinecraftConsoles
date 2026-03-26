@@ -18,6 +18,30 @@
       }
     },
     {
+      "name": "native-base",
+      "displayName": "Native Desktop Base",
+      "inherits": "base",
+      "hidden": true,
+      "cacheVariables": {
+        "MINECRAFT_BUILD_PORTABILITY": "ON",
+        "MINECRAFT_BUILD_WORLD": "OFF",
+        "MINECRAFT_BUILD_CLIENT": "OFF",
+        "MINECRAFT_BUILD_SERVER": "OFF",
+        "PLATFORM_DEFINES": "_NATIVE_DESKTOP",
+        "PLATFORM_NAME": "NativeDesktop"
+      }
+    },
+    {
+      "name": "macos-native",
+      "displayName": "macOS Native Porting",
+      "inherits": "native-base"
+    },
+    {
+      "name": "linux-native",
+      "displayName": "Linux Native Porting",
+      "inherits": "native-base"
+    },
+    {
       "name": "durango",
       "displayName": "Durango",
       "inherits": "base",
@@ -75,6 +99,12 @@
   "buildPresets": [
     { "name": "windows64-debug",   "displayName": "Windows64 - Debug",   "configurePreset": "windows64", "configuration": "Debug" },
     { "name": "windows64-release", "displayName": "Windows64 - Release", "configurePreset": "windows64", "configuration": "Release" },
+
+    { "name": "macos-native-debug",   "displayName": "macOS Native - Debug",   "configurePreset": "macos-native", "configuration": "Debug" },
+    { "name": "macos-native-release", "displayName": "macOS Native - Release", "configurePreset": "macos-native", "configuration": "Release" },
+
+    { "name": "linux-native-debug",   "displayName": "Linux Native - Debug",   "configurePreset": "linux-native", "configuration": "Debug" },
+    { "name": "linux-native-release", "displayName": "Linux Native - Release", "configurePreset": "linux-native", "configuration": "Release" },
 
     { "name": "durango-debug",     "displayName": "Durango - Debug",     "configurePreset": "durango",   "configuration": "Debug" },
     { "name": "durango-release",   "displayName": "Durango - Release",   "configurePreset": "durango",   "configuration": "Release" },
