@@ -32,6 +32,7 @@ add_executable(Minecraft.Portability.SmokeTest
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/BanManager.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/FileUtils.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/StringUtils.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/ServerLogger.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/FilesystemSmokeTest.cpp"
 )
 

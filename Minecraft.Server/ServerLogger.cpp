@@ -1,16 +1,22 @@
-#include "stdafx.h"
-
 #include "ServerLogger.h"
-#include "Common\\StringUtils.h"
-#include "vendor\\linenoise\\linenoise.h"
+#include "Common/StringUtils.h"
+#include "vendor/linenoise/linenoise.h"
 
+#include <chrono>
+#include <cctype>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 
+#if defined(_WIN32)
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif
+
 namespace ServerRuntime
 {
-static volatile LONG g_minLogLevel = (LONG)eServerLogLevel_Info;
+static int g_minLogLevel = (int)eServerLogLevel_Info;
 
 static const char *NormalizeCategory(const char *category)
 {
@@ -38,6 +44,29 @@ static const char *LogLevelToString(EServerLogLevel level)
 	}
 }
 
+static bool EqualsIgnoreCase(const char *lhs, const char *rhs)
+{
+	if (lhs == NULL || rhs == NULL)
+	{
+		return lhs == rhs;
+	}
+
+	while (*lhs != 0 && *rhs != 0)
+	{
+		if (std::tolower((unsigned char)*lhs) !=
+			std::tolower((unsigned char)*rhs))
+		{
+			return false;
+		}
+
+		++lhs;
+		++rhs;
+	}
+
+	return *lhs == 0 && *rhs == 0;
+}
+
+#if defined(_WIN32)
 static WORD LogLevelToColor(EServerLogLevel level)
 {
 	switch (level)
@@ -50,9 +79,27 @@ static WORD LogLevelToColor(EServerLogLevel level)
 		return FOREGROUND_RED | FOREGROUND_INTENSITY;
 	case eServerLogLevel_Info:
 	default:
-		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |
+			FOREGROUND_INTENSITY;
 	}
 }
+#else
+static const char *LogLevelToAnsiColor(EServerLogLevel level)
+{
+	switch (level)
+	{
+	case eServerLogLevel_Debug:
+		return "\033[36m";
+	case eServerLogLevel_Warn:
+		return "\033[33m";
+	case eServerLogLevel_Error:
+		return "\033[31m";
+	case eServerLogLevel_Info:
+	default:
+		return "\033[37m";
+	}
+}
+#endif
 
 static void BuildTimestamp(char *buffer, size_t bufferSize)
 {
@@ -61,24 +108,35 @@ static void BuildTimestamp(char *buffer, size_t bufferSize)
 		return;
 	}
 
-	SYSTEMTIME localTime;
-	GetLocalTime(&localTime);
-	sprintf_s(
+	const std::chrono::system_clock::time_point now =
+		std::chrono::system_clock::now();
+	const std::time_t nowSeconds =
+		std::chrono::system_clock::to_time_t(now);
+	std::tm localTime = {};
+#if defined(_WIN32)
+	localtime_s(&localTime, &nowSeconds);
+#else
+	localtime_r(&nowSeconds, &localTime);
+#endif
+	const unsigned milliseconds =
+		(unsigned)(std::chrono::duration_cast<std::chrono::milliseconds>(
+			now.time_since_epoch()).count() % 1000ULL);
+	snprintf(
 		buffer,
 		bufferSize,
 		"%04u-%02u-%02u %02u:%02u:%02u.%03u",
-		(unsigned)localTime.wYear,
-		(unsigned)localTime.wMonth,
-		(unsigned)localTime.wDay,
-		(unsigned)localTime.wHour,
-		(unsigned)localTime.wMinute,
-		(unsigned)localTime.wSecond,
-		(unsigned)localTime.wMilliseconds);
+		(unsigned)(localTime.tm_year + 1900),
+		(unsigned)(localTime.tm_mon + 1),
+		(unsigned)localTime.tm_mday,
+		(unsigned)localTime.tm_hour,
+		(unsigned)localTime.tm_min,
+		(unsigned)localTime.tm_sec,
+		milliseconds);
 }
 
 static bool ShouldLog(EServerLogLevel level)
 {
-	return ((LONG)level >= g_minLogLevel);
+	return ((int)level >= g_minLogLevel);
 }
 
 static void WriteLogLine(EServerLogLevel level, const char *category, const char *message)
@@ -96,9 +154,10 @@ static void WriteLogLine(EServerLogLevel level, const char *category, const char
 	char timestamp[32] = {};
 	BuildTimestamp(timestamp, sizeof(timestamp));
 
-	HANDLE stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO originalInfo;
 	bool hasColorConsole = false;
+#if defined(_WIN32)
+	HANDLE stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+	CONSOLE_SCREEN_BUFFER_INFO originalInfo = {};
 	if (stdoutHandle != INVALID_HANDLE_VALUE && stdoutHandle != NULL)
 	{
 		if (GetConsoleScreenBufferInfo(stdoutHandle, &originalInfo))
@@ -107,6 +166,13 @@ static void WriteLogLine(EServerLogLevel level, const char *category, const char
 			SetConsoleTextAttribute(stdoutHandle, LogLevelToColor(level));
 		}
 	}
+#else
+	hasColorConsole = isatty(fileno(stdout)) != 0;
+	if (hasColorConsole)
+	{
+		fputs(LogLevelToAnsiColor(level), stdout);
+	}
+#endif
 
 	printf(
 		"[%s][%s][%s] %s\n",
@@ -118,7 +184,11 @@ static void WriteLogLine(EServerLogLevel level, const char *category, const char
 
 	if (hasColorConsole)
 	{
+#if defined(_WIN32)
 		SetConsoleTextAttribute(stdoutHandle, originalInfo.wAttributes);
+#else
+		fputs("\033[0m", stdout);
+#endif
 	}
 
 	linenoiseExternalWriteEnd();
@@ -133,7 +203,8 @@ static void WriteLogLineV(EServerLogLevel level, const char *category, const cha
 		return;
 	}
 
-	vsnprintf_s(messageBuffer, sizeof(messageBuffer), _TRUNCATE, format, args);
+	vsnprintf(messageBuffer, sizeof(messageBuffer), format, args);
+	messageBuffer[sizeof(messageBuffer) - 1] = 0;
 	WriteLogLine(level, category, messageBuffer);
 }
 
@@ -144,22 +215,22 @@ bool TryParseServerLogLevel(const char *value, EServerLogLevel *outLevel)
 		return false;
 	}
 
-	if (_stricmp(value, "debug") == 0)
+	if (EqualsIgnoreCase(value, "debug"))
 	{
 		*outLevel = eServerLogLevel_Debug;
 		return true;
 	}
-	if (_stricmp(value, "info") == 0)
+	if (EqualsIgnoreCase(value, "info"))
 	{
 		*outLevel = eServerLogLevel_Info;
 		return true;
 	}
-	if (_stricmp(value, "warn") == 0 || _stricmp(value, "warning") == 0)
+	if (EqualsIgnoreCase(value, "warn") || EqualsIgnoreCase(value, "warning"))
 	{
 		*outLevel = eServerLogLevel_Warn;
 		return true;
 	}
-	if (_stricmp(value, "error") == 0)
+	if (EqualsIgnoreCase(value, "error"))
 	{
 		*outLevel = eServerLogLevel_Error;
 		return true;
@@ -179,7 +250,7 @@ void SetServerLogLevel(EServerLogLevel level)
 		level = eServerLogLevel_Error;
 	}
 
-	g_minLogLevel = (LONG)level;
+	g_minLogLevel = (int)level;
 }
 
 EServerLogLevel GetServerLogLevel()
@@ -255,4 +326,3 @@ void LogWorldName(const char *prefix, const std::wstring &name)
 	LogInfof("world-io", "%s: %s", (prefix != NULL) ? prefix : "name", utf8.c_str());
 }
 }
-

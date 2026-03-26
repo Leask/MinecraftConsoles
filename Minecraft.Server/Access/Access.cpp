@@ -2,11 +2,12 @@
 
 #include "Access.h"
 
-#include "..\Common\StringUtils.h"
-#include "..\ServerLogger.h"
+#include "../Common/StringUtils.h"
+#include "../ServerLogger.h"
 
 #include <memory>
 #include <mutex>
+#include <stdio.h>
 
 namespace ServerRuntime
 {
@@ -73,7 +74,8 @@ namespace ServerRuntime
 			}
 
 			char buffer[32] = {};
-			sprintf_s(buffer, sizeof(buffer), "0x%016llx", (unsigned long long)xuid);
+			snprintf(buffer, sizeof(buffer), "0x%016llx",
+				(unsigned long long)xuid);
 			return buffer;
 		}
 

@@ -2,7 +2,7 @@
 
 #include "ServerLogManager.h"
 
-#include "Common\StringUtils.h"
+#include "Common/StringUtils.h"
 #include "ServerLogger.h"
 
 #include <array>
@@ -137,7 +137,8 @@ namespace ServerRuntime
                 }
 
                 char messageBuffer[2048] = {};
-                vsnprintf_s(messageBuffer, sizeof(messageBuffer), _TRUNCATE, format, args);
+                vsnprintf(messageBuffer, sizeof(messageBuffer), format, args);
+                messageBuffer[sizeof(messageBuffer) - 1] = 0;
                 ForwardClientDebugMessage(source, messageBuffer);
             }
 
@@ -215,7 +216,7 @@ namespace ServerRuntime
         void ForwardClientUserDebugLogV(int user, const char *format, va_list args)
         {
             char source[32] = {};
-            _snprintf_s(source, sizeof(source), _TRUNCATE, "app:user=%d", user);
+            snprintf(source, sizeof(source), "app:user=%d", user);
             ForwardFormattedClientDebugLogV(source, format, args);
         }
 

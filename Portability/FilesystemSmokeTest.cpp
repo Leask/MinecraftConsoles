@@ -8,17 +8,12 @@
 #include "lce_win32/lce_win32.h"
 #include "Minecraft.Server/Common/FileUtils.h"
 #include "Minecraft.Server/Common/StringUtils.h"
+#include "Minecraft.Server/ServerLogger.h"
 
-namespace ServerRuntime
+extern "C"
 {
-    void LogDebug(const char*, const char*) {}
-    void LogInfo(const char*, const char*) {}
-    void LogWarn(const char*, const char*) {}
-    void LogError(const char*, const char*) {}
-    void LogDebugf(const char*, const char*, ...) {}
-    void LogInfof(const char*, const char*, ...) {}
-    void LogWarnf(const char*, const char*, ...) {}
-    void LogErrorf(const char*, const char*, ...) {}
+    void linenoiseExternalWriteBegin(void) {}
+    void linenoiseExternalWriteEnd(void) {}
 }
 
 namespace
@@ -102,6 +97,11 @@ int main(int argc, char* argv[])
         banManager.SnapshotBannedPlayers(&snapshotPlayers);
     const bool snapshotIpsOk =
         banManager.SnapshotBannedIps(&snapshotIps);
+    ServerRuntime::EServerLogLevel parsedLogLevel = ServerRuntime::eServerLogLevel_Info;
+    const bool parsedWarnLogLevel =
+        ServerRuntime::TryParseServerLogLevel("Warn", &parsedLogLevel);
+    ServerRuntime::SetServerLogLevel(ServerRuntime::eServerLogLevel_Warn);
+    const int currentLogLevel = (int)ServerRuntime::GetServerLogLevel();
     CRITICAL_SECTION criticalSection = {};
     InitializeCriticalSection(&criticalSection);
     const ULONG recursiveEnter1 = TryEnterCriticalSection(&criticalSection);
@@ -190,6 +190,9 @@ int main(int argc, char* argv[])
         snapshotIpsOk,
         snapshotPlayers.size(),
         snapshotIps.size());
+    printf("log_parse=%d log_level=%d\n",
+        parsedWarnLogLevel,
+        currentLogLevel);
     printf("critical_section_try=%lu recursive_try=%lu\n",
         static_cast<unsigned long>(recursiveEnter1),
         static_cast<unsigned long>(recursiveEnter2));
@@ -242,6 +245,9 @@ int main(int argc, char* argv[])
         isPlayerBanned && isIpBanned &&
         snapshotPlayersOk && snapshotIpsOk &&
         snapshotPlayers.size() == 1 && snapshotIps.size() == 1 &&
+        parsedWarnLogLevel &&
+        parsedLogLevel == ServerRuntime::eServerLogLevel_Warn &&
+        currentLogLevel == (int)ServerRuntime::eServerLogLevel_Warn &&
         utcTimestamp.size() == 20 && utcTimestamp[10] == 'T' &&
         utcTimestamp[19] == 'Z' &&
         waitAny == WAIT_OBJECT_0 + 1 && waitAllBefore == WAIT_TIMEOUT &&
