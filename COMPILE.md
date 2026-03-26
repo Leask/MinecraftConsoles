@@ -90,6 +90,18 @@ Build the smoke test:
 cmake --build --preset macos-native-debug --target Minecraft.Portability.SmokeTest
 ```
 
+Run the smoke test through CTest:
+
+```bash
+ctest --preset macos-native-debug-test
+```
+
+Or use the one-step check target:
+
+```bash
+cmake --build --preset macos-native-debug --target Minecraft.Portability.Check
+```
+
 Run the smoke test from the repository root:
 
 ```bash
@@ -101,6 +113,7 @@ Equivalent Linux commands:
 ```bash
 cmake --preset linux-native
 cmake --build --preset linux-native-debug --target Minecraft.Portability.SmokeTest
+ctest --preset linux-native-debug-test
 ./build/linux-native/Portability/Debug/Minecraft.Portability.SmokeTest .
 ```
 

@@ -120,5 +120,43 @@
 
     { "name": "xbox360-debug",     "displayName": "Xbox 360 - Debug",    "configurePreset": "xbox360",   "configuration": "Debug" },
     { "name": "xbox360-release",   "displayName": "Xbox 360 - Release",  "configurePreset": "xbox360",   "configuration": "Release" }
+  ],
+  "testPresets": [
+    {
+      "name": "macos-native-debug-test",
+      "displayName": "macOS Native Smoke - Debug",
+      "configurePreset": "macos-native",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "macos-native-release-test",
+      "displayName": "macOS Native Smoke - Release",
+      "configurePreset": "macos-native",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-native-debug-test",
+      "displayName": "Linux Native Smoke - Debug",
+      "configurePreset": "linux-native",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-native-release-test",
+      "displayName": "Linux Native Smoke - Release",
+      "configurePreset": "linux-native",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
   ]
 }

@@ -63,3 +63,25 @@ target_include_directories(Minecraft.Portability.SmokeTest PRIVATE
 )
 
 configure_compiler_target(Minecraft.Portability.SmokeTest)
+
+if(BUILD_TESTING)
+  add_test(
+    NAME minecraft_portability_smoke
+    COMMAND $<TARGET_FILE:Minecraft.Portability.SmokeTest> "${CMAKE_SOURCE_DIR}"
+  )
+  set_tests_properties(minecraft_portability_smoke PROPERTIES
+    LABELS "native;portability;smoke"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+  )
+endif()
+
+add_custom_target(Minecraft.Portability.Check
+  COMMAND ${CMAKE_CTEST_COMMAND}
+    --output-on-failure
+    -C $<CONFIG>
+    -R "^minecraft_portability_smoke$"
+  DEPENDS Minecraft.Portability.SmokeTest
+  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+  COMMENT "Running native portability smoke test"
+  VERBATIM
+)
