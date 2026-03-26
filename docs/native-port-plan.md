@@ -230,6 +230,10 @@ This iteration starts with:
   that compiles and runs in the native smoke target, including argument
   parsing, property overlay, help text, and `int64` seed handling without
   MSVC-only integer helpers
+- `Minecraft.World/stdafx.h` now has an explicit `_NATIVE_DESKTOP` path
+  instead of falling through to Orbis headers, and the native smoke target
+  now compiles `Minecraft.World/system.cpp` through a narrow
+  `NativeDesktopStubs.h` shim plus `lce_win32` compatibility types
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

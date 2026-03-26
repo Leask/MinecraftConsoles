@@ -6,26 +6,46 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 
 typedef int BOOL;
+typedef char CHAR;
 typedef unsigned char BYTE;
+typedef BYTE* PBYTE;
 typedef unsigned short WORD;
+typedef unsigned short USHORT;
+typedef short SHORT;
 typedef int32_t LONG;
 typedef int64_t LONG64;
+typedef int64_t LONGLONG;
 typedef std::uint32_t DWORD;
 typedef std::uint32_t ULONG;
 typedef unsigned int UINT;
+typedef int INT;
 typedef unsigned long long ULONGLONG;
 typedef std::size_t SIZE_T;
 typedef std::uintptr_t ULONG_PTR;
 typedef std::uintptr_t DWORD_PTR;
 typedef void VOID;
+typedef float FLOAT;
+typedef wchar_t WCHAR;
 typedef void* HANDLE;
 typedef void* LPVOID;
 typedef const void* LPCVOID;
 typedef const char* LPCSTR;
+typedef wchar_t* LPWSTR;
+typedef const wchar_t* LPCWSTR;
 typedef DWORD* LPDWORD;
 typedef LONG* PLONG;
+typedef LONG HRESULT;
+typedef VOID* XMEMCOMPRESSION_CONTEXT;
+typedef VOID* XMEMDECOMPRESSION_CONTEXT;
+
+struct FILETIME
+{
+    DWORD dwLowDateTime;
+    DWORD dwHighDateTime;
+};
 
 #ifndef TRUE
 #define TRUE 1
@@ -43,12 +63,28 @@ typedef LONG* PLONG;
 #define CALLBACK
 #endif
 
+#ifndef __debugbreak
+#if defined(__clang__) || defined(__GNUC__)
+#define __debugbreak() __builtin_trap()
+#else
+#define __debugbreak() ((void)0)
+#endif
+#endif
+
 #ifndef CONST
 #define CONST const
 #endif
 
 #ifndef INVALID_HANDLE_VALUE
 #define INVALID_HANDLE_VALUE ((HANDLE)(intptr_t)-1)
+#endif
+
+#ifndef RtlZeroMemory
+#define RtlZeroMemory(Destination, Length) std::memset((Destination), 0, (Length))
+#endif
+
+#ifndef ZeroMemory
+#define ZeroMemory RtlZeroMemory
 #endif
 
 #ifndef MAXULONG_PTR

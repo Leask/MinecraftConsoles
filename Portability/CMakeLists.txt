@@ -39,12 +39,17 @@ add_executable(Minecraft.Portability.SmokeTest
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/ServerLogger.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/vendor/linenoise/linenoise.c"
   "${CMAKE_SOURCE_DIR}/Minecraft.World/PerformanceTimer.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.World/system.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.World/ThreadName.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/FilesystemSmokeTest.cpp"
 )
 
 target_link_libraries(Minecraft.Portability.SmokeTest PRIVATE
   Minecraft.Portability
+)
+
+target_compile_definitions(Minecraft.Portability.SmokeTest PRIVATE
+  ${MINECRAFT_SHARED_DEFINES}
 )
 
 target_include_directories(Minecraft.Portability.SmokeTest PRIVATE

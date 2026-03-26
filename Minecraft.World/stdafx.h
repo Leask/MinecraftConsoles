@@ -77,18 +77,23 @@ typedef XUID GameSessionUID;
 #include "OrbisStubs.h"
 #include "OrbisMaths.h"
 #elif defined __PSVITA__
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
-#include <touch.h>
-#include "PSVitaTypes.h"
-#include "PSVitaStubs.h"
-#include "PSVitaMaths.h"
+	#include <unordered_map>
+	#include <unordered_set>
+	#include <vector>
+	#include <touch.h>
+	#include "PSVitaTypes.h"
+	#include "PSVitaStubs.h"
+	#include "PSVitaMaths.h"
+#elif defined _NATIVE_DESKTOP
+	#include <unordered_map>
+	#include <unordered_set>
+	#include <vector>
+	#include <lce_win32/lce_win32.h>
 #else
-#include <unordered_map>
-#include <unordered_set>
-#include <sal.h>
-#include <vector>
+	#include <unordered_map>
+	#include <unordered_set>
+	#include <sal.h>
+	#include <vector>
 #endif //__PS3__
 
 #include <memory>
@@ -110,7 +115,9 @@ typedef XUID GameSessionUID;
 #include <assert.h>
 #endif
 
-#ifndef _XBOX
+#if defined(_NATIVE_DESKTOP)
+#include "NativeDesktop/NativeDesktopStubs.h"
+#elif !defined(_XBOX)
 #include "extraX64.h"
 #else
 #include "..\Minecraft.Client\xbox\network\extra.h"
@@ -141,6 +148,7 @@ typedef XUID GameSessionUID;
 
 void MemSect(int sect);
 
+#if !defined(_NATIVE_DESKTOP)
 #ifdef _XBOX
 #include "..\Minecraft.Client\xbox\4JLibs\inc\4J_Profile.h"
 #include "..\Minecraft.Client\xbox\4JLibs\inc\4J_Render.h"
@@ -239,3 +247,4 @@ void MemSect(int sect);
 #include "..\Minecraft.Client\Common\GameRules\ConsoleGameRulesConstants.h"
 #include "..\Minecraft.Client\Common\GameRules\ConsoleGameRules.h"
 #include "..\Minecraft.Client\Common\Telemetry\TelemetryManager.h"
+#endif

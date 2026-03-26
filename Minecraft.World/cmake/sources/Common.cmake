@@ -106,6 +106,7 @@ source_group("ConsoleJavaLibs/InputOutputStream" FILES ${_MINECRAFT_WORLD_COMMON
 set(_MINECRAFT_WORLD_COMMON_HEADER_FILES
   "${CMAKE_CURRENT_SOURCE_DIR}/LevelObjectInputStream.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Minecraft.World.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/NativeDesktop/NativeDesktopStubs.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/ParticleTypes.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/SoundTypes.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/compression.h"
