@@ -1,7 +1,8 @@
 #pragma once
 
 #include <string>
-#include <windows.h>
+
+#include <lce_win32/lce_win32.h>
 
 #include "ServerProperties.h"
 

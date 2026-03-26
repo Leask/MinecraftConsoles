@@ -22,6 +22,12 @@ set(_INCLUDE_LCE_NET
 )
 source_group("include/lce_net" FILES ${_INCLUDE_LCE_NET})
 
+set(_INCLUDE_LCE_WIN32
+  "${CMAKE_SOURCE_DIR}/include/lce_win32/lce_win32.cpp"
+  "${CMAKE_SOURCE_DIR}/include/lce_win32/lce_win32.h"
+)
+source_group("include/lce_win32" FILES ${_INCLUDE_LCE_WIN32})
+
 set(_INCLUDE_BUILDVER
   "${CMAKE_SOURCE_DIR}/include/Common/BuildVer.h"
 )
@@ -32,5 +38,6 @@ set(SOURCES_COMMON
 	${_INCLUDE_LCE_TIME}
 	${_INCLUDE_LCE_STDIN}
 	${_INCLUDE_LCE_NET}
+	${_INCLUDE_LCE_WIN32}
 	${_INCLUDE_BUILDVER}
 )

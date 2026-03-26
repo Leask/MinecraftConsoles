@@ -7,14 +7,20 @@ set(MINECRAFT_PORTABILITY_SOURCES
   "${CMAKE_SOURCE_DIR}/include/lce_stdin/lce_stdin.h"
   "${CMAKE_SOURCE_DIR}/include/lce_time/lce_time.cpp"
   "${CMAKE_SOURCE_DIR}/include/lce_time/lce_time.h"
+  "${CMAKE_SOURCE_DIR}/include/lce_win32/lce_win32.cpp"
+  "${CMAKE_SOURCE_DIR}/include/lce_win32/lce_win32.h"
 )
 
 add_library(Minecraft.Portability STATIC ${MINECRAFT_PORTABILITY_SOURCES})
+
+find_package(Threads REQUIRED)
 
 target_include_directories(Minecraft.Portability
   PUBLIC
   "${CMAKE_SOURCE_DIR}/include"
 )
+
+target_link_libraries(Minecraft.Portability PUBLIC Threads::Threads)
 
 target_compile_definitions(Minecraft.Portability PRIVATE
   ${MINECRAFT_SHARED_DEFINES}

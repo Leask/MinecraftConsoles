@@ -149,6 +149,9 @@ Current server blockers already visible in the active tree:
 - stream-mode stdin now has a portability layer, but interactive console and
   console-color paths still depend on Win32 console semantics
 - networking still enters through `WinsockNetLayer`
+- `Minecraft.World/stdafx.h` still routes non-Windows builds into legacy
+  console platform include trees instead of a dedicated `NativeDesktop`
+  branch
 
 ### Phase 3: Native client bootstrap
 
@@ -178,6 +181,8 @@ This iteration starts with:
 - first cross-platform filesystem implementation
 - first cross-platform time and sleep implementation
 - first cross-platform stdin and socket utility implementation
+- first non-Windows Win32 compatibility shim for
+  `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native
