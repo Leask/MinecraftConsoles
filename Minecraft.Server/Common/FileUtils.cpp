@@ -1,11 +1,15 @@
-#include "stdafx.h"
-
 #include "FileUtils.h"
 
-#include "StringUtils.h"
-
+#include <filesystem>
+#if defined(_WIN32)
 #include <io.h>
+#else
+#include <unistd.h>
+#endif
 #include <stdio.h>
+
+#include <lce_time/lce_time.h>
+#include <lce_win32/lce_win32.h>
 
 namespace ServerRuntime
 {
@@ -13,21 +17,50 @@ namespace ServerRuntime
 	{
 		namespace
 		{
-			static std::wstring ToWidePath(const std::string &filePath)
+			static std::filesystem::path ToNativePath(const std::string &filePath)
 			{
-				return StringUtils::Utf8ToWide(filePath);
+				return std::filesystem::u8path(filePath);
+			}
+
+			static FILE *OpenPathFile(
+				const std::filesystem::path &path,
+				const char *mode)
+			{
+#if defined(_WIN32)
+				const std::wstring wideMode =
+					std::filesystem::path(mode).wstring();
+				return _wfopen(path.c_str(), wideMode.c_str());
+#else
+				return fopen(path.c_str(), mode);
+#endif
+			}
+
+			static bool FlushFileToStorage(FILE *file)
+			{
+				if (file == nullptr)
+				{
+					return false;
+				}
+
+				if (fflush(file) != 0)
+				{
+					return false;
+				}
+
+#if defined(_WIN32)
+				return _commit(_fileno(file)) == 0;
+#else
+				return fsync(fileno(file)) == 0;
+#endif
 			}
 		}
 
 		unsigned long long GetCurrentUtcFileTime()
 		{
-			FILETIME now = {};
-			GetSystemTimeAsFileTime(&now);
-
-			ULARGE_INTEGER value = {};
-			value.LowPart = now.dwLowDateTime;
-			value.HighPart = now.dwHighDateTime;
-			return value.QuadPart;
+			static const unsigned long long kWindowsToUnixEpoch100Ns =
+				116444736000000000ULL;
+			return (LceGetUnixTimeMilliseconds() * 10000ULL) +
+				kWindowsToUnixEpoch100Ns;
 		}
 
 		bool ReadTextFile(const std::string &filePath, std::string *outText)
@@ -39,14 +72,14 @@ namespace ServerRuntime
 
 			outText->clear();
 
-			const std::wstring widePath = ToWidePath(filePath);
-			if (widePath.empty())
+			const std::filesystem::path nativePath = ToNativePath(filePath);
+			if (nativePath.empty())
 			{
 				return false;
 			}
 
-			FILE *inFile = nullptr;
-			if (_wfopen_s(&inFile, widePath.c_str(), L"rb") != 0 || inFile == nullptr)
+			FILE *inFile = OpenPathFile(nativePath, "rb");
+			if (inFile == nullptr)
 			{
 				return false;
 			}
@@ -91,16 +124,17 @@ namespace ServerRuntime
 
 		bool WriteTextFileAtomic(const std::string &filePath, const std::string &text)
 		{
-			const std::wstring widePath = ToWidePath(filePath);
-			if (widePath.empty())
+			const std::filesystem::path nativePath = ToNativePath(filePath);
+			if (nativePath.empty())
 			{
 				return false;
 			}
 
-			const std::wstring tmpPath = widePath + L".tmp";
+			std::filesystem::path tmpPath = nativePath;
+			tmpPath += ".tmp";
 
-			FILE *outFile = nullptr;
-			if (_wfopen_s(&outFile, tmpPath.c_str(), L"wb") != 0 || outFile == nullptr)
+			FILE *outFile = OpenPathFile(tmpPath, "wb");
+			if (outFile == nullptr)
 			{
 				return false;
 			}
@@ -111,33 +145,53 @@ namespace ServerRuntime
 				if (bytesWritten != text.size())
 				{
 					fclose(outFile);
-					DeleteFileW(tmpPath.c_str());
+					std::error_code cleanupError;
+					std::filesystem::remove(tmpPath, cleanupError);
 					return false;
 				}
 			}
 
-			if (fflush(outFile) != 0 || _commit(_fileno(outFile)) != 0)
+			if (!FlushFileToStorage(outFile))
 			{
 				fclose(outFile);
-				DeleteFileW(tmpPath.c_str());
+				std::error_code cleanupError;
+				std::filesystem::remove(tmpPath, cleanupError);
 				return false;
 			}
 			fclose(outFile);
 
-			DWORD attrs = GetFileAttributesW(widePath.c_str());
-			if (attrs != INVALID_FILE_ATTRIBUTES && ((attrs & FILE_ATTRIBUTE_DIRECTORY) == 0))
+#if defined(_WIN32)
+			if (std::filesystem::exists(nativePath) &&
+				std::filesystem::is_regular_file(nativePath))
 			{
 				// Replace the destination without deleting the last known-good file first.
-				if (ReplaceFileW(widePath.c_str(), tmpPath.c_str(), nullptr, REPLACEFILE_IGNORE_MERGE_ERRORS, nullptr, nullptr))
+				if (ReplaceFileW(
+						nativePath.c_str(),
+						tmpPath.c_str(),
+						nullptr,
+						REPLACEFILE_IGNORE_MERGE_ERRORS,
+						nullptr,
+						nullptr))
 				{
 					return true;
 				}
 			}
 
-			if (MoveFileExW(tmpPath.c_str(), widePath.c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
+			if (MoveFileExW(
+					tmpPath.c_str(),
+					nativePath.c_str(),
+					MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
 			{
 				return true;
 			}
+#else
+			std::error_code renameError;
+			std::filesystem::rename(tmpPath, nativePath, renameError);
+			if (!renameError)
+			{
+				return true;
+			}
+#endif
 
 			// Keep the temp file on failure so the original file remains recoverable and the caller can inspect the write result.
 			return false;

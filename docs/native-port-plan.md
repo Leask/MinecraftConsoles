@@ -185,6 +185,8 @@ This iteration starts with:
   `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
 - first server-common utility source (`Minecraft.Server/Common/StringUtils.cpp`)
   compiling in the native smoke target without `stdafx.h`
+- first server file I/O utility source (`Minecraft.Server/Common/FileUtils.cpp`)
+  compiling and running in the native smoke target without Win32 file APIs
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

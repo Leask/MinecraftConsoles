@@ -5,6 +5,7 @@
 #include "lce_stdin/lce_stdin.h"
 #include "lce_time/lce_time.h"
 #include "lce_win32/lce_win32.h"
+#include "Minecraft.Server/Common/FileUtils.h"
 #include "Minecraft.Server/Common/StringUtils.h"
 
 namespace
@@ -45,6 +46,19 @@ int main(int argc, char* argv[])
             &parsedUnsigned);
     const std::string utcTimestamp =
         ServerRuntime::StringUtils::GetCurrentUtcTimestampIso8601();
+    const std::string smokeFilePath = "build/portability-smoke-file.txt";
+    const std::string smokeFileText = "native smoke file\n";
+    const bool wroteSmokeFile =
+        ServerRuntime::FileUtils::WriteTextFileAtomic(
+            smokeFilePath,
+            smokeFileText);
+    std::string smokeFileReadback;
+    const bool readSmokeFile =
+        ServerRuntime::FileUtils::ReadTextFile(
+            smokeFilePath,
+            &smokeFileReadback);
+    const unsigned long long utcFileTime =
+        ServerRuntime::FileUtils::GetCurrentUtcFileTime();
     CRITICAL_SECTION criticalSection = {};
     InitializeCriticalSection(&criticalSection);
     const ULONG recursiveEnter1 = TryEnterCriticalSection(&criticalSection);
@@ -113,6 +127,11 @@ int main(int argc, char* argv[])
         parsedUnsignedOk,
         parsedUnsigned,
         utcTimestamp.c_str());
+    printf("file_write=%d file_read=%d file_readback_match=%d utc_file_time=%llu\n",
+        wroteSmokeFile,
+        readSmokeFile,
+        smokeFileReadback == smokeFileText,
+        utcFileTime);
     printf("critical_section_try=%lu recursive_try=%lu\n",
         static_cast<unsigned long>(recursiveEnter1),
         static_cast<unsigned long>(recursiveEnter2));
@@ -157,6 +176,8 @@ int main(int argc, char* argv[])
         recursiveEnter2 == TRUE && tlsSet == TRUE && tlsResolved == 1 &&
         !smokeUtf8.empty() && smokeRoundTrip == smokeWide &&
         parsedUnsignedOk && parsedUnsigned == 12345ULL &&
+        wroteSmokeFile && readSmokeFile && smokeFileReadback == smokeFileText &&
+        utcFileTime > 0 &&
         utcTimestamp.size() == 20 && utcTimestamp[10] == 'T' &&
         utcTimestamp[19] == 'Z' &&
         waitAny == WAIT_OBJECT_0 + 1 && waitAllBefore == WAIT_TIMEOUT &&
