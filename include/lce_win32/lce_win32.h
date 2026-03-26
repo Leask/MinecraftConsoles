@@ -79,6 +79,22 @@ struct FILETIME
 #define INVALID_HANDLE_VALUE ((HANDLE)(intptr_t)-1)
 #endif
 
+#ifndef S_OK
+#define S_OK ((HRESULT)0L)
+#endif
+
+#ifndef E_FAIL
+#define E_FAIL ((HRESULT)0x80004005L)
+#endif
+
+#ifndef FAILED
+#define FAILED(hr) (((HRESULT)(hr)) < 0)
+#endif
+
+#ifndef SUCCEEDED
+#define SUCCEEDED(hr) (((HRESULT)(hr)) >= 0)
+#endif
+
 #ifndef RtlZeroMemory
 #define RtlZeroMemory(Destination, Length) std::memset((Destination), 0, (Length))
 #endif
@@ -114,6 +130,11 @@ struct FILETIME
 #define THREAD_PRIORITY_ERROR_RETURN 2147483647
 #define THREAD_PRIORITY_TIME_CRITICAL THREAD_BASE_PRIORITY_LOWRT
 #define THREAD_PRIORITY_IDLE THREAD_BASE_PRIORITY_IDLE
+
+inline void PIXAddNamedCounter(int, const char*, ...) {}
+inline void PIXBeginNamedEvent(int, const char*, ...) {}
+inline void PIXEndNamedEvent() {}
+inline void PIXSetMarkerDeprecated(int, const char*, ...) {}
 
 struct SECURITY_ATTRIBUTES
 {

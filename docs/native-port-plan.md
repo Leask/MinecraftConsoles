@@ -240,9 +240,14 @@ This iteration starts with:
 - native smoke now compiles and round-trips `Minecraft.World/FileHeader.cpp`
   so save-header metadata layout, duplicate-entry reuse, offsets, endian
   selection, and version fields are checked on macOS/Linux paths
+- native smoke now compiles and round-trips `Minecraft.World/compression.cpp`
+  with bundled zlib, covering `Compress`, `CompressRLE`, `CompressLZXRLE`,
+  and the matching native decompression paths
 - native smoke is now wired into `CTest`, `CMakePresets.json`, and a
   `Minecraft.Portability.Check` target so portability regressions can be
   exercised by automation instead of only ad hoc manual runs
+- a dedicated `.github/workflows/native-smoke.yml` workflow now runs the
+  same native smoke presets on macOS and Linux in CI
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

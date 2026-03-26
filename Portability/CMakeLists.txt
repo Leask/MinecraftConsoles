@@ -15,6 +15,24 @@ set(MINECRAFT_PORTABILITY_SOURCES
 
 add_library(Minecraft.Portability STATIC ${MINECRAFT_PORTABILITY_SOURCES})
 
+set(MINECRAFT_PORTABILITY_ZLIB_SOURCES
+  "${CMAKE_SOURCE_DIR}/Minecraft.Client/Common/zlib/adler32.c"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Client/Common/zlib/compress.c"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Client/Common/zlib/crc32.c"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Client/Common/zlib/deflate.c"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Client/Common/zlib/infback.c"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Client/Common/zlib/inffast.c"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Client/Common/zlib/inflate.c"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Client/Common/zlib/inftrees.c"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Client/Common/zlib/trees.c"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Client/Common/zlib/uncompr.c"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Client/Common/zlib/zutil.c"
+)
+
+add_library(Minecraft.Portability.Zlib STATIC
+  ${MINECRAFT_PORTABILITY_ZLIB_SOURCES}
+)
+
 find_package(Threads REQUIRED)
 
 target_include_directories(Minecraft.Portability
@@ -29,6 +47,7 @@ target_compile_definitions(Minecraft.Portability PRIVATE
 )
 
 configure_compiler_target(Minecraft.Portability)
+configure_compiler_target(Minecraft.Portability.Zlib)
 
 add_executable(Minecraft.Portability.SmokeTest
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/BanManager.cpp"
@@ -40,9 +59,12 @@ add_executable(Minecraft.Portability.SmokeTest
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/vendor/linenoise/linenoise.c"
   "${CMAKE_SOURCE_DIR}/Minecraft.World/FileHeader.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.World/PerformanceTimer.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.World/compression.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.World/system.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.World/ThreadName.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/FilesystemSmokeTest.cpp"
+  "${CMAKE_CURRENT_LIST_DIR}/WorldCompressionSmoke.cpp"
+  "${CMAKE_CURRENT_LIST_DIR}/WorldCompressionSmoke.h"
   "${CMAKE_CURRENT_LIST_DIR}/WorldFileHeaderSmoke.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/WorldFileHeaderSmoke.h"
   "${CMAKE_CURRENT_LIST_DIR}/WorldSystemSmoke.cpp"
@@ -51,6 +73,7 @@ add_executable(Minecraft.Portability.SmokeTest
 
 target_link_libraries(Minecraft.Portability.SmokeTest PRIVATE
   Minecraft.Portability
+  Minecraft.Portability.Zlib
 )
 
 target_compile_definitions(Minecraft.Portability.SmokeTest PRIVATE

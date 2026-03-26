@@ -117,6 +117,9 @@ ctest --preset linux-native-debug-test
 ./build/linux-native/Portability/Debug/Minecraft.Portability.SmokeTest .
 ```
 
+The repository also includes a `Native Smoke` GitHub Actions workflow that
+runs the same native smoke preset on macOS and Linux for portability changes.
+
 Notes:
 - The Windows64 client and dedicated server remain the only supported gameplay
   targets today.

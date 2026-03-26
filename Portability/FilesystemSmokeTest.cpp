@@ -15,6 +15,7 @@
 #include "Minecraft.Server/ServerLogger.h"
 #include "Minecraft.Server/vendor/linenoise/linenoise.h"
 #include "Minecraft.World/PerformanceTimer.h"
+#include "WorldCompressionSmoke.h"
 #include "Minecraft.World/ThreadName.h"
 #include "WorldFileHeaderSmoke.h"
 #include "WorldSystemSmoke.h"
@@ -200,6 +201,8 @@ int main(int argc, char* argv[])
     const std::uint64_t unixMs = LceGetUnixTimeMilliseconds();
     const WorldFileHeaderSmokeResult worldFileHeaderSmoke =
         RunWorldFileHeaderSmoke();
+    const WorldCompressionSmokeResult worldCompressionSmoke =
+        RunWorldCompressionSmoke();
     const WorldSystemSmokeResult worldSystemSmoke = RunWorldSystemSmoke();
     const std::wstring smokeWide = L"native \u4e16\u754c";
     const std::string smokeUtf8 = ServerRuntime::StringUtils::WideToUtf8(smokeWide);
@@ -602,6 +605,15 @@ int main(int argc, char* argv[])
         worldFileHeaderSmoke.offsetsOk,
         worldFileHeaderSmoke.fileCount,
         worldFileHeaderSmoke.totalSize);
+    printf("world_compression_zlib=%d rle=%d lzxrle=%d input_size=%u "
+        "compressed=%u rle_size=%u lzxrle_size=%u\n",
+        worldCompressionSmoke.zlibRoundTripOk,
+        worldCompressionSmoke.rleRoundTripOk,
+        worldCompressionSmoke.lzxRleRoundTripOk,
+        worldCompressionSmoke.inputSize,
+        worldCompressionSmoke.compressedSize,
+        worldCompressionSmoke.rleSize,
+        worldCompressionSmoke.lzxRleSize);
     printf("world_system_monotonic=%d current_ms=%lld real_ms=%lld delta_ns=%lld\n",
         worldSystemSmoke.monotonicAdvanced,
         static_cast<long long>(worldSystemSmoke.currentTimeMs),
@@ -739,6 +751,13 @@ int main(int argc, char* argv[])
         worldFileHeaderSmoke.offsetsOk &&
         worldFileHeaderSmoke.fileCount == 2 &&
         worldFileHeaderSmoke.totalSize > 12U &&
+        worldCompressionSmoke.zlibRoundTripOk &&
+        worldCompressionSmoke.rleRoundTripOk &&
+        worldCompressionSmoke.lzxRleRoundTripOk &&
+        worldCompressionSmoke.inputSize > 0U &&
+        worldCompressionSmoke.compressedSize > 0U &&
+        worldCompressionSmoke.rleSize > 0U &&
+        worldCompressionSmoke.lzxRleSize > 0U &&
         worldSystemSmoke.monotonicAdvanced &&
         worldSystemSmoke.currentTimePositive &&
         worldSystemSmoke.realTimePositive &&
