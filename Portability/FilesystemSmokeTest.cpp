@@ -16,6 +16,7 @@
 #include "Minecraft.Server/vendor/linenoise/linenoise.h"
 #include "Minecraft.World/PerformanceTimer.h"
 #include "Minecraft.World/ThreadName.h"
+#include "WorldFileHeaderSmoke.h"
 #include "WorldSystemSmoke.h"
 
 namespace
@@ -197,6 +198,8 @@ int main(int argc, char* argv[])
     const std::uint64_t monotonicMsBefore = LceGetMonotonicMilliseconds();
     const std::uint64_t monotonicNsBefore = LceGetMonotonicNanoseconds();
     const std::uint64_t unixMs = LceGetUnixTimeMilliseconds();
+    const WorldFileHeaderSmokeResult worldFileHeaderSmoke =
+        RunWorldFileHeaderSmoke();
     const WorldSystemSmokeResult worldSystemSmoke = RunWorldSystemSmoke();
     const std::wstring smokeWide = L"native \u4e16\u754c";
     const std::string smokeUtf8 = ServerRuntime::StringUtils::WideToUtf8(smokeWide);
@@ -591,6 +594,14 @@ int main(int argc, char* argv[])
         printf("first_file=\n");
     }
     printf("unix_ms=%llu\n", static_cast<unsigned long long>(unixMs));
+    printf("world_file_header_duplicate=%d round_trip=%d prefixes=%d "
+        "offsets=%d file_count=%d total_size=%u\n",
+        worldFileHeaderSmoke.duplicateReused,
+        worldFileHeaderSmoke.roundTripOk,
+        worldFileHeaderSmoke.prefixesOk,
+        worldFileHeaderSmoke.offsetsOk,
+        worldFileHeaderSmoke.fileCount,
+        worldFileHeaderSmoke.totalSize);
     printf("world_system_monotonic=%d current_ms=%lld real_ms=%lld delta_ns=%lld\n",
         worldSystemSmoke.monotonicAdvanced,
         static_cast<long long>(worldSystemSmoke.currentTimeMs),
@@ -722,6 +733,12 @@ int main(int argc, char* argv[])
         cliRunning && cliStopped && cliSink.queuedLines.empty() &&
         utcTimestamp.size() == 20 && utcTimestamp[10] == 'T' &&
         utcTimestamp[19] == 'Z' &&
+        worldFileHeaderSmoke.duplicateReused &&
+        worldFileHeaderSmoke.roundTripOk &&
+        worldFileHeaderSmoke.prefixesOk &&
+        worldFileHeaderSmoke.offsetsOk &&
+        worldFileHeaderSmoke.fileCount == 2 &&
+        worldFileHeaderSmoke.totalSize > 12U &&
         worldSystemSmoke.monotonicAdvanced &&
         worldSystemSmoke.currentTimePositive &&
         worldSystemSmoke.realTimePositive &&

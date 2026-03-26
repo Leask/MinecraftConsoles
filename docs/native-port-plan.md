@@ -237,6 +237,9 @@ This iteration starts with:
 - native smoke now also runs `System::nanoTime()` and
   `System::currentTimeMillis()` through a dedicated world wrapper instead of
   treating `system.cpp` as compile-only coverage
+- native smoke now compiles and round-trips `Minecraft.World/FileHeader.cpp`
+  so save-header metadata layout, duplicate-entry reuse, offsets, endian
+  selection, and version fields are checked on macOS/Linux paths
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native
