@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include "ServerLogger.h"
 
@@ -30,7 +31,7 @@ namespace ServerRuntime
 		/** `level-seed` is explicitly set */
 		bool hasSeed;
 		/** `level-seed` */
-		__int64 seed;
+		std::int64_t seed;
 		/** `log-level` */
 		EServerLogLevel logLevel;
 		/** `autosave-interval` (seconds) */

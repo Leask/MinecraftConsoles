@@ -6,6 +6,7 @@
 #include "Minecraft.h"
 #include "MinecraftServer.h"
 #include "..\Access\Access.h"
+#include "..\Common\DedicatedServerOptions.h"
 #include "..\Common\StringUtils.h"
 #include "..\ServerLogger.h"
 #include "..\ServerLogManager.h"
@@ -58,22 +59,6 @@ extern DWORD dwProfileSettingsA[];
 
 static const int kProfileValueCount = 5;
 static const int kProfileSettingCount = 4;
-
-struct DedicatedServerConfig
-{
-	int port;
-	char bindIP[256];
-	char name[17];
-	int maxPlayers;
-	int worldSize;
-	int worldSizeChunks;
-	int worldHellScale;
-	__int64 seed;
-	ServerRuntime::EServerLogLevel logLevel;
-	bool hasSeed;
-	bool showHelp;
-};
-
 static std::atomic<bool> g_shutdownRequested(false);
 static const DWORD kDefaultAutosaveIntervalMs = 60 * 1000;
 static const int kServerActionPad = 0;
@@ -151,15 +136,12 @@ static int WaitForServerStoppedThreadProc(void *)
 
 static void PrintUsage()
 {
-	ServerRuntime::LogInfo("usage", "Minecraft.Server.exe [options]");
-	ServerRuntime::LogInfo("usage", "  -port <1-65535>       Listen TCP port (default: server.properties:server-port)");
-	ServerRuntime::LogInfo("usage", "  -ip <addr>            Bind address (default: server.properties:server-ip)");
-	ServerRuntime::LogInfo("usage", "  -bind <addr>          Alias of -ip");
-	ServerRuntime::LogInfo("usage", "  -name <name>          Host display name (max 16 chars, default: server.properties:server-name)");
-	ServerRuntime::LogInfo("usage", "  -maxplayers <1-8>     Public slots (default: server.properties:max-players)");
-	ServerRuntime::LogInfo("usage", "  -seed <int64>         World seed (overrides server.properties:level-seed)");
-	ServerRuntime::LogInfo("usage", "  -loglevel <level>     debug|info|warn|error (default: server.properties:log-level)");
-	ServerRuntime::LogInfo("usage", "  -help                 Show this help");
+	std::vector<std::string> usageLines;
+	ServerRuntime::BuildDedicatedServerUsageLines(&usageLines);
+	for (size_t i = 0; i < usageLines.size(); ++i)
+	{
+		ServerRuntime::LogInfo("usage", usageLines[i].c_str());
+	}
 }
 
 using ServerRuntime::LoadServerPropertiesConfig;
@@ -174,6 +156,7 @@ using ServerRuntime::SaveServerPropertiesConfig;
 using ServerRuntime::SetServerLogLevel;
 using ServerRuntime::ServerPropertiesConfig;
 using ServerRuntime::TryParseServerLogLevel;
+using ServerRuntime::DedicatedServerConfig;
 using ServerRuntime::StringUtils::WideToUtf8;
 using ServerRuntime::BootstrapWorldForServer;
 using ServerRuntime::eWorldBootstrap_CreatedNew;
@@ -181,99 +164,6 @@ using ServerRuntime::eWorldBootstrap_Failed;
 using ServerRuntime::eWorldBootstrap_Loaded;
 using ServerRuntime::WaitForWorldActionIdle;
 using ServerRuntime::WorldBootstrapResult;
-
-static bool ParseIntArg(const char *value, int *outValue)
-{
-	if (value == NULL || *value == 0)
-		return false;
-
-	char *end = NULL;
-	long parsed = strtol(value, &end, 10);
-	if (end == value || *end != 0)
-		return false;
-
-	*outValue = (int)parsed;
-	return true;
-}
-
-static bool ParseInt64Arg(const char *value, __int64 *outValue)
-{
-	if (value == NULL || *value == 0)
-		return false;
-
-	char *end = NULL;
-	__int64 parsed = _strtoi64(value, &end, 10);
-	if (end == value || *end != 0)
-		return false;
-
-	*outValue = parsed;
-	return true;
-}
-
-static bool ParseCommandLine(int argc, char **argv, DedicatedServerConfig *config)
-{
-	for (int i = 1; i < argc; ++i)
-	{
-		const char *arg = argv[i];
-		if (_stricmp(arg, "-help") == 0 || _stricmp(arg, "--help") == 0 || _stricmp(arg, "-h") == 0)
-		{
-			config->showHelp = true;
-			return true;
-		}
-		else if ((_stricmp(arg, "-port") == 0) && (i + 1 < argc))
-		{
-			int port = 0;
-			if (!ParseIntArg(argv[++i], &port) || port <= 0 || port > 65535)
-			{
-				LogError("startup", "Invalid -port value.");
-				return false;
-			}
-			config->port = port;
-		}
-		else if ((_stricmp(arg, "-ip") == 0 || _stricmp(arg, "-bind") == 0) && (i + 1 < argc))
-		{
-			strncpy_s(config->bindIP, sizeof(config->bindIP), argv[++i], _TRUNCATE);
-		}
-		else if ((_stricmp(arg, "-name") == 0) && (i + 1 < argc))
-		{
-			strncpy_s(config->name, sizeof(config->name), argv[++i], _TRUNCATE);
-		}
-		else if ((_stricmp(arg, "-maxplayers") == 0) && (i + 1 < argc))
-		{
-			int maxPlayers = 0;
-			if (!ParseIntArg(argv[++i], &maxPlayers) || maxPlayers <= 0 || maxPlayers > MINECRAFT_NET_MAX_PLAYERS)
-			{
-				LogError("startup", "Invalid -maxplayers value.");
-				return false;
-			}
-			config->maxPlayers = maxPlayers;
-		}
-		else if ((_stricmp(arg, "-seed") == 0) && (i + 1 < argc))
-		{
-			if (!ParseInt64Arg(argv[++i], &config->seed))
-			{
-				LogError("startup", "Invalid -seed value.");
-				return false;
-			}
-			config->hasSeed = true;
-		}
-		else if ((_stricmp(arg, "-loglevel") == 0) && (i + 1 < argc))
-		{
-			if (!TryParseServerLogLevel(argv[++i], &config->logLevel))
-			{
-				LogError("startup", "Invalid -loglevel value. Use debug/info/warn/error.");
-				return false;
-			}
-		}
-		else
-		{
-			LogErrorf("startup", "Unknown or incomplete argument: %s", arg);
-			return false;
-		}
-	}
-
-	return true;
-}
 
 static void SetExeWorkingDirectory()
 {
@@ -285,33 +175,6 @@ static void SetExeWorkingDirectory()
 		*(slash + 1) = 0;
 		SetCurrentDirectoryA(exePath);
 	}
-}
-
-static void ApplyServerPropertiesToDedicatedConfig(const ServerPropertiesConfig &serverProperties, DedicatedServerConfig *config)
-{
-	if (config == NULL)
-	{
-		return;
-	}
-
-	config->port = serverProperties.serverPort;
-	strncpy_s(
-		config->bindIP,
-		sizeof(config->bindIP),
-		serverProperties.serverIp.empty() ? "0.0.0.0" : serverProperties.serverIp.c_str(),
-		_TRUNCATE);
-	strncpy_s(
-		config->name,
-		sizeof(config->name),
-		serverProperties.serverName.empty() ? "DedicatedServer" : serverProperties.serverName.c_str(),
-		_TRUNCATE);
-	config->maxPlayers = serverProperties.maxPlayers;
-	config->worldSize = serverProperties.worldSize;
-	config->worldSizeChunks = serverProperties.worldSizeChunks;
-	config->worldHellScale = serverProperties.worldHellScale;
-	config->logLevel = serverProperties.logLevel;
-	config->hasSeed = serverProperties.hasSeed;
-	config->seed = serverProperties.seed;
 }
 
 /**
@@ -350,28 +213,29 @@ static void HandleXuiActions()
  */
 int main(int argc, char **argv)
 {
-	DedicatedServerConfig config;
-	config.port = WIN64_NET_DEFAULT_PORT;
-	strncpy_s(config.bindIP, sizeof(config.bindIP), "0.0.0.0", _TRUNCATE);
-	strncpy_s(config.name, sizeof(config.name), "DedicatedServer", _TRUNCATE);
-	config.maxPlayers = MINECRAFT_NET_MAX_PLAYERS;
-	config.worldSize = e_worldSize_Classic;
-	config.worldSizeChunks = LEVEL_WIDTH_CLASSIC;
-	config.worldHellScale = HELL_LEVEL_SCALE_CLASSIC;
-	config.seed = 0;
-	config.logLevel = ServerRuntime::eServerLogLevel_Info;
-	config.hasSeed = false;
-	config.showHelp = false;
+	DedicatedServerConfig config =
+		ServerRuntime::CreateDefaultDedicatedServerConfig();
 
 	SetConsoleCtrlHandler(ConsoleCtrlHandlerProc, TRUE);
 	SetExeWorkingDirectory();
 
 	// Load base settings from server.properties, then override with CLI values when provided
 	ServerPropertiesConfig serverProperties = LoadServerPropertiesConfig();
-	ApplyServerPropertiesToDedicatedConfig(serverProperties, &config);
+	ServerRuntime::ApplyServerPropertiesToDedicatedConfig(
+		serverProperties,
+		&config);
 
-	if (!ParseCommandLine(argc, argv, &config))
+	std::string parseError;
+	if (!ServerRuntime::ParseDedicatedServerCommandLine(
+		argc,
+		argv,
+		&config,
+		&parseError))
 	{
+		if (!parseError.empty())
+		{
+			LogError("startup", parseError.c_str());
+		}
 		PrintUsage();
 		return 1;
 	}

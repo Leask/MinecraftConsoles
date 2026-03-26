@@ -7,6 +7,7 @@
 #include "Common\\FileUtils.h"
 #include "..\\Minecraft.World\\ChunkSource.h"
 
+#include <cstdint>
 #include <cctype>
 #include <map>
 #include <stdio.h>
@@ -95,10 +96,10 @@ static std::string IntToString(int value)
 	return std::string(buffer);
 }
 
-static std::string Int64ToString(__int64 value)
+static std::string Int64ToString(std::int64_t value)
 {
 	char buffer[64] = {};
-	_i64toa_s(value, buffer, sizeof(buffer), 10);
+	snprintf(buffer, sizeof(buffer), "%lld", (long long)value);
 	return std::string(buffer);
 }
 
@@ -160,7 +161,7 @@ static bool TryParseInt(const std::string &value, int *outValue)
 	return true;
 }
 
-static bool TryParseInt64(const std::string &value, __int64 *outValue)
+static bool TryParseInt64(const std::string &value, std::int64_t *outValue)
 {
 	if (outValue == NULL)
 	{
@@ -174,13 +175,13 @@ static bool TryParseInt64(const std::string &value, __int64 *outValue)
 	}
 
 	char *end = NULL;
-	__int64 parsed = _strtoi64(trimmed.c_str(), &end, 10);
+	long long parsed = strtoll(trimmed.c_str(), &end, 10);
 	if (end == trimmed.c_str() || *end != 0)
 	{
 		return false;
 	}
 
-	*outValue = parsed;
+	*outValue = static_cast<std::int64_t>(parsed);
 	return true;
 }
 
@@ -498,7 +499,7 @@ static std::string ReadNormalizedStringProperty(
 static bool ReadNormalizedOptionalInt64Property(
 	std::unordered_map<std::string, std::string> *properties,
 	const char *key,
-	__int64 *outValue,
+	std::int64_t *outValue,
 	bool *shouldWrite)
 {
 	std::string raw = TrimAscii((*properties)[key]);
@@ -515,7 +516,7 @@ static bool ReadNormalizedOptionalInt64Property(
 		return false;
 	}
 
-	__int64 parsed = 0;
+	std::int64_t parsed = 0;
 	if (!TryParseInt64(raw, &parsed))
 	{
 		(*properties)[key] = "";
@@ -927,4 +928,3 @@ bool SaveServerPropertiesConfig(const ServerPropertiesConfig &config)
 	return WriteServerPropertiesFile(kServerPropertiesPath, merged);
 }
 }
-

@@ -32,6 +32,7 @@ configure_compiler_target(Minecraft.Portability)
 
 add_executable(Minecraft.Portability.SmokeTest
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/BanManager.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerOptions.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/FileUtils.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/StringUtils.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Console/ServerCliInput.cpp"

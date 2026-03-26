@@ -7,6 +7,7 @@
 #include "lce_stdin/lce_stdin.h"
 #include "lce_time/lce_time.h"
 #include "lce_win32/lce_win32.h"
+#include "Minecraft.Server/Common/DedicatedServerOptions.h"
 #include "Minecraft.Server/Common/FileUtils.h"
 #include "Minecraft.Server/Console/IServerCliInputSink.h"
 #include "Minecraft.Server/Console/ServerCliInput.h"
@@ -211,6 +212,98 @@ int main(int argc, char* argv[])
         ServerRuntime::StringUtils::TryParseUtcTimestampIso8601(
             utcTimestamp,
             &parsedUtcFileTime);
+    const ServerRuntime::DedicatedServerConfig defaultDedicatedConfig =
+        ServerRuntime::CreateDefaultDedicatedServerConfig();
+    ServerRuntime::ServerPropertiesConfig dedicatedProperties = {};
+    dedicatedProperties.serverPort = 25570;
+    dedicatedProperties.serverIp = "10.0.0.5";
+    dedicatedProperties.serverName = "NativeProps";
+    dedicatedProperties.maxPlayers = 24;
+    dedicatedProperties.worldSize = 2;
+    dedicatedProperties.worldSizeChunks = 72;
+    dedicatedProperties.worldHellScale = 2;
+    dedicatedProperties.logLevel = ServerRuntime::eServerLogLevel_Warn;
+    dedicatedProperties.hasSeed = true;
+    dedicatedProperties.seed = 987654321LL;
+    ServerRuntime::DedicatedServerConfig propertyDedicatedConfig =
+        defaultDedicatedConfig;
+    ServerRuntime::ApplyServerPropertiesToDedicatedConfig(
+        dedicatedProperties,
+        &propertyDedicatedConfig);
+    char dedicatedArg0[] = "Minecraft.Server";
+    char dedicatedArg1[] = "-port";
+    char dedicatedArg2[] = "25571";
+    char dedicatedArg3[] = "-bind";
+    char dedicatedArg4[] = "127.0.0.1";
+    char dedicatedArg5[] = "-name";
+    char dedicatedArg6[] = "NativeCli";
+    char dedicatedArg7[] = "-maxplayers";
+    char dedicatedArg8[] = "32";
+    char dedicatedArg9[] = "-seed";
+    char dedicatedArg10[] = "123456789";
+    char dedicatedArg11[] = "-loglevel";
+    char dedicatedArg12[] = "debug";
+    char* dedicatedArgv[] = {
+        dedicatedArg0,
+        dedicatedArg1,
+        dedicatedArg2,
+        dedicatedArg3,
+        dedicatedArg4,
+        dedicatedArg5,
+        dedicatedArg6,
+        dedicatedArg7,
+        dedicatedArg8,
+        dedicatedArg9,
+        dedicatedArg10,
+        dedicatedArg11,
+        dedicatedArg12
+    };
+    ServerRuntime::DedicatedServerConfig cliDedicatedConfig =
+        propertyDedicatedConfig;
+    std::string dedicatedParseError;
+    const bool dedicatedParseOk =
+        ServerRuntime::ParseDedicatedServerCommandLine(
+            static_cast<int>(sizeof(dedicatedArgv) / sizeof(dedicatedArgv[0])),
+            dedicatedArgv,
+            &cliDedicatedConfig,
+            &dedicatedParseError);
+    char dedicatedHelpArg0[] = "Minecraft.Server";
+    char dedicatedHelpArg1[] = "--help";
+    char* dedicatedHelpArgv[] = {
+        dedicatedHelpArg0,
+        dedicatedHelpArg1
+    };
+    ServerRuntime::DedicatedServerConfig helpDedicatedConfig =
+        defaultDedicatedConfig;
+    std::string dedicatedHelpError;
+    const bool dedicatedHelpOk =
+        ServerRuntime::ParseDedicatedServerCommandLine(
+            static_cast<int>(
+                sizeof(dedicatedHelpArgv) / sizeof(dedicatedHelpArgv[0])),
+            dedicatedHelpArgv,
+            &helpDedicatedConfig,
+            &dedicatedHelpError);
+    char dedicatedInvalidArg0[] = "Minecraft.Server";
+    char dedicatedInvalidArg1[] = "-port";
+    char dedicatedInvalidArg2[] = "70000";
+    char* dedicatedInvalidArgv[] = {
+        dedicatedInvalidArg0,
+        dedicatedInvalidArg1,
+        dedicatedInvalidArg2
+    };
+    ServerRuntime::DedicatedServerConfig invalidDedicatedConfig =
+        defaultDedicatedConfig;
+    std::string dedicatedInvalidError;
+    const bool dedicatedInvalidOk =
+        ServerRuntime::ParseDedicatedServerCommandLine(
+            static_cast<int>(
+                sizeof(dedicatedInvalidArgv) /
+                sizeof(dedicatedInvalidArgv[0])),
+            dedicatedInvalidArgv,
+            &invalidDedicatedConfig,
+            &dedicatedInvalidError);
+    std::vector<std::string> dedicatedUsageLines;
+    ServerRuntime::BuildDedicatedServerUsageLines(&dedicatedUsageLines);
     const std::string smokeFilePath = "build/portability-smoke-file.txt";
     const std::string smokeFileText = "native smoke file\n";
     const bool wroteSmokeFile =
@@ -393,6 +486,50 @@ int main(int argc, char* argv[])
         parsedUnsigned,
         utcTimestamp.c_str(),
         parsedUtcOk);
+    printf("dedicated_defaults=%d dedicated_props=%d dedicated_cli=%d "
+        "dedicated_help=%d dedicated_invalid=%d usage_lines=%zu\n",
+        defaultDedicatedConfig.port == 25565 &&
+            std::strcmp(defaultDedicatedConfig.bindIP, "0.0.0.0") == 0 &&
+            std::strcmp(defaultDedicatedConfig.name, "DedicatedServer") == 0 &&
+            defaultDedicatedConfig.maxPlayers == 256 &&
+            !defaultDedicatedConfig.hasSeed &&
+            defaultDedicatedConfig.logLevel ==
+                ServerRuntime::eServerLogLevel_Info,
+        propertyDedicatedConfig.port == dedicatedProperties.serverPort &&
+            std::strcmp(
+                propertyDedicatedConfig.bindIP,
+                dedicatedProperties.serverIp.c_str()) == 0 &&
+            std::strcmp(
+                propertyDedicatedConfig.name,
+                dedicatedProperties.serverName.c_str()) == 0 &&
+            propertyDedicatedConfig.maxPlayers ==
+                dedicatedProperties.maxPlayers &&
+            propertyDedicatedConfig.worldSize ==
+                dedicatedProperties.worldSize &&
+            propertyDedicatedConfig.worldSizeChunks ==
+                dedicatedProperties.worldSizeChunks &&
+            propertyDedicatedConfig.worldHellScale ==
+                dedicatedProperties.worldHellScale &&
+            propertyDedicatedConfig.hasSeed &&
+            propertyDedicatedConfig.seed == dedicatedProperties.seed &&
+            propertyDedicatedConfig.logLevel ==
+                dedicatedProperties.logLevel,
+        dedicatedParseOk &&
+            dedicatedParseError.empty() &&
+            cliDedicatedConfig.port == 25571 &&
+            std::strcmp(cliDedicatedConfig.bindIP, "127.0.0.1") == 0 &&
+            std::strcmp(cliDedicatedConfig.name, "NativeCli") == 0 &&
+            cliDedicatedConfig.maxPlayers == 32 &&
+            cliDedicatedConfig.hasSeed &&
+            cliDedicatedConfig.seed == 123456789LL &&
+            cliDedicatedConfig.logLevel ==
+                ServerRuntime::eServerLogLevel_Debug,
+        dedicatedHelpOk &&
+            dedicatedHelpError.empty() &&
+            helpDedicatedConfig.showHelp,
+        !dedicatedInvalidOk &&
+            !dedicatedInvalidError.empty(),
+        dedicatedUsageLines.size());
     printf("file_write=%d file_read=%d file_readback_match=%d utc_file_time=%llu\n",
         wroteSmokeFile,
         readSmokeFile,
@@ -525,6 +662,44 @@ int main(int argc, char* argv[])
         !smokeUtf8.empty() && smokeRoundTrip == smokeWide &&
         parsedUnsignedOk && parsedUnsigned == 12345ULL &&
         parsedUtcOk && parsedUtcFileTime > 0 && parsedUtcFileTime <= utcFileTime &&
+        defaultDedicatedConfig.port == 25565 &&
+        std::strcmp(defaultDedicatedConfig.bindIP, "0.0.0.0") == 0 &&
+        std::strcmp(defaultDedicatedConfig.name, "DedicatedServer") == 0 &&
+        defaultDedicatedConfig.maxPlayers == 256 &&
+        !defaultDedicatedConfig.hasSeed &&
+        defaultDedicatedConfig.logLevel == ServerRuntime::eServerLogLevel_Info &&
+        propertyDedicatedConfig.port == dedicatedProperties.serverPort &&
+        std::strcmp(
+            propertyDedicatedConfig.bindIP,
+            dedicatedProperties.serverIp.c_str()) == 0 &&
+        std::strcmp(
+            propertyDedicatedConfig.name,
+            dedicatedProperties.serverName.c_str()) == 0 &&
+        propertyDedicatedConfig.maxPlayers ==
+            dedicatedProperties.maxPlayers &&
+        propertyDedicatedConfig.worldSize ==
+            dedicatedProperties.worldSize &&
+        propertyDedicatedConfig.worldSizeChunks ==
+            dedicatedProperties.worldSizeChunks &&
+        propertyDedicatedConfig.worldHellScale ==
+            dedicatedProperties.worldHellScale &&
+        propertyDedicatedConfig.hasSeed &&
+        propertyDedicatedConfig.seed == dedicatedProperties.seed &&
+        propertyDedicatedConfig.logLevel ==
+            dedicatedProperties.logLevel &&
+        dedicatedParseOk && dedicatedParseError.empty() &&
+        cliDedicatedConfig.port == 25571 &&
+        std::strcmp(cliDedicatedConfig.bindIP, "127.0.0.1") == 0 &&
+        std::strcmp(cliDedicatedConfig.name, "NativeCli") == 0 &&
+        cliDedicatedConfig.maxPlayers == 32 &&
+        cliDedicatedConfig.hasSeed &&
+        cliDedicatedConfig.seed == 123456789LL &&
+        cliDedicatedConfig.logLevel == ServerRuntime::eServerLogLevel_Debug &&
+        dedicatedHelpOk && dedicatedHelpError.empty() &&
+        helpDedicatedConfig.showHelp &&
+        !dedicatedInvalidOk && !dedicatedInvalidError.empty() &&
+        !dedicatedUsageLines.empty() &&
+        dedicatedUsageLines[0].find("Minecraft.Server") != std::string::npos &&
         wroteSmokeFile && readSmokeFile && smokeFileReadback == smokeFileText &&
         utcFileTime > 0 &&
         createdBanDirectory && ensuredBanFiles &&

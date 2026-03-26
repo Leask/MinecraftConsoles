@@ -225,6 +225,11 @@ This iteration starts with:
 - `WinsockNetLayer` host/join/split-screen connection setup now partially
   route through shared `lce_net` helpers (`resolve`, `bind`, `listen`,
   `connect`, `TCP_NODELAY`) instead of directly open-coding WinSock setup
+- dedicated server CLI/default/property config parsing now lives in a
+  standalone `Minecraft.Server/Common/DedicatedServerOptions.cpp` module
+  that compiles and runs in the native smoke target, including argument
+  parsing, property overlay, help text, and `int64` seed handling without
+  MSVC-only integer helpers
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native
