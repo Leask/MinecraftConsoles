@@ -52,11 +52,14 @@ configure_compiler_target(Minecraft.Portability)
 configure_compiler_target(Minecraft.Portability.Zlib)
 
 add_executable(Minecraft.Portability.SmokeTest
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/Access.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/BanManager.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/WhitelistManager.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/AccessStorageUtils.h"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerBootstrap.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerOptions.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerRuntime.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerSocketBootstrap.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/FileUtils.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/ServerStoragePaths.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/StringUtils.cpp"
@@ -97,10 +100,13 @@ target_include_directories(Minecraft.Portability.SmokeTest PRIVATE
 configure_compiler_target(Minecraft.Portability.SmokeTest)
 
 add_executable(Minecraft.Server.NativeBootstrap
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/Access.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/BanManager.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/WhitelistManager.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerBootstrap.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerOptions.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerRuntime.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerSocketBootstrap.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/FileUtils.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/ServerStoragePaths.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/StringUtils.cpp"

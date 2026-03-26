@@ -6,16 +6,11 @@
 #include <string>
 #include <vector>
 
-#include "Minecraft.Server/Access/BanManager.h"
-#include "Minecraft.Server/Access/WhitelistManager.h"
+#include "Minecraft.Server/Common/DedicatedServerBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerOptions.h"
-#include "Minecraft.Server/Common/DedicatedServerRuntime.h"
-#include "Minecraft.Server/Common/StringUtils.h"
-#include "Minecraft.Server/Common/ServerStoragePaths.h"
+#include "Minecraft.Server/Common/DedicatedServerSocketBootstrap.h"
 #include "Minecraft.Server/ServerLogger.h"
-#include "Minecraft.Server/ServerProperties.h"
-#include "lce_filesystem/lce_filesystem.h"
-#include "lce_process/lce_process.h"
+#include "lce_net/lce_net.h"
 #include "lce_stdin/lce_stdin.h"
 #include "lce_time/lce_time.h"
 
@@ -31,34 +26,6 @@ namespace
     void NativeSignalHandler(int)
     {
         RequestShutdown();
-    }
-
-    bool EnsureDirectoryChain(const std::string& path)
-    {
-        if (path.empty())
-        {
-            return false;
-        }
-
-        std::string current;
-        for (char ch : path)
-        {
-            if (ch == '/' || ch == '\\')
-            {
-                if (!current.empty() &&
-                    !CreateDirectoryIfMissing(current.c_str(), nullptr))
-                {
-                    return false;
-                }
-
-                continue;
-            }
-
-            current.push_back(ch);
-        }
-
-        return !current.empty() &&
-            CreateDirectoryIfMissing(current.c_str(), nullptr);
     }
 }
 
@@ -77,30 +44,31 @@ int main(int argc, char** argv)
         argv[serverArgc++] = argv[i];
     }
 
-    if (!LceSetCurrentDirectoryToExecutable())
-    {
-        std::fprintf(stderr, "startup error: failed to switch to executable directory\n");
-        return 1;
-    }
-
     std::signal(SIGINT, NativeSignalHandler);
     std::signal(SIGTERM, NativeSignalHandler);
 
-    ServerRuntime::DedicatedServerConfig config =
-        ServerRuntime::CreateDefaultDedicatedServerConfig();
-    ServerRuntime::ServerPropertiesConfig serverProperties =
-        ServerRuntime::LoadServerPropertiesConfig();
-    ServerRuntime::ApplyServerPropertiesToDedicatedConfig(
-        serverProperties,
-        &config);
-
+    ServerRuntime::DedicatedServerBootstrapContext bootstrapContext = {};
     std::string parseError;
-    if (!ServerRuntime::ParseDedicatedServerCommandLine(
+    switch (ServerRuntime::PrepareDedicatedServerBootstrapContext(
             serverArgc,
             argv,
-            &config,
+            &bootstrapContext,
             &parseError))
     {
+    case ServerRuntime::eDedicatedServerBootstrap_Ready:
+        break;
+    case ServerRuntime::eDedicatedServerBootstrap_ShowHelp:
+        {
+            std::vector<std::string> usageLines;
+            ServerRuntime::BuildDedicatedServerUsageLines(&usageLines);
+            for (const std::string& line : usageLines)
+            {
+                std::printf("%s\n", line.c_str());
+            }
+            return 0;
+        }
+    case ServerRuntime::eDedicatedServerBootstrap_Failed:
+    default:
         if (!parseError.empty())
         {
             std::fprintf(stderr, "startup error: %s\n", parseError.c_str());
@@ -108,75 +76,58 @@ int main(int argc, char** argv)
         return 2;
     }
 
-    if (config.showHelp)
+    std::string bootstrapError;
+    if (!ServerRuntime::InitializeDedicatedServerBootstrapEnvironment(
+            &bootstrapContext,
+            &bootstrapError))
     {
-        std::vector<std::string> usageLines;
-        ServerRuntime::BuildDedicatedServerUsageLines(&usageLines);
-        for (const std::string& line : usageLines)
-        {
-            std::printf("%s\n", line.c_str());
-        }
-        return 0;
-    }
-
-    ServerRuntime::SetServerLogLevel(config.logLevel);
-
-    const std::string storageRoot =
-        ServerRuntime::GetServerGameHddRootPath();
-    if (!EnsureDirectoryChain(storageRoot))
-    {
-        ServerRuntime::LogErrorf(
-            "startup",
-            "failed to create storage root %s",
-            storageRoot.c_str());
+        ServerRuntime::LogError("startup", bootstrapError.c_str());
         return 3;
     }
 
-    ServerRuntime::Access::BanManager banManager(".");
-    ServerRuntime::Access::WhitelistManager whitelistManager(".");
-    if (!banManager.EnsureBanFilesExist() ||
-        !banManager.Reload() ||
-        !whitelistManager.EnsureWhitelistFileExists() ||
-        !whitelistManager.Reload())
-    {
-        ServerRuntime::LogError(
-            "startup",
-            "failed to initialize native access storage");
-        return 4;
-    }
-
-    const ServerRuntime::DedicatedServerRuntimeState runtimeState =
-        ServerRuntime::BuildDedicatedServerRuntimeState(
-            config,
-            serverProperties);
-    const std::uint64_t autosaveMs =
-        ServerRuntime::GetDedicatedServerAutosaveIntervalMs(
-            serverProperties);
-
-    ServerRuntime::LogInfof(
-        "startup",
-        "native bootstrap listening on %s:%d name=%s autosave=%llums",
-        runtimeState.bindIp.c_str(),
-        runtimeState.multiplayerPort,
-        runtimeState.hostNameUtf8.c_str(),
-        static_cast<unsigned long long>(autosaveMs));
-    ServerRuntime::LogInfof(
-        "startup",
-        "storage root=%s world=%s level-id=%s whitelist=%s lan=%s",
-        storageRoot.c_str(),
-        ServerRuntime::StringUtils::WideToUtf8(serverProperties.worldName).c_str(),
-        serverProperties.worldSaveId.c_str(),
-        serverProperties.whiteListEnabled ? "enabled" : "disabled",
-        runtimeState.lanAdvertise ? "enabled" : "disabled");
+    ServerRuntime::LogDedicatedServerBootstrapSummary(
+        "native bootstrap",
+        bootstrapContext);
 
     if (bootstrapOnly)
     {
         ServerRuntime::LogInfo(
             "startup",
             "native bootstrap completed in bootstrap-only mode");
+        ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
+            &bootstrapContext);
         return 0;
     }
 
+    if (!LceNetInitialize())
+    {
+        ServerRuntime::LogError(
+            "startup",
+            "failed to initialize native socket runtime");
+        ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
+            &bootstrapContext);
+        return 4;
+    }
+
+    ServerRuntime::DedicatedServerSocketBootstrapState socketState = {};
+    std::string socketError;
+    if (!ServerRuntime::StartDedicatedServerSocketBootstrap(
+            bootstrapContext,
+            &socketState,
+            &socketError))
+    {
+        ServerRuntime::LogError("startup", socketError.c_str());
+        LceNetShutdown();
+        ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
+            &bootstrapContext);
+        return 5;
+    }
+
+    ServerRuntime::LogInfof(
+        "startup",
+        "native bootstrap bound dedicated listener on %s:%d",
+        bootstrapContext.runtimeState.bindIp.c_str(),
+        socketState.boundPort);
     ServerRuntime::LogInfo(
         "startup",
         "native bootstrap shell running; type stop or send SIGINT to exit");
@@ -199,6 +150,10 @@ int main(int argc, char** argv)
         LceSleepMilliseconds(50);
     }
 
+    ServerRuntime::StopDedicatedServerSocketBootstrap(&socketState);
+    LceNetShutdown();
     ServerRuntime::LogInfo("shutdown", "native bootstrap shell stopped");
+    ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
+        &bootstrapContext);
     return 0;
 }

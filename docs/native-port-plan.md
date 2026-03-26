@@ -268,6 +268,19 @@ This iteration starts with:
 - native smoke now also covers `ServerProperties.cpp` and
   `WhitelistManager.cpp`, including default file creation, normalization, save
   persistence, and whitelist JSON workflow
+- dedicated server startup preflight is now being consolidated in
+  `Minecraft.Server/Common/DedicatedServerBootstrap.cpp`, which centralizes
+  executable-directory setup, `server.properties` loading, CLI override
+  parsing, runtime-state derivation, storage-root creation, and access-control
+  initialization so the native bootstrap path and `Windows64/ServerMain.cpp`
+  can converge on the same server-only startup flow
+- native smoke now covers that shared bootstrap module end-to-end, including
+  prepare/init/shutdown transitions and `Access.cpp` state publication on the
+  `_NATIVE_DESKTOP` path
+- native dedicated bootstrap now also routes TCP listener setup through
+  `Minecraft.Server/Common/DedicatedServerSocketBootstrap.cpp`, and native
+  smoke validates the bind/listen/loopback-accept path so the non-Windows
+  server shell no longer only logs a target port but actually owns one
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

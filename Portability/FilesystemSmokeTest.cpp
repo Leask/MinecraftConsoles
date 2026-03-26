@@ -1,7 +1,11 @@
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
 
+#include "Minecraft.Server/Access/Access.h"
 #include "Minecraft.Server/Access/BanManager.h"
+#include "Minecraft.Server/Common/DedicatedServerBootstrap.h"
+#include "Minecraft.Server/Common/DedicatedServerSocketBootstrap.h"
 #include "lce_filesystem/lce_filesystem.h"
 #include "lce_net/lce_net.h"
 #include "lce_process/lce_process.h"
@@ -213,6 +217,8 @@ int main(int argc, char* argv[])
     const WorldCompressionSmokeResult worldCompressionSmoke =
         RunWorldCompressionSmoke();
     const WorldSystemSmokeResult worldSystemSmoke = RunWorldSystemSmoke();
+    const std::filesystem::path smokeWorkingDirectory =
+        std::filesystem::current_path();
     const std::wstring smokeWide = L"native \u4e16\u754c";
     const std::string smokeUtf8 = ServerRuntime::StringUtils::WideToUtf8(smokeWide);
     const std::wstring smokeRoundTrip =
@@ -420,6 +426,110 @@ int main(int argc, char* argv[])
     const bool cliRunning = cliInput.IsRunning();
     cliInput.Stop();
     const bool cliStopped = !cliInput.IsRunning();
+    char bootstrapArg0[] = "Minecraft.Server.NativeBootstrap";
+    char bootstrapArg1[] = "-port";
+    char bootstrapArg2[] = "25578";
+    char bootstrapArg3[] = "-bind";
+    char bootstrapArg4[] = "127.0.0.1";
+    char bootstrapArg5[] = "-name";
+    char bootstrapArg6[] = "BootstrapSmoke";
+    char bootstrapArg7[] = "-loglevel";
+    char bootstrapArg8[] = "warn";
+    char* bootstrapArgv[] = {
+        bootstrapArg0,
+        bootstrapArg1,
+        bootstrapArg2,
+        bootstrapArg3,
+        bootstrapArg4,
+        bootstrapArg5,
+        bootstrapArg6,
+        bootstrapArg7,
+        bootstrapArg8
+    };
+    ServerRuntime::DedicatedServerBootstrapContext bootstrapSmokeContext = {};
+    std::string bootstrapSmokeError;
+    const ServerRuntime::EDedicatedServerBootstrapStatus bootstrapStatus =
+        ServerRuntime::PrepareDedicatedServerBootstrapContext(
+            static_cast<int>(sizeof(bootstrapArgv) / sizeof(bootstrapArgv[0])),
+            bootstrapArgv,
+            &bootstrapSmokeContext,
+            &bootstrapSmokeError);
+    const bool bootstrapPrepared =
+        bootstrapStatus == ServerRuntime::eDedicatedServerBootstrap_Ready &&
+        bootstrapSmokeError.empty();
+    bool bootstrapEnvironmentReady = false;
+    bool bootstrapAccessReady = false;
+    bool bootstrapAccessShutdown = false;
+    if (bootstrapPrepared)
+    {
+        bootstrapEnvironmentReady =
+            ServerRuntime::InitializeDedicatedServerBootstrapEnvironment(
+                &bootstrapSmokeContext,
+                &bootstrapSmokeError);
+        bootstrapAccessReady =
+            bootstrapEnvironmentReady &&
+            ServerRuntime::Access::IsInitialized();
+        ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
+            &bootstrapSmokeContext);
+        bootstrapAccessShutdown =
+            !ServerRuntime::Access::IsInitialized() &&
+            !bootstrapSmokeContext.accessInitialized;
+    }
+    std::filesystem::current_path(smokeWorkingDirectory);
+    const bool bootstrapRestoredDirectory =
+        std::filesystem::current_path() == smokeWorkingDirectory;
+    ServerRuntime::DedicatedServerBootstrapContext socketBootstrapContext = {};
+    socketBootstrapContext.runtimeState.bindIp = "127.0.0.1";
+    socketBootstrapContext.runtimeState.multiplayerPort = 0;
+    ServerRuntime::DedicatedServerSocketBootstrapState socketBootstrapState =
+        {};
+    std::string socketBootstrapError;
+    const bool socketBootstrapStarted =
+        ServerRuntime::StartDedicatedServerSocketBootstrap(
+            socketBootstrapContext,
+            &socketBootstrapState,
+            &socketBootstrapError);
+    LceSocketHandle socketBootstrapClient = LCE_INVALID_SOCKET;
+    LceSocketHandle socketBootstrapAccepted = LCE_INVALID_SOCKET;
+    char socketBootstrapAcceptedIp[64] = {};
+    int socketBootstrapAcceptedPort = -1;
+    bool socketBootstrapConnected = false;
+    bool socketBootstrapAcceptedOk = false;
+    if (socketBootstrapStarted)
+    {
+        socketBootstrapClient = LceNetOpenTcpSocket();
+        socketBootstrapConnected =
+            socketBootstrapClient != LCE_INVALID_SOCKET &&
+            LceNetConnectIpv4(
+                socketBootstrapClient,
+                "127.0.0.1",
+                socketBootstrapState.boundPort);
+        if (socketBootstrapConnected)
+        {
+            socketBootstrapAccepted = LceNetAcceptIpv4(
+                socketBootstrapState.listener,
+                socketBootstrapAcceptedIp,
+                sizeof(socketBootstrapAcceptedIp),
+                &socketBootstrapAcceptedPort);
+            socketBootstrapAcceptedOk =
+                socketBootstrapAccepted != LCE_INVALID_SOCKET &&
+                socketBootstrapAcceptedIp[0] != '\0' &&
+                socketBootstrapAcceptedPort > 0;
+        }
+    }
+    if (socketBootstrapAccepted != LCE_INVALID_SOCKET)
+    {
+        LceNetCloseSocket(socketBootstrapAccepted);
+    }
+    if (socketBootstrapClient != LCE_INVALID_SOCKET)
+    {
+        LceNetCloseSocket(socketBootstrapClient);
+    }
+    const int socketBootstrapBoundPort = socketBootstrapState.boundPort;
+    ServerRuntime::StopDedicatedServerSocketBootstrap(&socketBootstrapState);
+    const bool socketBootstrapStopped =
+        socketBootstrapState.listener == LCE_INVALID_SOCKET &&
+        socketBootstrapState.boundPort == -1;
     CRITICAL_SECTION criticalSection = {};
     InitializeCriticalSection(&criticalSection);
     const ULONG recursiveEnter1 = TryEnterCriticalSection(&criticalSection);
@@ -632,6 +742,27 @@ int main(int argc, char* argv[])
         cliRunning,
         cliStopped,
         cliSink.queuedLines.size());
+    printf("bootstrap_prepare=%d bootstrap_environment=%d access_ready=%d "
+        "access_shutdown=%d restored_dir=%d runtime_host=%s bind_ip=%s "
+        "port=%d storage_root=%s\n",
+        bootstrapPrepared,
+        bootstrapEnvironmentReady,
+        bootstrapAccessReady,
+        bootstrapAccessShutdown,
+        bootstrapRestoredDirectory,
+        bootstrapSmokeContext.runtimeState.hostNameUtf8.c_str(),
+        bootstrapSmokeContext.runtimeState.bindIp.c_str(),
+        bootstrapSmokeContext.runtimeState.multiplayerPort,
+        bootstrapSmokeContext.storageRoot.c_str());
+    printf("socket_bootstrap_started=%d connected=%d accepted=%d stopped=%d "
+        "bound_port=%d accepted_ip=%s accepted_port=%d\n",
+        socketBootstrapStarted,
+        socketBootstrapConnected,
+        socketBootstrapAcceptedOk,
+        socketBootstrapStopped,
+        socketBootstrapStarted ? socketBootstrapBoundPort : -1,
+        socketBootstrapAcceptedIp,
+        socketBootstrapAcceptedPort);
     printf("critical_section_try=%lu recursive_try=%lu\n",
         static_cast<unsigned long>(recursiveEnter1),
         static_cast<unsigned long>(recursiveEnter2));
@@ -830,6 +961,16 @@ int main(int argc, char* argv[])
         historyMaxLenSet == 1 && historyAddFirst == 1 &&
         historyAddSecond == 1 && completionEntriesOk &&
         cliRunning && cliStopped && cliSink.queuedLines.empty() &&
+        bootstrapPrepared && bootstrapEnvironmentReady &&
+        bootstrapAccessReady && bootstrapAccessShutdown &&
+        bootstrapRestoredDirectory &&
+        bootstrapSmokeContext.runtimeState.hostNameUtf8 == "BootstrapSmoke" &&
+        bootstrapSmokeContext.runtimeState.bindIp == "127.0.0.1" &&
+        bootstrapSmokeContext.runtimeState.multiplayerPort == 25578 &&
+        bootstrapSmokeContext.storageRoot == "NativeDesktop/GameHDD" &&
+        socketBootstrapStarted && socketBootstrapConnected &&
+        socketBootstrapAcceptedOk && socketBootstrapStopped &&
+        socketBootstrapBoundPort > 0 &&
         utcTimestamp.size() == 20 && utcTimestamp[10] == 'T' &&
         utcTimestamp[19] == 'Z' &&
         worldFileHeaderSmoke.duplicateReused &&

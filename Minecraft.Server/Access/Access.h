@@ -3,6 +3,10 @@
 #include "BanManager.h"
 #include "WhitelistManager.h"
 
+#if defined(_NATIVE_DESKTOP)
+#include "Minecraft.World/NativeDesktop/NativeDesktopStubs.h"
+#endif
+
 namespace ServerRuntime
 {
 	/**

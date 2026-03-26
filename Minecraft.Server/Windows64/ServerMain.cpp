@@ -5,7 +5,7 @@
 #include "Input.h"
 #include "Minecraft.h"
 #include "MinecraftServer.h"
-#include "..\Access\Access.h"
+#include "..\Common\DedicatedServerBootstrap.h"
 #include "..\Common\DedicatedServerOptions.h"
 #include "..\Common\DedicatedServerRuntime.h"
 #include "..\Common\StringUtils.h"
@@ -79,32 +79,30 @@ namespace ServerRuntime
 }
 
 /**
- * Calls Access::Shutdown automatically once dedicated access control was initialized successfully
- * アクセス制御初期化後のShutdownを自動化する
+ * Calls dedicated bootstrap shutdown automatically once native/bootstrap
+ * environment initialization succeeded.
+ * 共有ブートストラップ初期化後のShutdownを自動化する
  */
-class AccessShutdownGuard
+class DedicatedServerBootstrapGuard
 {
 public:
-	AccessShutdownGuard()
-		: m_active(false)
+	DedicatedServerBootstrapGuard()
+		: m_context(nullptr)
 	{
 	}
 
-	void Activate()
+	void Activate(ServerRuntime::DedicatedServerBootstrapContext *context)
 	{
-		m_active = true;
+		m_context = context;
 	}
 
-	~AccessShutdownGuard()
+	~DedicatedServerBootstrapGuard()
 	{
-		if (m_active)
-		{
-			ServerRuntime::Access::Shutdown();
-		}
+		ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(m_context);
 	}
 
 private:
-	bool m_active;
+	ServerRuntime::DedicatedServerBootstrapContext *m_context;
 };
 static BOOL WINAPI ConsoleCtrlHandlerProc(DWORD ctrlType)
 {
@@ -146,7 +144,6 @@ static void PrintUsage()
 	}
 }
 
-using ServerRuntime::LoadServerPropertiesConfig;
 using ServerRuntime::LogError;
 using ServerRuntime::LogErrorf;
 using ServerRuntime::LogInfof;
@@ -155,7 +152,6 @@ using ServerRuntime::LogStartupStep;
 using ServerRuntime::LogWarn;
 using ServerRuntime::LogWorldIO;
 using ServerRuntime::SaveServerPropertiesConfig;
-using ServerRuntime::SetServerLogLevel;
 using ServerRuntime::ServerPropertiesConfig;
 using ServerRuntime::TryParseServerLogLevel;
 using ServerRuntime::DedicatedServerConfig;
@@ -166,11 +162,6 @@ using ServerRuntime::eWorldBootstrap_Failed;
 using ServerRuntime::eWorldBootstrap_Loaded;
 using ServerRuntime::WaitForWorldActionIdle;
 using ServerRuntime::WorldBootstrapResult;
-
-static bool SetExeWorkingDirectory()
-{
-	return LceSetCurrentDirectoryToExecutable();
-}
 
 /**
  * **Tick Core Async Subsystems**
@@ -208,53 +199,42 @@ static void HandleXuiActions()
  */
 int main(int argc, char **argv)
 {
-	DedicatedServerConfig config =
-		ServerRuntime::CreateDefaultDedicatedServerConfig();
+	ServerRuntime::DedicatedServerBootstrapContext bootstrapContext = {};
+	DedicatedServerBootstrapGuard bootstrapShutdownGuard;
 
 	SetConsoleCtrlHandler(ConsoleCtrlHandlerProc, TRUE);
-	if (!SetExeWorkingDirectory())
-	{
-		LogError("startup", "Failed to switch working directory to executable folder.");
-		return 1;
-	}
-
-	// Load base settings from server.properties, then override with CLI values when provided
-	ServerPropertiesConfig serverProperties = LoadServerPropertiesConfig();
-	ServerRuntime::ApplyServerPropertiesToDedicatedConfig(
-		serverProperties,
-		&config);
-
-	std::string parseError;
-	if (!ServerRuntime::ParseDedicatedServerCommandLine(
+	std::string bootstrapError;
+	switch (ServerRuntime::PrepareDedicatedServerBootstrapContext(
 		argc,
 		argv,
-		&config,
-		&parseError))
+		&bootstrapContext,
+		&bootstrapError))
 	{
-		if (!parseError.empty())
+	case ServerRuntime::eDedicatedServerBootstrap_Ready:
+		break;
+	case ServerRuntime::eDedicatedServerBootstrap_ShowHelp:
+		PrintUsage();
+		return 0;
+	case ServerRuntime::eDedicatedServerBootstrap_Failed:
+	default:
+		if (!bootstrapError.empty())
 		{
-			LogError("startup", parseError.c_str());
+			LogError("startup", bootstrapError.c_str());
 		}
 		PrintUsage();
 		return 1;
 	}
-	if (config.showHelp)
-	{
-		PrintUsage();
-		return 0;
-	}
 
-	SetServerLogLevel(config.logLevel);
 	LogStartupStep("initializing process state");
-	AccessShutdownGuard accessShutdownGuard;
+	DedicatedServerConfig &config = bootstrapContext.config;
+	ServerPropertiesConfig &serverProperties =
+		bootstrapContext.serverProperties;
+	const ServerRuntime::DedicatedServerRuntimeState &runtimeState =
+		bootstrapContext.runtimeState;
 
 	g_iScreenWidth = 1280;
 	g_iScreenHeight = 720;
 
-	const DedicatedServerRuntimeState runtimeState =
-		ServerRuntime::BuildDedicatedServerRuntimeState(
-			config,
-			serverProperties);
 	strncpy_s(
 		g_Win64Username,
 		sizeof(g_Win64Username),
@@ -287,12 +267,14 @@ int main(int argc, char **argv)
 	LogStartupStep("initializing server log manager");
 	ServerRuntime::ServerLogManager::Initialize();
 	LogStartupStep("initializing dedicated access control");
-	if (!ServerRuntime::Access::Initialize(".", serverProperties.whiteListEnabled))
+	if (!ServerRuntime::InitializeDedicatedServerBootstrapEnvironment(
+		&bootstrapContext,
+		&bootstrapError))
 	{
-		LogError("startup", "Failed to initialize dedicated server access control.");
+		LogError("startup", bootstrapError.c_str());
 		return 2;
 	}
-	accessShutdownGuard.Activate();
+	bootstrapShutdownGuard.Activate(&bootstrapContext);
 	LogInfof("startup", "LAN advertise: %s", serverProperties.lanAdvertise ? "enabled" : "disabled");
 	LogInfof("startup", "Whitelist: %s", serverProperties.whiteListEnabled ? "enabled" : "disabled");
 	LogInfof("startup", "Spawn protection radius: %d", serverProperties.spawnProtectionRadius);

@@ -1,9 +1,7 @@
-#include "stdafx.h"
-
 #include "Access.h"
 
-#include "../Common/StringUtils.h"
-#include "../ServerLogger.h"
+#include "Minecraft.Server/Common/StringUtils.h"
+#include "Minecraft.Server/ServerLogger.h"
 
 #include <memory>
 #include <mutex>
@@ -15,6 +13,9 @@ namespace ServerRuntime
 	{
 		namespace
 		{
+			static constexpr PlayerUID kInvalidPlayerXuid =
+				static_cast<PlayerUID>(0);
+
 			/**
 			 * **Access State**
 			 *
@@ -68,7 +69,7 @@ namespace ServerRuntime
 
 		std::string FormatXuid(PlayerUID xuid)
 		{
-			if (xuid == INVALID_XUID)
+			if (xuid == kInvalidPlayerXuid)
 			{
 				return "";
 			}
