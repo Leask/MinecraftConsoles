@@ -100,6 +100,12 @@ int main(int argc, char* argv[])
     const bool tcpListenerBound =
         LceNetBindIpv4(tcpListener, "127.0.0.1", 0);
     const int tcpListenerPort = LceNetGetBoundPort(tcpListener);
+    char resolvedLocalhost[64] = {};
+    const bool tcpResolvedLocalhost = LceNetResolveIpv4(
+        "localhost",
+        tcpListenerPort,
+        resolvedLocalhost,
+        sizeof(resolvedLocalhost));
     const bool tcpListening = LceNetListen(tcpListener, 4);
     const LceSocketHandle tcpClient = LceNetOpenTcpSocket();
     const bool tcpClientNoDelay =
@@ -342,7 +348,7 @@ int main(int argc, char* argv[])
         udpPayloadOk,
         udpSenderIp,
         udpSenderPort);
-    printf("tcp_listener=%d,%d,%d port=%d listening=%d tcp_client=%d,%d,%d "
+    printf("tcp_listener=%d,%d,%d port=%d resolved=%d ip=%s listening=%d tcp_client=%d,%d,%d "
         "connected=%d tcp_accepted=%d,%d,%d ip=%s port=%d "
         "server_recv=%d server_payload_ok=%d client_recv=%d "
         "client_payload_ok=%d\n",
@@ -350,6 +356,8 @@ int main(int argc, char* argv[])
         tcpListenerReuse,
         tcpListenerBound,
         tcpListenerPort,
+        tcpResolvedLocalhost,
+        resolvedLocalhost,
         tcpListening,
         tcpClient != LCE_INVALID_SOCKET,
         tcpClientNoDelay,
@@ -492,7 +500,9 @@ int main(int argc, char* argv[])
         udpSent == static_cast<int>(sizeof(udpPayload) - 1) &&
         udpPayloadOk && udpSenderIp[0] != '\0' && udpSenderPort > 0 &&
         tcpListener != LCE_INVALID_SOCKET && tcpListenerReuse &&
-        tcpListenerBound && tcpListenerPort > 0 && tcpListening &&
+        tcpListenerBound && tcpListenerPort > 0 &&
+        tcpResolvedLocalhost && resolvedLocalhost[0] != '\0' &&
+        tcpListening &&
         tcpClient != LCE_INVALID_SOCKET && tcpClientNoDelay &&
         tcpClientTimeout && tcpConnected &&
         tcpAccepted != LCE_INVALID_SOCKET && tcpAcceptedNoDelay &&

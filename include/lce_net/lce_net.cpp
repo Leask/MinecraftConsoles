@@ -6,6 +6,7 @@
 #else
 #include <arpa/inet.h>
 #include <errno.h>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
@@ -13,6 +14,7 @@
 #include <unistd.h>
 #endif
 
+#include <cstdio>
 #include <cstring>
 
 bool LceNetInitialize()
@@ -65,6 +67,63 @@ bool LceNetStringIsIpLiteral(const char* text)
 
     in6_addr ipv6 = {};
     return inet_pton(AF_INET6, text, &ipv6) == 1;
+}
+
+bool LceNetResolveIpv4(
+    const char* host,
+    int port,
+    char* outIp,
+    std::size_t outIpSize)
+{
+    if (host == nullptr ||
+        host[0] == '\0' ||
+        outIp == nullptr ||
+        outIpSize == 0 ||
+        port < 0 ||
+        port > 65535)
+    {
+        return false;
+    }
+
+    outIp[0] = '\0';
+
+    addrinfo hints = {};
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    char portText[16] = {};
+#if defined(_WINDOWS64) || defined(_WIN32)
+    _snprintf_s(portText, sizeof(portText), _TRUNCATE, "%d", port);
+#else
+    std::snprintf(portText, sizeof(portText), "%d", port);
+#endif
+
+    addrinfo* result = nullptr;
+    if (getaddrinfo(host, portText, &hints, &result) != 0 || result == nullptr)
+    {
+        return false;
+    }
+
+    bool resolved = false;
+    for (addrinfo* current = result; current != nullptr; current = current->ai_next)
+    {
+        if (current->ai_family != AF_INET)
+        {
+            continue;
+        }
+
+        const sockaddr_in* address =
+            reinterpret_cast<const sockaddr_in*>(current->ai_addr);
+        if (inet_ntop(AF_INET, &address->sin_addr, outIp, outIpSize) != nullptr)
+        {
+            resolved = true;
+            break;
+        }
+    }
+
+    freeaddrinfo(result);
+    return resolved;
 }
 
 LceSocketHandle LceNetOpenTcpSocket()

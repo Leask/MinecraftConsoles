@@ -192,6 +192,9 @@ This iteration starts with:
 - first cross-platform TCP socket runtime in `lce_net`
   covering listen/connect/accept/send/receive helpers for native host/join
   groundwork
+- first cross-platform IPv4 resolution helper in `lce_net`
+  so native and Windows desktop paths can share `localhost` / hostname
+  resolution without directly depending on WinSock address setup
 - first non-Windows Win32 compatibility shim for
   `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
 - first server-common utility source (`Minecraft.Server/Common/StringUtils.cpp`)
@@ -219,6 +222,9 @@ This iteration starts with:
   `sendto`/`recvfrom`
 - `WinsockNetLayer` packet framing and accepted-socket setup now partially
   route through shared `lce_net` TCP helpers (`accept`, `send`, `recv`)
+- `WinsockNetLayer` host/join/split-screen connection setup now partially
+  route through shared `lce_net` helpers (`resolve`, `bind`, `listen`,
+  `connect`, `TCP_NODELAY`) instead of directly open-coding WinSock setup
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

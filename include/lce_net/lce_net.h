@@ -13,6 +13,11 @@ void LceNetShutdown();
 int LceNetGetLastError();
 int LceNetCloseSocket(LceSocketHandle socketHandle);
 bool LceNetStringIsIpLiteral(const char* text);
+bool LceNetResolveIpv4(
+    const char* host,
+    int port,
+    char* outIp,
+    std::size_t outIpSize);
 LceSocketHandle LceNetOpenTcpSocket();
 LceSocketHandle LceNetOpenUdpSocket();
 bool LceNetSetSocketNoDelay(LceSocketHandle socketHandle, bool enabled);

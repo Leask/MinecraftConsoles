@@ -18,6 +18,7 @@
 #include "..\..\Minecraft.h"
 #include "..\4JLibs\inc\4J_Profile.h"
 
+#include <cstdio>
 #include <string>
 
 static bool RecvExact(SOCKET sock, BYTE* buf, int len);
@@ -132,13 +133,13 @@ void WinsockNetLayer::Shutdown()
 
 	if (s_listenSocket != INVALID_SOCKET)
 	{
-		closesocket(s_listenSocket);
+		CloseNetSocket(s_listenSocket);
 		s_listenSocket = INVALID_SOCKET;
 	}
 
 	if (s_hostConnectionSocket != INVALID_SOCKET)
 	{
-		closesocket(s_hostConnectionSocket);
+		CloseNetSocket(s_hostConnectionSocket);
 		s_hostConnectionSocket = INVALID_SOCKET;
 	}
 
@@ -157,7 +158,7 @@ void WinsockNetLayer::Shutdown()
 		s_connections[i].active = false;
 		if (s_connections[i].tcpSocket != INVALID_SOCKET)
 		{
-			closesocket(s_connections[i].tcpSocket);
+			CloseNetSocket(s_connections[i].tcpSocket);
 			s_connections[i].tcpSocket = INVALID_SOCKET;
 		}
 		if (s_connections[i].recvThread != nullptr)
@@ -190,7 +191,7 @@ void WinsockNetLayer::Shutdown()
 	{
 		if (s_splitScreenSocket[i] != INVALID_SOCKET)
 		{
-			closesocket(s_splitScreenSocket[i]);
+			CloseNetSocket(s_splitScreenSocket[i]);
 			s_splitScreenSocket[i] = INVALID_SOCKET;
 		}
 		if (s_splitScreenRecvThread[i] != nullptr)
@@ -242,51 +243,30 @@ bool WinsockNetLayer::HostGame(int port, const char* bindIp)
 		s_smallIdToSocket[i] = INVALID_SOCKET;
 	LeaveCriticalSection(&s_smallIdToSocketLock);
 
-	struct addrinfo hints = {};
-	struct addrinfo* result = nullptr;
-
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-	hints.ai_flags = (bindIp == nullptr || bindIp[0] == 0) ? AI_PASSIVE : 0;
-
-	char portStr[16];
-	sprintf_s(portStr, "%d", port);
-
 	const char* resolvedBindIp = (bindIp != nullptr && bindIp[0] != 0) ? bindIp : nullptr;
-	int iResult = getaddrinfo(resolvedBindIp, portStr, &hints, &result);
-	if (iResult != 0)
-	{
-		app.DebugPrintf("getaddrinfo failed for %s:%d - %d\n",
-			resolvedBindIp != nullptr ? resolvedBindIp : "*",
-			port,
-			iResult);
-		return false;
-	}
-
-	s_listenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-	if (s_listenSocket == INVALID_SOCKET)
+	const LceSocketHandle listenHandle = LceNetOpenTcpSocket();
+	if (listenHandle == LCE_INVALID_SOCKET)
 	{
 		app.DebugPrintf("socket() failed: %d\n", GetNetLastError());
-		freeaddrinfo(result);
 		return false;
 	}
+	s_listenSocket = static_cast<SOCKET>(listenHandle);
 
-	int opt = 1;
-	setsockopt(s_listenSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt));
-
-	iResult = ::bind(s_listenSocket, result->ai_addr, static_cast<int>(result->ai_addrlen));
-	freeaddrinfo(result);
-	if (iResult == SOCKET_ERROR)
+	if (!LceNetSetSocketReuseAddress(listenHandle, true))
+	{
+		app.DebugPrintf("setsockopt(SO_REUSEADDR) failed: %d\n", GetNetLastError());
+		CloseNetSocket(s_listenSocket);
+		s_listenSocket = INVALID_SOCKET;
+		return false;
+	}
+	if (!LceNetBindIpv4(listenHandle, resolvedBindIp, port))
 	{
 		app.DebugPrintf("bind() failed: %d\n", GetNetLastError());
 		CloseNetSocket(s_listenSocket);
 		s_listenSocket = INVALID_SOCKET;
 		return false;
 	}
-
-	iResult = listen(s_listenSocket, SOMAXCONN);
-	if (iResult == SOCKET_ERROR)
+	if (!LceNetListen(listenHandle, SOMAXCONN))
 	{
 		app.DebugPrintf("listen() failed: %d\n", GetNetLastError());
 		CloseNetSocket(s_listenSocket);
@@ -316,7 +296,7 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 
 	if (s_hostConnectionSocket != INVALID_SOCKET)
 	{
-		closesocket(s_hostConnectionSocket);
+		CloseNetSocket(s_hostConnectionSocket);
 		s_hostConnectionSocket = INVALID_SOCKET;
 	}
 
@@ -331,20 +311,10 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 		s_clientRecvThread = nullptr;
 	}
 
-	struct addrinfo hints = {};
-	struct addrinfo* result = nullptr;
-
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-
-	char portStr[16];
-	sprintf_s(portStr, "%d", port);
-
-	int iResult = getaddrinfo(ip, portStr, &hints, &result);
-	if (iResult != 0)
+	char resolvedIp[64] = {};
+	if (!LceNetResolveIpv4(ip, port, resolvedIp, sizeof(resolvedIp)))
 	{
-		app.DebugPrintf("getaddrinfo failed for %s:%d - %d\n", ip, port, iResult);
+		app.DebugPrintf("resolve failed for %s:%d\n", ip, port);
 		return false;
 	}
 
@@ -354,21 +324,20 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 
 	for (int attempt = 0; attempt < maxAttempts; ++attempt)
 	{
-		s_hostConnectionSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-		if (s_hostConnectionSocket == INVALID_SOCKET)
+		const LceSocketHandle connectionHandle = LceNetOpenTcpSocket();
+		if (connectionHandle == LCE_INVALID_SOCKET)
 		{
 			app.DebugPrintf("socket() failed: %d\n", GetNetLastError());
 			break;
 		}
+		s_hostConnectionSocket = static_cast<SOCKET>(connectionHandle);
 
-		int noDelay = 1;
-		setsockopt(s_hostConnectionSocket, IPPROTO_TCP, TCP_NODELAY, (const char*)&noDelay, sizeof(noDelay));
+		LceNetSetSocketNoDelay(connectionHandle, true);
 
-		iResult = connect(s_hostConnectionSocket, result->ai_addr, static_cast<int>(result->ai_addrlen));
-		if (iResult == SOCKET_ERROR)
+		if (!LceNetConnectIpv4(connectionHandle, resolvedIp, port))
 		{
 			int err = GetNetLastError();
-			app.DebugPrintf("connect() to %s:%d failed (attempt %d/%d): %d\n", ip, port, attempt + 1, maxAttempts, err);
+			app.DebugPrintf("connect() to %s:%d failed (attempt %d/%d): %d\n", resolvedIp, port, attempt + 1, maxAttempts, err);
 			CloseNetSocket(s_hostConnectionSocket);
 			s_hostConnectionSocket = INVALID_SOCKET;
 			Sleep(200);
@@ -376,8 +345,7 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 		}
 
 		BYTE assignBuf[1];
-		int bytesRecv = recv(s_hostConnectionSocket, (char*)assignBuf, 1, 0);
-		if (bytesRecv != 1)
+		if (!LceNetRecvAll(connectionHandle, assignBuf, 1))
 		{
 			app.DebugPrintf("Failed to receive small ID assignment from host (attempt %d/%d)\n", attempt + 1, maxAttempts);
 			CloseNetSocket(s_hostConnectionSocket);
@@ -403,7 +371,6 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 			Minecraft::GetInstance()->connectionDisconnected(ProfileManager.GetPrimaryPad(), (DisconnectPacket::eDisconnectReason)reason);
 			CloseNetSocket(s_hostConnectionSocket);
 			s_hostConnectionSocket = INVALID_SOCKET;
-			freeaddrinfo(result);
 			return false;
 		}
 
@@ -411,7 +378,6 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 		connected = true;
 		break;
 	}
-	freeaddrinfo(result);
 
 	if (!connected)
 	{
@@ -421,10 +387,10 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 
 	// Save the host IP and port so JoinSplitScreen can connect to the same host
 	// regardless of how the connection was initiated (UI vs command line).
-	strncpy_s(g_Win64MultiplayerIP, sizeof(g_Win64MultiplayerIP), ip, _TRUNCATE);
+	strncpy_s(g_Win64MultiplayerIP, sizeof(g_Win64MultiplayerIP), resolvedIp, _TRUNCATE);
 	g_Win64MultiplayerPort = port;
 
-	app.DebugPrintf("Win64 LAN: Connected to %s:%d, assigned smallId=%d\n", ip, port, s_localSmallId);
+	app.DebugPrintf("Win64 LAN: Connected to %s:%d, assigned smallId=%d\n", resolvedIp, port, s_localSmallId);
 
 	s_active = true;
 	s_connected = true;
@@ -578,7 +544,7 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 			{
 				ServerRuntime::ServerLogManager::OnRejectedTcpConnection(remoteIpForLog, ServerRuntime::ServerLogManager::eTcpRejectReason_BannedIp);
 				SendRejectWithReason(clientSocket, DisconnectPacket::eDisconnect_Banned);
-				closesocket(clientSocket);
+				CloseNetSocket(clientSocket);
 				continue;
 			}
 		}
@@ -597,7 +563,7 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 			{
 				app.DebugPrintf("Win64 LAN: Rejecting connection, game not ready\n");
 			}
-			closesocket(clientSocket);
+			CloseNetSocket(clientSocket);
 			continue;
 		}
 
@@ -615,7 +581,7 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 				app.DebugPrintf("Win64 LAN: Rejecting connection, server at max players\n");
 			}
 			SendRejectWithReason(clientSocket, DisconnectPacket::eDisconnect_ServerFull);
-			closesocket(clientSocket);
+			CloseNetSocket(clientSocket);
 			continue;
 		}
 
@@ -644,17 +610,16 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 				app.DebugPrintf("Win64 LAN: Server full, rejecting connection\n");
 			}
 			SendRejectWithReason(clientSocket, DisconnectPacket::eDisconnect_ServerFull);
-			closesocket(clientSocket);
+			CloseNetSocket(clientSocket);
 			continue;
 		}
 		LeaveCriticalSection(&s_freeSmallIdLock);
 
 		BYTE assignBuf[1] = { assignedSmallId };
-		int sent = send(clientSocket, (const char*)assignBuf, 1, 0);
-		if (sent != 1)
+		if (!LceNetSendAll(static_cast<LceSocketHandle>(clientSocket), assignBuf, 1))
 		{
 			app.DebugPrintf("Failed to send small ID to client\n");
-			closesocket(clientSocket);
+			CloseNetSocket(clientSocket);
 			PushFreeSmallId(assignedSmallId);
 			continue;
 		}
@@ -770,7 +735,7 @@ DWORD WINAPI WinsockNetLayer::RecvThreadProc(LPVOID param)
 			s_connections[i].active = false;
 			if (s_connections[i].tcpSocket != INVALID_SOCKET)
 			{
-				closesocket(s_connections[i].tcpSocket);
+				CloseNetSocket(s_connections[i].tcpSocket);
 				s_connections[i].tcpSocket = INVALID_SOCKET;
 			}
 			break;
@@ -827,7 +792,7 @@ void WinsockNetLayer::CloseConnectionBySmallId(BYTE smallId)
 	{
 		if (s_connections[i].smallId == smallId && s_connections[i].active && s_connections[i].tcpSocket != INVALID_SOCKET)
 		{
-			closesocket(s_connections[i].tcpSocket);
+			CloseNetSocket(s_connections[i].tcpSocket);
 			s_connections[i].tcpSocket = INVALID_SOCKET;
 			app.DebugPrintf("Win64 LAN: Force-closed TCP connection for smallId=%d\n", smallId);
 			break;
@@ -864,38 +829,32 @@ bool WinsockNetLayer::JoinSplitScreen(int padIndex, BYTE* outSmallId)
 		return false;
 	}
 
-	struct addrinfo hints = {};
-	struct addrinfo* result = nullptr;
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_protocol = IPPROTO_TCP;
-
-	char portStr[16];
-	sprintf_s(portStr, "%d", g_Win64MultiplayerPort);
-	if (getaddrinfo(g_Win64MultiplayerIP, portStr, &hints, &result) != 0 || result == nullptr)
+	char resolvedIp[64] = {};
+	if (!LceNetResolveIpv4(
+		g_Win64MultiplayerIP,
+		g_Win64MultiplayerPort,
+		resolvedIp,
+		sizeof(resolvedIp)))
 	{
-		app.DebugPrintf("Win64 LAN: Split-screen getaddrinfo failed for %s:%d\n", g_Win64MultiplayerIP, g_Win64MultiplayerPort);
+		app.DebugPrintf("Win64 LAN: Split-screen resolve failed for %s:%d\n", g_Win64MultiplayerIP, g_Win64MultiplayerPort);
 		return false;
 	}
 
-	SOCKET sock = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-	if (sock == INVALID_SOCKET)
+	const LceSocketHandle splitHandle = LceNetOpenTcpSocket();
+	SOCKET sock = static_cast<SOCKET>(splitHandle);
+	if (splitHandle == LCE_INVALID_SOCKET)
 	{
-		freeaddrinfo(result);
 		return false;
 	}
 
-	int noDelay = 1;
-	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (const char*)&noDelay, sizeof(noDelay));
+	LceNetSetSocketNoDelay(splitHandle, true);
 
-	if (connect(sock, result->ai_addr, (int)result->ai_addrlen) == SOCKET_ERROR)
+	if (!LceNetConnectIpv4(splitHandle, resolvedIp, g_Win64MultiplayerPort))
 	{
 		app.DebugPrintf("Win64 LAN: Split-screen connect() failed: %d\n", GetNetLastError());
 		CloseNetSocket(sock);
-		freeaddrinfo(result);
 		return false;
 	}
-	freeaddrinfo(result);
 
 	BYTE assignBuf[1];
 	if (!RecvExact(sock, assignBuf, 1))
@@ -927,7 +886,7 @@ bool WinsockNetLayer::JoinSplitScreen(int padIndex, BYTE* outSmallId)
 	if (s_splitScreenRecvThread[padIndex] == nullptr)
 	{
 		delete threadParam;
-		closesocket(sock);
+		CloseNetSocket(sock);
 		s_splitScreenSocket[padIndex] = INVALID_SOCKET;
 		s_splitScreenSmallId[padIndex] = 0xFF;
 		app.DebugPrintf("Win64 LAN: CreateThread failed for split-screen pad %d\n", padIndex);
@@ -943,7 +902,7 @@ void WinsockNetLayer::CloseSplitScreenConnection(int padIndex)
 
 	if (s_splitScreenSocket[padIndex] != INVALID_SOCKET)
 	{
-		closesocket(s_splitScreenSocket[padIndex]);
+		CloseNetSocket(s_splitScreenSocket[padIndex]);
 		s_splitScreenSocket[padIndex] = INVALID_SOCKET;
 	}
 	s_splitScreenSmallId[padIndex] = 0xFF;
