@@ -9,6 +9,7 @@
 #include "..\..\Common\Network\PlatformNetworkManagerStub.h"
 #include "..\..\..\Minecraft.World\Socket.h"
 #include <lce_net/lce_net.h>
+#include <lce_time/lce_time.h>
 #if defined(MINECRAFT_SERVER_BUILD)
 #include "..\..\..\Minecraft.Server\Access\Access.h"
 #include "..\..\..\Minecraft.Server\ServerLogManager.h"
@@ -1093,19 +1094,25 @@ bool WinsockNetLayer::StartAdvertising(int gamePort, const wchar_t* hostName, un
 	if (!s_initialized) return false;
 
 	EnterCriticalSection(&s_advertiseLock);
-	memset(&s_advertiseData, 0, sizeof(s_advertiseData));
-	s_advertiseData.magic = WIN64_LAN_BROADCAST_MAGIC;
-	s_advertiseData.netVersion = netVer;
-	s_advertiseData.gamePort = static_cast<WORD>(gamePort);
-	wcsncpy_s(s_advertiseData.hostName, 32, hostName, _TRUNCATE);
-	s_advertiseData.playerCount = 1;
-	s_advertiseData.maxPlayers = MINECRAFT_NET_MAX_PLAYERS;
-	s_advertiseData.gameHostSettings = gameSettings;
-	s_advertiseData.texturePackParentId = texPackId;
-	s_advertiseData.subTexturePackId = subTexId;
-	s_advertiseData.isJoinable = 0;
+	const bool broadcastReady = LceLanBuildBroadcast(
+		gamePort,
+		hostName,
+		gameSettings,
+		texPackId,
+		subTexId,
+		netVer,
+		1,
+		MINECRAFT_NET_MAX_PLAYERS,
+		false,
+		&s_advertiseData);
 	s_hostGamePort = gamePort;
 	LeaveCriticalSection(&s_advertiseLock);
+	if (!broadcastReady)
+	{
+		app.DebugPrintf("Win64 LAN: Failed to build advertise payload for port %d\n",
+			gamePort);
+		return false;
+	}
 
 	s_advertiseSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	if (s_advertiseSock == INVALID_SOCKET)
@@ -1120,7 +1127,8 @@ bool WinsockNetLayer::StartAdvertising(int gamePort, const wchar_t* hostName, un
 	s_advertising = true;
 	s_advertiseThread = CreateThread(nullptr, 0, AdvertiseThreadProc, nullptr, 0, nullptr);
 
-	app.DebugPrintf("Win64 LAN: Started advertising on UDP port %d\n", WIN64_LAN_DISCOVERY_PORT);
+	app.DebugPrintf("Win64 LAN: Started advertising on UDP port %d\n",
+		LCE_LAN_DISCOVERY_PORT);
 	return true;
 }
 
@@ -1168,7 +1176,7 @@ DWORD WINAPI WinsockNetLayer::AdvertiseThreadProc(LPVOID param)
 	struct sockaddr_in broadcastAddr;
 	memset(&broadcastAddr, 0, sizeof(broadcastAddr));
 	broadcastAddr.sin_family = AF_INET;
-	broadcastAddr.sin_port = htons(WIN64_LAN_DISCOVERY_PORT);
+	broadcastAddr.sin_port = htons(LCE_LAN_DISCOVERY_PORT);
 	broadcastAddr.sin_addr.s_addr = INADDR_BROADCAST;
 
 	while (s_advertising)
@@ -1209,7 +1217,7 @@ bool WinsockNetLayer::StartDiscovery()
 	struct sockaddr_in bindAddr;
 	memset(&bindAddr, 0, sizeof(bindAddr));
 	bindAddr.sin_family = AF_INET;
-	bindAddr.sin_port = htons(WIN64_LAN_DISCOVERY_PORT);
+	bindAddr.sin_port = htons(LCE_LAN_DISCOVERY_PORT);
 	bindAddr.sin_addr.s_addr = INADDR_ANY;
 
 	if (::bind(s_discoverySock, (struct sockaddr*)&bindAddr, sizeof(bindAddr)) == SOCKET_ERROR)
@@ -1226,7 +1234,8 @@ bool WinsockNetLayer::StartDiscovery()
 	s_discovering = true;
 	s_discoveryThread = CreateThread(nullptr, 0, DiscoveryThreadProc, nullptr, 0, nullptr);
 
-	app.DebugPrintf("Win64 LAN: Listening for LAN games on UDP port %d\n", WIN64_LAN_DISCOVERY_PORT);
+	app.DebugPrintf("Win64 LAN: Listening for LAN games on UDP port %d\n",
+		LCE_LAN_DISCOVERY_PORT);
 	return true;
 }
 
@@ -1281,68 +1290,39 @@ DWORD WINAPI WinsockNetLayer::DiscoveryThreadProc(LPVOID param)
 		if (recvLen < static_cast<int>(sizeof(Win64LANBroadcast)))
 			continue;
 
-		Win64LANBroadcast* broadcast = (Win64LANBroadcast*)recvBuf;
-		if (broadcast->magic != WIN64_LAN_BROADCAST_MAGIC)
-			continue;
-
 		char senderIP[64];
 		inet_ntop(AF_INET, &senderAddr.sin_addr, senderIP, sizeof(senderIP));
-
-		DWORD now = GetTickCount();
-
-		EnterCriticalSection(&s_discoveryLock);
-
-		bool found = false;
-		for (size_t i = 0; i < s_discoveredSessions.size(); i++)
+		const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
+		Win64LANSession session = {};
+		if (!LceLanDecodeBroadcast(
+			recvBuf,
+			static_cast<std::size_t>(recvLen),
+			senderIP,
+			nowMs,
+			&session))
 		{
-			if (strcmp(s_discoveredSessions[i].hostIP, senderIP) == 0 &&
-				s_discoveredSessions[i].hostPort == static_cast<int>(broadcast->gamePort))
-			{
-				s_discoveredSessions[i].netVersion = broadcast->netVersion;
-				wcsncpy_s(s_discoveredSessions[i].hostName, 32, broadcast->hostName, _TRUNCATE);
-				s_discoveredSessions[i].playerCount = broadcast->playerCount;
-				s_discoveredSessions[i].maxPlayers = broadcast->maxPlayers;
-				s_discoveredSessions[i].gameHostSettings = broadcast->gameHostSettings;
-				s_discoveredSessions[i].texturePackParentId = broadcast->texturePackParentId;
-				s_discoveredSessions[i].subTexturePackId = broadcast->subTexturePackId;
-				s_discoveredSessions[i].isJoinable = (broadcast->isJoinable != 0);
-				s_discoveredSessions[i].lastSeenTick = now;
-				found = true;
-				break;
-			}
+			continue;
 		}
 
-		if (!found)
+		EnterCriticalSection(&s_discoveryLock);
+		bool addedSession = false;
+		LceLanUpsertSession(session, &s_discoveredSessions, &addedSession);
+		if (addedSession)
 		{
-			Win64LANSession session;
-			memset(&session, 0, sizeof(session));
-			strncpy_s(session.hostIP, sizeof(session.hostIP), senderIP, _TRUNCATE);
-			session.hostPort = static_cast<int>(broadcast->gamePort);
-			session.netVersion = broadcast->netVersion;
-			wcsncpy_s(session.hostName, 32, broadcast->hostName, _TRUNCATE);
-			session.playerCount = broadcast->playerCount;
-			session.maxPlayers = broadcast->maxPlayers;
-			session.gameHostSettings = broadcast->gameHostSettings;
-			session.texturePackParentId = broadcast->texturePackParentId;
-			session.subTexturePackId = broadcast->subTexturePackId;
-			session.isJoinable = (broadcast->isJoinable != 0);
-			session.lastSeenTick = now;
-			s_discoveredSessions.push_back(session);
-
 			app.DebugPrintf("Win64 LAN: Discovered game \"%ls\" at %s:%d\n",
 				session.hostName, session.hostIP, session.hostPort);
 		}
-
-		for (size_t i = s_discoveredSessions.size(); i > 0; i--)
+		std::vector<Win64LANSession> expiredSessions;
+		LceLanPruneExpiredSessions(
+			nowMs,
+			LCE_LAN_SESSION_TIMEOUT_MS,
+			&s_discoveredSessions,
+			&expiredSessions);
+		for (size_t i = 0; i < expiredSessions.size(); ++i)
 		{
-			if (now - s_discoveredSessions[i - 1].lastSeenTick > 5000)
-			{
-				app.DebugPrintf("Win64 LAN: Session \"%ls\" at %s timed out\n",
-					s_discoveredSessions[i - 1].hostName, s_discoveredSessions[i - 1].hostIP);
-				s_discoveredSessions.erase(s_discoveredSessions.begin() + (i - 1));
-			}
+			app.DebugPrintf("Win64 LAN: Session \"%ls\" at %s timed out\n",
+				expiredSessions[i].hostName, expiredSessions[i].hostIP);
 		}
-
 		LeaveCriticalSection(&s_discoveryLock);
 	}
 

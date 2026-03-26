@@ -1,4 +1,6 @@
 set(MINECRAFT_PORTABILITY_SOURCES
+  "${CMAKE_SOURCE_DIR}/include/lce_net/lce_lan.cpp"
+  "${CMAKE_SOURCE_DIR}/include/lce_net/lce_lan.h"
   "${CMAKE_SOURCE_DIR}/include/lce_filesystem/lce_filesystem.cpp"
   "${CMAKE_SOURCE_DIR}/include/lce_filesystem/lce_filesystem.h"
   "${CMAKE_SOURCE_DIR}/include/lce_net/lce_net.cpp"

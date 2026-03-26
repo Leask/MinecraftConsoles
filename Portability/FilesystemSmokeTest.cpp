@@ -63,6 +63,37 @@ int main(int argc, char* argv[])
     const bool ipv4Literal = LceNetStringIsIpLiteral("127.0.0.1");
     const bool ipv6Literal = LceNetStringIsIpLiteral("::1");
     const bool invalidLiteral = LceNetStringIsIpLiteral("not-an-ip");
+    const bool lanWireSizeOk = sizeof(LceLanBroadcast) == 84;
+    LceLanBroadcast lanBroadcast = {};
+    const bool lanBroadcastBuilt = LceLanBuildBroadcast(
+        25565,
+        L"SmokeHost",
+        0x1234,
+        77,
+        3,
+        45,
+        2,
+        256,
+        true,
+        &lanBroadcast);
+    LceLanSession lanSession = {};
+    const bool lanBroadcastDecoded = LceLanDecodeBroadcast(
+        &lanBroadcast,
+        sizeof(lanBroadcast),
+        "192.168.0.7",
+        1000,
+        &lanSession);
+    std::vector<LceLanSession> lanSessions;
+    bool lanAdded = false;
+    LceLanUpsertSession(lanSession, &lanSessions, &lanAdded);
+    LceLanSession lanUpdated = lanSession;
+    lanUpdated.playerCount = 4;
+    lanUpdated.isJoinable = false;
+    lanUpdated.lastSeenMs = 2000;
+    bool lanUpdatedAdded = true;
+    LceLanUpsertSession(lanUpdated, &lanSessions, &lanUpdatedAdded);
+    std::vector<LceLanSession> expiredLanSessions;
+    LceLanPruneExpiredSessions(8000, 5000, &lanSessions, &expiredLanSessions);
     const bool stdinAvailable = LceStdinIsAvailable();
     const int stdinReadableNow = stdinAvailable ? LceWaitForStdinReadable(0) : -1;
     SetThreadName(GetCurrentThreadId(), "smoke-main");
@@ -210,6 +241,16 @@ int main(int argc, char* argv[])
         ipv4Literal,
         ipv6Literal,
         invalidLiteral);
+    printf("lan_broadcast=%d lan_decode=%d lan_added=%d lan_updated_added=%d "
+        "lan_count=%zu lan_expired=%zu lan_max_players=%u lan_wire_size=%d\n",
+        lanBroadcastBuilt,
+        lanBroadcastDecoded,
+        lanAdded,
+        lanUpdatedAdded,
+        lanSessions.size(),
+        expiredLanSessions.size(),
+        static_cast<unsigned int>(lanBroadcast.maxPlayers),
+        lanWireSizeOk);
     printf("stdin_available=%d stdin_readable_now=%d\n",
         stdinAvailable,
         stdinReadableNow);
@@ -300,7 +341,18 @@ int main(int argc, char* argv[])
     }
 
     return (exists && smokeDirectoryReady && netInitialized && ipv4Literal &&
-        ipv6Literal && !invalidLiteral && recursiveEnter1 == TRUE &&
+        ipv6Literal && !invalidLiteral &&
+        lanBroadcastBuilt && lanBroadcastDecoded && lanAdded &&
+        !lanUpdatedAdded && lanSessions.empty() &&
+        expiredLanSessions.size() == 1 &&
+        lanBroadcast.maxPlayers == 255 &&
+        lanWireSizeOk &&
+        lanUpdated.playerCount == 4 &&
+        lanSession.isJoinable &&
+        lanSession.hostPort == 25565 &&
+        lanSession.netVersion == 45 &&
+        expiredLanSessions[0].playerCount == 4 &&
+        recursiveEnter1 == TRUE &&
         recursiveEnter2 == TRUE && tlsSet == TRUE && tlsResolved == 1 &&
         !smokeUtf8.empty() && smokeRoundTrip == smokeWide &&
         parsedUnsignedOk && parsedUnsigned == 12345ULL &&

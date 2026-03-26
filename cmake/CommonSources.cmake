@@ -17,6 +17,8 @@ set(_INCLUDE_LCE_STDIN
 source_group("include/lce_stdin" FILES ${_INCLUDE_LCE_STDIN})
 
 set(_INCLUDE_LCE_NET
+  "${CMAKE_SOURCE_DIR}/include/lce_net/lce_lan.cpp"
+  "${CMAKE_SOURCE_DIR}/include/lce_net/lce_lan.h"
   "${CMAKE_SOURCE_DIR}/include/lce_net/lce_net.cpp"
   "${CMAKE_SOURCE_DIR}/include/lce_net/lce_net.h"
 )

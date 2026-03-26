@@ -182,6 +182,10 @@ This iteration starts with:
 - first cross-platform filesystem implementation
 - first cross-platform time and sleep implementation
 - first cross-platform stdin and socket utility implementation
+- first extracted LAN discovery helper
+  (`include/lce_net/lce_lan.cpp`) covering broadcast encoding, session upsert,
+  timeout pruning, and a fixed 16-bit wire layout for future native host/join
+  work
 - first non-Windows Win32 compatibility shim for
   `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
 - first server-common utility source (`Minecraft.Server/Common/StringUtils.cpp`)
@@ -201,6 +205,9 @@ This iteration starts with:
 - second world utility source (`Minecraft.World/PerformanceTimer.cpp`)
   compiling and running in the native smoke target through `lce_time`
   instead of Win32 performance-counter APIs
+- first extracted Windows network-path helper reused by the active tree
+  (`WinsockNetLayer`) and the native smoke target, including a fix for the
+  LAN broadcast `maxPlayers` byte overflow when desktop builds report 256
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

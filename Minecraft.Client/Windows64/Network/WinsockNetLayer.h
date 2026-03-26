@@ -7,6 +7,7 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <vector>
+#include <lce_net/lce_lan.h>
 #include "..\..\Common\Network\NetworkPlayerInterface.h"
 
 #pragma comment(lib, "Ws2_32.lib")
@@ -16,41 +17,10 @@
 #define WIN64_SMALLID_REJECT 0xFF
 #define WIN64_NET_RECV_BUFFER_SIZE 65536
 #define WIN64_NET_MAX_PACKET_SIZE (4 * 1024 * 1024)
-#define WIN64_LAN_DISCOVERY_PORT 25566
-#define WIN64_LAN_BROADCAST_MAGIC 0x4D434C4E
-
 class Socket;
 
-#pragma pack(push, 1)
-struct Win64LANBroadcast
-{
-	DWORD magic;
-	WORD netVersion;
-	WORD gamePort;
-	wchar_t hostName[32];
-	BYTE playerCount;
-	BYTE maxPlayers;
-	DWORD gameHostSettings;
-	DWORD texturePackParentId;
-	BYTE subTexturePackId;
-	BYTE isJoinable;
-};
-#pragma pack(pop)
-
-struct Win64LANSession
-{
-	char hostIP[64];
-	int hostPort;
-	wchar_t hostName[32];
-	unsigned short netVersion;
-	unsigned char playerCount;
-	unsigned char maxPlayers;
-	unsigned int gameHostSettings;
-	unsigned int texturePackParentId;
-	unsigned char subTexturePackId;
-	bool isJoinable;
-	DWORD lastSeenTick;
-};
+using Win64LANBroadcast = LceLanBroadcast;
+using Win64LANSession = LceLanSession;
 
 struct Win64RemoteConnection
 {
