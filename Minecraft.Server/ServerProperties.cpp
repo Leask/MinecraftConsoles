@@ -1,11 +1,9 @@
-#include "stdafx.h"
-
 #include "ServerProperties.h"
 
 #include "ServerLogger.h"
-#include "Common\\StringUtils.h"
-#include "Common\\FileUtils.h"
-#include "..\\Minecraft.World\\ChunkSource.h"
+#include "Common/StringUtils.h"
+#include "Common/FileUtils.h"
+#include "../Minecraft.Client/Common/App_Defines.h"
 
 #include <cstdint>
 #include <cctype>
@@ -36,6 +34,14 @@ static const int kDefaultMaxPlayers = 16;
 static const int kMaxDedicatedPlayers = 256;
 static const int kDefaultAutosaveIntervalSeconds = 60;
 static const char *kLanAdvertisePropertyKey = "lan-advertise";
+static const int kLevelWidthClassic = 54;
+static const int kLevelWidthSmall = 64;
+static const int kLevelWidthMedium = 3 * 64;
+static const int kLevelWidthLarge = 5 * 64;
+static const int kHellLevelScaleClassic = 3;
+static const int kHellLevelScaleSmall = 3;
+static const int kHellLevelScaleMedium = 6;
+static const int kHellLevelScaleLarge = 8;
 
 static const ServerPropertyDefault kServerPropertyDefaults[] =
 {
@@ -92,7 +98,7 @@ static std::string BoolToString(bool value)
 static std::string IntToString(int value)
 {
 	char buffer[32] = {};
-	sprintf_s(buffer, sizeof(buffer), "%d", value);
+	snprintf(buffer, sizeof(buffer), "%d", value);
 	return std::string(buffer);
 }
 
@@ -630,14 +636,14 @@ static int WorldSizeToXzChunks(int worldSize)
 	switch (worldSize)
 	{
 	case e_worldSize_Small:
-		return LEVEL_WIDTH_SMALL;
+		return kLevelWidthSmall;
 	case e_worldSize_Medium:
-		return LEVEL_WIDTH_MEDIUM;
+		return kLevelWidthMedium;
 	case e_worldSize_Large:
-		return LEVEL_WIDTH_LARGE;
+		return kLevelWidthLarge;
 	case e_worldSize_Classic:
 	default:
-		return LEVEL_WIDTH_CLASSIC;
+		return kLevelWidthClassic;
 	}
 }
 
@@ -646,14 +652,14 @@ static int WorldSizeToHellScale(int worldSize)
 	switch (worldSize)
 	{
 	case e_worldSize_Small:
-		return HELL_LEVEL_SCALE_SMALL;
+		return kHellLevelScaleSmall;
 	case e_worldSize_Medium:
-		return HELL_LEVEL_SCALE_MEDIUM;
+		return kHellLevelScaleMedium;
 	case e_worldSize_Large:
-		return HELL_LEVEL_SCALE_LARGE;
+		return kHellLevelScaleLarge;
 	case e_worldSize_Classic:
 	default:
-		return HELL_LEVEL_SCALE_CLASSIC;
+		return kHellLevelScaleClassic;
 	}
 }
 

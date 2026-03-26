@@ -1,12 +1,10 @@
-#include "stdafx.h"
-
 #include "WhitelistManager.h"
 
-#include "..\Common\AccessStorageUtils.h"
-#include "..\Common\FileUtils.h"
-#include "..\Common\StringUtils.h"
-#include "..\ServerLogger.h"
-#include "..\vendor\nlohmann\json.hpp"
+#include "../Common/AccessStorageUtils.h"
+#include "../Common/FileUtils.h"
+#include "../Common/StringUtils.h"
+#include "../ServerLogger.h"
+#include "../vendor/nlohmann/json.hpp"
 
 #include <algorithm>
 

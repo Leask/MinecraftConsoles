@@ -18,6 +18,7 @@
 #include "Minecraft.Server/ServerLogger.h"
 #include "Minecraft.Server/vendor/linenoise/linenoise.h"
 #include "Minecraft.World/PerformanceTimer.h"
+#include "ServerPropertiesSmoke.h"
 #include "WorldCompressionSmoke.h"
 #include "Minecraft.World/ThreadName.h"
 #include "WorldFileHeaderSmoke.h"
@@ -207,6 +208,8 @@ int main(int argc, char* argv[])
     const std::uint64_t unixMs = LceGetUnixTimeMilliseconds();
     const WorldFileHeaderSmokeResult worldFileHeaderSmoke =
         RunWorldFileHeaderSmoke();
+    const ServerPropertiesSmokeResult serverPropertiesSmoke =
+        RunServerPropertiesSmoke();
     const WorldCompressionSmokeResult worldCompressionSmoke =
         RunWorldCompressionSmoke();
     const WorldSystemSmokeResult worldSystemSmoke = RunWorldSystemSmoke();
@@ -665,6 +668,12 @@ int main(int argc, char* argv[])
         worldFileHeaderSmoke.offsetsOk,
         worldFileHeaderSmoke.fileCount,
         worldFileHeaderSmoke.totalSize);
+    printf("server_properties_defaults=%d normalized=%d persisted=%d "
+        "whitelist=%d\n",
+        serverPropertiesSmoke.createdDefaults,
+        serverPropertiesSmoke.normalizedValues,
+        serverPropertiesSmoke.savePersisted,
+        serverPropertiesSmoke.whitelistWorkflowOk);
     printf("world_compression_zlib=%d rle=%d lzxrle=%d input_size=%u "
         "compressed=%u rle_size=%u lzxrle_size=%u\n",
         worldCompressionSmoke.zlibRoundTripOk,
@@ -829,6 +838,10 @@ int main(int argc, char* argv[])
         worldFileHeaderSmoke.offsetsOk &&
         worldFileHeaderSmoke.fileCount == 2 &&
         worldFileHeaderSmoke.totalSize > 12U &&
+        serverPropertiesSmoke.createdDefaults &&
+        serverPropertiesSmoke.normalizedValues &&
+        serverPropertiesSmoke.savePersisted &&
+        serverPropertiesSmoke.whitelistWorkflowOk &&
         worldCompressionSmoke.zlibRoundTripOk &&
         worldCompressionSmoke.rleRoundTripOk &&
         worldCompressionSmoke.lzxRleRoundTripOk &&

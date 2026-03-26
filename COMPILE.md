@@ -120,6 +120,13 @@ ctest --preset linux-native-debug-test
 The repository also includes a `Native Smoke` GitHub Actions workflow that
 runs the same native smoke preset on macOS and Linux for portability changes.
 
+The native presets now also build a bootstrap-only dedicated server shell:
+
+```bash
+./build/macos-native/Portability/Debug/Minecraft.Server.NativeBootstrap --bootstrap-only
+./build/linux-native/Portability/Debug/Minecraft.Server.NativeBootstrap --bootstrap-only
+```
+
 Notes:
 - The Windows64 client and dedicated server remain the only supported gameplay
   targets today.

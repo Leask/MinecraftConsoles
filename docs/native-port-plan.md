@@ -260,6 +260,14 @@ This iteration starts with:
   of `ServerMain.cpp` into
   `Minecraft.Server/Common/DedicatedServerRuntime.cpp`, with native smoke
   verifying host name/bind IP flags and autosave deadline calculation
+- `Minecraft.Server.NativeBootstrap` now builds and runs on native presets as
+  a first real dedicated-server entry point for macOS/Linux; it currently
+  handles executable-directory bootstrap, `server.properties` loading, access
+  file initialization, storage-root creation, and a bootstrap-only startup
+  path verified by CTest
+- native smoke now also covers `ServerProperties.cpp` and
+  `WhitelistManager.cpp`, including default file creation, normalization, save
+  persistence, and whitelist JSON workflow
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

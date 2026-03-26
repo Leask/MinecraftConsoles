@@ -53,11 +53,14 @@ configure_compiler_target(Minecraft.Portability.Zlib)
 
 add_executable(Minecraft.Portability.SmokeTest
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/BanManager.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/WhitelistManager.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/AccessStorageUtils.h"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerOptions.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerRuntime.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/FileUtils.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/ServerStoragePaths.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/StringUtils.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/ServerProperties.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Console/ServerCliInput.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/ServerLogger.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/vendor/linenoise/linenoise.c"
@@ -67,6 +70,8 @@ add_executable(Minecraft.Portability.SmokeTest
   "${CMAKE_SOURCE_DIR}/Minecraft.World/system.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.World/ThreadName.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/FilesystemSmokeTest.cpp"
+  "${CMAKE_CURRENT_LIST_DIR}/ServerPropertiesSmoke.cpp"
+  "${CMAKE_CURRENT_LIST_DIR}/ServerPropertiesSmoke.h"
   "${CMAKE_CURRENT_LIST_DIR}/WorldCompressionSmoke.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/WorldCompressionSmoke.h"
   "${CMAKE_CURRENT_LIST_DIR}/WorldFileHeaderSmoke.cpp"
@@ -91,14 +96,59 @@ target_include_directories(Minecraft.Portability.SmokeTest PRIVATE
 
 configure_compiler_target(Minecraft.Portability.SmokeTest)
 
+add_executable(Minecraft.Server.NativeBootstrap
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/BanManager.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/WhitelistManager.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerOptions.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerRuntime.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/FileUtils.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/ServerStoragePaths.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/StringUtils.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/ServerLogger.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/ServerProperties.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/vendor/linenoise/linenoise.c"
+  "${CMAKE_CURRENT_LIST_DIR}/NativeServerBootstrapMain.cpp"
+)
+
+target_link_libraries(Minecraft.Server.NativeBootstrap PRIVATE
+  Minecraft.Portability
+)
+
+target_compile_definitions(Minecraft.Server.NativeBootstrap PRIVATE
+  ${MINECRAFT_SHARED_DEFINES}
+)
+
+target_include_directories(Minecraft.Server.NativeBootstrap PRIVATE
+  "${CMAKE_SOURCE_DIR}"
+  "${CMAKE_SOURCE_DIR}/include"
+)
+
+configure_compiler_target(Minecraft.Server.NativeBootstrap)
+
 if(BUILD_TESTING)
   add_test(
     NAME minecraft_portability_smoke
     COMMAND $<TARGET_FILE:Minecraft.Portability.SmokeTest> "${CMAKE_SOURCE_DIR}"
   )
+  add_test(
+    NAME minecraft_native_server_bootstrap
+    COMMAND
+      $<TARGET_FILE:Minecraft.Server.NativeBootstrap>
+      --bootstrap-only
+      -port
+      25577
+      -bind
+      127.0.0.1
+      -name
+      NativeBootstrap
+  )
   set_tests_properties(minecraft_portability_smoke PROPERTIES
     LABELS "native;portability;smoke"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+  )
+  set_tests_properties(minecraft_native_server_bootstrap PROPERTIES
+    LABELS "native;server;bootstrap"
+    WORKING_DIRECTORY "$<TARGET_FILE_DIR:Minecraft.Server.NativeBootstrap>"
   )
 endif()
 
@@ -106,8 +156,10 @@ add_custom_target(Minecraft.Portability.Check
   COMMAND ${CMAKE_CTEST_COMMAND}
     --output-on-failure
     -C $<CONFIG>
-    -R "^minecraft_portability_smoke$"
-  DEPENDS Minecraft.Portability.SmokeTest
+    -R "^minecraft_(portability_smoke|native_server_bootstrap)$"
+  DEPENDS
+    Minecraft.Portability.SmokeTest
+    Minecraft.Server.NativeBootstrap
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
   COMMENT "Running native portability smoke test"
   VERBATIM
