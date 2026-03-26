@@ -12,6 +12,7 @@
 #include "Minecraft.Server/Common/StringUtils.h"
 #include "Minecraft.Server/ServerLogger.h"
 #include "Minecraft.Server/vendor/linenoise/linenoise.h"
+#include "Minecraft.World/PerformanceTimer.h"
 #include "Minecraft.World/ThreadName.h"
 
 namespace
@@ -65,6 +66,7 @@ int main(int argc, char* argv[])
     const bool stdinAvailable = LceStdinIsAvailable();
     const int stdinReadableNow = stdinAvailable ? LceWaitForStdinReadable(0) : -1;
     SetThreadName(GetCurrentThreadId(), "smoke-main");
+    PerformanceTimer timer;
     const std::uint64_t monotonicMsBefore = LceGetMonotonicMilliseconds();
     const std::uint64_t monotonicNsBefore = LceGetMonotonicNanoseconds();
     const std::uint64_t unixMs = LceGetUnixTimeMilliseconds();
@@ -191,6 +193,7 @@ int main(int argc, char* argv[])
         GetFirstFileInDirectory(path, firstFile, sizeof(firstFile));
 
     LceSleepMilliseconds(20);
+    timer.PrintElapsedTime(L"smoke");
 
     const std::uint64_t monotonicMsAfter = LceGetMonotonicMilliseconds();
     const std::uint64_t monotonicNsAfter = LceGetMonotonicNanoseconds();

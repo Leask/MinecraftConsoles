@@ -1,13 +1,15 @@
 #pragma once
 
+#include <cstdint>
+#include <string>
+
 class PerformanceTimer
 {
 private:
-	LARGE_INTEGER  m_qwStartTime;
-	float m_fSecsPerTick;
+	std::uint64_t m_startTimeNs;
 
 public:
 	PerformanceTimer();
 	void Reset();
-	void PrintElapsedTime(const wstring &description);
+	void PrintElapsedTime(const std::wstring &description);
 };

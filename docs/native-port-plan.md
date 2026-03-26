@@ -198,6 +198,9 @@ This iteration starts with:
 - first world utility source (`Minecraft.World/ThreadName.cpp`)
   compiling and running in the native smoke target with a native
   pthread-based thread-name path
+- second world utility source (`Minecraft.World/PerformanceTimer.cpp`)
+  compiling and running in the native smoke target through `lce_time`
+  instead of Win32 performance-counter APIs
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native
