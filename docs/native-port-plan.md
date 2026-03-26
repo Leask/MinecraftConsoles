@@ -234,6 +234,9 @@ This iteration starts with:
   instead of falling through to Orbis headers, and the native smoke target
   now compiles `Minecraft.World/system.cpp` through a narrow
   `NativeDesktopStubs.h` shim plus `lce_win32` compatibility types
+- native smoke now also runs `System::nanoTime()` and
+  `System::currentTimeMillis()` through a dedicated world wrapper instead of
+  treating `system.cpp` as compile-only coverage
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

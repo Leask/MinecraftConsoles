@@ -16,6 +16,7 @@
 #include "Minecraft.Server/vendor/linenoise/linenoise.h"
 #include "Minecraft.World/PerformanceTimer.h"
 #include "Minecraft.World/ThreadName.h"
+#include "WorldSystemSmoke.h"
 
 namespace
 {
@@ -196,6 +197,7 @@ int main(int argc, char* argv[])
     const std::uint64_t monotonicMsBefore = LceGetMonotonicMilliseconds();
     const std::uint64_t monotonicNsBefore = LceGetMonotonicNanoseconds();
     const std::uint64_t unixMs = LceGetUnixTimeMilliseconds();
+    const WorldSystemSmokeResult worldSystemSmoke = RunWorldSystemSmoke();
     const std::wstring smokeWide = L"native \u4e16\u754c";
     const std::string smokeUtf8 = ServerRuntime::StringUtils::WideToUtf8(smokeWide);
     const std::wstring smokeRoundTrip =
@@ -589,6 +591,11 @@ int main(int argc, char* argv[])
         printf("first_file=\n");
     }
     printf("unix_ms=%llu\n", static_cast<unsigned long long>(unixMs));
+    printf("world_system_monotonic=%d current_ms=%lld real_ms=%lld delta_ns=%lld\n",
+        worldSystemSmoke.monotonicAdvanced,
+        static_cast<long long>(worldSystemSmoke.currentTimeMs),
+        static_cast<long long>(worldSystemSmoke.realTimeMs),
+        static_cast<long long>(worldSystemSmoke.deltaNs));
     printf("delta_ms=%llu delta_ns=%llu\n",
         static_cast<unsigned long long>(deltaMs),
         static_cast<unsigned long long>(deltaNs));
@@ -715,6 +722,10 @@ int main(int argc, char* argv[])
         cliRunning && cliStopped && cliSink.queuedLines.empty() &&
         utcTimestamp.size() == 20 && utcTimestamp[10] == 'T' &&
         utcTimestamp[19] == 'Z' &&
+        worldSystemSmoke.monotonicAdvanced &&
+        worldSystemSmoke.currentTimePositive &&
+        worldSystemSmoke.realTimePositive &&
+        worldSystemSmoke.deltaNs > 0 &&
         waitAny == WAIT_OBJECT_0 + 1 && waitAllBefore == WAIT_TIMEOUT &&
         waitAllAfter == WAIT_OBJECT_0 && resumed == 0 &&
         threadWait == WAIT_OBJECT_0 && gotExitCode == TRUE &&

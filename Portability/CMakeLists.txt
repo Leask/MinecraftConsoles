@@ -42,6 +42,8 @@ add_executable(Minecraft.Portability.SmokeTest
   "${CMAKE_SOURCE_DIR}/Minecraft.World/system.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.World/ThreadName.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/FilesystemSmokeTest.cpp"
+  "${CMAKE_CURRENT_LIST_DIR}/WorldSystemSmoke.cpp"
+  "${CMAKE_CURRENT_LIST_DIR}/WorldSystemSmoke.h"
 )
 
 target_link_libraries(Minecraft.Portability.SmokeTest PRIVATE
