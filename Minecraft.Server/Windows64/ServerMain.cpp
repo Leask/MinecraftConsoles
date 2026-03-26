@@ -8,6 +8,7 @@
 #include "..\Common\DedicatedServerBootstrap.h"
 #include "..\Common\DedicatedServerOptions.h"
 #include "..\Common\DedicatedServerRuntime.h"
+#include "..\Common\DedicatedServerShutdownPlan.h"
 #include "..\Common\DedicatedServerSessionConfig.h"
 #include "..\Common\DedicatedServerWorldBootstrap.h"
 #include "..\Common\StringUtils.h"
@@ -550,11 +551,15 @@ int main(int argc, char **argv)
 
 	LogInfof("shutdown", "Dedicated server stopped");
 	MinecraftServer *server = MinecraftServer::getInstance();
-	if (server != NULL)
+	const ServerRuntime::DedicatedServerShutdownPlan shutdownPlan =
+		ServerRuntime::BuildDedicatedServerShutdownPlan(
+			server != NULL,
+			g_NetworkManager.ServerStoppedValid());
+	if (shutdownPlan.shouldSetSaveOnExit)
 	{
 		server->setSaveOnExit(true);
 	}
-	if (server != NULL)
+	if (shutdownPlan.shouldLogShutdownSave)
 	{
 		LogWorldIO("requesting save before shutdown");
 		LogWorldIO("using saveOnExit for shutdown");
@@ -562,7 +567,7 @@ int main(int argc, char **argv)
 
 	MinecraftServer::HaltServer();
 
-	if (g_NetworkManager.ServerStoppedValid())
+	if (shutdownPlan.shouldWaitForServerStop)
 	{
 		C4JThread waitThread(&WaitForServerStoppedThreadProc, NULL, "WaitServerStopped");
 		waitThread.Run();

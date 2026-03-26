@@ -531,6 +531,8 @@ set(_MINECRAFT_SERVER_COMMON_SERVER_COMMON
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerOptions.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerRuntime.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerRuntime.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerShutdownPlan.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerShutdownPlan.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerSessionConfig.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerSessionConfig.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerSocketBootstrap.cpp"

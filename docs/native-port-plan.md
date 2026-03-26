@@ -294,6 +294,10 @@ This iteration starts with:
   is shrinking toward a thin coordinator while native smoke verifies
   save-id persistence decisions, initial-save gating, and autosave deadline
   transitions without depending on D3D/UI startup
+- shutdown save/wait decisions are now also moving behind
+  `Minecraft.Server/Common/DedicatedServerShutdownPlan.cpp`, so the tail of
+  `ServerMain.cpp` is starting to converge on shared lifecycle rules instead
+  of open-coded `saveOnExit` / `ServerStoppedValid` branches
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

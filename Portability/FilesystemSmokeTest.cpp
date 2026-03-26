@@ -9,6 +9,7 @@
 #include "Minecraft.Server/Common/DedicatedServerSessionConfig.h"
 #include "Minecraft.Server/Common/DedicatedServerSocketBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerWorldBootstrap.h"
+#include "Minecraft.Server/Common/DedicatedServerShutdownPlan.h"
 #include "lce_filesystem/lce_filesystem.h"
 #include "lce_net/lce_net.h"
 #include "lce_process/lce_process.h"
@@ -406,6 +407,14 @@ int main(int argc, char* argv[])
             sessionConfig,
             fakeSaveData,
             7777);
+    const ServerRuntime::DedicatedServerShutdownPlan shutdownPlanWithServer =
+        ServerRuntime::BuildDedicatedServerShutdownPlan(
+            true,
+            true);
+    const ServerRuntime::DedicatedServerShutdownPlan shutdownPlanWithoutServer =
+        ServerRuntime::BuildDedicatedServerShutdownPlan(
+            false,
+            false);
     const std::string smokeFilePath = "build/portability-smoke-file.txt";
     const std::string smokeFileText = "native smoke file\n";
     ServerRuntime::ServerPropertiesConfig runtimeProperties = {};
@@ -886,6 +895,15 @@ int main(int argc, char* argv[])
         autosaveRequested,
         autosaveNextAdvanced,
         autosaveCompleted);
+    printf("shutdown_plan=%d with_server_wait=%d without_server_wait=%d\n",
+        shutdownPlanWithServer.shouldSetSaveOnExit &&
+            shutdownPlanWithServer.shouldLogShutdownSave &&
+            shutdownPlanWithServer.shouldWaitForServerStop &&
+            !shutdownPlanWithoutServer.shouldSetSaveOnExit &&
+            !shutdownPlanWithoutServer.shouldLogShutdownSave &&
+            !shutdownPlanWithoutServer.shouldWaitForServerStop,
+        shutdownPlanWithServer.shouldWaitForServerStop,
+        shutdownPlanWithoutServer.shouldWaitForServerStop);
     printf("file_write=%d file_read=%d file_readback_match=%d utc_file_time=%llu\n",
         wroteSmokeFile,
         readSmokeFile,
@@ -1207,6 +1225,12 @@ int main(int argc, char* argv[])
         autosaveRequested &&
         autosaveNextAdvanced &&
         autosaveCompleted &&
+        shutdownPlanWithServer.shouldSetSaveOnExit &&
+        shutdownPlanWithServer.shouldLogShutdownSave &&
+        shutdownPlanWithServer.shouldWaitForServerStop &&
+        !shutdownPlanWithoutServer.shouldSetSaveOnExit &&
+        !shutdownPlanWithoutServer.shouldLogShutdownSave &&
+        !shutdownPlanWithoutServer.shouldWaitForServerStop &&
         wroteSmokeFile && readSmokeFile && smokeFileReadback == smokeFileText &&
         runtimeState.hostNameUtf8 == "RuntimeHost" &&
         runtimeState.hostNameWide == L"RuntimeHost" &&
