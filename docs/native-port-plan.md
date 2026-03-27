@@ -362,6 +362,9 @@ This iteration starts with:
   which pulls the initial-save and autosave `app.SetXuiServerAction` /
   `app.GetXuiServerAction` path out of `ServerMain.cpp` and into the
   platform-specific runtime layer
+- hosted game startup is now also starting to move behind a dedicated runtime
+  boundary, so `ServerMain.cpp` no longer open-code the
+  `g_NetworkManager.HostGame + C4JThread + startup wait loop` sequence
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

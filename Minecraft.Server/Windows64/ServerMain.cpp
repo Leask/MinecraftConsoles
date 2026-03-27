@@ -6,6 +6,7 @@
 #include "Minecraft.h"
 #include "MinecraftServer.h"
 #include "..\Common\DedicatedServerBootstrap.h"
+#include "..\Common\DedicatedServerHostedGameRuntime.h"
 #include "..\Common\DedicatedServerOptions.h"
 #include "..\Common\DedicatedServerPlatformState.h"
 #include "..\Common\DedicatedServerPlatformRuntime.h"
@@ -313,30 +314,11 @@ int main(int argc, char **argv)
 		networkInitPlan);
 
 	LogStartupStep("starting hosted network game thread");
-	g_NetworkManager.HostGame(
-		hostedGamePlan.localUsersMask,
-		hostedGamePlan.onlineGame,
-		hostedGamePlan.privateGame,
-		hostedGamePlan.publicSlots,
-		hostedGamePlan.privateSlots);
-	if (hostedGamePlan.fakeLocalPlayerJoined)
-	{
-		g_NetworkManager.FakeLocalPlayerJoined();
-	}
-
-	C4JThread *startThread = new C4JThread(&CGameNetworkManager::RunNetworkGameThreadProc, (LPVOID)param, "RunNetworkGame");
-	startThread->Run();
-
-	while (startThread->isRunning() &&
-		!ServerRuntime::IsDedicatedServerShutdownRequested())
-	{
-		ServerRuntime::TickDedicatedServerPlatformRuntime();
-		LceSleepMilliseconds(10);
-	}
-
-	startThread->WaitForCompletion(INFINITE);
-	int startupResult = startThread->GetExitCode();
-	delete startThread;
+	int startupResult =
+		ServerRuntime::StartDedicatedServerHostedGameRuntime(
+			hostedGamePlan,
+			&CGameNetworkManager::RunNetworkGameThreadProc,
+			(LPVOID)param);
 
 	const ServerRuntime::DedicatedServerHostedThreadStartupPlan
 		hostedThreadStartupPlan =

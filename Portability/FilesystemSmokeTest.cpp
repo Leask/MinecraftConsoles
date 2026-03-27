@@ -6,6 +6,7 @@
 #include "Minecraft.Server/Access/Access.h"
 #include "Minecraft.Server/Access/BanManager.h"
 #include "Minecraft.Server/Common/DedicatedServerBootstrap.h"
+#include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSessionConfig.h"
@@ -37,6 +38,16 @@
 
 namespace
 {
+    int HostedGameRuntimeSmokeThreadProc(void* threadParam)
+    {
+        int* value = static_cast<int*>(threadParam);
+        if (value != nullptr)
+        {
+            *value = 1;
+        }
+        return 11;
+    }
+
     struct SmokeNetworkGameInitData
     {
         std::int64_t seed = 0;
@@ -526,6 +537,12 @@ int main(int argc, char* argv[])
     ServerRuntime::RequestDedicatedServerWorldAutosave(0);
     const bool platformWaitIdle =
         ServerRuntime::WaitForDedicatedServerWorldActionIdle(0, 1);
+    int hostedGameRuntimeThreadValue = 0;
+    const int hostedGameRuntimeResult =
+        ServerRuntime::StartDedicatedServerHostedGameRuntime(
+            hostedGamePlan,
+            &HostedGameRuntimeSmokeThreadProc,
+            &hostedGameRuntimeThreadValue);
     ServerRuntime::StopDedicatedServerPlatformRuntime();
     const std::uint64_t defaultAutosaveMs =
         ServerRuntime::GetDedicatedServerAutosaveIntervalMs(
@@ -1138,6 +1155,11 @@ int main(int argc, char* argv[])
         platformActionIdle && platformWaitIdle,
         platformActionIdle,
         platformWaitIdle);
+    printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
+        hostedGameRuntimeResult == 11 &&
+            hostedGameRuntimeThreadValue == 1,
+        hostedGameRuntimeResult,
+        hostedGameRuntimeThreadValue);
     printf("server_storage_platform=%s game_hdd_root=%s\n",
         storagePlatformDirectory,
         storageGameHddRoot.c_str());
@@ -1458,6 +1480,8 @@ int main(int argc, char* argv[])
         runtimeState.lanAdvertise &&
         platformActionIdle &&
         platformWaitIdle &&
+        hostedGameRuntimeResult == 11 &&
+        hostedGameRuntimeThreadValue == 1 &&
         defaultAutosaveMs == 60000U &&
         configuredAutosaveMs == 45000U &&
         nextAutosaveTick == 46000U &&
