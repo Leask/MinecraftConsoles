@@ -227,6 +227,9 @@ This iteration starts with:
 - Windows-specific dedicated-server globals such as username, bind IP, port,
   and dedicated/LAN flags are now applied inside the platform runtime instead
   of being open-coded in `ServerMain.cpp`
+- shutdown request state is now shared between Windows `ServerMain` and the
+  native bootstrap path, which removes duplicated signal/shutdown atomics and
+  keeps the future native runtime boundary consistent
 - first non-Windows Win32 compatibility shim for
   `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
 - first server-common utility source (`Minecraft.Server/Common/StringUtils.cpp`)

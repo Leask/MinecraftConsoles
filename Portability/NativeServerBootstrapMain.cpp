@@ -1,4 +1,3 @@
-#include <atomic>
 #include <cstdint>
 #include <csignal>
 #include <cstdio>
@@ -10,6 +9,7 @@
 #include "Minecraft.Server/Common/DedicatedServerOptions.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
+#include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 #include "Minecraft.Server/Common/DedicatedServerSocketBootstrap.h"
 #include "Minecraft.Server/ServerLogger.h"
 #include "lce_net/lce_net.h"
@@ -18,16 +18,9 @@
 
 namespace
 {
-    std::atomic<bool> g_shutdownRequested(false);
-
-    void RequestShutdown()
-    {
-        g_shutdownRequested.store(true);
-    }
-
     void NativeSignalHandler(int)
     {
-        RequestShutdown();
+        ServerRuntime::RequestDedicatedServerShutdown();
     }
 
     const char* GetDedicatedServerLoopbackTarget(
@@ -41,6 +34,7 @@ namespace
 
 int main(int argc, char** argv)
 {
+    ServerRuntime::ResetDedicatedServerShutdownRequest();
     bool bootstrapOnly = false;
     bool selfConnect = false;
     int serverArgc = 1;
@@ -246,7 +240,7 @@ int main(int argc, char** argv)
     ServerRuntime::LogInfo(
         "startup",
         "native bootstrap shell running; type stop or send SIGINT to exit");
-    while (!g_shutdownRequested.load())
+    while (!ServerRuntime::IsDedicatedServerShutdownRequested())
     {
         if (LceStdinIsAvailable() && LceWaitForStdinReadable(50) == 1)
         {
@@ -256,7 +250,7 @@ int main(int argc, char** argv)
                 const std::string line = lineBuffer;
                 if (line == "stop\n" || line == "stop\r\n" || line == "stop")
                 {
-                    RequestShutdown();
+                    ServerRuntime::RequestDedicatedServerShutdown();
                     break;
                 }
             }

@@ -536,6 +536,8 @@ set(_MINECRAFT_SERVER_COMMON_SERVER_COMMON
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerPlatformRuntime.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerRuntime.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerRuntime.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerSignalState.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerSignalState.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerShutdownPlan.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerShutdownPlan.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerSessionConfig.cpp"

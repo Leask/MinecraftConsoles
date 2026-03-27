@@ -10,6 +10,7 @@
 #include "..\Common\DedicatedServerPlatformState.h"
 #include "..\Common\DedicatedServerPlatformRuntime.h"
 #include "..\Common\DedicatedServerRuntime.h"
+#include "..\Common\DedicatedServerSignalState.h"
 #include "..\Common\DedicatedServerShutdownPlan.h"
 #include "..\Common\DedicatedServerSessionConfig.h"
 #include "..\Common\DedicatedServerWorldBootstrap.h"
@@ -45,24 +46,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <atomic>
 #include <cwchar>
 
-static std::atomic<bool> g_shutdownRequested(false);
 static const int kServerActionPad = 0;
-
-static bool IsShutdownRequested()
-{
-	return g_shutdownRequested.load();
-}
-
-namespace ServerRuntime
-{
-	void RequestDedicatedServerShutdown()
-	{
-		g_shutdownRequested.store(true);
-	}
-}
 
 /**
  * Calls dedicated bootstrap shutdown automatically once native/bootstrap
@@ -218,6 +204,7 @@ int main(int argc, char **argv)
 	ServerRuntime::DedicatedServerBootstrapContext bootstrapContext = {};
 	DedicatedServerBootstrapGuard bootstrapShutdownGuard;
 	DedicatedServerLogManagerGuard logManagerGuard;
+	ServerRuntime::ResetDedicatedServerShutdownRequest();
 
 	SetConsoleCtrlHandler(ConsoleCtrlHandlerProc, TRUE);
 	std::string bootstrapError;
@@ -370,7 +357,8 @@ int main(int argc, char **argv)
 	C4JThread *startThread = new C4JThread(&CGameNetworkManager::RunNetworkGameThreadProc, (LPVOID)param, "RunNetworkGame");
 	startThread->Run();
 
-	while (startThread->isRunning() && !IsShutdownRequested())
+	while (startThread->isRunning() &&
+		!ServerRuntime::IsDedicatedServerShutdownRequested())
 	{
 		TickCoreSystems();
 		LceSleepMilliseconds(10);
@@ -401,7 +389,7 @@ int main(int argc, char **argv)
 	const ServerRuntime::DedicatedServerInitialSavePlan initialSavePlan =
 		ServerRuntime::BuildDedicatedServerInitialSavePlan(
 		worldBootstrapPlan,
-		IsShutdownRequested(),
+		ServerRuntime::IsDedicatedServerShutdownRequested(),
 		app.m_bShutdown);
 	if (initialSavePlan.shouldRequestInitialSave)
 	{
@@ -435,13 +423,15 @@ int main(int argc, char **argv)
 	ServerRuntime::ServerCli serverCli;
 	serverCli.Start();
 
-	while (!IsShutdownRequested() && !app.m_bShutdown)
+	while (!ServerRuntime::IsDedicatedServerShutdownRequested() &&
+		!app.m_bShutdown)
 	{
 		TickCoreSystems();
 		HandleXuiActions();
 		serverCli.Poll();
 
-		if (IsShutdownRequested() || app.m_bShutdown)
+		if (ServerRuntime::IsDedicatedServerShutdownRequested() ||
+			app.m_bShutdown)
 		{
 			break;
 		}

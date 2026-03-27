@@ -9,6 +9,7 @@
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSessionConfig.h"
+#include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 #include "Minecraft.Server/Common/DedicatedServerSocketBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerWorldBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerShutdownPlan.h"
@@ -482,6 +483,15 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerHostedThreadStartupPlan
         threadStartupPlanFailed =
             ServerRuntime::BuildDedicatedServerHostedThreadStartupPlan(9);
+    ServerRuntime::ResetDedicatedServerShutdownRequest();
+    const bool shutdownSignalInitiallyClear =
+        !ServerRuntime::IsDedicatedServerShutdownRequested();
+    ServerRuntime::RequestDedicatedServerShutdown();
+    const bool shutdownSignalRaised =
+        ServerRuntime::IsDedicatedServerShutdownRequested();
+    ServerRuntime::ResetDedicatedServerShutdownRequest();
+    const bool shutdownSignalReset =
+        !ServerRuntime::IsDedicatedServerShutdownRequested();
     const std::string smokeFilePath = "build/portability-smoke-file.txt";
     const std::string smokeFileText = "native smoke file\n";
     ServerRuntime::ServerPropertiesConfig runtimeProperties = {};
@@ -1058,6 +1068,12 @@ int main(int argc, char* argv[])
         threadStartupPlanOk.shouldAbortStartup,
         threadStartupPlanFailed.shouldAbortStartup,
         threadStartupPlanFailed.abortExitCode);
+    printf("shutdown_signal=%d raised=%d reset=%d\n",
+        shutdownSignalInitiallyClear &&
+            shutdownSignalRaised &&
+            shutdownSignalReset,
+        shutdownSignalRaised,
+        shutdownSignalReset);
     printf("file_write=%d file_read=%d file_readback_match=%d utc_file_time=%llu\n",
         wroteSmokeFile,
         readSmokeFile,
