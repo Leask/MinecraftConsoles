@@ -7,6 +7,7 @@
 #include "MinecraftServer.h"
 #include "..\Common\DedicatedServerBootstrap.h"
 #include "..\Common\DedicatedServerHostedGameRuntime.h"
+#include "..\Common\DedicatedServerLifecycle.h"
 #include "..\Common\DedicatedServerOptions.h"
 #include "..\Common\DedicatedServerPlatformState.h"
 #include "..\Common\DedicatedServerPlatformRuntime.h"
@@ -108,21 +109,6 @@ public:
 private:
 	bool m_active;
 };
-
-/**
- * **Wait For Server Stopped Signal**
- *
- * Thread entry used during shutdown to wait until the network layer reports server stop completion
- * 停止通知待機用の終了スレッド処理
- */
-static int WaitForServerStoppedThreadProc(void *)
-{
-	if (g_NetworkManager.ServerStoppedValid())
-	{
-		g_NetworkManager.ServerStoppedWait();
-	}
-	return 0;
-}
 
 static void PrintUsage()
 {
@@ -338,32 +324,9 @@ int main(int argc, char **argv)
 		"Dedicated server listening on %s:%d",
 		platformState.bindIp.c_str(),
 		platformState.multiplayerPort);
-	const ServerRuntime::DedicatedServerInitialSavePlan initialSavePlan =
-		ServerRuntime::BuildDedicatedServerInitialSavePlan(
+	ServerRuntime::ExecuteDedicatedServerInitialSave(
 		worldBootstrapPlan,
-		ServerRuntime::IsDedicatedServerShutdownRequested(),
-		app.m_bShutdown);
-	if (initialSavePlan.shouldRequestInitialSave)
-	{
-		// Windows64 suppresses saveToDisc right after new world creation
-		// Dedicated Server explicitly runs the initial save here
-		LogWorldIO("requesting initial save for newly created world");
-		ServerRuntime::WaitForDedicatedServerWorldActionIdle(
-			kServerActionPad,
-			initialSavePlan.idleWaitBeforeRequestMs);
-		ServerRuntime::RequestDedicatedServerWorldAutosave(kServerActionPad);
-		if (!ServerRuntime::WaitForDedicatedServerWorldActionIdle(
-			kServerActionPad,
-			initialSavePlan.requestTimeoutMs))
-		{
-			LogWorldIO("initial save timed out");
-			LogWarn("world-io", "Timed out waiting for initial save action to finish.");
-		}
-		else
-		{
-			LogWorldIO("initial save completed");
-		}
-	}
+		kServerActionPad);
 	ServerRuntime::DedicatedServerAutosaveState autosaveState =
 		ServerRuntime::CreateDedicatedServerAutosaveState(
 			LceGetMonotonicMilliseconds(),
@@ -372,14 +335,14 @@ int main(int argc, char **argv)
 	serverCli.Start();
 
 	while (!ServerRuntime::IsDedicatedServerShutdownRequested() &&
-		!app.m_bShutdown)
+		!ServerRuntime::IsDedicatedServerAppShutdownRequested())
 	{
 		ServerRuntime::TickDedicatedServerPlatformRuntime();
 		ServerRuntime::HandleDedicatedServerPlatformActions();
 		serverCli.Poll();
 
 		if (ServerRuntime::IsDedicatedServerShutdownRequested() ||
-			app.m_bShutdown)
+			ServerRuntime::IsDedicatedServerAppShutdownRequested())
 		{
 			break;
 		}
@@ -400,7 +363,7 @@ int main(int argc, char **argv)
 			ServerRuntime::MarkDedicatedServerAutosaveCompleted(&autosaveState);
 		}
 
-		if (MinecraftServer::serverHalted())
+		if (ServerRuntime::IsDedicatedServerGameplayHalted())
 		{
 			break;
 		}
@@ -426,32 +389,10 @@ int main(int argc, char **argv)
 		LceSleepMilliseconds(10);
 	}
 	serverCli.Stop();
-	app.m_bShutdown = true;
+	ServerRuntime::SetDedicatedServerAppShutdownRequested(true);
 
 	LogInfof("shutdown", "Dedicated server stopped");
-	MinecraftServer *server = MinecraftServer::getInstance();
-	const ServerRuntime::DedicatedServerShutdownPlan shutdownPlan =
-		ServerRuntime::BuildDedicatedServerShutdownPlan(
-			server != NULL,
-			g_NetworkManager.ServerStoppedValid());
-	if (shutdownPlan.shouldSetSaveOnExit)
-	{
-		server->setSaveOnExit(true);
-	}
-	if (shutdownPlan.shouldLogShutdownSave)
-	{
-		LogWorldIO("requesting save before shutdown");
-		LogWorldIO("using saveOnExit for shutdown");
-	}
-
-	MinecraftServer::HaltServer();
-
-	if (shutdownPlan.shouldWaitForServerStop)
-	{
-		C4JThread waitThread(&WaitForServerStoppedThreadProc, NULL, "WaitServerStopped");
-		waitThread.Run();
-		waitThread.WaitForCompletion(INFINITE);
-	}
+	ServerRuntime::ExecuteDedicatedServerShutdown();
 
 	LogInfof("shutdown", "Cleaning up and exiting.");
 	ServerRuntime::StopDedicatedServerPlatformRuntime();

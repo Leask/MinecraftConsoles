@@ -7,6 +7,7 @@
 #include "Minecraft.Server/Access/BanManager.h"
 #include "Minecraft.Server/Common/DedicatedServerBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
+#include "Minecraft.Server/Common/DedicatedServerLifecycle.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSessionConfig.h"
@@ -537,6 +538,29 @@ int main(int argc, char* argv[])
     ServerRuntime::RequestDedicatedServerWorldAutosave(0);
     const bool platformWaitIdle =
         ServerRuntime::WaitForDedicatedServerWorldActionIdle(0, 1);
+    const bool platformGameplayInstance =
+        ServerRuntime::HasDedicatedServerGameplayInstance();
+    const bool platformAppShutdownBefore =
+        !ServerRuntime::IsDedicatedServerAppShutdownRequested();
+    ServerRuntime::SetDedicatedServerAppShutdownRequested(true);
+    const bool platformAppShutdownAfter =
+        ServerRuntime::IsDedicatedServerAppShutdownRequested();
+    const bool platformGameplayHaltedBefore =
+        !ServerRuntime::IsDedicatedServerGameplayHalted();
+    const bool platformStopSignalValid =
+        ServerRuntime::IsDedicatedServerStopSignalValid();
+    ServerRuntime::EnableDedicatedServerSaveOnExit();
+    ServerRuntime::SetDedicatedServerAppShutdownRequested(false);
+    const ServerRuntime::DedicatedServerInitialSaveExecutionResult
+        initialSaveExecution =
+            ServerRuntime::ExecuteDedicatedServerInitialSave(
+                createdWorldPlan,
+                0);
+    const ServerRuntime::DedicatedServerShutdownExecutionResult
+        shutdownExecution =
+            ServerRuntime::ExecuteDedicatedServerShutdown();
+    const bool platformGameplayHaltedAfter =
+        ServerRuntime::IsDedicatedServerGameplayHalted();
     int hostedGameRuntimeThreadValue = 0;
     const int hostedGameRuntimeResult =
         ServerRuntime::StartDedicatedServerHostedGameRuntime(
@@ -1155,6 +1179,32 @@ int main(int argc, char* argv[])
         platformActionIdle && platformWaitIdle,
         platformActionIdle,
         platformWaitIdle);
+    printf("platform_shutdown=%d gameplay=%d app_before=%d app_after=%d "
+        "halt_before=%d halt_after=%d stop_valid=%d\n",
+        platformGameplayInstance &&
+            platformAppShutdownBefore &&
+            platformAppShutdownAfter &&
+            platformGameplayHaltedBefore &&
+            platformGameplayHaltedAfter &&
+            platformStopSignalValid,
+        platformGameplayInstance,
+        platformAppShutdownBefore,
+        platformAppShutdownAfter,
+        platformGameplayHaltedBefore,
+        platformGameplayHaltedAfter,
+        platformStopSignalValid);
+    printf("platform_lifecycle=%d initial_requested=%d initial_completed=%d "
+        "initial_timeout=%d shutdown_wait=%d shutdown_halt=%d\n",
+        initialSaveExecution.requested &&
+            initialSaveExecution.completed &&
+            !initialSaveExecution.timedOut &&
+            shutdownExecution.plan.shouldWaitForServerStop &&
+            shutdownExecution.haltedGameplay,
+        initialSaveExecution.requested,
+        initialSaveExecution.completed,
+        initialSaveExecution.timedOut,
+        shutdownExecution.plan.shouldWaitForServerStop,
+        shutdownExecution.haltedGameplay);
     printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
         hostedGameRuntimeResult == 11 &&
             hostedGameRuntimeThreadValue == 1,
@@ -1480,6 +1530,19 @@ int main(int argc, char* argv[])
         runtimeState.lanAdvertise &&
         platformActionIdle &&
         platformWaitIdle &&
+        platformGameplayInstance &&
+        platformAppShutdownBefore &&
+        platformAppShutdownAfter &&
+        platformGameplayHaltedBefore &&
+        platformGameplayHaltedAfter &&
+        platformStopSignalValid &&
+        initialSaveExecution.requested &&
+        initialSaveExecution.completed &&
+        !initialSaveExecution.timedOut &&
+        shutdownExecution.plan.shouldSetSaveOnExit &&
+        shutdownExecution.plan.shouldLogShutdownSave &&
+        shutdownExecution.plan.shouldWaitForServerStop &&
+        shutdownExecution.haltedGameplay &&
         hostedGameRuntimeResult == 11 &&
         hostedGameRuntimeThreadValue == 1 &&
         defaultAutosaveMs == 60000U &&

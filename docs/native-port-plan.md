@@ -365,6 +365,10 @@ This iteration starts with:
 - hosted game startup is now also starting to move behind a dedicated runtime
   boundary, so `ServerMain.cpp` no longer open-code the
   `g_NetworkManager.HostGame + C4JThread + startup wait loop` sequence
+- gameplay shutdown state is now moving behind that same runtime boundary,
+  so `ServerMain.cpp` no longer directly reaches into `app.m_bShutdown`,
+  `MinecraftServer::HaltServer()`, or `ServerStoppedWait()` for the
+  dedicated-server shutdown tail
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

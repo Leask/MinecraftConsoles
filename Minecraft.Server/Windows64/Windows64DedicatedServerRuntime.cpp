@@ -87,6 +87,15 @@ namespace
             _TRUNCATE);
         g_Win64DedicatedServerLanAdvertise = platformState.lanAdvertise;
     }
+
+    int WaitForServerStoppedThreadProc(void *)
+    {
+        if (g_NetworkManager.ServerStoppedValid())
+        {
+            g_NetworkManager.ServerStoppedWait();
+        }
+        return 0;
+    }
 }
 
 namespace ServerRuntime
@@ -227,6 +236,55 @@ namespace ServerRuntime
             timeoutMs,
             &TickDedicatedServerPlatformRuntime,
             &HandleDedicatedServerPlatformActions);
+    }
+
+    bool HasDedicatedServerGameplayInstance()
+    {
+        return MinecraftServer::getInstance() != NULL;
+    }
+
+    bool IsDedicatedServerAppShutdownRequested()
+    {
+        return app.m_bShutdown;
+    }
+
+    void SetDedicatedServerAppShutdownRequested(bool shutdownRequested)
+    {
+        app.m_bShutdown = shutdownRequested;
+    }
+
+    bool IsDedicatedServerGameplayHalted()
+    {
+        return MinecraftServer::serverHalted();
+    }
+
+    bool IsDedicatedServerStopSignalValid()
+    {
+        return g_NetworkManager.ServerStoppedValid();
+    }
+
+    void EnableDedicatedServerSaveOnExit()
+    {
+        MinecraftServer *server = MinecraftServer::getInstance();
+        if (server != NULL)
+        {
+            server->setSaveOnExit(true);
+        }
+    }
+
+    void HaltDedicatedServerGameplay()
+    {
+        MinecraftServer::HaltServer();
+    }
+
+    void WaitForDedicatedServerStopSignal()
+    {
+        C4JThread waitThread(
+            &WaitForServerStoppedThreadProc,
+            NULL,
+            "WaitServerStopped");
+        waitThread.Run();
+        waitThread.WaitForCompletion(INFINITE);
     }
 
     void StopDedicatedServerPlatformRuntime()

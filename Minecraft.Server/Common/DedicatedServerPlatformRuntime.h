@@ -28,5 +28,13 @@ namespace ServerRuntime
     bool WaitForDedicatedServerWorldActionIdle(
         int actionPad,
         DWORD timeoutMs);
+    bool HasDedicatedServerGameplayInstance();
+    bool IsDedicatedServerAppShutdownRequested();
+    void SetDedicatedServerAppShutdownRequested(bool shutdownRequested);
+    bool IsDedicatedServerGameplayHalted();
+    bool IsDedicatedServerStopSignalValid();
+    void EnableDedicatedServerSaveOnExit();
+    void HaltDedicatedServerGameplay();
+    void WaitForDedicatedServerStopSignal();
     void StopDedicatedServerPlatformRuntime();
 }
