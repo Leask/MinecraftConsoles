@@ -73,6 +73,8 @@ namespace ServerRuntime
         }
 
         context->serverProperties = LoadServerPropertiesConfig();
+        context->worldTarget = ResolveDedicatedServerWorldTarget(
+            context->serverProperties);
         ApplyServerPropertiesToDedicatedConfig(
             context->serverProperties,
             &context->config);
@@ -180,8 +182,8 @@ namespace ServerRuntime
             "startup",
             "storage root=%s world=%s level-id=%s whitelist=%s lan=%s",
             context.storageRoot.c_str(),
-            StringUtils::WideToUtf8(context.serverProperties.worldName).c_str(),
-            context.serverProperties.worldSaveId.c_str(),
+            StringUtils::WideToUtf8(context.worldTarget.worldName).c_str(),
+            context.worldTarget.saveId.c_str(),
             context.serverProperties.whiteListEnabled ? "enabled" : "disabled",
             context.runtimeState.lanAdvertise ? "enabled" : "disabled");
     }

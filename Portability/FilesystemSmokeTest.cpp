@@ -1746,7 +1746,7 @@ int main(int argc, char* argv[])
         cliSink.queuedLines.size());
     printf("bootstrap_prepare=%d bootstrap_environment=%d access_ready=%d "
         "access_shutdown=%d restored_dir=%d runtime_host=%s bind_ip=%s "
-        "port=%d storage_root=%s\n",
+        "port=%d storage_root=%s world=%ls level_id=%s\n",
         bootstrapPrepared,
         bootstrapEnvironmentReady,
         bootstrapAccessReady,
@@ -1755,7 +1755,9 @@ int main(int argc, char* argv[])
         bootstrapSmokeContext.runtimeState.hostNameUtf8.c_str(),
         bootstrapSmokeContext.runtimeState.bindIp.c_str(),
         bootstrapSmokeContext.runtimeState.multiplayerPort,
-        bootstrapSmokeContext.storageRoot.c_str());
+        bootstrapSmokeContext.storageRoot.c_str(),
+        bootstrapSmokeContext.worldTarget.worldName.c_str(),
+        bootstrapSmokeContext.worldTarget.saveId.c_str());
     printf("socket_bootstrap_started=%d connected=%d accepted=%d stopped=%d "
         "bound_port=%d accepted_ip=%s accepted_port=%d\n",
         socketBootstrapStarted,
@@ -2169,6 +2171,8 @@ int main(int argc, char* argv[])
         bootstrapSmokeContext.runtimeState.hostNameUtf8 == "BootstrapSmoke" &&
         bootstrapSmokeContext.runtimeState.bindIp == "127.0.0.1" &&
         bootstrapSmokeContext.runtimeState.multiplayerPort == 25578 &&
+        bootstrapSmokeContext.worldTarget.worldName == L"world" &&
+        bootstrapSmokeContext.worldTarget.saveId == "world" &&
         bootstrapSmokeContext.storageRoot == "NativeDesktop/GameHDD" &&
         socketBootstrapStarted && socketBootstrapConnected &&
         socketBootstrapAcceptedOk && socketBootstrapStopped &&

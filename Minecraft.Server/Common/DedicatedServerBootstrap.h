@@ -6,6 +6,7 @@
 #include "../Access/Access.h"
 #include "DedicatedServerOptions.h"
 #include "DedicatedServerRuntime.h"
+#include "DedicatedServerWorldBootstrap.h"
 
 namespace ServerRuntime
 {
@@ -20,6 +21,7 @@ namespace ServerRuntime
     {
         DedicatedServerConfig config = {};
         ServerPropertiesConfig serverProperties = {};
+        DedicatedServerWorldTarget worldTarget = {};
         DedicatedServerRuntimeState runtimeState = {};
         std::string storageRoot;
         std::uint64_t autosaveIntervalMs = 0;
