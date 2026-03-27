@@ -1,5 +1,7 @@
 #include <cstdint>
+#include <cerrno>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -17,6 +19,7 @@ int main(int argc, char** argv)
     ServerRuntime::ResetDedicatedServerShutdownRequest();
     bool bootstrapOnly = false;
     bool selfConnect = false;
+    std::uint64_t shutdownAfterMs = 0;
     int serverArgc = 1;
     for (int i = 1; i < argc; ++i)
     {
@@ -28,6 +31,34 @@ int main(int argc, char** argv)
         if (std::strcmp(argv[i], "--self-connect") == 0)
         {
             selfConnect = true;
+            continue;
+        }
+        if (std::strcmp(argv[i], "--shutdown-after-ms") == 0)
+        {
+            if (i + 1 >= argc)
+            {
+                std::fprintf(
+                    stderr,
+                    "startup error: missing value for --shutdown-after-ms\n");
+                return 2;
+            }
+
+            errno = 0;
+            char* end = nullptr;
+            const unsigned long long parsedValue = std::strtoull(
+                argv[i + 1],
+                &end,
+                10);
+            if (argv[i + 1] == end || *end != '\0' || errno != 0)
+            {
+                std::fprintf(
+                    stderr,
+                    "startup error: invalid --shutdown-after-ms value\n");
+                return 2;
+            }
+
+            shutdownAfterMs = (std::uint64_t)parsedValue;
+            ++i;
             continue;
         }
 
@@ -59,6 +90,14 @@ int main(int argc, char** argv)
             {
                 std::printf("%s\n", line.c_str());
             }
+            std::printf("\n");
+            std::printf("Native bootstrap options:\n");
+            std::printf("  --bootstrap-only           "
+                "Initialize bootstrap and exit\n");
+            std::printf("  --self-connect             "
+                "Loop back a TCP client and exit\n");
+            std::printf("  --shutdown-after-ms <ms>   "
+                "Run shell mode for a bounded time\n");
             return 0;
         }
     case ServerRuntime::eDedicatedServerBootstrap_Failed:
@@ -89,7 +128,8 @@ int main(int argc, char** argv)
     const ServerRuntime::DedicatedServerHeadlessRuntimeOptions
         runtimeOptions = {
             bootstrapOnly,
-            selfConnect
+            selfConnect,
+            shutdownAfterMs
         };
     const int exitCode = ServerRuntime::RunDedicatedServerHeadlessRuntime(
         bootstrapContext,

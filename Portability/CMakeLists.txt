@@ -174,6 +174,19 @@ if(BUILD_TESTING)
       -name
       NativeSelfConnect
   )
+  add_test(
+    NAME minecraft_native_server_shell_smoke
+    COMMAND
+      $<TARGET_FILE:Minecraft.Server.NativeBootstrap>
+      --shutdown-after-ms
+      150
+      -port
+      25579
+      -bind
+      127.0.0.1
+      -name
+      NativeShell
+  )
   set_tests_properties(minecraft_portability_smoke PROPERTIES
     LABELS "native;portability;smoke"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
@@ -186,13 +199,17 @@ if(BUILD_TESTING)
     LABELS "native;server;bootstrap;socket"
     WORKING_DIRECTORY "$<TARGET_FILE_DIR:Minecraft.Server.NativeBootstrap>"
   )
+  set_tests_properties(minecraft_native_server_shell_smoke PROPERTIES
+    LABELS "native;server;bootstrap;shell"
+    WORKING_DIRECTORY "$<TARGET_FILE_DIR:Minecraft.Server.NativeBootstrap>"
+  )
 endif()
 
 add_custom_target(Minecraft.Portability.Check
   COMMAND ${CMAKE_CTEST_COMMAND}
     --output-on-failure
     -C $<CONFIG>
-    -R "^minecraft_(portability_smoke|native_server_bootstrap|native_server_listener_smoke)$"
+    -R "^minecraft_(portability_smoke|native_server_bootstrap|native_server_listener_smoke|native_server_shell_smoke)$"
   DEPENDS
     Minecraft.Portability.SmokeTest
     Minecraft.Server.NativeBootstrap

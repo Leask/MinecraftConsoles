@@ -136,14 +136,30 @@ namespace
         return 0;
     }
 
-    void RunDedicatedServerHeadlessShell()
+    void RunDedicatedServerHeadlessShell(
+        const ServerRuntime::DedicatedServerHeadlessRuntimeOptions &options)
     {
+        const std::uint64_t shellStartMs = LceGetMonotonicMilliseconds();
         ServerRuntime::LogInfo(
             "startup",
             "native bootstrap shell running; "
             "type stop or send SIGINT to exit");
         while (!ServerRuntime::IsDedicatedServerShutdownRequested())
         {
+            if (options.shutdownAfterMs > 0)
+            {
+                const std::uint64_t now = LceGetMonotonicMilliseconds();
+                if (now - shellStartMs >= options.shutdownAfterMs)
+                {
+                    ServerRuntime::LogInfof(
+                        "shutdown",
+                        "native bootstrap auto-shutdown after %llums",
+                        (unsigned long long)options.shutdownAfterMs);
+                    ServerRuntime::RequestDedicatedServerShutdown();
+                    break;
+                }
+            }
+
             if (LceStdinIsAvailable() && LceWaitForStdinReadable(50) == 1)
             {
                 char lineBuffer[256] = {};
@@ -237,7 +253,7 @@ namespace ServerRuntime
             return selfConnectExitCode;
         }
 
-        RunDedicatedServerHeadlessShell();
+        RunDedicatedServerHeadlessShell(options);
         LogInfo("shutdown", "native bootstrap shell stopped");
         return 0;
     }

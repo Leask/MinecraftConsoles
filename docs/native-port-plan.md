@@ -341,6 +341,9 @@ This iteration starts with:
   as well, with `ServerMain.cpp` and `NativeServerBootstrapMain.cpp` both
   delegating signal/control-handler setup through a dedicated server signal
   handler interface instead of open-coding that platform glue in each main
+- native shell mode can now also auto-stop after a bounded runtime, and that
+  shell path is now exercised by `CTest`, so the runnable headless server
+  entry is covered by automation beyond only bootstrap-only and self-connect
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

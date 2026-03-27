@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "DedicatedServerBootstrap.h"
 #include "DedicatedServerPlatformState.h"
 
@@ -9,6 +11,7 @@ namespace ServerRuntime
     {
         bool bootstrapOnly = false;
         bool selfConnect = false;
+        std::uint64_t shutdownAfterMs = 0;
     };
 
     int RunDedicatedServerHeadlessRuntime(
