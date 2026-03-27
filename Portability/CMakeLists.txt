@@ -69,6 +69,7 @@ add_executable(Minecraft.Portability.SmokeTest
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerSessionConfig.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerSocketBootstrap.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerWorldBootstrap.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerWorldSaveSelection.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/FileUtils.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/ServerStoragePaths.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/StringUtils.cpp"

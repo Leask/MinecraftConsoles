@@ -7,11 +7,13 @@
 #include "ServerLogger.h"
 #include "Common\\ServerStoragePaths.h"
 #include "Common\\StringUtils.h"
+#include "Common\\DedicatedServerWorldSaveSelection.h"
 #include <lce_filesystem/lce_filesystem.h>
 #include <lce_time/lce_time.h>
 
 #include <stdio.h>
 #include <string.h>
+#include <vector>
 
 namespace ServerRuntime
 {
@@ -287,50 +289,6 @@ static bool WaitForSaveLoadResult(SaveDataLoadContext *context, DWORD timeoutMs,
 }
 
 /**
- * **Match SAVE_INFO By World Name**
- *
- * Compares both save title and save filename against the target world name
- * ワールド名一致判定
- */
-static bool SaveInfoMatchesWorldName(const SAVE_INFO &saveInfo, const std::wstring &targetWorldName)
-{
-	if (targetWorldName.empty())
-	{
-		return false;
-	}
-
-	std::wstring saveTitle = Utf8ToWide(saveInfo.UTF8SaveTitle);
-	std::wstring saveFilename = Utf8ToWide(saveInfo.UTF8SaveFilename);
-
-	if (!saveTitle.empty() && (_wcsicmp(saveTitle.c_str(), targetWorldName.c_str()) == 0))
-	{
-		return true;
-	}
-	if (!saveFilename.empty() && (_wcsicmp(saveFilename.c_str(), targetWorldName.c_str()) == 0))
-	{
-		return true;
-	}
-
-	return false;
-}
-
-/**
- * **Match SAVE_INFO By Save Filename**
- *
- * Checks whether `SAVE_INFO` matches by save destination ID (`UTF8SaveFilename`)
- * 保存先ID一致判定
- */
-static bool SaveInfoMatchesSaveFilename(const SAVE_INFO &saveInfo, const std::string &targetSaveFilename)
-{
-	if (targetSaveFilename.empty() || saveInfo.UTF8SaveFilename[0] == 0)
-	{
-		return false;
-	}
-
-	return (_stricmp(saveInfo.UTF8SaveFilename, targetSaveFilename.c_str()) == 0);
-}
-
-/**
  * **Apply World Identity To Storage**
  *
  * Applies world identity (`level-name` + `level-id`) to storage
@@ -411,44 +369,27 @@ static EWorldSaveLoadResult PrepareWorldSaveData(
 		return eWorldSaveLoad_Failed;
 	}
 
-	int matchedIndex = -1;
-	if (!targetSaveFilename.empty())
-	{
-		// 1) If save ID is provided, search by it first
-		//    This is the most stable way to reuse the same world target
-		for (int i = 0; i < infoContext.details->iSaveC; ++i)
-		{
-			LogEnumeratedSaveInfo(i, infoContext.details->SaveInfoA[i]);
-			if (SaveInfoMatchesSaveFilename(infoContext.details->SaveInfoA[i], targetSaveFilename))
-			{
-				matchedIndex = i;
-				break;
-			}
-		}
-	}
-
-	if (matchedIndex < 0 && targetSaveFilename.empty())
-	{
-		for (int i = 0; i < infoContext.details->iSaveC; ++i)
-		{
-			LogEnumeratedSaveInfo(i, infoContext.details->SaveInfoA[i]);
-		}
-	}
-
+	std::vector<ServerRuntime::DedicatedServerWorldSaveMatchEntry> saveEntries;
+	saveEntries.reserve(infoContext.details->iSaveC);
 	for (int i = 0; i < infoContext.details->iSaveC; ++i)
 	{
-		// 2) If no save matched by ID, try compatibility fallback
-		//    Match worldName against save title or save filename
-		if (matchedIndex >= 0)
-		{
-			break;
-		}
-		if (SaveInfoMatchesWorldName(infoContext.details->SaveInfoA[i], targetWorldName))
-		{
-			matchedIndex = i;
-			break;
-		}
+		const SAVE_INFO &saveInfo = infoContext.details->SaveInfoA[i];
+		LogEnumeratedSaveInfo(i, saveInfo);
+
+		ServerRuntime::DedicatedServerWorldSaveMatchEntry matchEntry = {};
+		matchEntry.title = Utf8ToWide(saveInfo.UTF8SaveTitle);
+		matchEntry.filename = Utf8ToWide(saveInfo.UTF8SaveFilename);
+		saveEntries.push_back(matchEntry);
 	}
+
+	const ServerRuntime::DedicatedServerWorldSaveSelectionResult
+		saveSelection =
+			ServerRuntime::SelectDedicatedServerWorldSaveEntry(
+				saveEntries.empty() ? NULL : &saveEntries[0],
+				static_cast<int>(saveEntries.size()),
+				targetWorldName,
+				targetSaveFilename);
+	const int matchedIndex = saveSelection.matchedIndex;
 
 	if (matchedIndex < 0)
 	{

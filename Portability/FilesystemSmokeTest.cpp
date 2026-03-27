@@ -15,6 +15,7 @@
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 #include "Minecraft.Server/Common/DedicatedServerSocketBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerWorldBootstrap.h"
+#include "Minecraft.Server/Common/DedicatedServerWorldSaveSelection.h"
 #include "Minecraft.Server/Common/DedicatedServerShutdownPlan.h"
 #include "lce_filesystem/lce_filesystem.h"
 #include "lce_net/lce_net.h"
@@ -366,6 +367,32 @@ int main(int argc, char* argv[])
         ServerRuntime::StringUtils::TryParseUtcTimestampIso8601(
             utcTimestamp,
             &parsedUtcFileTime);
+    const ServerRuntime::DedicatedServerWorldSaveMatchEntry
+        worldSaveEntries[] = {
+            {L"Alpha World", L"save_alpha"},
+            {L"Beta World", L"WORLD_B"}
+        };
+    const ServerRuntime::DedicatedServerWorldSaveSelectionResult
+        worldSaveMatchById =
+            ServerRuntime::SelectDedicatedServerWorldSaveEntry(
+                worldSaveEntries,
+                2,
+                L"alpha world",
+                "world_b");
+    const ServerRuntime::DedicatedServerWorldSaveSelectionResult
+        worldSaveMatchByName =
+            ServerRuntime::SelectDedicatedServerWorldSaveEntry(
+                worldSaveEntries,
+                2,
+                L"beta world",
+                "");
+    const ServerRuntime::DedicatedServerWorldSaveSelectionResult
+        worldSaveNoMatch =
+            ServerRuntime::SelectDedicatedServerWorldSaveEntry(
+                worldSaveEntries,
+                2,
+                L"gamma world",
+                "missing");
     const ServerRuntime::DedicatedServerConfig defaultDedicatedConfig =
         ServerRuntime::CreateDefaultDedicatedServerConfig();
     ServerRuntime::ServerPropertiesConfig dedicatedProperties = {};
@@ -1194,6 +1221,18 @@ int main(int argc, char* argv[])
         parsedUnsigned,
         utcTimestamp.c_str(),
         parsedUtcOk);
+    printf("world_save_selection=%d save_id=%d by_save_id=%d "
+        "name_fallback=%d no_match=%d\n",
+        worldSaveMatchById.matchedIndex == 1 &&
+            worldSaveMatchById.matchedBySaveId &&
+            worldSaveMatchByName.matchedIndex == 1 &&
+            !worldSaveMatchByName.matchedBySaveId &&
+            worldSaveNoMatch.matchedIndex == -1 &&
+            !worldSaveNoMatch.matchedBySaveId,
+        worldSaveMatchById.matchedIndex,
+        worldSaveMatchById.matchedBySaveId,
+        worldSaveMatchByName.matchedIndex,
+        worldSaveNoMatch.matchedIndex);
     printf("dedicated_defaults=%d dedicated_props=%d dedicated_cli=%d "
         "dedicated_help=%d dedicated_invalid=%d usage_lines=%zu\n",
         defaultDedicatedConfig.port == 25565 &&
@@ -1759,6 +1798,12 @@ int main(int argc, char* argv[])
         DirectoryExists(executableDirectory.c_str()) &&
         netInitialized && ipv4Literal &&
         ipv6Literal && !invalidLiteral &&
+        worldSaveMatchById.matchedIndex == 1 &&
+        worldSaveMatchById.matchedBySaveId &&
+        worldSaveMatchByName.matchedIndex == 1 &&
+        !worldSaveMatchByName.matchedBySaveId &&
+        worldSaveNoMatch.matchedIndex == -1 &&
+        !worldSaveNoMatch.matchedBySaveId &&
         udpReceiver != LCE_INVALID_SOCKET &&
         udpReceiverReuse && udpReceiverTimeout && udpReceiverBound &&
         udpReceiverPort > 0 && udpSender != LCE_INVALID_SOCKET &&
