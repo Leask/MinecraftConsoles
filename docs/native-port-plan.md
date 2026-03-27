@@ -333,6 +333,10 @@ This iteration starts with:
   `Minecraft.Server/Common/DedicatedServerShutdownPlan.cpp`, so the tail of
   `ServerMain.cpp` is starting to converge on shared lifecycle rules instead
   of open-coded `saveOnExit` / `ServerStoppedValid` branches
+- the runnable native bootstrap flow is now also moving behind
+  `Minecraft.Server/Common/DedicatedServerHeadlessRuntime.cpp`, so the
+  non-Windows listener bootstrap, self-connect smoke path, shell loop, and
+  shutdown cleanup are no longer open-coded in `NativeServerBootstrapMain.cpp`
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

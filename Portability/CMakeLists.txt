@@ -110,6 +110,7 @@ add_executable(Minecraft.Server.NativeBootstrap
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/BanManager.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/WhitelistManager.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerBootstrap.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerHeadlessRuntime.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerOptions.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerPlatformState.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/NativeDedicatedServerPlatformRuntime.cpp"
