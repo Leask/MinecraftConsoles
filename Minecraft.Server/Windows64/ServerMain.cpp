@@ -529,8 +529,17 @@ int main(int argc, char **argv)
 			break;
 		}
 
-		if (autosaveState.autosaveRequested &&
-			app.GetXuiServerAction(kServerActionPad) == eXuiServerAction_Idle)
+		const bool autosaveActionIdle =
+			app.GetXuiServerAction(kServerActionPad) ==
+				eXuiServerAction_Idle;
+		const std::uint64_t now = LceGetMonotonicMilliseconds();
+		const ServerRuntime::DedicatedServerAutosaveLoopPlan autosaveLoopPlan =
+			ServerRuntime::BuildDedicatedServerAutosaveLoopPlan(
+				autosaveState,
+				autosaveActionIdle,
+				now);
+
+		if (autosaveLoopPlan.shouldMarkCompleted)
 		{
 			LogWorldIO("autosave completed");
 			ServerRuntime::MarkDedicatedServerAutosaveCompleted(&autosaveState);
@@ -541,27 +550,21 @@ int main(int argc, char **argv)
 			break;
 		}
 
-		const std::uint64_t now = LceGetMonotonicMilliseconds();
-		if (ServerRuntime::ShouldTriggerDedicatedServerAutosave(
-			autosaveState,
-			now))
+		if (autosaveLoopPlan.shouldRequestAutosave)
 		{
-			if (app.GetXuiServerAction(kServerActionPad) == eXuiServerAction_Idle)
-			{
-				LogWorldIO("requesting autosave");
-				app.SetXuiServerAction(kServerActionPad, eXuiServerAction_AutoSaveGame);
-				ServerRuntime::MarkDedicatedServerAutosaveRequested(
-					&autosaveState,
+			LogWorldIO("requesting autosave");
+			app.SetXuiServerAction(kServerActionPad, eXuiServerAction_AutoSaveGame);
+			ServerRuntime::MarkDedicatedServerAutosaveRequested(
+				&autosaveState,
+				now,
+				serverProperties);
+		}
+		else if (autosaveLoopPlan.shouldAdvanceDeadline)
+		{
+			autosaveState.nextTickMs =
+				ServerRuntime::ComputeNextDedicatedServerAutosaveDeadlineMs(
 					now,
 					serverProperties);
-			}
-			else
-			{
-				autosaveState.nextTickMs =
-					ServerRuntime::ComputeNextDedicatedServerAutosaveDeadlineMs(
-						now,
-						serverProperties);
-			}
 		}
 
 		LceSleepMilliseconds(10);

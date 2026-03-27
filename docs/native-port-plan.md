@@ -208,6 +208,9 @@ This iteration starts with:
   `Minecraft.Server/Common/DedicatedServerSessionConfig.cpp`, so tutorial,
   corrupt-save, host-settings, world-size, and save-disable defaults stop
   living inline in `ServerMain.cpp`
+- autosave loop decisions now live in
+  `Minecraft.Server/Common/DedicatedServerRuntime.cpp`, so completion,
+  request, and deadline-pushback rules stay under native smoke coverage
 - first non-Windows Win32 compatibility shim for
   `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
 - first server-common utility source (`Minecraft.Server/Common/StringUtils.cpp`)

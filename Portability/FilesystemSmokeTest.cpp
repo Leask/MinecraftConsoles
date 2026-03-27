@@ -490,8 +490,31 @@ int main(int argc, char* argv[])
         runtimeProperties);
     const bool autosaveRequested = autosaveState.autosaveRequested;
     const bool autosaveNextAdvanced = autosaveState.nextTickMs == 91000U;
+    const ServerRuntime::DedicatedServerAutosaveLoopPlan autosaveCompletePlan =
+        ServerRuntime::BuildDedicatedServerAutosaveLoopPlan(
+            autosaveState,
+            true,
+            47000);
     ServerRuntime::MarkDedicatedServerAutosaveCompleted(&autosaveState);
     const bool autosaveCompleted = !autosaveState.autosaveRequested;
+    const ServerRuntime::DedicatedServerAutosaveLoopPlan autosaveRequestPlan =
+        ServerRuntime::BuildDedicatedServerAutosaveLoopPlan(
+            autosaveState,
+            true,
+            91000);
+    const ServerRuntime::DedicatedServerAutosaveLoopPlan autosaveDelayPlan =
+        ServerRuntime::BuildDedicatedServerAutosaveLoopPlan(
+            autosaveState,
+            false,
+            91000);
+    ServerRuntime::DedicatedServerAutosaveState autosaveCatchupState =
+        autosaveState;
+    autosaveCatchupState.autosaveRequested = true;
+    const ServerRuntime::DedicatedServerAutosaveLoopPlan autosaveCatchupPlan =
+        ServerRuntime::BuildDedicatedServerAutosaveLoopPlan(
+            autosaveCatchupState,
+            true,
+            91000);
     const char* storagePlatformDirectory =
         ServerRuntime::GetServerStoragePlatformDirectory();
     const std::string storageGameHddRoot =
@@ -940,7 +963,19 @@ int main(int argc, char* argv[])
             autosaveState.nextTickMs == 91000U &&
             !autosaveState.autosaveRequested &&
             autosaveTriggerBefore &&
-            autosaveTriggerAtDeadline,
+            autosaveTriggerAtDeadline &&
+            autosaveCompletePlan.shouldMarkCompleted &&
+            !autosaveCompletePlan.shouldRequestAutosave &&
+            !autosaveCompletePlan.shouldAdvanceDeadline &&
+            !autosaveRequestPlan.shouldMarkCompleted &&
+            autosaveRequestPlan.shouldRequestAutosave &&
+            !autosaveRequestPlan.shouldAdvanceDeadline &&
+            !autosaveDelayPlan.shouldMarkCompleted &&
+            !autosaveDelayPlan.shouldRequestAutosave &&
+            autosaveDelayPlan.shouldAdvanceDeadline &&
+            autosaveCatchupPlan.shouldMarkCompleted &&
+            autosaveCatchupPlan.shouldRequestAutosave &&
+            !autosaveCatchupPlan.shouldAdvanceDeadline,
         shouldRunInitialSave,
         shouldSkipInitialSaveWhenStopping,
         autosaveRequested,

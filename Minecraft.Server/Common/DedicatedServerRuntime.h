@@ -28,6 +28,13 @@ namespace ServerRuntime
         bool autosaveRequested;
     };
 
+    struct DedicatedServerAutosaveLoopPlan
+    {
+        bool shouldMarkCompleted = false;
+        bool shouldRequestAutosave = false;
+        bool shouldAdvanceDeadline = false;
+    };
+
     DedicatedServerRuntimeState BuildDedicatedServerRuntimeState(
         const DedicatedServerConfig &config,
         const ServerPropertiesConfig &serverProperties);
@@ -54,4 +61,9 @@ namespace ServerRuntime
 
     void MarkDedicatedServerAutosaveCompleted(
         DedicatedServerAutosaveState *autosaveState);
+
+    DedicatedServerAutosaveLoopPlan BuildDedicatedServerAutosaveLoopPlan(
+        const DedicatedServerAutosaveState &autosaveState,
+        bool actionIdle,
+        std::uint64_t nowMs);
 }

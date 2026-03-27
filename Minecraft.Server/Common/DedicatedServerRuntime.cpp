@@ -101,4 +101,38 @@ namespace ServerRuntime
 
         autosaveState->autosaveRequested = false;
     }
+
+    DedicatedServerAutosaveLoopPlan BuildDedicatedServerAutosaveLoopPlan(
+        const DedicatedServerAutosaveState &autosaveState,
+        bool actionIdle,
+        std::uint64_t nowMs)
+    {
+        DedicatedServerAutosaveLoopPlan plan = {};
+        plan.shouldMarkCompleted =
+            autosaveState.autosaveRequested && actionIdle;
+
+        if (autosaveState.autosaveRequested &&
+            !plan.shouldMarkCompleted)
+        {
+            return plan;
+        }
+
+        if (!ShouldTriggerDedicatedServerAutosave(
+                autosaveState,
+                nowMs))
+        {
+            return plan;
+        }
+
+        if (actionIdle)
+        {
+            plan.shouldRequestAutosave = true;
+        }
+        else
+        {
+            plan.shouldAdvanceDeadline = true;
+        }
+
+        return plan;
+    }
 }
