@@ -40,9 +40,38 @@ namespace ServerRuntime
         bool fakeLocalPlayerJoined = true;
     };
 
+    struct DedicatedServerWorldLoadPlan
+    {
+        bool shouldPersistResolvedSaveId = false;
+        std::string resolvedSaveId;
+        bool shouldAbortStartup = false;
+        int abortExitCode = 0;
+    };
+
+    struct DedicatedServerInitialSavePlan
+    {
+        bool shouldRequestInitialSave = false;
+        DWORD idleWaitBeforeRequestMs = 5000;
+        DWORD requestTimeoutMs = 30000;
+    };
+
+    struct DedicatedServerHostedThreadStartupPlan
+    {
+        bool shouldAbortStartup = false;
+        int abortExitCode = 0;
+    };
+
     DedicatedServerWorldBootstrapPlan BuildDedicatedServerWorldBootstrapPlan(
         const ServerPropertiesConfig &serverProperties,
         const WorldBootstrapResult &worldBootstrap);
+
+    DedicatedServerWorldLoadPlan BuildDedicatedServerWorldLoadPlan(
+        const DedicatedServerWorldBootstrapPlan &worldBootstrapPlan);
+
+    DedicatedServerInitialSavePlan BuildDedicatedServerInitialSavePlan(
+        const DedicatedServerWorldBootstrapPlan &worldBootstrapPlan,
+        bool shutdownRequested,
+        bool appShutdown);
 
     bool ShouldRunDedicatedServerInitialSave(
         const DedicatedServerWorldBootstrapPlan &worldBootstrapPlan,
@@ -62,6 +91,9 @@ namespace ServerRuntime
         const DedicatedServerSessionConfig &sessionConfig,
         LoadSaveDataThreadParam *saveData,
         std::int64_t generatedSeed);
+
+    DedicatedServerHostedThreadStartupPlan
+    BuildDedicatedServerHostedThreadStartupPlan(int startupResult);
 
     template <typename TInitData>
     void PopulateDedicatedServerNetworkGameInitData(

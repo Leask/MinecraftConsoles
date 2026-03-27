@@ -214,6 +214,9 @@ This iteration starts with:
 - `NetworkGameInitData` field mapping now lives behind
   `PopulateDedicatedServerNetworkGameInitData(...)`, so `ServerMain.cpp`
   no longer hand-populates the game-thread init payload directly
+- world-load persistence, initial-save timing, and hosted-thread failure
+  handling are now expressed as shared startup plans instead of inline
+  branches in `ServerMain.cpp`
 - first non-Windows Win32 compatibility shim for
   `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
 - first server-common utility source (`Minecraft.Server/Common/StringUtils.cpp`)

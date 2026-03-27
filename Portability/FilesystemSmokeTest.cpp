@@ -390,6 +390,9 @@ int main(int argc, char* argv[])
         ServerRuntime::BuildDedicatedServerWorldBootstrapPlan(
             worldBootstrapProperties,
             loadedWorldBootstrap);
+    const ServerRuntime::DedicatedServerWorldLoadPlan loadedWorldLoadPlan =
+        ServerRuntime::BuildDedicatedServerWorldLoadPlan(
+            loadedWorldPlan);
     ServerRuntime::WorldBootstrapResult createdWorldBootstrap;
     createdWorldBootstrap.status = ServerRuntime::eWorldBootstrap_CreatedNew;
     createdWorldBootstrap.resolvedSaveId = "world";
@@ -397,12 +400,20 @@ int main(int argc, char* argv[])
         ServerRuntime::BuildDedicatedServerWorldBootstrapPlan(
             worldBootstrapProperties,
             createdWorldBootstrap);
+    const ServerRuntime::DedicatedServerInitialSavePlan createdInitialSavePlan =
+        ServerRuntime::BuildDedicatedServerInitialSavePlan(
+            createdWorldPlan,
+            false,
+            false);
     ServerRuntime::WorldBootstrapResult failedWorldBootstrap;
     failedWorldBootstrap.status = ServerRuntime::eWorldBootstrap_Failed;
     const ServerRuntime::DedicatedServerWorldBootstrapPlan failedWorldPlan =
         ServerRuntime::BuildDedicatedServerWorldBootstrapPlan(
             worldBootstrapProperties,
             failedWorldBootstrap);
+    const ServerRuntime::DedicatedServerWorldLoadPlan failedWorldLoadPlan =
+        ServerRuntime::BuildDedicatedServerWorldLoadPlan(
+            failedWorldPlan);
     const bool shouldRunInitialSave =
         ServerRuntime::ShouldRunDedicatedServerInitialSave(
             createdWorldPlan,
@@ -452,6 +463,12 @@ int main(int argc, char* argv[])
         ServerRuntime::BuildDedicatedServerShutdownPlan(
             false,
             false);
+    const ServerRuntime::DedicatedServerHostedThreadStartupPlan
+        threadStartupPlanOk =
+            ServerRuntime::BuildDedicatedServerHostedThreadStartupPlan(0);
+    const ServerRuntime::DedicatedServerHostedThreadStartupPlan
+        threadStartupPlanFailed =
+            ServerRuntime::BuildDedicatedServerHostedThreadStartupPlan(9);
     const std::string smokeFilePath = "build/portability-smoke-file.txt";
     const std::string smokeFileText = "native smoke file\n";
     ServerRuntime::ServerPropertiesConfig runtimeProperties = {};
@@ -941,9 +958,12 @@ int main(int argc, char* argv[])
             loadedWorldPlan.resolvedSaveId == "world_loaded" &&
             !loadedWorldPlan.createdNewWorld &&
             !loadedWorldPlan.loadFailed,
-        loadedWorldPlan.shouldPersistResolvedSaveId,
+        loadedWorldLoadPlan.shouldPersistResolvedSaveId &&
+            loadedWorldLoadPlan.resolvedSaveId == "world_loaded" &&
+            !loadedWorldLoadPlan.shouldAbortStartup,
         createdWorldPlan.createdNewWorld,
-        failedWorldPlan.loadFailed,
+        failedWorldLoadPlan.shouldAbortStartup &&
+            failedWorldLoadPlan.abortExitCode == 4,
         networkInitPlan.seed == 7777 &&
             networkInitPlan.saveData == fakeSaveData &&
             networkInitPlan.settings == sessionConfig.hostSettings &&
@@ -996,7 +1016,10 @@ int main(int argc, char* argv[])
             autosaveCatchupPlan.shouldMarkCompleted &&
             autosaveCatchupPlan.shouldRequestAutosave &&
             !autosaveCatchupPlan.shouldAdvanceDeadline,
-        shouldRunInitialSave,
+        shouldRunInitialSave &&
+            createdInitialSavePlan.shouldRequestInitialSave &&
+            createdInitialSavePlan.idleWaitBeforeRequestMs == 5000 &&
+            createdInitialSavePlan.requestTimeoutMs == 30000,
         shouldSkipInitialSaveWhenStopping,
         autosaveRequested,
         autosaveNextAdvanced,
@@ -1010,6 +1033,14 @@ int main(int argc, char* argv[])
             !shutdownPlanWithoutServer.shouldWaitForServerStop,
         shutdownPlanWithServer.shouldWaitForServerStop,
         shutdownPlanWithoutServer.shouldWaitForServerStop);
+    printf("thread_startup_plan=%d ok_abort=%d failed_abort=%d failed_code=%d\n",
+        !threadStartupPlanOk.shouldAbortStartup &&
+            threadStartupPlanOk.abortExitCode == 0 &&
+            threadStartupPlanFailed.shouldAbortStartup &&
+            threadStartupPlanFailed.abortExitCode == 4,
+        threadStartupPlanOk.shouldAbortStartup,
+        threadStartupPlanFailed.shouldAbortStartup,
+        threadStartupPlanFailed.abortExitCode);
     printf("file_write=%d file_read=%d file_readback_match=%d utc_file_time=%llu\n",
         wroteSmokeFile,
         readSmokeFile,

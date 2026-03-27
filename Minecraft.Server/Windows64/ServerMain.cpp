@@ -412,18 +412,21 @@ int main(int argc, char **argv)
 		ServerRuntime::BuildDedicatedServerWorldBootstrapPlan(
 			serverProperties,
 			worldBootstrap);
-	if (worldBootstrapPlan.shouldPersistResolvedSaveId)
+	const ServerRuntime::DedicatedServerWorldLoadPlan worldLoadPlan =
+		ServerRuntime::BuildDedicatedServerWorldLoadPlan(
+			worldBootstrapPlan);
+	if (worldLoadPlan.shouldPersistResolvedSaveId)
 	{
 		// Persist the actually loaded save-id back to config
 		// Keep lookup keys aligned for next startup
 		LogWorldIO("updating level-id to loaded save filename");
-		serverProperties.worldSaveId = worldBootstrapPlan.resolvedSaveId;
+		serverProperties.worldSaveId = worldLoadPlan.resolvedSaveId;
 		if (!SaveServerPropertiesConfig(serverProperties))
 		{
 			LogWorldIO("failed to persist updated level-id");
 		}
 	}
-	else if (worldBootstrapPlan.loadFailed)
+	else if (worldLoadPlan.shouldAbortStartup)
 	{
 		LogErrorf(
 			"world-io",
@@ -433,7 +436,7 @@ int main(int argc, char **argv)
 		g_NetworkManager.Terminate();
 		CleanupDevice();
 		
-		return 4;
+		return worldLoadPlan.abortExitCode;
 	}
 
 	const ServerRuntime::DedicatedServerHostedGamePlan hostedGamePlan =
@@ -473,29 +476,43 @@ int main(int argc, char **argv)
 	int startupResult = startThread->GetExitCode();
 	delete startThread;
 
-	if (startupResult != 0)
+	const ServerRuntime::DedicatedServerHostedThreadStartupPlan
+		hostedThreadStartupPlan =
+			ServerRuntime::BuildDedicatedServerHostedThreadStartupPlan(
+				startupResult);
+	if (hostedThreadStartupPlan.shouldAbortStartup)
 	{
 		LogErrorf("startup", "Failed to start dedicated server (code %d).", startupResult);
 		WinsockNetLayer::Shutdown();
 		g_NetworkManager.Terminate();
 		CleanupDevice();
 		
-		return 4;
+		return hostedThreadStartupPlan.abortExitCode;
 	}
 
 	LogStartupStep("server startup complete");
 	LogInfof("startup", "Dedicated server listening on %s:%d", g_Win64MultiplayerIP, g_Win64MultiplayerPort);
-	if (ServerRuntime::ShouldRunDedicatedServerInitialSave(
+	const ServerRuntime::DedicatedServerInitialSavePlan initialSavePlan =
+		ServerRuntime::BuildDedicatedServerInitialSavePlan(
 		worldBootstrapPlan,
 		IsShutdownRequested(),
-		app.m_bShutdown))
+		app.m_bShutdown);
+	if (initialSavePlan.shouldRequestInitialSave)
 	{
 		// Windows64 suppresses saveToDisc right after new world creation
 		// Dedicated Server explicitly runs the initial save here
 		LogWorldIO("requesting initial save for newly created world");
-		WaitForWorldActionIdle(kServerActionPad, 5000, &TickCoreSystems, &HandleXuiActions);
+		WaitForWorldActionIdle(
+			kServerActionPad,
+			initialSavePlan.idleWaitBeforeRequestMs,
+			&TickCoreSystems,
+			&HandleXuiActions);
 		app.SetXuiServerAction(kServerActionPad, eXuiServerAction_AutoSaveGame);
-		if (!WaitForWorldActionIdle(kServerActionPad, 30000, &TickCoreSystems, &HandleXuiActions))
+		if (!WaitForWorldActionIdle(
+			kServerActionPad,
+			initialSavePlan.requestTimeoutMs,
+			&TickCoreSystems,
+			&HandleXuiActions))
 		{
 			LogWorldIO("initial save timed out");
 			LogWarn("world-io", "Timed out waiting for initial save action to finish.");
