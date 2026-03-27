@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 #include "DedicatedServerRuntime.h"
 
 namespace ServerRuntime
@@ -14,6 +16,13 @@ namespace ServerRuntime
         bool advancedDeadline = false;
     };
 
+    struct DedicatedServerGameplayLoopRunResult
+    {
+        std::size_t iterations = 0;
+        bool requestedAppShutdown = false;
+        DedicatedServerGameplayLoopIterationResult lastIteration = {};
+    };
+
     DedicatedServerGameplayLoopIterationResult
     TickDedicatedServerGameplayLoop(
         DedicatedServerAutosaveState *autosaveState,
@@ -21,4 +30,13 @@ namespace ServerRuntime
         int actionPad,
         DedicatedServerGameplayLoopPollProc *pollProc,
         void *pollContext);
+
+    DedicatedServerGameplayLoopRunResult
+    RunDedicatedServerGameplayLoopUntilExit(
+        DedicatedServerAutosaveState *autosaveState,
+        const ServerPropertiesConfig &serverProperties,
+        int actionPad,
+        DedicatedServerGameplayLoopPollProc *pollProc,
+        void *pollContext,
+        unsigned int sleepMs);
 }

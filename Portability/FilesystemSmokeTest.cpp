@@ -143,6 +143,28 @@ namespace
         std::vector<std::string> queuedLines;
     };
 
+    struct GameplayLoopRunPollContext
+    {
+        int pollCount = 0;
+        int shutdownOnPoll = 3;
+    };
+
+    void GameplayLoopRunPoll(void* context)
+    {
+        GameplayLoopRunPollContext* pollContext =
+            static_cast<GameplayLoopRunPollContext*>(context);
+        if (pollContext == nullptr)
+        {
+            return;
+        }
+
+        ++pollContext->pollCount;
+        if (pollContext->pollCount >= pollContext->shutdownOnPoll)
+        {
+            ServerRuntime::RequestDedicatedServerShutdown();
+        }
+    }
+
     DWORD WINAPI SmokeThreadMain(LPVOID lpThreadParameter)
     {
         SetThreadName(static_cast<DWORD>(-1), "smoke-worker");
@@ -684,6 +706,24 @@ int main(int argc, char* argv[])
                 nullptr,
                 nullptr);
     ServerRuntime::ResetDedicatedServerShutdownRequest();
+    ServerRuntime::SetDedicatedServerAppShutdownRequested(false);
+    ServerRuntime::DedicatedServerAutosaveState gameplayLoopRunState =
+        ServerRuntime::CreateDedicatedServerAutosaveState(
+            0,
+            runtimeProperties);
+    gameplayLoopRunState.nextTickMs = 0;
+    GameplayLoopRunPollContext gameplayLoopRunPollContext = {};
+    const ServerRuntime::DedicatedServerGameplayLoopRunResult
+        gameplayLoopRunResult =
+            ServerRuntime::RunDedicatedServerGameplayLoopUntilExit(
+                &gameplayLoopRunState,
+                runtimeProperties,
+                0,
+                &GameplayLoopRunPoll,
+                &gameplayLoopRunPollContext,
+                0);
+    ServerRuntime::ResetDedicatedServerShutdownRequest();
+    ServerRuntime::SetDedicatedServerAppShutdownRequested(false);
     const ServerRuntime::DedicatedServerShutdownExecutionResult
         shutdownExecution =
             ServerRuntime::ExecuteDedicatedServerShutdown();
@@ -1375,6 +1415,14 @@ int main(int argc, char* argv[])
         gameplayLoopRequest.autosaveRequested,
         gameplayLoopComplete.autosaveCompleted,
         gameplayLoopExit.shouldExit);
+    printf("gameplay_loop_run=%d iterations=%zu polls=%d app_shutdown=%d\n",
+        gameplayLoopRunResult.iterations == 3U &&
+            gameplayLoopRunPollContext.pollCount == 3 &&
+            gameplayLoopRunResult.requestedAppShutdown &&
+            gameplayLoopRunResult.lastIteration.shouldExit,
+        gameplayLoopRunResult.iterations,
+        gameplayLoopRunPollContext.pollCount,
+        gameplayLoopRunResult.requestedAppShutdown);
     printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
         hostedGameRuntimeResult == 11 &&
             hostedGameRuntimeThreadValue == 1,
@@ -1745,6 +1793,10 @@ int main(int argc, char* argv[])
         gameplayLoopComplete.autosaveCompleted &&
         !gameplayLoopComplete.shouldExit &&
         gameplayLoopExit.shouldExit &&
+        gameplayLoopRunResult.iterations == 3U &&
+        gameplayLoopRunPollContext.pollCount == 3 &&
+        gameplayLoopRunResult.requestedAppShutdown &&
+        gameplayLoopRunResult.lastIteration.shouldExit &&
         hostedGameRuntimeResult == 11 &&
         hostedGameRuntimeThreadValue == 1 &&
         hostedGameStartupExecution.startupResult == 0 &&

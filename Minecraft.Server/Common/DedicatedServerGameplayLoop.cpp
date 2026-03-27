@@ -79,4 +79,37 @@ namespace ServerRuntime
 
         return result;
     }
+
+    DedicatedServerGameplayLoopRunResult
+    RunDedicatedServerGameplayLoopUntilExit(
+        DedicatedServerAutosaveState *autosaveState,
+        const ServerPropertiesConfig &serverProperties,
+        int actionPad,
+        DedicatedServerGameplayLoopPollProc *pollProc,
+        void *pollContext,
+        unsigned int sleepMs)
+    {
+        DedicatedServerGameplayLoopRunResult result = {};
+        while (!IsDedicatedServerShutdownRequested() &&
+            !IsDedicatedServerAppShutdownRequested())
+        {
+            result.lastIteration = TickDedicatedServerGameplayLoop(
+                autosaveState,
+                serverProperties,
+                actionPad,
+                pollProc,
+                pollContext);
+            ++result.iterations;
+            if (result.lastIteration.shouldExit)
+            {
+                break;
+            }
+
+            LceSleepMilliseconds(sleepMs);
+        }
+
+        SetDedicatedServerAppShutdownRequested(true);
+        result.requestedAppShutdown = true;
+        return result;
+    }
 }

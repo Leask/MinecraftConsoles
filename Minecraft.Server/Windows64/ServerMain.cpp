@@ -307,27 +307,14 @@ int main(int argc, char **argv)
 			serverProperties);
 	ServerRuntime::ServerCli serverCli;
 	serverCli.Start();
-
-	while (!ServerRuntime::IsDedicatedServerShutdownRequested() &&
-		!ServerRuntime::IsDedicatedServerAppShutdownRequested())
-	{
-		const ServerRuntime::DedicatedServerGameplayLoopIterationResult
-			loopResult =
-				ServerRuntime::TickDedicatedServerGameplayLoop(
-					&autosaveState,
-					serverProperties,
-					kServerActionPad,
-					&PollDedicatedServerCli,
-					&serverCli);
-		if (loopResult.shouldExit)
-		{
-			break;
-		}
-
-		LceSleepMilliseconds(10);
-	}
+	ServerRuntime::RunDedicatedServerGameplayLoopUntilExit(
+		&autosaveState,
+		serverProperties,
+		kServerActionPad,
+		&PollDedicatedServerCli,
+		&serverCli,
+		10);
 	serverCli.Stop();
-	ServerRuntime::SetDedicatedServerAppShutdownRequested(true);
 
 	LogInfof("shutdown", "Dedicated server stopped");
 	ServerRuntime::ExecuteDedicatedServerShutdown();

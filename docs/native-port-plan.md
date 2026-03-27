@@ -226,6 +226,9 @@ This iteration starts with:
 - hosted-game startup now has a shared execution helper in
   `Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h`, so init-data
   population plus startup-result handling stop living inline in `ServerMain.cpp`
+- the dedicated gameplay main loop now has a shared run helper in
+  `Minecraft.Server/Common/DedicatedServerGameplayLoop.cpp`, so the
+  `while + sleep + app-shutdown` flow stops living inline in `ServerMain.cpp`
 - the remaining Windows-only runtime bootstrap/teardown sequence now lives in
   `Minecraft.Server/Windows64/Windows64DedicatedServerRuntime.cpp`, making
   the native blocker boundary explicit instead of leaving it interleaved with
