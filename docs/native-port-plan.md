@@ -233,6 +233,10 @@ This iteration starts with:
   session helper in `Minecraft.Server/Common/DedicatedServerLifecycle.cpp`,
   so the post-startup dedicated server flow is covered as one native-smoke
   execution path instead of only as isolated helper calls
+- session-config application, world-load execution, and hosted-game startup
+  now also have a shared startup helper in
+  `Minecraft.Server/Common/DedicatedServerLifecycle.h`, so `ServerMain.cpp`
+  no longer open-codes most of the startup path after `BootstrapWorldForServer`
 - the remaining Windows-only runtime bootstrap/teardown sequence now lives in
   `Minecraft.Server/Windows64/Windows64DedicatedServerRuntime.cpp`, making
   the native blocker boundary explicit instead of leaving it interleaved with

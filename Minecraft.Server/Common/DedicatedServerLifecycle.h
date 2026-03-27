@@ -4,6 +4,8 @@
 
 #include "../ServerProperties.h"
 #include "DedicatedServerGameplayLoop.h"
+#include "DedicatedServerHostedGameRuntime.h"
+#include "DedicatedServerPlatformRuntime.h"
 #include "DedicatedServerShutdownPlan.h"
 #include "DedicatedServerWorldBootstrap.h"
 
@@ -34,11 +36,77 @@ namespace ServerRuntime
         const DedicatedServerWorldLoadPlan &worldLoadPlan,
         ServerPropertiesConfig *serverProperties);
 
+    struct DedicatedServerStartupExecutionResult
+    {
+        DedicatedServerSessionConfig sessionConfig = {};
+        DedicatedServerAppSessionApplyResult appSession = {};
+        DedicatedServerWorldBootstrapPlan worldBootstrapPlan = {};
+        DedicatedServerWorldLoadExecutionResult worldLoadExecution = {};
+        DedicatedServerHostedGamePlan hostedGamePlan = {};
+        DedicatedServerHostedGameStartupExecutionResult hostedGameStartup = {};
+        bool abortedStartup = false;
+        int abortExitCode = 0;
+    };
+
     struct DedicatedServerShutdownExecutionResult
     {
         DedicatedServerShutdownPlan plan = {};
         bool haltedGameplay = false;
     };
+
+    template <typename TInitData>
+    DedicatedServerStartupExecutionResult ExecuteDedicatedServerStartup(
+        const DedicatedServerConfig &config,
+        ServerPropertiesConfig *serverProperties,
+        const WorldBootstrapResult &worldBootstrap,
+        std::int64_t generatedSeed,
+        DedicatedServerHostedGameThreadProc *threadProc,
+        TInitData *initData)
+    {
+        DedicatedServerStartupExecutionResult result = {};
+        if (serverProperties == nullptr)
+        {
+            result.abortedStartup = true;
+            result.abortExitCode = 1;
+            return result;
+        }
+
+        result.sessionConfig = BuildDedicatedServerSessionConfig(
+            config,
+            *serverProperties);
+        result.appSession = ApplyDedicatedServerAppSessionPlan(
+            BuildDedicatedServerAppSessionPlan(result.sessionConfig));
+        result.worldBootstrapPlan = BuildDedicatedServerWorldBootstrapPlan(
+            *serverProperties,
+            worldBootstrap);
+        result.worldLoadExecution = ExecuteDedicatedServerWorldLoadPlan(
+            result.worldBootstrapPlan,
+            BuildDedicatedServerWorldLoadPlan(result.worldBootstrapPlan),
+            serverProperties);
+        if (result.worldLoadExecution.abortedStartup)
+        {
+            result.abortedStartup = true;
+            result.abortExitCode = result.worldLoadExecution.abortExitCode;
+            return result;
+        }
+
+        result.hostedGamePlan = BuildDedicatedServerHostedGamePlan(
+            result.sessionConfig,
+            worldBootstrap.saveData,
+            generatedSeed);
+        result.hostedGameStartup = ExecuteDedicatedServerHostedGameStartup(
+            result.hostedGamePlan,
+            threadProc,
+            initData);
+        if (result.hostedGameStartup.startupPlan.shouldAbortStartup)
+        {
+            result.abortedStartup = true;
+            result.abortExitCode =
+                result.hostedGameStartup.startupPlan.abortExitCode;
+        }
+
+        return result;
+    }
 
     struct DedicatedServerSessionExecutionResult
     {

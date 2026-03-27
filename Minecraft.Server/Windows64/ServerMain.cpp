@@ -234,62 +234,35 @@ int main(int argc, char **argv)
 		return windowsRuntimeStartResult.exitCode;
 	}
 
-	const ServerRuntime::DedicatedServerSessionConfig sessionConfig =
-		ServerRuntime::BuildDedicatedServerSessionConfig(
-			config,
-			serverProperties);
-	const ServerRuntime::DedicatedServerAppSessionPlan appSessionPlan =
-		ServerRuntime::BuildDedicatedServerAppSessionPlan(sessionConfig);
-	ServerRuntime::ApplyDedicatedServerAppSessionPlan(appSessionPlan);
 	// Read world name and fixed save-id from server.properties
 	// Delegate load-vs-create decision to WorldManager
 	WorldBootstrapResult worldBootstrap = BootstrapWorldForServer(
 		serverProperties,
 		kServerActionPad,
 		&ServerRuntime::TickDedicatedServerPlatformRuntime);
-	const ServerRuntime::DedicatedServerWorldBootstrapPlan worldBootstrapPlan =
-		ServerRuntime::BuildDedicatedServerWorldBootstrapPlan(
-			serverProperties,
-			worldBootstrap);
-	const ServerRuntime::DedicatedServerWorldLoadPlan worldLoadPlan =
-		ServerRuntime::BuildDedicatedServerWorldLoadPlan(
-			worldBootstrapPlan);
-	const ServerRuntime::DedicatedServerWorldLoadExecutionResult
-		worldLoadExecution =
-			ServerRuntime::ExecuteDedicatedServerWorldLoadPlan(
-				worldBootstrapPlan,
-				worldLoadPlan,
-				&serverProperties);
-	if (worldLoadExecution.abortedStartup)
-	{
-		ServerRuntime::StopDedicatedServerPlatformRuntime();
-		
-		return worldLoadExecution.abortExitCode;
-	}
-
-	const ServerRuntime::DedicatedServerHostedGamePlan hostedGamePlan =
-		ServerRuntime::BuildDedicatedServerHostedGamePlan(
-			sessionConfig,
-			worldBootstrap.saveData,
-			(new Random())->nextLong());
 	NetworkGameInitData param;
-
 	LogStartupStep("starting hosted network game thread");
-	const ServerRuntime::DedicatedServerHostedGameStartupExecutionResult
-		hostedGameStartupExecution =
-			ServerRuntime::ExecuteDedicatedServerHostedGameStartup(
-			hostedGamePlan,
-			&CGameNetworkManager::RunNetworkGameThreadProc,
-			&param);
-	if (hostedGameStartupExecution.startupPlan.shouldAbortStartup)
+	const ServerRuntime::DedicatedServerStartupExecutionResult
+		startupExecution =
+			ServerRuntime::ExecuteDedicatedServerStartup(
+				config,
+				&serverProperties,
+				worldBootstrap,
+				(new Random())->nextLong(),
+				&CGameNetworkManager::RunNetworkGameThreadProc,
+				&param);
+	if (startupExecution.abortedStartup)
 	{
-		LogErrorf(
-			"startup",
-			"Failed to start dedicated server (code %d).",
-			hostedGameStartupExecution.startupResult);
+		if (startupExecution.hostedGameStartup.startupPlan.shouldAbortStartup)
+		{
+			LogErrorf(
+				"startup",
+				"Failed to start dedicated server (code %d).",
+				startupExecution.hostedGameStartup.startupResult);
+		}
 		ServerRuntime::StopDedicatedServerPlatformRuntime();
 		
-		return hostedGameStartupExecution.startupPlan.abortExitCode;
+		return startupExecution.abortExitCode;
 	}
 
 	LogStartupStep("server startup complete");
@@ -301,7 +274,7 @@ int main(int argc, char **argv)
 	ServerRuntime::ServerCli serverCli;
 	serverCli.Start();
 	ServerRuntime::ExecuteDedicatedServerSession(
-		worldBootstrapPlan,
+		startupExecution.worldBootstrapPlan,
 		serverProperties,
 		kServerActionPad,
 		&PollDedicatedServerCli,

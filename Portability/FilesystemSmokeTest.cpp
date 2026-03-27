@@ -568,6 +568,8 @@ int main(int argc, char* argv[])
             false);
     LoadSaveDataThreadParam *fakeSaveData =
         reinterpret_cast<LoadSaveDataThreadParam *>(0x1234);
+    loadedWorldBootstrap.saveData = fakeSaveData;
+    failedWorldBootstrap.saveData = fakeSaveData;
     const ServerRuntime::DedicatedServerNetworkInitPlan networkInitPlan =
         ServerRuntime::BuildDedicatedServerNetworkInitPlan(
             sessionConfig,
@@ -649,6 +651,46 @@ int main(int argc, char* argv[])
             ServerRuntime::StartDedicatedServerPlatformRuntime(platformState);
     appSessionRuntimeResult =
         ServerRuntime::ApplyDedicatedServerAppSessionPlan(appSessionPlan);
+    SmokeNetworkGameInitData startupExecutionInitData = {};
+    ServerRuntime::DedicatedServerStartupExecutionResult
+        startupExecutionResult = {};
+    ServerRuntime::DedicatedServerStartupExecutionResult
+        startupExecutionFailed = {};
+    std::string startupExecutionText;
+    bool startupExecutionDirectoryReady = false;
+    {
+        ScopedCurrentDirectory directoryGuard(
+            "build/portability-startup-execution-smoke");
+        startupExecutionDirectoryReady = directoryGuard.IsActive();
+        if (startupExecutionDirectoryReady)
+        {
+            ServerRuntime::ServerPropertiesConfig startupExecutionProperties =
+                worldBootstrapProperties;
+            startupExecutionProperties.worldName = L"Startup Execution";
+            startupExecutionResult =
+                ServerRuntime::ExecuteDedicatedServerStartup(
+                    sessionDedicatedConfig,
+                    &startupExecutionProperties,
+                    loadedWorldBootstrap,
+                    9999,
+                    &HostedGameStartupSmokeThreadProc,
+                    &startupExecutionInitData);
+            ServerRuntime::FileUtils::ReadTextFile(
+                "server.properties",
+                &startupExecutionText);
+
+            ServerRuntime::ServerPropertiesConfig failedStartupProperties =
+                worldBootstrapProperties;
+            startupExecutionFailed =
+                ServerRuntime::ExecuteDedicatedServerStartup(
+                    sessionDedicatedConfig,
+                    &failedStartupProperties,
+                    failedWorldBootstrap,
+                    9999,
+                    &HostedGameStartupSmokeThreadProc,
+                    &startupExecutionInitData);
+        }
+    }
     ServerRuntime::TickDedicatedServerPlatformRuntime();
     ServerRuntime::HandleDedicatedServerPlatformActions();
     const bool platformActionIdle =
@@ -1291,6 +1333,21 @@ int main(int argc, char* argv[])
         loadedWorldExecution.savedResolvedSaveId,
         failedWorldExecution.abortedStartup,
         failedWorldExecution.abortExitCode);
+    printf("startup_execution=%d dir=%d aborted=%d failed_abort=%d "
+        "failed_code=%d\n",
+        startupExecutionDirectoryReady &&
+            !startupExecutionResult.abortedStartup &&
+            startupExecutionResult.appSession.applied &&
+            startupExecutionResult.worldLoadExecution.savedResolvedSaveId &&
+            startupExecutionResult.hostedGameStartup.startupResult == 0 &&
+            startupExecutionText.find("level-id=world_loaded") !=
+                std::string::npos &&
+            startupExecutionFailed.abortedStartup &&
+            startupExecutionFailed.abortExitCode == 4,
+        startupExecutionDirectoryReady,
+        startupExecutionResult.abortedStartup,
+        startupExecutionFailed.abortedStartup,
+        startupExecutionFailed.abortExitCode);
     printf("autosave_state=%d initial_save=%d skip_initial_save=%d "
         "requested=%d next_advanced=%d completed=%d\n",
         autosaveState.intervalMs == 45000U &&
@@ -1771,6 +1828,15 @@ int main(int argc, char* argv[])
         failedWorldExecution.abortExitCode == 4 &&
         worldLoadExecutionText.find("level-id=world_loaded") !=
             std::string::npos &&
+        startupExecutionDirectoryReady &&
+        !startupExecutionResult.abortedStartup &&
+        startupExecutionResult.appSession.applied &&
+        startupExecutionResult.worldLoadExecution.savedResolvedSaveId &&
+        startupExecutionResult.hostedGameStartup.startupResult == 0 &&
+        startupExecutionText.find("level-id=world_loaded") !=
+            std::string::npos &&
+        startupExecutionFailed.abortedStartup &&
+        startupExecutionFailed.abortExitCode == 4 &&
         !createdWorldPlan.shouldPersistResolvedSaveId &&
         createdWorldPlan.createdNewWorld &&
         !createdWorldPlan.loadFailed &&
