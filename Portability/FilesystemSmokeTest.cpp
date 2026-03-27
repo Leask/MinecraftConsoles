@@ -35,6 +35,16 @@
 
 namespace
 {
+    struct SmokeNetworkGameInitData
+    {
+        std::int64_t seed = 0;
+        LoadSaveDataThreadParam *saveData = nullptr;
+        DWORD settings = 0;
+        bool dedicatedNoLocalHostPlayer = false;
+        unsigned int xzSize = 0;
+        unsigned char hellScale = 0;
+    };
+
     class SmokeCliInputSink : public ServerRuntime::IServerCliInputSink
     {
     public:
@@ -430,6 +440,10 @@ int main(int argc, char* argv[])
             sessionConfig,
             fakeSaveData,
             9999);
+    SmokeNetworkGameInitData populatedInitData;
+    ServerRuntime::PopulateDedicatedServerNetworkGameInitData(
+        &populatedInitData,
+        hostedGamePlan.networkInitPlan);
     const ServerRuntime::DedicatedServerShutdownPlan shutdownPlanWithServer =
         ServerRuntime::BuildDedicatedServerShutdownPlan(
             true,
@@ -955,7 +969,13 @@ int main(int argc, char* argv[])
             hostedGamePlan.publicSlots ==
                 sessionConfig.networkMaxPlayers &&
             hostedGamePlan.privateSlots == 0 &&
-            hostedGamePlan.fakeLocalPlayerJoined,
+            hostedGamePlan.fakeLocalPlayerJoined &&
+            populatedInitData.seed == hostedGamePlan.networkInitPlan.seed &&
+            populatedInitData.saveData == fakeSaveData &&
+            populatedInitData.settings == sessionConfig.hostSettings &&
+            populatedInitData.dedicatedNoLocalHostPlayer &&
+            populatedInitData.xzSize == sessionConfig.worldSizeChunks &&
+            populatedInitData.hellScale == sessionConfig.worldHellScale,
         static_cast<long long>(hostedGamePlan.resolvedSeed));
     printf("autosave_state=%d initial_save=%d skip_initial_save=%d "
         "requested=%d next_advanced=%d completed=%d\n",

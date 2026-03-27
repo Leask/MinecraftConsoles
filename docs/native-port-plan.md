@@ -211,6 +211,9 @@ This iteration starts with:
 - autosave loop decisions now live in
   `Minecraft.Server/Common/DedicatedServerRuntime.cpp`, so completion,
   request, and deadline-pushback rules stay under native smoke coverage
+- `NetworkGameInitData` field mapping now lives behind
+  `PopulateDedicatedServerNetworkGameInitData(...)`, so `ServerMain.cpp`
+  no longer hand-populates the game-thread init payload directly
 - first non-Windows Win32 compatibility shim for
   `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
 - first server-common utility source (`Minecraft.Server/Common/StringUtils.cpp`)

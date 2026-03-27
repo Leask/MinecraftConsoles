@@ -62,4 +62,25 @@ namespace ServerRuntime
         const DedicatedServerSessionConfig &sessionConfig,
         LoadSaveDataThreadParam *saveData,
         std::int64_t generatedSeed);
+
+    template <typename TInitData>
+    void PopulateDedicatedServerNetworkGameInitData(
+        TInitData *initData,
+        const DedicatedServerNetworkInitPlan &networkInitPlan)
+    {
+        if (initData == nullptr)
+        {
+            return;
+        }
+
+        initData->seed = networkInitPlan.seed;
+#ifdef _LARGE_WORLDS
+        initData->xzSize = networkInitPlan.worldSizeChunks;
+        initData->hellScale = networkInitPlan.worldHellScale;
+#endif
+        initData->saveData = networkInitPlan.saveData;
+        initData->settings = networkInitPlan.settings;
+        initData->dedicatedNoLocalHostPlayer =
+            networkInitPlan.dedicatedNoLocalHostPlayer;
+    }
 }

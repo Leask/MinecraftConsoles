@@ -444,15 +444,9 @@ int main(int argc, char **argv)
 	const ServerRuntime::DedicatedServerNetworkInitPlan &networkInitPlan =
 		hostedGamePlan.networkInitPlan;
 	NetworkGameInitData *param = new NetworkGameInitData();
-	param->seed = networkInitPlan.seed;
-#ifdef _LARGE_WORLDS
-	param->xzSize = networkInitPlan.worldSizeChunks;
-	param->hellScale = networkInitPlan.worldHellScale;
-#endif
-	param->saveData = networkInitPlan.saveData;
-	param->settings = networkInitPlan.settings;
-	param->dedicatedNoLocalHostPlayer =
-		networkInitPlan.dedicatedNoLocalHostPlayer;
+	ServerRuntime::PopulateDedicatedServerNetworkGameInitData(
+		param,
+		networkInitPlan);
 
 	LogStartupStep("starting hosted network game thread");
 	g_NetworkManager.HostGame(
