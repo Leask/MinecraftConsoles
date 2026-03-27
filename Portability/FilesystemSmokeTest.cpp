@@ -368,6 +368,8 @@ int main(int argc, char* argv[])
         ServerRuntime::BuildDedicatedServerSessionConfig(
             sessionDedicatedConfig,
             sessionProperties);
+    const ServerRuntime::DedicatedServerAppSessionPlan appSessionPlan =
+        ServerRuntime::BuildDedicatedServerAppSessionPlan(sessionConfig);
     ServerRuntime::ServerPropertiesConfig worldBootstrapProperties = {};
     worldBootstrapProperties.worldName = L"";
     worldBootstrapProperties.worldSaveId = "WORLD";
@@ -826,7 +828,7 @@ int main(int argc, char* argv[])
             !dedicatedInvalidError.empty(),
         dedicatedUsageLines.size());
     printf("session_config=%d host_settings=0x%08x network_max_players=%u "
-        "seed=%lld size=%u hell=%u\n",
+        "seed=%lld size=%u hell=%u app_plan=%d\n",
         (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_DIFFICULTY) ==
                 2U &&
             ((sessionConfig.hostSettings &
@@ -885,7 +887,15 @@ int main(int argc, char* argv[])
         static_cast<unsigned int>(sessionConfig.networkMaxPlayers),
         static_cast<long long>(sessionConfig.seed),
         sessionConfig.worldSizeChunks,
-        static_cast<unsigned int>(sessionConfig.worldHellScale));
+        static_cast<unsigned int>(sessionConfig.worldHellScale),
+        appSessionPlan.shouldInitGameSettings &&
+            !appSessionPlan.tutorialMode &&
+            !appSessionPlan.corruptSaveDeleted &&
+            appSessionPlan.hostSettings == sessionConfig.hostSettings &&
+            appSessionPlan.shouldApplyWorldSize &&
+            appSessionPlan.worldSizeChunks == sessionConfig.worldSizeChunks &&
+            appSessionPlan.worldHellScale == sessionConfig.worldHellScale &&
+            appSessionPlan.saveDisabled == sessionConfig.saveDisabled);
     printf("world_bootstrap_plan=%d loaded_persist=%d created_new=%d "
         "failed=%d init_plan=%d init_seed=%lld init_players=%u "
         "hosted_plan=%d hosted_seed=%lld\n",

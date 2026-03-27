@@ -379,24 +379,32 @@ int main(int argc, char **argv)
 		return 3;
 	}
 
-	app.InitGameSettings();
-
 	const ServerRuntime::DedicatedServerSessionConfig sessionConfig =
 		ServerRuntime::BuildDedicatedServerSessionConfig(
 			config,
 			serverProperties);
+	const ServerRuntime::DedicatedServerAppSessionPlan appSessionPlan =
+		ServerRuntime::BuildDedicatedServerAppSessionPlan(sessionConfig);
+
 	MinecraftServer::resetFlags();
-	app.SetTutorialMode(false);
-	app.SetCorruptSaveDeleted(false);
-	app.SetGameHostOption(eGameHostOption_All, sessionConfig.hostSettings);
+	if (appSessionPlan.shouldInitGameSettings)
+	{
+		app.InitGameSettings();
+	}
+	app.SetTutorialMode(appSessionPlan.tutorialMode);
+	app.SetCorruptSaveDeleted(appSessionPlan.corruptSaveDeleted);
+	app.SetGameHostOption(eGameHostOption_All, appSessionPlan.hostSettings);
 #ifdef _LARGE_WORLDS
 	// Apply desired target size for loading existing worlds.
 	// Expansion happens only when target size is larger than current level size.
-	app.SetGameNewWorldSize(sessionConfig.worldSizeChunks, true);
-	app.SetGameNewHellScale(sessionConfig.worldHellScale);
+	if (appSessionPlan.shouldApplyWorldSize)
+	{
+		app.SetGameNewWorldSize(appSessionPlan.worldSizeChunks, true);
+		app.SetGameNewHellScale(appSessionPlan.worldHellScale);
+	}
 #endif
 
-	StorageManager.SetSaveDisabled(sessionConfig.saveDisabled);
+	StorageManager.SetSaveDisabled(appSessionPlan.saveDisabled);
 	// Read world name and fixed save-id from server.properties
 	// Delegate load-vs-create decision to WorldManager
 	WorldBootstrapResult worldBootstrap = BootstrapWorldForServer(serverProperties, kServerActionPad, &TickCoreSystems);

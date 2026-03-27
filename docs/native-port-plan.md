@@ -204,6 +204,10 @@ This iteration starts with:
 - first extracted dedicated hosted-game startup plan in
   `Minecraft.Server/Common/DedicatedServerWorldBootstrap.cpp`, so seed
   resolution plus `HostGame` defaults stop living inline in `ServerMain.cpp`
+- first extracted dedicated app-session setup plan in
+  `Minecraft.Server/Common/DedicatedServerSessionConfig.cpp`, so tutorial,
+  corrupt-save, host-settings, world-size, and save-disable defaults stop
+  living inline in `ServerMain.cpp`
 - first non-Windows Win32 compatibility shim for
   `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
 - first server-common utility source (`Minecraft.Server/Common/StringUtils.cpp`)

@@ -162,4 +162,19 @@ namespace ServerRuntime
             static_cast<unsigned char>(config.worldHellScale);
         return sessionConfig;
     }
+
+    DedicatedServerAppSessionPlan BuildDedicatedServerAppSessionPlan(
+        const DedicatedServerSessionConfig &sessionConfig)
+    {
+        DedicatedServerAppSessionPlan plan = {};
+        plan.shouldInitGameSettings = true;
+        plan.tutorialMode = false;
+        plan.corruptSaveDeleted = false;
+        plan.hostSettings = sessionConfig.hostSettings;
+        plan.shouldApplyWorldSize = true;
+        plan.worldSizeChunks = sessionConfig.worldSizeChunks;
+        plan.worldHellScale = sessionConfig.worldHellScale;
+        plan.saveDisabled = sessionConfig.saveDisabled;
+        return plan;
+    }
 }
