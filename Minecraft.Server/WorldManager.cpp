@@ -5,6 +5,7 @@
 #include "Minecraft.h"
 #include "MinecraftServer.h"
 #include "ServerLogger.h"
+#include "Common\\DedicatedServerWorldBootstrap.h"
 #include "Common\\ServerStoragePaths.h"
 #include "Common\\StringUtils.h"
 #include "Common\\DedicatedServerWorldSaveSelection.h"
@@ -19,13 +20,6 @@ namespace ServerRuntime
 {
 using StringUtils::Utf8ToWide;
 using StringUtils::WideToUtf8;
-
-enum EWorldSaveLoadResult
-{
-	eWorldSaveLoad_Loaded,
-	eWorldSaveLoad_NotFound,
-	eWorldSaveLoad_Failed
-};
 
 struct SaveInfoQueryContext
 {
@@ -318,7 +312,7 @@ static void ApplyWorldStorageTarget(const std::wstring &worldName, const std::st
  * - `eWorldSaveLoad_NotFound`: No matching save found
  * - `eWorldSaveLoad_Failed`: API failure, corruption, or invalid data
  */
-static EWorldSaveLoadResult PrepareWorldSaveData(
+static EDedicatedServerWorldLoadStatus PrepareWorldSaveData(
 	const std::wstring &targetWorldName,
 	const std::string &targetSaveFilename,
 	int actionPad,
@@ -328,7 +322,7 @@ static EWorldSaveLoadResult PrepareWorldSaveData(
 {
 	if (outSaveData == NULL)
 	{
-		return eWorldSaveLoad_Failed;
+		return eDedicatedServerWorldLoad_Failed;
 	}
 	*outSaveData = NULL;
 	if (outResolvedSaveFilename != NULL)
@@ -350,13 +344,13 @@ static EWorldSaveLoadResult PrepareWorldSaveData(
 	else if (infoState != C4JStorage::ESaveGame_GetSavesInfo)
 	{
 		LogWorldIO("GetSavesInfo failed to start");
-		return eWorldSaveLoad_Failed;
+		return eDedicatedServerWorldLoad_Failed;
 	}
 
 	if (!WaitForSaveInfoResult(&infoContext, 10000, tickProc))
 	{
 		LogWorldIO("timed out waiting for save list");
-		return eWorldSaveLoad_Failed;
+		return eDedicatedServerWorldLoad_Failed;
 	}
 
 	if (infoContext.details == NULL)
@@ -366,7 +360,7 @@ static EWorldSaveLoadResult PrepareWorldSaveData(
 	if (infoContext.details == NULL)
 	{
 		LogWorldIO("failed to retrieve save list");
-		return eWorldSaveLoad_Failed;
+		return eDedicatedServerWorldLoad_Failed;
 	}
 
 	std::vector<ServerRuntime::DedicatedServerWorldSaveMatchEntry> saveEntries;
@@ -394,7 +388,7 @@ static EWorldSaveLoadResult PrepareWorldSaveData(
 	if (matchedIndex < 0)
 	{
 		LogWorldIO("no save matched configured world name");
-		return eWorldSaveLoad_NotFound;
+		return eDedicatedServerWorldLoad_NotFound;
 	}
 
 	std::wstring matchedTitle = Utf8ToWide(infoContext.details->SaveInfoA[matchedIndex].UTF8SaveTitle);
@@ -434,7 +428,7 @@ static EWorldSaveLoadResult PrepareWorldSaveData(
 	if (loadState != C4JStorage::ESaveGame_Load && loadState != C4JStorage::ESaveGame_Idle)
 	{
 		LogWorldIO("LoadSaveData failed to start");
-		return eWorldSaveLoad_Failed;
+		return eDedicatedServerWorldLoad_Failed;
 	}
 
 	if (loadState == C4JStorage::ESaveGame_Load)
@@ -442,12 +436,12 @@ static EWorldSaveLoadResult PrepareWorldSaveData(
 		if (!WaitForSaveLoadResult(&loadContext, 15000, tickProc))
 		{
 			LogWorldIO("timed out waiting for save data load");
-			return eWorldSaveLoad_Failed;
+			return eDedicatedServerWorldLoad_Failed;
 		}
 		if (loadContext.isCorrupt)
 		{
 			LogWorldIO("target save is corrupt; aborting load");
-			return eWorldSaveLoad_Failed;
+			return eDedicatedServerWorldLoad_Failed;
 		}
 	}
 
@@ -456,7 +450,7 @@ static EWorldSaveLoadResult PrepareWorldSaveData(
 	{
 		// Treat zero-byte payload as failure even when load API reports success
 		LogWorldIO("loaded save has zero size");
-		return eWorldSaveLoad_Failed;
+		return eDedicatedServerWorldLoad_Failed;
 	}
 
 	byteArray loadedSaveData(saveSize, false);
@@ -465,12 +459,12 @@ static EWorldSaveLoadResult PrepareWorldSaveData(
 	if (loadedSize == 0)
 	{
 		LogWorldIO("failed to copy loaded save data from storage manager");
-		return eWorldSaveLoad_Failed;
+		return eDedicatedServerWorldLoad_Failed;
 	}
 
 	*outSaveData = new LoadSaveDataThreadParam(loadedSaveData.data, loadedSize, matchedTitle);
 	LogWorldIO("prepared save data payload for server startup");
-	return eWorldSaveLoad_Loaded;
+	return eDedicatedServerWorldLoad_Loaded;
 }
 
 /**
@@ -497,12 +491,10 @@ WorldBootstrapResult BootstrapWorldForServer(
 		return result;
 	}
 
-	std::wstring targetWorldName = config.worldName;
-	std::string targetSaveFilename = config.worldSaveId;
-	if (targetWorldName.empty())
-	{
-		targetWorldName = L"world";
-	}
+	const DedicatedServerWorldTarget worldTarget =
+		ResolveDedicatedServerWorldTarget(config);
+	const std::wstring &targetWorldName = worldTarget.worldName;
+	const std::string &targetSaveFilename = worldTarget.saveId;
 
 	LogWorldName("configured level-name", targetWorldName);
 	if (!targetSaveFilename.empty())
@@ -512,34 +504,33 @@ WorldBootstrapResult BootstrapWorldForServer(
 
 	ApplyWorldStorageTarget(targetWorldName, targetSaveFilename);
 
+	LoadSaveDataThreadParam *loadedSaveData = NULL;
 	std::string loadedSaveFilename;
-	EWorldSaveLoadResult worldLoadResult = PrepareWorldSaveData(
+	const EDedicatedServerWorldLoadStatus worldLoadResult =
+		PrepareWorldSaveData(
 		targetWorldName,
 		targetSaveFilename,
 		actionPad,
 		tickProc,
-		&result.saveData,
+		&loadedSaveData,
 		&loadedSaveFilename);
-	if (worldLoadResult == eWorldSaveLoad_Loaded)
+	result = BuildDedicatedServerWorldBootstrapResult(
+		worldLoadResult,
+		loadedSaveData,
+		worldTarget,
+		loadedSaveFilename);
+	if (result.status == eWorldBootstrap_Loaded)
 	{
-		result.status = eWorldBootstrap_Loaded;
-		result.resolvedSaveId = loadedSaveFilename;
 		LogStartupStep("loading configured world from save data");
 	}
-	else if (worldLoadResult == eWorldSaveLoad_NotFound)
+	else if (result.status == eWorldBootstrap_CreatedNew)
 	{
 		// Create a new context only when no matching save exists
 		// Fix saveId here so the next startup writes to the same location
-		result.status = eWorldBootstrap_CreatedNew;
-		result.resolvedSaveId = targetSaveFilename;
 		LogStartupStep("configured world not found; creating new world");
 		LogWorldIO("creating new world save context");
 		StorageManager.ResetSaveData();
 		ApplyWorldStorageTarget(targetWorldName, targetSaveFilename);
-	}
-	else
-	{
-		result.status = eWorldBootstrap_Failed;
 	}
 
 	return result;

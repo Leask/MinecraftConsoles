@@ -9,14 +9,54 @@ namespace ServerRuntime
         static constexpr int kDedicatedServerStartupFailureExitCode = 4;
     }
 
+    DedicatedServerWorldTarget ResolveDedicatedServerWorldTarget(
+        const ServerPropertiesConfig &serverProperties)
+    {
+        DedicatedServerWorldTarget target = {};
+        target.worldName = serverProperties.worldName.empty()
+            ? L"world"
+            : serverProperties.worldName;
+        target.saveId = serverProperties.worldSaveId;
+        return target;
+    }
+
+    WorldBootstrapResult BuildDedicatedServerWorldBootstrapResult(
+        EDedicatedServerWorldLoadStatus loadStatus,
+        LoadSaveDataThreadParam *saveData,
+        const DedicatedServerWorldTarget &worldTarget,
+        const std::string &resolvedLoadedSaveId)
+    {
+        WorldBootstrapResult result = {};
+        result.saveData = saveData;
+
+        if (loadStatus == eDedicatedServerWorldLoad_Loaded)
+        {
+            result.status = eWorldBootstrap_Loaded;
+            result.resolvedSaveId = resolvedLoadedSaveId;
+            return result;
+        }
+
+        if (loadStatus == eDedicatedServerWorldLoad_NotFound)
+        {
+            result.status = eWorldBootstrap_CreatedNew;
+            result.resolvedSaveId = worldTarget.saveId;
+            result.saveData = NULL;
+            return result;
+        }
+
+        result.status = eWorldBootstrap_Failed;
+        result.saveData = NULL;
+        return result;
+    }
+
     DedicatedServerWorldBootstrapPlan BuildDedicatedServerWorldBootstrapPlan(
         const ServerPropertiesConfig &serverProperties,
         const WorldBootstrapResult &worldBootstrap)
     {
         DedicatedServerWorldBootstrapPlan plan = {};
-        plan.targetWorldName = serverProperties.worldName.empty()
-            ? L"world"
-            : serverProperties.worldName;
+        const DedicatedServerWorldTarget worldTarget =
+            ResolveDedicatedServerWorldTarget(serverProperties);
+        plan.targetWorldName = worldTarget.worldName;
         plan.loadFailed =
             worldBootstrap.status == eWorldBootstrap_Failed;
         plan.createdNewWorld =
@@ -26,7 +66,7 @@ namespace ServerRuntime
         const std::string resolvedLower =
             StringUtils::ToLowerAscii(worldBootstrap.resolvedSaveId);
         const std::string configuredLower =
-            StringUtils::ToLowerAscii(serverProperties.worldSaveId);
+            StringUtils::ToLowerAscii(worldTarget.saveId);
         plan.shouldPersistResolvedSaveId =
             worldBootstrap.status == eWorldBootstrap_Loaded &&
             !worldBootstrap.resolvedSaveId.empty() &&

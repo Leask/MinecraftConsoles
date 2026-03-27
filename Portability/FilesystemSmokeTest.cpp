@@ -509,6 +509,36 @@ int main(int argc, char* argv[])
     sessionProperties.doTileDrops = true;
     sessionProperties.naturalRegeneration = false;
     sessionProperties.doDaylightCycle = true;
+    ServerRuntime::ServerPropertiesConfig defaultWorldTargetProperties = {};
+    ServerRuntime::ServerPropertiesConfig configuredWorldTargetProperties = {};
+    configuredWorldTargetProperties.worldName = L"Smoke World";
+    configuredWorldTargetProperties.worldSaveId = "SMOKE_WORLD";
+    const ServerRuntime::DedicatedServerWorldTarget defaultWorldTarget =
+        ServerRuntime::ResolveDedicatedServerWorldTarget(
+            defaultWorldTargetProperties);
+    const ServerRuntime::DedicatedServerWorldTarget configuredWorldTarget =
+        ServerRuntime::ResolveDedicatedServerWorldTarget(
+            configuredWorldTargetProperties);
+    LoadSaveDataThreadParam *fakeBootstrapSaveData =
+        reinterpret_cast<LoadSaveDataThreadParam *>(0x4321);
+    const ServerRuntime::WorldBootstrapResult loadedWorldTargetBootstrap =
+        ServerRuntime::BuildDedicatedServerWorldBootstrapResult(
+            ServerRuntime::eDedicatedServerWorldLoad_Loaded,
+            fakeBootstrapSaveData,
+            configuredWorldTarget,
+            "resolved_world");
+    const ServerRuntime::WorldBootstrapResult createdWorldTargetBootstrap =
+        ServerRuntime::BuildDedicatedServerWorldBootstrapResult(
+            ServerRuntime::eDedicatedServerWorldLoad_NotFound,
+            fakeBootstrapSaveData,
+            configuredWorldTarget,
+            "");
+    const ServerRuntime::WorldBootstrapResult failedWorldTargetBootstrap =
+        ServerRuntime::BuildDedicatedServerWorldBootstrapResult(
+            ServerRuntime::eDedicatedServerWorldLoad_Failed,
+            fakeBootstrapSaveData,
+            configuredWorldTarget,
+            "");
     ServerRuntime::DedicatedServerConfig sessionDedicatedConfig =
         defaultDedicatedConfig;
     sessionDedicatedConfig.maxPlayers = 256;
@@ -1233,6 +1263,29 @@ int main(int argc, char* argv[])
         worldSaveMatchById.matchedBySaveId,
         worldSaveMatchByName.matchedIndex,
         worldSaveNoMatch.matchedIndex);
+    printf("world_bootstrap_target=%d default=%ls configured=%ls "
+        "loaded=%d created=%d failed=%d\n",
+        defaultWorldTarget.worldName == L"world" &&
+            defaultWorldTarget.saveId.empty() &&
+            configuredWorldTarget.worldName == L"Smoke World" &&
+            configuredWorldTarget.saveId == "SMOKE_WORLD" &&
+            loadedWorldTargetBootstrap.status ==
+                ServerRuntime::eWorldBootstrap_Loaded &&
+            loadedWorldTargetBootstrap.saveData == fakeBootstrapSaveData &&
+            loadedWorldTargetBootstrap.resolvedSaveId == "resolved_world" &&
+            createdWorldTargetBootstrap.status ==
+                ServerRuntime::eWorldBootstrap_CreatedNew &&
+            createdWorldTargetBootstrap.saveData == NULL &&
+            createdWorldTargetBootstrap.resolvedSaveId == "SMOKE_WORLD" &&
+            failedWorldTargetBootstrap.status ==
+                ServerRuntime::eWorldBootstrap_Failed &&
+            failedWorldTargetBootstrap.saveData == NULL &&
+            failedWorldTargetBootstrap.resolvedSaveId.empty(),
+        defaultWorldTarget.worldName.c_str(),
+        configuredWorldTarget.worldName.c_str(),
+        loadedWorldTargetBootstrap.status,
+        createdWorldTargetBootstrap.status,
+        failedWorldTargetBootstrap.status);
     printf("dedicated_defaults=%d dedicated_props=%d dedicated_cli=%d "
         "dedicated_help=%d dedicated_invalid=%d usage_lines=%zu\n",
         defaultDedicatedConfig.port == 25565 &&
@@ -1804,6 +1857,22 @@ int main(int argc, char* argv[])
         !worldSaveMatchByName.matchedBySaveId &&
         worldSaveNoMatch.matchedIndex == -1 &&
         !worldSaveNoMatch.matchedBySaveId &&
+        defaultWorldTarget.worldName == L"world" &&
+        defaultWorldTarget.saveId.empty() &&
+        configuredWorldTarget.worldName == L"Smoke World" &&
+        configuredWorldTarget.saveId == "SMOKE_WORLD" &&
+        loadedWorldTargetBootstrap.status ==
+            ServerRuntime::eWorldBootstrap_Loaded &&
+        loadedWorldTargetBootstrap.saveData == fakeBootstrapSaveData &&
+        loadedWorldTargetBootstrap.resolvedSaveId == "resolved_world" &&
+        createdWorldTargetBootstrap.status ==
+            ServerRuntime::eWorldBootstrap_CreatedNew &&
+        createdWorldTargetBootstrap.saveData == NULL &&
+        createdWorldTargetBootstrap.resolvedSaveId == "SMOKE_WORLD" &&
+        failedWorldTargetBootstrap.status ==
+            ServerRuntime::eWorldBootstrap_Failed &&
+        failedWorldTargetBootstrap.saveData == NULL &&
+        failedWorldTargetBootstrap.resolvedSaveId.empty() &&
         udpReceiver != LCE_INVALID_SOCKET &&
         udpReceiverReuse && udpReceiverTimeout && udpReceiverBound &&
         udpReceiverPort > 0 && udpSender != LCE_INVALID_SOCKET &&

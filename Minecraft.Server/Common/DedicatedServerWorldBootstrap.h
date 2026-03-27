@@ -8,6 +8,19 @@
 
 namespace ServerRuntime
 {
+    enum EDedicatedServerWorldLoadStatus
+    {
+        eDedicatedServerWorldLoad_Loaded,
+        eDedicatedServerWorldLoad_NotFound,
+        eDedicatedServerWorldLoad_Failed
+    };
+
+    struct DedicatedServerWorldTarget
+    {
+        std::wstring worldName;
+        std::string saveId;
+    };
+
     struct DedicatedServerWorldBootstrapPlan
     {
         std::wstring targetWorldName;
@@ -60,6 +73,15 @@ namespace ServerRuntime
         bool shouldAbortStartup = false;
         int abortExitCode = 0;
     };
+
+    DedicatedServerWorldTarget ResolveDedicatedServerWorldTarget(
+        const ServerPropertiesConfig &serverProperties);
+
+    WorldBootstrapResult BuildDedicatedServerWorldBootstrapResult(
+        EDedicatedServerWorldLoadStatus loadStatus,
+        LoadSaveDataThreadParam *saveData,
+        const DedicatedServerWorldTarget &worldTarget,
+        const std::string &resolvedLoadedSaveId);
 
     DedicatedServerWorldBootstrapPlan BuildDedicatedServerWorldBootstrapPlan(
         const ServerPropertiesConfig &serverProperties,
