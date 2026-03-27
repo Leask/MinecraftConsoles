@@ -27,17 +27,31 @@ namespace
     {
         RequestShutdown();
     }
+
+    const char* GetDedicatedServerLoopbackTarget(
+        const std::string &bindIp)
+    {
+        return bindIp == "0.0.0.0"
+            ? "127.0.0.1"
+            : bindIp.c_str();
+    }
 }
 
 int main(int argc, char** argv)
 {
     bool bootstrapOnly = false;
+    bool selfConnect = false;
     int serverArgc = 1;
     for (int i = 1; i < argc; ++i)
     {
         if (std::strcmp(argv[i], "--bootstrap-only") == 0)
         {
             bootstrapOnly = true;
+            continue;
+        }
+        if (std::strcmp(argv[i], "--self-connect") == 0)
+        {
+            selfConnect = true;
             continue;
         }
 
@@ -128,6 +142,76 @@ int main(int argc, char** argv)
         "native bootstrap bound dedicated listener on %s:%d",
         bootstrapContext.runtimeState.bindIp.c_str(),
         socketState.boundPort);
+    if (selfConnect)
+    {
+        const char* loopbackTarget = GetDedicatedServerLoopbackTarget(
+            bootstrapContext.runtimeState.bindIp);
+        LceSocketHandle clientSocket = LceNetOpenTcpSocket();
+        if (clientSocket == LCE_INVALID_SOCKET)
+        {
+            ServerRuntime::LogError(
+                "startup",
+                "failed to allocate self-connect client socket");
+            ServerRuntime::StopDedicatedServerSocketBootstrap(&socketState);
+            LceNetShutdown();
+            ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
+                &bootstrapContext);
+            return 6;
+        }
+
+        if (!LceNetConnectIpv4(
+                clientSocket,
+                loopbackTarget,
+                socketState.boundPort))
+        {
+            LceNetCloseSocket(clientSocket);
+            ServerRuntime::LogErrorf(
+                "startup",
+                "failed to self-connect to %s:%d",
+                loopbackTarget,
+                socketState.boundPort);
+            ServerRuntime::StopDedicatedServerSocketBootstrap(&socketState);
+            LceNetShutdown();
+            ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
+                &bootstrapContext);
+            return 7;
+        }
+
+        char acceptedIp[64] = {};
+        int acceptedPort = -1;
+        LceSocketHandle acceptedSocket = LceNetAcceptIpv4(
+            socketState.listener,
+            acceptedIp,
+            sizeof(acceptedIp),
+            &acceptedPort);
+        if (acceptedSocket == LCE_INVALID_SOCKET)
+        {
+            LceNetCloseSocket(clientSocket);
+            ServerRuntime::LogError(
+                "startup",
+                "failed to accept self-connect socket");
+            ServerRuntime::StopDedicatedServerSocketBootstrap(&socketState);
+            LceNetShutdown();
+            ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
+                &bootstrapContext);
+            return 8;
+        }
+
+        ServerRuntime::LogInfof(
+            "startup",
+            "native bootstrap self-connect accepted from %s:%d",
+            acceptedIp,
+            acceptedPort);
+        LceNetCloseSocket(acceptedSocket);
+        LceNetCloseSocket(clientSocket);
+        ServerRuntime::StopDedicatedServerSocketBootstrap(&socketState);
+        LceNetShutdown();
+        ServerRuntime::LogInfo("shutdown", "native bootstrap self-connect ok");
+        ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
+            &bootstrapContext);
+        return 0;
+    }
+
     ServerRuntime::LogInfo(
         "startup",
         "native bootstrap shell running; type stop or send SIGINT to exit");

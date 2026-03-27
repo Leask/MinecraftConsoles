@@ -6,6 +6,7 @@
 #include "Minecraft.Server/Access/Access.h"
 #include "Minecraft.Server/Access/BanManager.h"
 #include "Minecraft.Server/Common/DedicatedServerBootstrap.h"
+#include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerSessionConfig.h"
 #include "Minecraft.Server/Common/DedicatedServerSocketBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerWorldBootstrap.h"
@@ -407,6 +408,26 @@ int main(int argc, char* argv[])
             sessionConfig,
             fakeSaveData,
             7777);
+    const std::int64_t resolvedConfiguredSeed =
+        ServerRuntime::ResolveDedicatedServerSeed(
+            sessionConfig,
+            9999);
+    ServerRuntime::DedicatedServerConfig randomSeedDedicatedConfig =
+        sessionDedicatedConfig;
+    randomSeedDedicatedConfig.hasSeed = false;
+    const ServerRuntime::DedicatedServerSessionConfig randomSeedSessionConfig =
+        ServerRuntime::BuildDedicatedServerSessionConfig(
+            randomSeedDedicatedConfig,
+            sessionProperties);
+    const std::int64_t resolvedGeneratedSeed =
+        ServerRuntime::ResolveDedicatedServerSeed(
+            randomSeedSessionConfig,
+            9999);
+    const ServerRuntime::DedicatedServerHostedGamePlan hostedGamePlan =
+        ServerRuntime::BuildDedicatedServerHostedGamePlan(
+            sessionConfig,
+            fakeSaveData,
+            9999);
     const ServerRuntime::DedicatedServerShutdownPlan shutdownPlanWithServer =
         ServerRuntime::BuildDedicatedServerShutdownPlan(
             true,
@@ -437,6 +458,8 @@ int main(int argc, char* argv[])
         ServerRuntime::BuildDedicatedServerRuntimeState(
             runtimeConfig,
             runtimeProperties);
+    const ServerRuntime::DedicatedServerPlatformState platformState =
+        ServerRuntime::BuildDedicatedServerPlatformState(runtimeState, 3);
     const std::uint64_t defaultAutosaveMs =
         ServerRuntime::GetDedicatedServerAutosaveIntervalMs(
             dedicatedProperties);
@@ -864,7 +887,8 @@ int main(int argc, char* argv[])
         sessionConfig.worldSizeChunks,
         static_cast<unsigned int>(sessionConfig.worldHellScale));
     printf("world_bootstrap_plan=%d loaded_persist=%d created_new=%d "
-        "failed=%d init_plan=%d init_seed=%lld init_players=%u\n",
+        "failed=%d init_plan=%d init_seed=%lld init_players=%u "
+        "hosted_plan=%d hosted_seed=%lld\n",
         loadedWorldPlan.targetWorldName == L"world" &&
             loadedWorldPlan.shouldPersistResolvedSaveId &&
             loadedWorldPlan.resolvedSaveId == "world_loaded" &&
@@ -879,10 +903,27 @@ int main(int argc, char* argv[])
             networkInitPlan.dedicatedNoLocalHostPlayer &&
             networkInitPlan.worldSizeChunks == sessionConfig.worldSizeChunks &&
             networkInitPlan.worldHellScale == sessionConfig.worldHellScale &&
-        networkInitPlan.networkMaxPlayers ==
+            networkInitPlan.networkMaxPlayers ==
                 sessionConfig.networkMaxPlayers,
         static_cast<long long>(networkInitPlan.seed),
-        static_cast<unsigned int>(networkInitPlan.networkMaxPlayers));
+        static_cast<unsigned int>(networkInitPlan.networkMaxPlayers),
+        resolvedConfiguredSeed == sessionConfig.seed &&
+            resolvedGeneratedSeed == 9999 &&
+            hostedGamePlan.resolvedSeed == sessionConfig.seed &&
+            hostedGamePlan.networkInitPlan.seed == sessionConfig.seed &&
+            hostedGamePlan.networkInitPlan.saveData == fakeSaveData &&
+            hostedGamePlan.networkInitPlan.settings ==
+                sessionConfig.hostSettings &&
+            hostedGamePlan.networkInitPlan.networkMaxPlayers ==
+                sessionConfig.networkMaxPlayers &&
+            hostedGamePlan.localUsersMask == 0 &&
+            hostedGamePlan.onlineGame &&
+            !hostedGamePlan.privateGame &&
+            hostedGamePlan.publicSlots ==
+                sessionConfig.networkMaxPlayers &&
+            hostedGamePlan.privateSlots == 0 &&
+            hostedGamePlan.fakeLocalPlayerJoined,
+        static_cast<long long>(hostedGamePlan.resolvedSeed));
     printf("autosave_state=%d initial_save=%d skip_initial_save=%d "
         "requested=%d next_advanced=%d completed=%d\n",
         autosaveState.intervalMs == 45000U &&
@@ -923,6 +964,33 @@ int main(int argc, char* argv[])
         static_cast<unsigned long long>(defaultAutosaveMs),
         static_cast<unsigned long long>(configuredAutosaveMs),
         static_cast<unsigned long long>(nextAutosaveTick));
+    printf("server_platform_state=%d utf8=%s players=%zu host_player=%d "
+        "player1=%ls player2=%ls\n",
+        platformState.userNameUtf8 == runtimeState.hostNameUtf8 &&
+            platformState.userNameWide == runtimeState.hostNameWide &&
+            platformState.bindIp == runtimeState.bindIp &&
+            platformState.multiplayerPort == runtimeState.multiplayerPort &&
+            platformState.dedicatedServerPort ==
+                runtimeState.dedicatedServerPort &&
+            platformState.multiplayerHost == runtimeState.multiplayerHost &&
+            platformState.multiplayerJoin == runtimeState.multiplayerJoin &&
+            platformState.dedicatedServer == runtimeState.dedicatedServer &&
+            platformState.lanAdvertise == runtimeState.lanAdvertise &&
+            platformState.players.size() == 3 &&
+            platformState.players[0].smallId == 0U &&
+            !platformState.players[0].isRemote &&
+            platformState.players[0].isHostPlayer &&
+            platformState.players[0].gamertag == L"RuntimeHost" &&
+            platformState.players[1].smallId == 1U &&
+            !platformState.players[1].isRemote &&
+            !platformState.players[1].isHostPlayer &&
+            platformState.players[1].gamertag == L"Player1" &&
+            platformState.players[2].gamertag == L"Player2",
+        platformState.userNameUtf8.c_str(),
+        platformState.players.size(),
+        platformState.players[0].isHostPlayer,
+        platformState.players[1].gamertag.c_str(),
+        platformState.players[2].gamertag.c_str());
     printf("server_storage_platform=%s game_hdd_root=%s\n",
         storagePlatformDirectory,
         storageGameHddRoot.c_str());

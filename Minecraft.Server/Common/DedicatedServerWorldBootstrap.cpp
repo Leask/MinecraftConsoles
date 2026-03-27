@@ -54,4 +54,33 @@ namespace ServerRuntime
         plan.networkMaxPlayers = sessionConfig.networkMaxPlayers;
         return plan;
     }
+
+    std::int64_t ResolveDedicatedServerSeed(
+        const DedicatedServerSessionConfig &sessionConfig,
+        std::int64_t generatedSeed)
+    {
+        return sessionConfig.hasSeed ? sessionConfig.seed : generatedSeed;
+    }
+
+    DedicatedServerHostedGamePlan BuildDedicatedServerHostedGamePlan(
+        const DedicatedServerSessionConfig &sessionConfig,
+        LoadSaveDataThreadParam *saveData,
+        std::int64_t generatedSeed)
+    {
+        DedicatedServerHostedGamePlan plan = {};
+        plan.resolvedSeed = ResolveDedicatedServerSeed(
+            sessionConfig,
+            generatedSeed);
+        plan.networkInitPlan = BuildDedicatedServerNetworkInitPlan(
+            sessionConfig,
+            saveData,
+            plan.resolvedSeed);
+        plan.localUsersMask = 0;
+        plan.onlineGame = true;
+        plan.privateGame = false;
+        plan.publicSlots = plan.networkInitPlan.networkMaxPlayers;
+        plan.privateSlots = 0;
+        plan.fakeLocalPlayerJoined = true;
+        return plan;
+    }
 }

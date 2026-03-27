@@ -58,6 +58,7 @@ add_executable(Minecraft.Portability.SmokeTest
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/AccessStorageUtils.h"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerBootstrap.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerOptions.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerPlatformState.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerRuntime.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerShutdownPlan.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerSessionConfig.cpp"
@@ -108,6 +109,7 @@ add_executable(Minecraft.Server.NativeBootstrap
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/WhitelistManager.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerBootstrap.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerOptions.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerPlatformState.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerRuntime.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerShutdownPlan.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerSessionConfig.cpp"
@@ -154,6 +156,18 @@ if(BUILD_TESTING)
       -name
       NativeBootstrap
   )
+  add_test(
+    NAME minecraft_native_server_listener_smoke
+    COMMAND
+      $<TARGET_FILE:Minecraft.Server.NativeBootstrap>
+      --self-connect
+      -port
+      25578
+      -bind
+      127.0.0.1
+      -name
+      NativeSelfConnect
+  )
   set_tests_properties(minecraft_portability_smoke PROPERTIES
     LABELS "native;portability;smoke"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
@@ -162,13 +176,17 @@ if(BUILD_TESTING)
     LABELS "native;server;bootstrap"
     WORKING_DIRECTORY "$<TARGET_FILE_DIR:Minecraft.Server.NativeBootstrap>"
   )
+  set_tests_properties(minecraft_native_server_listener_smoke PROPERTIES
+    LABELS "native;server;bootstrap;socket"
+    WORKING_DIRECTORY "$<TARGET_FILE_DIR:Minecraft.Server.NativeBootstrap>"
+  )
 endif()
 
 add_custom_target(Minecraft.Portability.Check
   COMMAND ${CMAKE_CTEST_COMMAND}
     --output-on-failure
     -C $<CONFIG>
-    -R "^minecraft_(portability_smoke|native_server_bootstrap)$"
+    -R "^minecraft_(portability_smoke|native_server_bootstrap|native_server_listener_smoke)$"
   DEPENDS
     Minecraft.Portability.SmokeTest
     Minecraft.Server.NativeBootstrap

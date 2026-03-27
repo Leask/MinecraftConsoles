@@ -195,6 +195,15 @@ This iteration starts with:
 - first cross-platform IPv4 resolution helper in `lce_net`
   so native and Windows desktop paths can share `localhost` / hostname
   resolution without directly depending on WinSock address setup
+- first extracted dedicated server platform-state helper
+  (`Minecraft.Server/Common/DedicatedServerPlatformState.cpp`) so default
+  host identity, bind/runtime flags, and `IQNet::m_player[]` bootstrap data
+  stop living inline inside `ServerMain.cpp`
+- native bootstrap self-connect coverage in `CTest`, so listener bind/accept
+  stays under automated regression while `ServerMain.cpp` keeps shrinking
+- first extracted dedicated hosted-game startup plan in
+  `Minecraft.Server/Common/DedicatedServerWorldBootstrap.cpp`, so seed
+  resolution plus `HostGame` defaults stop living inline in `ServerMain.cpp`
 - first non-Windows Win32 compatibility shim for
   `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
 - first server-common utility source (`Minecraft.Server/Common/StringUtils.cpp`)

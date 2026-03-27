@@ -7,6 +7,7 @@
 #include "MinecraftServer.h"
 #include "..\Common\DedicatedServerBootstrap.h"
 #include "..\Common\DedicatedServerOptions.h"
+#include "..\Common\DedicatedServerPlatformState.h"
 #include "..\Common\DedicatedServerRuntime.h"
 #include "..\Common\DedicatedServerShutdownPlan.h"
 #include "..\Common\DedicatedServerSessionConfig.h"
@@ -234,6 +235,10 @@ int main(int argc, char **argv)
 		bootstrapContext.serverProperties;
 	const ServerRuntime::DedicatedServerRuntimeState &runtimeState =
 		bootstrapContext.runtimeState;
+	const ServerRuntime::DedicatedServerPlatformState platformState =
+		ServerRuntime::BuildDedicatedServerPlatformState(
+			runtimeState,
+			MINECRAFT_NET_MAX_PLAYERS);
 
 	g_iScreenWidth = 1280;
 	g_iScreenHeight = 720;
@@ -241,7 +246,7 @@ int main(int argc, char **argv)
 	strncpy_s(
 		g_Win64Username,
 		sizeof(g_Win64Username),
-		runtimeState.hostNameUtf8.c_str(),
+		platformState.userNameUtf8.c_str(),
 		_TRUNCATE);
 	wmemset(
 		g_Win64UsernameW,
@@ -249,24 +254,24 @@ int main(int argc, char **argv)
 		sizeof(g_Win64UsernameW) / sizeof(g_Win64UsernameW[0]));
 	wcsncpy(
 		g_Win64UsernameW,
-		runtimeState.hostNameWide.c_str(),
+		platformState.userNameWide.c_str(),
 		(sizeof(g_Win64UsernameW) / sizeof(g_Win64UsernameW[0])) - 1);
-	g_Win64MultiplayerHost = runtimeState.multiplayerHost;
-	g_Win64MultiplayerJoin = runtimeState.multiplayerJoin;
-	g_Win64MultiplayerPort = runtimeState.multiplayerPort;
+	g_Win64MultiplayerHost = platformState.multiplayerHost;
+	g_Win64MultiplayerJoin = platformState.multiplayerJoin;
+	g_Win64MultiplayerPort = platformState.multiplayerPort;
 	strncpy_s(
 		g_Win64MultiplayerIP,
 		sizeof(g_Win64MultiplayerIP),
-		runtimeState.bindIp.c_str(),
+		platformState.bindIp.c_str(),
 		_TRUNCATE);
-	g_Win64DedicatedServer = runtimeState.dedicatedServer;
-	g_Win64DedicatedServerPort = runtimeState.dedicatedServerPort;
+	g_Win64DedicatedServer = platformState.dedicatedServer;
+	g_Win64DedicatedServerPort = platformState.dedicatedServerPort;
 	strncpy_s(
 		g_Win64DedicatedServerBindIP,
 		sizeof(g_Win64DedicatedServerBindIP),
-		runtimeState.bindIp.c_str(),
+		platformState.bindIp.c_str(),
 		_TRUNCATE);
-	g_Win64DedicatedServerLanAdvertise = runtimeState.lanAdvertise;
+	g_Win64DedicatedServerLanAdvertise = platformState.lanAdvertise;
 	LogStartupStep("initializing server log manager");
 	ServerRuntime::ServerLogManager::Initialize();
 	LogStartupStep("initializing dedicated access control");
@@ -339,14 +344,19 @@ int main(int argc, char **argv)
 	LogStartupStep("initializing network manager");
 	g_NetworkManager.Initialise();
 
-	for (int i = 0; i < MINECRAFT_NET_MAX_PLAYERS; ++i)
+	for (size_t i = 0; i < platformState.players.size(); ++i)
 	{
-		IQNet::m_player[i].m_smallId = (BYTE)i;
-		IQNet::m_player[i].m_isRemote = false;
-		IQNet::m_player[i].m_isHostPlayer = (i == 0);
-		swprintf_s(IQNet::m_player[i].m_gamertag, 32, L"Player%d", i);
+		const ServerRuntime::DedicatedServerPlayerState &playerState =
+			platformState.players[i];
+		IQNet::m_player[i].m_smallId = static_cast<BYTE>(playerState.smallId);
+		IQNet::m_player[i].m_isRemote = playerState.isRemote;
+		IQNet::m_player[i].m_isHostPlayer = playerState.isHostPlayer;
+		wmemset(IQNet::m_player[i].m_gamertag, 0, 32);
+		wcsncpy(
+			IQNet::m_player[i].m_gamertag,
+			playerState.gamertag.c_str(),
+			31);
 	}
-	wcscpy_s(IQNet::m_player[0].m_gamertag, 32, g_Win64UsernameW);
 	WinsockNetLayer::Initialize();
 
 	Tesselator::CreateNewThreadStorage(1024 * 1024);
@@ -418,14 +428,13 @@ int main(int argc, char **argv)
 		return 4;
 	}
 
-	const std::int64_t resolvedSeed = sessionConfig.hasSeed
-		? sessionConfig.seed
-		: (new Random())->nextLong();
-	const ServerRuntime::DedicatedServerNetworkInitPlan networkInitPlan =
-		ServerRuntime::BuildDedicatedServerNetworkInitPlan(
+	const ServerRuntime::DedicatedServerHostedGamePlan hostedGamePlan =
+		ServerRuntime::BuildDedicatedServerHostedGamePlan(
 			sessionConfig,
 			worldBootstrap.saveData,
-			resolvedSeed);
+			(new Random())->nextLong());
+	const ServerRuntime::DedicatedServerNetworkInitPlan &networkInitPlan =
+		hostedGamePlan.networkInitPlan;
 	NetworkGameInitData *param = new NetworkGameInitData();
 	param->seed = networkInitPlan.seed;
 #ifdef _LARGE_WORLDS
@@ -439,12 +448,15 @@ int main(int argc, char **argv)
 
 	LogStartupStep("starting hosted network game thread");
 	g_NetworkManager.HostGame(
-		0,
-		true,
-		false,
-		networkInitPlan.networkMaxPlayers,
-		0);
-	g_NetworkManager.FakeLocalPlayerJoined();
+		hostedGamePlan.localUsersMask,
+		hostedGamePlan.onlineGame,
+		hostedGamePlan.privateGame,
+		hostedGamePlan.publicSlots,
+		hostedGamePlan.privateSlots);
+	if (hostedGamePlan.fakeLocalPlayerJoined)
+	{
+		g_NetworkManager.FakeLocalPlayerJoined();
+	}
 
 	C4JThread *startThread = new C4JThread(&CGameNetworkManager::RunNetworkGameThreadProc, (LPVOID)param, "RunNetworkGame");
 	startThread->Run();
