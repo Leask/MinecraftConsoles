@@ -23,6 +23,7 @@
 #include <lce_time/lce_time.h>
 #include "Tesselator.h"
 #include "Windows64/4JLibs/inc/4J_Render.h"
+#include "Windows64/Windows64DedicatedServerRuntime.h"
 #include "Windows64/GameConfig/Minecraft.spa.h"
 #include "Windows64/KeyboardMouseInput.h"
 #include "Windows64/Network/WinsockNetLayer.h"
@@ -46,26 +47,13 @@
 #include <atomic>
 #include <cwchar>
 
-extern ATOM MyRegisterClass(HINSTANCE hInstance);
-extern BOOL InitInstance(HINSTANCE hInstance, int nCmdShow);
-extern HRESULT InitDevice();
 extern void CleanupDevice();
-extern void DefineActions(void);
 
 extern HWND g_hWnd;
 extern int g_iScreenWidth;
 extern int g_iScreenHeight;
 extern char g_Win64Username[17];
 extern wchar_t g_Win64UsernameW[17];
-extern ID3D11Device* g_pd3dDevice;
-extern ID3D11DeviceContext* g_pImmediateContext;
-extern IDXGISwapChain* g_pSwapChain;
-extern ID3D11RenderTargetView* g_pRenderTargetView;
-extern ID3D11DepthStencilView* g_pDepthStencilView;
-extern DWORD dwProfileSettingsA[];
-
-static const int kProfileValueCount = 5;
-static const int kProfileSettingCount = 4;
 static std::atomic<bool> g_shutdownRequested(false);
 static const int kServerActionPad = 0;
 
@@ -107,6 +95,36 @@ public:
 
 private:
 	ServerRuntime::DedicatedServerBootstrapContext *m_context;
+};
+
+class DedicatedServerLogManagerGuard
+{
+public:
+	DedicatedServerLogManagerGuard()
+		: m_active(false)
+	{
+	}
+
+	void Activate()
+	{
+		m_active = true;
+	}
+
+	void Release()
+	{
+		m_active = false;
+	}
+
+	~DedicatedServerLogManagerGuard()
+	{
+		if (m_active)
+		{
+			ServerRuntime::ServerLogManager::Shutdown();
+		}
+	}
+
+private:
+	bool m_active;
 };
 static BOOL WINAPI ConsoleCtrlHandlerProc(DWORD ctrlType)
 {
@@ -205,6 +223,7 @@ int main(int argc, char **argv)
 {
 	ServerRuntime::DedicatedServerBootstrapContext bootstrapContext = {};
 	DedicatedServerBootstrapGuard bootstrapShutdownGuard;
+	DedicatedServerLogManagerGuard logManagerGuard;
 
 	SetConsoleCtrlHandler(ConsoleCtrlHandlerProc, TRUE);
 	std::string bootstrapError;
@@ -274,6 +293,7 @@ int main(int argc, char **argv)
 	g_Win64DedicatedServerLanAdvertise = platformState.lanAdvertise;
 	LogStartupStep("initializing server log manager");
 	ServerRuntime::ServerLogManager::Initialize();
+	logManagerGuard.Activate();
 	LogStartupStep("initializing dedicated access control");
 	if (!ServerRuntime::InitializeDedicatedServerBootstrapEnvironment(
 		&bootstrapContext,
@@ -295,88 +315,13 @@ int main(int argc, char **argv)
 		config.worldHellScale);
 #endif
 
-	LogStartupStep("registering hidden window class");
-	HINSTANCE hInstance = GetModuleHandle(NULL);
-	MyRegisterClass(hInstance);
-
-	LogStartupStep("creating hidden window");
-	if (!InitInstance(hInstance, SW_HIDE))
+	const ServerRuntime::DedicatedServerWindowsRuntimeStartResult
+		windowsRuntimeStartResult =
+			ServerRuntime::StartWindowsDedicatedServerRuntime(platformState);
+	if (!windowsRuntimeStartResult.ok)
 	{
-		LogError("startup", "Failed to create window instance.");
-		
-		return 2;
-	}
-	ShowWindow(g_hWnd, SW_HIDE);
-
-	LogStartupStep("initializing graphics device wrappers");
-	if (FAILED(InitDevice()))
-	{
-		LogError("startup", "Failed to initialize D3D device.");
-		CleanupDevice();
-		
-		return 2;
-	}
-
-	LogStartupStep("loading media/string tables");
-	app.loadMediaArchive();
-	RenderManager.Initialise(g_pd3dDevice, g_pSwapChain);
-	app.loadStringTable();
-	ui.init(g_pd3dDevice, g_pImmediateContext, g_pRenderTargetView, g_pDepthStencilView, g_iScreenWidth, g_iScreenHeight);
-
-	InputManager.Initialise(1, 3, MINECRAFT_ACTION_MAX, ACTION_MAX_MENU);
-	g_KBMInput.Init();
-	DefineActions();
-	InputManager.SetJoypadMapVal(0, 0);
-	InputManager.SetKeyRepeatRate(0.3f, 0.2f);
-
-	ProfileManager.Initialise(
-		TITLEID_MINECRAFT,
-		app.m_dwOfferID,
-		PROFILE_VERSION_10,
-		kProfileValueCount,
-		kProfileSettingCount,
-		dwProfileSettingsA,
-		app.GAME_DEFINED_PROFILE_DATA_BYTES * XUSER_MAX_COUNT,
-		&app.uiGameDefinedDataChangedBitmask);
-	ProfileManager.SetDefaultOptionsCallback(&CConsoleMinecraftApp::DefaultOptionsCallback, (LPVOID)&app);
-	ProfileManager.SetDebugFullOverride(true);
-
-	LogStartupStep("initializing network manager");
-	g_NetworkManager.Initialise();
-
-	for (size_t i = 0; i < platformState.players.size(); ++i)
-	{
-		const ServerRuntime::DedicatedServerPlayerState &playerState =
-			platformState.players[i];
-		IQNet::m_player[i].m_smallId = static_cast<BYTE>(playerState.smallId);
-		IQNet::m_player[i].m_isRemote = playerState.isRemote;
-		IQNet::m_player[i].m_isHostPlayer = playerState.isHostPlayer;
-		wmemset(IQNet::m_player[i].m_gamertag, 0, 32);
-		wcsncpy(
-			IQNet::m_player[i].m_gamertag,
-			playerState.gamertag.c_str(),
-			31);
-	}
-	WinsockNetLayer::Initialize();
-
-	Tesselator::CreateNewThreadStorage(1024 * 1024);
-	AABB::CreateNewThreadStorage();
-	Vec3::CreateNewThreadStorage();
-	IntCache::CreateNewThreadStorage();
-	Compression::CreateNewThreadStorage();
-	OldChunkStorage::CreateNewThreadStorage();
-	Level::enableLightingCache();
-	Tile::CreateNewThreadStorage();
-
-	LogStartupStep("creating Minecraft singleton");
-	Minecraft::main();
-	Minecraft *minecraft = Minecraft::GetInstance();
-	if (minecraft == NULL)
-	{
-		LogError("startup", "Minecraft initialization failed.");
-		CleanupDevice();
-		
-		return 3;
+		LogError("startup", windowsRuntimeStartResult.errorMessage.c_str());
+		return windowsRuntimeStartResult.exitCode;
 	}
 
 	const ServerRuntime::DedicatedServerSessionConfig sessionConfig =
@@ -432,9 +377,7 @@ int main(int argc, char **argv)
 			"world-io",
 			"Failed to load configured world \"%s\".",
 			WideToUtf8(worldBootstrapPlan.targetWorldName).c_str());
-		WinsockNetLayer::Shutdown();
-		g_NetworkManager.Terminate();
-		CleanupDevice();
+		ServerRuntime::StopWindowsDedicatedServerRuntime();
 		
 		return worldLoadPlan.abortExitCode;
 	}
@@ -483,9 +426,7 @@ int main(int argc, char **argv)
 	if (hostedThreadStartupPlan.shouldAbortStartup)
 	{
 		LogErrorf("startup", "Failed to start dedicated server (code %d).", startupResult);
-		WinsockNetLayer::Shutdown();
-		g_NetworkManager.Terminate();
-		CleanupDevice();
+		ServerRuntime::StopWindowsDedicatedServerRuntime();
 		
 		return hostedThreadStartupPlan.abortExitCode;
 	}
@@ -609,12 +550,9 @@ int main(int argc, char **argv)
 	}
 
 	LogInfof("shutdown", "Cleaning up and exiting.");
-	WinsockNetLayer::Shutdown();
-	LogDebugf("shutdown", "Network layer shutdown complete.");
-	g_NetworkManager.Terminate();
-	LogDebugf("shutdown", "Network manager terminated.");
+	ServerRuntime::StopWindowsDedicatedServerRuntime();
+	logManagerGuard.Release();
 	ServerRuntime::ServerLogManager::Shutdown();
-	CleanupDevice();
 	
 
 	return 0;

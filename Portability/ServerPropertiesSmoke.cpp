@@ -18,6 +18,8 @@ namespace
             , m_active(false)
         {
             std::error_code errorCode;
+            std::filesystem::remove_all(path, errorCode);
+            errorCode.clear();
             std::filesystem::create_directories(path, errorCode);
             std::filesystem::current_path(path, errorCode);
             m_active = !errorCode;

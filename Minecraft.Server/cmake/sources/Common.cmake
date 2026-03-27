@@ -508,6 +508,8 @@ set(_MINECRAFT_SERVER_COMMON_SERVER
   "${CMAKE_CURRENT_SOURCE_DIR}/ServerProperties.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/ServerProperties.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Windows64/ServerMain.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Windows64/Windows64DedicatedServerRuntime.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Windows64/Windows64DedicatedServerRuntime.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/WorldManager.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/WorldManager.h"
 )

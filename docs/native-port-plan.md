@@ -217,6 +217,10 @@ This iteration starts with:
 - world-load persistence, initial-save timing, and hosted-thread failure
   handling are now expressed as shared startup plans instead of inline
   branches in `ServerMain.cpp`
+- the remaining Windows-only runtime bootstrap/teardown sequence now lives in
+  `Minecraft.Server/Windows64/Windows64DedicatedServerRuntime.cpp`, making
+  the native blocker boundary explicit instead of leaving it interleaved with
+  the server coordinator logic
 - first non-Windows Win32 compatibility shim for
   `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
 - first server-common utility source (`Minecraft.Server/Common/StringUtils.cpp`)

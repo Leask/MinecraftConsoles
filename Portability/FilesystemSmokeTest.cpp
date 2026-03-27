@@ -82,6 +82,18 @@ namespace
 int main(int argc, char* argv[])
 {
     const char* path = argc > 1 ? argv[1] : ".";
+    std::error_code cleanupError;
+    std::filesystem::remove_all(
+        "build/portability-smoke-dir",
+        cleanupError);
+    cleanupError.clear();
+    std::filesystem::remove(
+        "build/portability-smoke-file.txt",
+        cleanupError);
+    cleanupError.clear();
+    std::filesystem::remove_all(
+        "build/portability-ban-smoke",
+        cleanupError);
     char firstFile[4096] = {};
     bool createdDirectory = false;
     const bool smokeDirectoryReady = CreateDirectoryIfMissing(
