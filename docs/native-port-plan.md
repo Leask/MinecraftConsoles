@@ -229,6 +229,10 @@ This iteration starts with:
 - the dedicated gameplay main loop now has a shared run helper in
   `Minecraft.Server/Common/DedicatedServerGameplayLoop.cpp`, so the
   `while + sleep + app-shutdown` flow stops living inline in `ServerMain.cpp`
+- initial save, gameplay session, and shutdown now also have a shared
+  session helper in `Minecraft.Server/Common/DedicatedServerLifecycle.cpp`,
+  so the post-startup dedicated server flow is covered as one native-smoke
+  execution path instead of only as isolated helper calls
 - the remaining Windows-only runtime bootstrap/teardown sequence now lives in
   `Minecraft.Server/Windows64/Windows64DedicatedServerRuntime.cpp`, making
   the native blocker boundary explicit instead of leaving it interleaved with

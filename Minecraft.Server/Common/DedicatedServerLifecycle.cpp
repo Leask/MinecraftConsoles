@@ -80,6 +80,33 @@ namespace ServerRuntime
         return result;
     }
 
+    DedicatedServerSessionExecutionResult ExecuteDedicatedServerSession(
+        const DedicatedServerWorldBootstrapPlan &worldBootstrapPlan,
+        const ServerPropertiesConfig &serverProperties,
+        int actionPad,
+        DedicatedServerGameplayLoopPollProc *pollProc,
+        void *pollContext,
+        std::uint64_t initialTickMs,
+        unsigned int sleepMs)
+    {
+        DedicatedServerSessionExecutionResult result = {};
+        result.initialSave = ExecuteDedicatedServerInitialSave(
+            worldBootstrapPlan,
+            actionPad);
+        result.autosaveState = CreateDedicatedServerAutosaveState(
+            initialTickMs,
+            serverProperties);
+        result.gameplayLoop = RunDedicatedServerGameplayLoopUntilExit(
+            &result.autosaveState,
+            serverProperties,
+            actionPad,
+            pollProc,
+            pollContext,
+            sleepMs);
+        result.shutdown = ExecuteDedicatedServerShutdown();
+        return result;
+    }
+
     DedicatedServerShutdownExecutionResult ExecuteDedicatedServerShutdown()
     {
         DedicatedServerShutdownExecutionResult result = {};

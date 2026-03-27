@@ -743,6 +743,24 @@ int main(int argc, char* argv[])
                 &HostedGameStartupSmokeThreadProc,
                 &hostedGameStartupInitData);
     ServerRuntime::StopDedicatedServerPlatformRuntime();
+    ServerRuntime::ResetDedicatedServerShutdownRequest();
+    const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
+        platformSessionRuntimeResult =
+            ServerRuntime::StartDedicatedServerPlatformRuntime(platformState);
+    GameplayLoopRunPollContext sessionPollContext = {};
+    const ServerRuntime::DedicatedServerSessionExecutionResult
+        sessionExecution =
+            ServerRuntime::ExecuteDedicatedServerSession(
+                createdWorldPlan,
+                runtimeProperties,
+                0,
+                &GameplayLoopRunPoll,
+                &sessionPollContext,
+                0,
+                0);
+    const bool sessionGameplayHalted =
+        ServerRuntime::IsDedicatedServerGameplayHalted();
+    ServerRuntime::StopDedicatedServerPlatformRuntime();
     const std::uint64_t defaultAutosaveMs =
         ServerRuntime::GetDedicatedServerAutosaveIntervalMs(
             dedicatedProperties);
@@ -1443,6 +1461,26 @@ int main(int argc, char* argv[])
         hostedGameStartupExecution.startupResult,
         hostedGameStartupExecution.startupPlan.shouldAbortStartup,
         hostedGameStartupExecution.startupPlan.abortExitCode);
+    printf("session_execution=%d runtime=%d initial=%d shutdown=%d "
+        "iterations=%zu polls=%d\n",
+        platformSessionRuntimeResult.ok &&
+            sessionExecution.initialSave.requested &&
+            sessionExecution.initialSave.completed &&
+            !sessionExecution.initialSave.timedOut &&
+            sessionExecution.autosaveState.intervalMs == 45000U &&
+            sessionExecution.gameplayLoop.iterations == 3U &&
+            sessionExecution.gameplayLoop.requestedAppShutdown &&
+            sessionExecution.gameplayLoop.lastIteration.shouldExit &&
+            sessionExecution.shutdown.haltedGameplay &&
+            sessionExecution.shutdown.plan.shouldSetSaveOnExit &&
+            sessionExecution.shutdown.plan.shouldWaitForServerStop &&
+            sessionGameplayHalted &&
+            sessionPollContext.pollCount == 3,
+        platformSessionRuntimeResult.ok,
+        sessionExecution.initialSave.completed,
+        sessionExecution.shutdown.haltedGameplay,
+        sessionExecution.gameplayLoop.iterations,
+        sessionPollContext.pollCount);
     printf("server_storage_platform=%s game_hdd_root=%s\n",
         storagePlatformDirectory,
         storageGameHddRoot.c_str());
@@ -1809,6 +1847,19 @@ int main(int argc, char* argv[])
         hostedGameStartupInitData.xzSize == sessionConfig.worldSizeChunks &&
         hostedGameStartupInitData.hellScale ==
             sessionConfig.worldHellScale &&
+        platformSessionRuntimeResult.ok &&
+        sessionExecution.initialSave.requested &&
+        sessionExecution.initialSave.completed &&
+        !sessionExecution.initialSave.timedOut &&
+        sessionExecution.autosaveState.intervalMs == 45000U &&
+        sessionExecution.gameplayLoop.iterations == 3U &&
+        sessionExecution.gameplayLoop.requestedAppShutdown &&
+        sessionExecution.gameplayLoop.lastIteration.shouldExit &&
+        sessionExecution.shutdown.haltedGameplay &&
+        sessionExecution.shutdown.plan.shouldSetSaveOnExit &&
+        sessionExecution.shutdown.plan.shouldWaitForServerStop &&
+        sessionGameplayHalted &&
+        sessionPollContext.pollCount == 3 &&
         defaultAutosaveMs == 60000U &&
         configuredAutosaveMs == 45000U &&
         nextAutosaveTick == 46000U &&

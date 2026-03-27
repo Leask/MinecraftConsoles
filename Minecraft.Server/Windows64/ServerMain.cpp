@@ -298,26 +298,19 @@ int main(int argc, char **argv)
 		"Dedicated server listening on %s:%d",
 		platformState.bindIp.c_str(),
 		platformState.multiplayerPort);
-	ServerRuntime::ExecuteDedicatedServerInitialSave(
-		worldBootstrapPlan,
-		kServerActionPad);
-	ServerRuntime::DedicatedServerAutosaveState autosaveState =
-		ServerRuntime::CreateDedicatedServerAutosaveState(
-			LceGetMonotonicMilliseconds(),
-			serverProperties);
 	ServerRuntime::ServerCli serverCli;
 	serverCli.Start();
-	ServerRuntime::RunDedicatedServerGameplayLoopUntilExit(
-		&autosaveState,
+	ServerRuntime::ExecuteDedicatedServerSession(
+		worldBootstrapPlan,
 		serverProperties,
 		kServerActionPad,
 		&PollDedicatedServerCli,
 		&serverCli,
+		LceGetMonotonicMilliseconds(),
 		10);
 	serverCli.Stop();
 
 	LogInfof("shutdown", "Dedicated server stopped");
-	ServerRuntime::ExecuteDedicatedServerShutdown();
 
 	LogInfof("shutdown", "Cleaning up and exiting.");
 	ServerRuntime::StopDedicatedServerPlatformRuntime();

@@ -1,6 +1,9 @@
 #pragma once
 
+#include <cstdint>
+
 #include "../ServerProperties.h"
+#include "DedicatedServerGameplayLoop.h"
 #include "DedicatedServerShutdownPlan.h"
 #include "DedicatedServerWorldBootstrap.h"
 
@@ -36,6 +39,23 @@ namespace ServerRuntime
         DedicatedServerShutdownPlan plan = {};
         bool haltedGameplay = false;
     };
+
+    struct DedicatedServerSessionExecutionResult
+    {
+        DedicatedServerInitialSaveExecutionResult initialSave = {};
+        DedicatedServerAutosaveState autosaveState = {};
+        DedicatedServerGameplayLoopRunResult gameplayLoop = {};
+        DedicatedServerShutdownExecutionResult shutdown = {};
+    };
+
+    DedicatedServerSessionExecutionResult ExecuteDedicatedServerSession(
+        const DedicatedServerWorldBootstrapPlan &worldBootstrapPlan,
+        const ServerPropertiesConfig &serverProperties,
+        int actionPad,
+        DedicatedServerGameplayLoopPollProc *pollProc,
+        void *pollContext,
+        std::uint64_t initialTickMs,
+        unsigned int sleepMs);
 
     DedicatedServerShutdownExecutionResult ExecuteDedicatedServerShutdown();
 }
