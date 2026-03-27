@@ -165,6 +165,15 @@ namespace
         }
     }
 
+    void IncrementHookCount(void* context)
+    {
+        int* hookCount = static_cast<int*>(context);
+        if (hookCount != nullptr)
+        {
+            ++(*hookCount);
+        }
+    }
+
     DWORD WINAPI SmokeThreadMain(LPVOID lpThreadParameter)
     {
         SetThreadName(static_cast<DWORD>(-1), "smoke-worker");
@@ -569,6 +578,7 @@ int main(int argc, char* argv[])
     LoadSaveDataThreadParam *fakeSaveData =
         reinterpret_cast<LoadSaveDataThreadParam *>(0x1234);
     loadedWorldBootstrap.saveData = fakeSaveData;
+    createdWorldBootstrap.saveData = fakeSaveData;
     failedWorldBootstrap.saveData = fakeSaveData;
     const ServerRuntime::DedicatedServerNetworkInitPlan networkInitPlan =
         ServerRuntime::BuildDedicatedServerNetworkInitPlan(
@@ -801,6 +811,43 @@ int main(int argc, char* argv[])
                 0,
                 0);
     const bool sessionGameplayHalted =
+        ServerRuntime::IsDedicatedServerGameplayHalted();
+    ServerRuntime::StopDedicatedServerPlatformRuntime();
+    ServerRuntime::ResetDedicatedServerShutdownRequest();
+    const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
+        platformRunRuntimeResult =
+            ServerRuntime::StartDedicatedServerPlatformRuntime(platformState);
+    ServerRuntime::ServerPropertiesConfig runExecutionProperties =
+        sessionProperties;
+    runExecutionProperties.worldName = L"Run Execution";
+    runExecutionProperties.worldSaveId = "WORLD";
+    runExecutionProperties.autosaveIntervalSeconds = 45;
+    SmokeNetworkGameInitData runExecutionInitData = {};
+    int runAfterStartupCount = 0;
+    int runBeforeSessionCount = 0;
+    int runAfterSessionCount = 0;
+    GameplayLoopRunPollContext runExecutionPollContext = {};
+    const ServerRuntime::DedicatedServerRunExecutionResult
+        runExecution =
+            ServerRuntime::ExecuteDedicatedServerRun(
+                sessionDedicatedConfig,
+                &runExecutionProperties,
+                createdWorldBootstrap,
+                0,
+                9999,
+                &HostedGameStartupSmokeThreadProc,
+                &runExecutionInitData,
+                &IncrementHookCount,
+                &runAfterStartupCount,
+                &IncrementHookCount,
+                &runBeforeSessionCount,
+                &GameplayLoopRunPoll,
+                &runExecutionPollContext,
+                &IncrementHookCount,
+                &runAfterSessionCount,
+                0,
+                0);
+    const bool runExecutionGameplayHalted =
         ServerRuntime::IsDedicatedServerGameplayHalted();
     ServerRuntime::StopDedicatedServerPlatformRuntime();
     const std::uint64_t defaultAutosaveMs =
@@ -1538,6 +1585,29 @@ int main(int argc, char* argv[])
         sessionExecution.shutdown.haltedGameplay,
         sessionExecution.gameplayLoop.iterations,
         sessionPollContext.pollCount);
+    printf("run_execution=%d runtime=%d completed=%d startup=%d "
+        "shutdown=%d hooks=%d/%d/%d polls=%d\n",
+        platformRunRuntimeResult.ok &&
+            !runExecution.abortedStartup &&
+            runExecution.completedSession &&
+            runExecution.startup.appSession.applied &&
+            runExecution.session.initialSave.requested &&
+            runExecution.session.initialSave.completed &&
+            runExecution.session.gameplayLoop.iterations == 3U &&
+            runExecution.session.shutdown.haltedGameplay &&
+            runExecutionGameplayHalted &&
+            runAfterStartupCount == 1 &&
+            runBeforeSessionCount == 1 &&
+            runAfterSessionCount == 1 &&
+            runExecutionPollContext.pollCount == 3,
+        platformRunRuntimeResult.ok,
+        runExecution.completedSession,
+        runExecution.startup.appSession.applied,
+        runExecution.session.shutdown.haltedGameplay,
+        runAfterStartupCount,
+        runBeforeSessionCount,
+        runAfterSessionCount,
+        runExecutionPollContext.pollCount);
     printf("server_storage_platform=%s game_hdd_root=%s\n",
         storagePlatformDirectory,
         storageGameHddRoot.c_str());
@@ -1926,6 +1996,19 @@ int main(int argc, char* argv[])
         sessionExecution.shutdown.plan.shouldWaitForServerStop &&
         sessionGameplayHalted &&
         sessionPollContext.pollCount == 3 &&
+        platformRunRuntimeResult.ok &&
+        !runExecution.abortedStartup &&
+        runExecution.completedSession &&
+        runExecution.startup.appSession.applied &&
+        runExecution.session.initialSave.requested &&
+        runExecution.session.initialSave.completed &&
+        runExecution.session.gameplayLoop.iterations == 3U &&
+        runExecution.session.shutdown.haltedGameplay &&
+        runExecutionGameplayHalted &&
+        runAfterStartupCount == 1 &&
+        runBeforeSessionCount == 1 &&
+        runAfterSessionCount == 1 &&
+        runExecutionPollContext.pollCount == 3 &&
         defaultAutosaveMs == 60000U &&
         configuredAutosaveMs == 45000U &&
         nextAutosaveTick == 46000U &&

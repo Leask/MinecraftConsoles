@@ -130,6 +130,44 @@ static void PollDedicatedServerCli(void *context)
 	}
 }
 
+static void LogDedicatedServerReady(void *context)
+{
+	const ServerRuntime::DedicatedServerPlatformState *platformState =
+		static_cast<const ServerRuntime::DedicatedServerPlatformState*>(
+			context);
+	if (platformState == NULL)
+	{
+		return;
+	}
+
+	LogStartupStep("server startup complete");
+	LogInfof(
+		"startup",
+		"Dedicated server listening on %s:%d",
+		platformState->bindIp.c_str(),
+		platformState->multiplayerPort);
+}
+
+static void StartDedicatedServerCli(void *context)
+{
+	ServerRuntime::ServerCli *serverCli =
+		static_cast<ServerRuntime::ServerCli*>(context);
+	if (serverCli != NULL)
+	{
+		serverCli->Start();
+	}
+}
+
+static void StopDedicatedServerCli(void *context)
+{
+	ServerRuntime::ServerCli *serverCli =
+		static_cast<ServerRuntime::ServerCli*>(context);
+	if (serverCli != NULL)
+	{
+		serverCli->Stop();
+	}
+}
+
 using ServerRuntime::LogError;
 using ServerRuntime::LogErrorf;
 using ServerRuntime::LogInfof;
@@ -241,47 +279,41 @@ int main(int argc, char **argv)
 		kServerActionPad,
 		&ServerRuntime::TickDedicatedServerPlatformRuntime);
 	NetworkGameInitData param;
+	ServerRuntime::ServerCli serverCli;
 	LogStartupStep("starting hosted network game thread");
-	const ServerRuntime::DedicatedServerStartupExecutionResult
-		startupExecution =
-			ServerRuntime::ExecuteDedicatedServerStartup(
-				config,
-				&serverProperties,
-				worldBootstrap,
-				(new Random())->nextLong(),
-				&CGameNetworkManager::RunNetworkGameThreadProc,
-				&param);
-	if (startupExecution.abortedStartup)
+	const ServerRuntime::DedicatedServerRunExecutionResult
+		runExecution =
+			ServerRuntime::ExecuteDedicatedServerRun(
+		config,
+		&serverProperties,
+		worldBootstrap,
+		kServerActionPad,
+		(new Random())->nextLong(),
+		&CGameNetworkManager::RunNetworkGameThreadProc,
+		&param,
+		&LogDedicatedServerReady,
+		&platformState,
+		&StartDedicatedServerCli,
+		&serverCli,
+		&PollDedicatedServerCli,
+		&serverCli,
+		&StopDedicatedServerCli,
+		&serverCli,
+		LceGetMonotonicMilliseconds(),
+		10);
+	if (runExecution.abortedStartup)
 	{
-		if (startupExecution.hostedGameStartup.startupPlan.shouldAbortStartup)
+		if (runExecution.startup.hostedGameStartup.startupPlan.shouldAbortStartup)
 		{
 			LogErrorf(
 				"startup",
 				"Failed to start dedicated server (code %d).",
-				startupExecution.hostedGameStartup.startupResult);
+				runExecution.startup.hostedGameStartup.startupResult);
 		}
 		ServerRuntime::StopDedicatedServerPlatformRuntime();
 		
-		return startupExecution.abortExitCode;
+		return runExecution.abortExitCode;
 	}
-
-	LogStartupStep("server startup complete");
-	LogInfof(
-		"startup",
-		"Dedicated server listening on %s:%d",
-		platformState.bindIp.c_str(),
-		platformState.multiplayerPort);
-	ServerRuntime::ServerCli serverCli;
-	serverCli.Start();
-	ServerRuntime::ExecuteDedicatedServerSession(
-		startupExecution.worldBootstrapPlan,
-		serverProperties,
-		kServerActionPad,
-		&PollDedicatedServerCli,
-		&serverCli,
-		LceGetMonotonicMilliseconds(),
-		10);
-	serverCli.Stop();
 
 	LogInfof("shutdown", "Dedicated server stopped");
 

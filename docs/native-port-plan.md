@@ -237,6 +237,10 @@ This iteration starts with:
   now also have a shared startup helper in
   `Minecraft.Server/Common/DedicatedServerLifecycle.h`, so `ServerMain.cpp`
   no longer open-codes most of the startup path after `BootstrapWorldForServer`
+- startup plus session orchestration now also have a shared run helper in
+  `Minecraft.Server/Common/DedicatedServerLifecycle.h`, so `ServerMain.cpp`
+  can delegate the end-to-end dedicated run flow while preserving explicit
+  hooks for ready logging and CLI lifecycle
 - the remaining Windows-only runtime bootstrap/teardown sequence now lives in
   `Minecraft.Server/Windows64/Windows64DedicatedServerRuntime.cpp`, making
   the native blocker boundary explicit instead of leaving it interleaved with
