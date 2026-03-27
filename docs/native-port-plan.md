@@ -369,6 +369,9 @@ This iteration starts with:
   so `ServerMain.cpp` no longer directly reaches into `app.m_bShutdown`,
   `MinecraftServer::HaltServer()`, or `ServerStoppedWait()` for the
   dedicated-server shutdown tail
+- the dedicated gameplay tick loop is now also moving behind shared helpers,
+  so `ServerMain.cpp` no longer open-codes the autosave/tick/CLI iteration
+  body and that loop behavior is now directly exercised by native smoke
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

@@ -6,6 +6,7 @@
 #include "Minecraft.h"
 #include "MinecraftServer.h"
 #include "..\Common\DedicatedServerBootstrap.h"
+#include "..\Common\DedicatedServerGameplayLoop.h"
 #include "..\Common\DedicatedServerHostedGameRuntime.h"
 #include "..\Common\DedicatedServerLifecycle.h"
 #include "..\Common\DedicatedServerOptions.h"
@@ -117,6 +118,16 @@ static void PrintUsage()
 	for (size_t i = 0; i < usageLines.size(); ++i)
 	{
 		ServerRuntime::LogInfo("usage", usageLines[i].c_str());
+	}
+}
+
+static void PollDedicatedServerCli(void *context)
+{
+	ServerRuntime::ServerCli *serverCli =
+		static_cast<ServerRuntime::ServerCli*>(context);
+	if (serverCli != NULL)
+	{
+		serverCli->Poll();
 	}
 }
 
@@ -337,53 +348,17 @@ int main(int argc, char **argv)
 	while (!ServerRuntime::IsDedicatedServerShutdownRequested() &&
 		!ServerRuntime::IsDedicatedServerAppShutdownRequested())
 	{
-		ServerRuntime::TickDedicatedServerPlatformRuntime();
-		ServerRuntime::HandleDedicatedServerPlatformActions();
-		serverCli.Poll();
-
-		if (ServerRuntime::IsDedicatedServerShutdownRequested() ||
-			ServerRuntime::IsDedicatedServerAppShutdownRequested())
+		const ServerRuntime::DedicatedServerGameplayLoopIterationResult
+			loopResult =
+				ServerRuntime::TickDedicatedServerGameplayLoop(
+					&autosaveState,
+					serverProperties,
+					kServerActionPad,
+					&PollDedicatedServerCli,
+					&serverCli);
+		if (loopResult.shouldExit)
 		{
 			break;
-		}
-
-		const bool autosaveActionIdle =
-			ServerRuntime::IsDedicatedServerWorldActionIdle(
-				kServerActionPad);
-		const std::uint64_t now = LceGetMonotonicMilliseconds();
-		const ServerRuntime::DedicatedServerAutosaveLoopPlan autosaveLoopPlan =
-			ServerRuntime::BuildDedicatedServerAutosaveLoopPlan(
-				autosaveState,
-				autosaveActionIdle,
-				now);
-
-		if (autosaveLoopPlan.shouldMarkCompleted)
-		{
-			LogWorldIO("autosave completed");
-			ServerRuntime::MarkDedicatedServerAutosaveCompleted(&autosaveState);
-		}
-
-		if (ServerRuntime::IsDedicatedServerGameplayHalted())
-		{
-			break;
-		}
-
-		if (autosaveLoopPlan.shouldRequestAutosave)
-		{
-			LogWorldIO("requesting autosave");
-			ServerRuntime::RequestDedicatedServerWorldAutosave(
-				kServerActionPad);
-			ServerRuntime::MarkDedicatedServerAutosaveRequested(
-				&autosaveState,
-				now,
-				serverProperties);
-		}
-		else if (autosaveLoopPlan.shouldAdvanceDeadline)
-		{
-			autosaveState.nextTickMs =
-				ServerRuntime::ComputeNextDedicatedServerAutosaveDeadlineMs(
-					now,
-					serverProperties);
 		}
 
 		LceSleepMilliseconds(10);

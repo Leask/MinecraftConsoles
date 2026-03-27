@@ -531,6 +531,8 @@ set(_MINECRAFT_SERVER_COMMON_SERVER_COMMON
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/AccessStorageUtils.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerBootstrap.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerBootstrap.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerGameplayLoop.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerGameplayLoop.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerHeadlessRuntime.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerHeadlessRuntime.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerHeadlessShell.cpp"

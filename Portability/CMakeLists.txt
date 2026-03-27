@@ -57,6 +57,7 @@ add_executable(Minecraft.Portability.SmokeTest
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/WhitelistManager.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/AccessStorageUtils.h"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerBootstrap.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerGameplayLoop.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/NativeDedicatedServerHostedGameRuntime.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerLifecycle.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerOptions.cpp"

@@ -6,6 +6,7 @@
 #include "Minecraft.Server/Access/Access.h"
 #include "Minecraft.Server/Access/BanManager.h"
 #include "Minecraft.Server/Common/DedicatedServerBootstrap.h"
+#include "Minecraft.Server/Common/DedicatedServerGameplayLoop.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerLifecycle.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
@@ -556,6 +557,38 @@ int main(int argc, char* argv[])
             ServerRuntime::ExecuteDedicatedServerInitialSave(
                 createdWorldPlan,
                 0);
+    ServerRuntime::SetDedicatedServerAppShutdownRequested(false);
+    ServerRuntime::DedicatedServerAutosaveState gameplayLoopState =
+        ServerRuntime::CreateDedicatedServerAutosaveState(
+            0,
+            runtimeProperties);
+    gameplayLoopState.nextTickMs = 0;
+    const ServerRuntime::DedicatedServerGameplayLoopIterationResult
+        gameplayLoopRequest =
+            ServerRuntime::TickDedicatedServerGameplayLoop(
+                &gameplayLoopState,
+                runtimeProperties,
+                0,
+                nullptr,
+                nullptr);
+    const ServerRuntime::DedicatedServerGameplayLoopIterationResult
+        gameplayLoopComplete =
+            ServerRuntime::TickDedicatedServerGameplayLoop(
+                &gameplayLoopState,
+                runtimeProperties,
+                0,
+                nullptr,
+                nullptr);
+    ServerRuntime::RequestDedicatedServerShutdown();
+    const ServerRuntime::DedicatedServerGameplayLoopIterationResult
+        gameplayLoopExit =
+            ServerRuntime::TickDedicatedServerGameplayLoop(
+                &gameplayLoopState,
+                runtimeProperties,
+                0,
+                nullptr,
+                nullptr);
+    ServerRuntime::ResetDedicatedServerShutdownRequest();
     const ServerRuntime::DedicatedServerShutdownExecutionResult
         shutdownExecution =
             ServerRuntime::ExecuteDedicatedServerShutdown();
@@ -1205,6 +1238,15 @@ int main(int argc, char* argv[])
         initialSaveExecution.timedOut,
         shutdownExecution.plan.shouldWaitForServerStop,
         shutdownExecution.haltedGameplay);
+    printf("gameplay_loop=%d request=%d complete=%d exit=%d\n",
+        gameplayLoopRequest.autosaveRequested &&
+            !gameplayLoopRequest.shouldExit &&
+            gameplayLoopComplete.autosaveCompleted &&
+            !gameplayLoopComplete.shouldExit &&
+            gameplayLoopExit.shouldExit,
+        gameplayLoopRequest.autosaveRequested,
+        gameplayLoopComplete.autosaveCompleted,
+        gameplayLoopExit.shouldExit);
     printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
         hostedGameRuntimeResult == 11 &&
             hostedGameRuntimeThreadValue == 1,
@@ -1543,6 +1585,11 @@ int main(int argc, char* argv[])
         shutdownExecution.plan.shouldLogShutdownSave &&
         shutdownExecution.plan.shouldWaitForServerStop &&
         shutdownExecution.haltedGameplay &&
+        gameplayLoopRequest.autosaveRequested &&
+        !gameplayLoopRequest.shouldExit &&
+        gameplayLoopComplete.autosaveCompleted &&
+        !gameplayLoopComplete.shouldExit &&
+        gameplayLoopExit.shouldExit &&
         hostedGameRuntimeResult == 11 &&
         hostedGameRuntimeThreadValue == 1 &&
         defaultAutosaveMs == 60000U &&
