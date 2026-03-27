@@ -519,6 +519,8 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
         platformRuntimeResult =
             ServerRuntime::StartDedicatedServerPlatformRuntime(platformState);
+    ServerRuntime::TickDedicatedServerPlatformRuntime();
+    ServerRuntime::HandleDedicatedServerPlatformActions();
     ServerRuntime::StopDedicatedServerPlatformRuntime();
     const std::uint64_t defaultAutosaveMs =
         ServerRuntime::GetDedicatedServerAutosaveIntervalMs(

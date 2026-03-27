@@ -354,6 +354,10 @@ This iteration starts with:
 - that live shell path now also has an acceptance-count assertion, so the
   automated native smoke fails if shell mode binds successfully but never
   actually accepts the expected client connection
+- the dedicated server platform runtime boundary now also owns the per-tick
+  async/network/profile/storage work and queued XUI action handling, so
+  `ServerMain.cpp` no longer open-codes those platform-specific runtime
+  operations outside the shared runtime interface
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

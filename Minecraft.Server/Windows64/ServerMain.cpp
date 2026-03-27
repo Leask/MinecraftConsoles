@@ -153,31 +153,6 @@ using ServerRuntime::WaitForWorldActionIdle;
 using ServerRuntime::WorldBootstrapResult;
 
 /**
- * **Tick Core Async Subsystems**
- *
- * Advances core subsystems for one frame to keep async processing alive
- * Call continuously even inside wait loops to avoid stalling storage/profile/network work
- * 非同期進行維持のためのティック処理
- */
-static void TickCoreSystems()
-{
-	g_NetworkManager.DoWork();
-	ProfileManager.Tick();
-	StorageManager.Tick();
-}
-
-/**
- * **Handle Queued XUI Server Action Once**
- *
- * Processes queued XUI/server action once
- * XUIアクションの単発処理
- */
-static void HandleXuiActions()
-{
-	app.HandleXuiActions();
-}
-
-/**
  * Dedicated Server Entory Point
  *
  * 主な責務:
@@ -292,7 +267,10 @@ int main(int argc, char **argv)
 	StorageManager.SetSaveDisabled(appSessionPlan.saveDisabled);
 	// Read world name and fixed save-id from server.properties
 	// Delegate load-vs-create decision to WorldManager
-	WorldBootstrapResult worldBootstrap = BootstrapWorldForServer(serverProperties, kServerActionPad, &TickCoreSystems);
+	WorldBootstrapResult worldBootstrap = BootstrapWorldForServer(
+		serverProperties,
+		kServerActionPad,
+		&ServerRuntime::TickDedicatedServerPlatformRuntime);
 	const ServerRuntime::DedicatedServerWorldBootstrapPlan worldBootstrapPlan =
 		ServerRuntime::BuildDedicatedServerWorldBootstrapPlan(
 			serverProperties,
@@ -352,7 +330,7 @@ int main(int argc, char **argv)
 	while (startThread->isRunning() &&
 		!ServerRuntime::IsDedicatedServerShutdownRequested())
 	{
-		TickCoreSystems();
+		ServerRuntime::TickDedicatedServerPlatformRuntime();
 		LceSleepMilliseconds(10);
 	}
 
@@ -391,14 +369,14 @@ int main(int argc, char **argv)
 		WaitForWorldActionIdle(
 			kServerActionPad,
 			initialSavePlan.idleWaitBeforeRequestMs,
-			&TickCoreSystems,
-			&HandleXuiActions);
+			&ServerRuntime::TickDedicatedServerPlatformRuntime,
+			&ServerRuntime::HandleDedicatedServerPlatformActions);
 		app.SetXuiServerAction(kServerActionPad, eXuiServerAction_AutoSaveGame);
 		if (!WaitForWorldActionIdle(
 			kServerActionPad,
 			initialSavePlan.requestTimeoutMs,
-			&TickCoreSystems,
-			&HandleXuiActions))
+			&ServerRuntime::TickDedicatedServerPlatformRuntime,
+			&ServerRuntime::HandleDedicatedServerPlatformActions))
 		{
 			LogWorldIO("initial save timed out");
 			LogWarn("world-io", "Timed out waiting for initial save action to finish.");
@@ -418,8 +396,8 @@ int main(int argc, char **argv)
 	while (!ServerRuntime::IsDedicatedServerShutdownRequested() &&
 		!app.m_bShutdown)
 	{
-		TickCoreSystems();
-		HandleXuiActions();
+		ServerRuntime::TickDedicatedServerPlatformRuntime();
+		ServerRuntime::HandleDedicatedServerPlatformActions();
 		serverCli.Poll();
 
 		if (ServerRuntime::IsDedicatedServerShutdownRequested() ||

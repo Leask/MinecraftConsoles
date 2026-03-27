@@ -195,6 +195,18 @@ namespace ServerRuntime
         return result;
     }
 
+    void TickDedicatedServerPlatformRuntime()
+    {
+        g_NetworkManager.DoWork();
+        ProfileManager.Tick();
+        StorageManager.Tick();
+    }
+
+    void HandleDedicatedServerPlatformActions()
+    {
+        app.HandleXuiActions();
+    }
+
     void StopDedicatedServerPlatformRuntime()
     {
         WinsockNetLayer::Shutdown();

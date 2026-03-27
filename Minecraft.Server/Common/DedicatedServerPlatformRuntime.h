@@ -19,5 +19,7 @@ namespace ServerRuntime
     StartDedicatedServerPlatformRuntime(
         const DedicatedServerPlatformState &platformState);
 
+    void TickDedicatedServerPlatformRuntime();
+    void HandleDedicatedServerPlatformActions();
     void StopDedicatedServerPlatformRuntime();
 }

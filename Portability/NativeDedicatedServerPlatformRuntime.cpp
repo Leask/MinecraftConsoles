@@ -14,6 +14,14 @@ namespace ServerRuntime
         return result;
     }
 
+    void TickDedicatedServerPlatformRuntime()
+    {
+    }
+
+    void HandleDedicatedServerPlatformActions()
+    {
+    }
+
     void StopDedicatedServerPlatformRuntime()
     {
     }
