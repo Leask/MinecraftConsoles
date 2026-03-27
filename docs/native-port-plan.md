@@ -358,6 +358,10 @@ This iteration starts with:
   async/network/profile/storage work and queued XUI action handling, so
   `ServerMain.cpp` no longer open-codes those platform-specific runtime
   operations outside the shared runtime interface
+- the same runtime boundary now also owns world-action idle/autosave requests,
+  which pulls the initial-save and autosave `app.SetXuiServerAction` /
+  `app.GetXuiServerAction` path out of `ServerMain.cpp` and into the
+  platform-specific runtime layer
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

@@ -521,6 +521,11 @@ int main(int argc, char* argv[])
             ServerRuntime::StartDedicatedServerPlatformRuntime(platformState);
     ServerRuntime::TickDedicatedServerPlatformRuntime();
     ServerRuntime::HandleDedicatedServerPlatformActions();
+    const bool platformActionIdle =
+        ServerRuntime::IsDedicatedServerWorldActionIdle(0);
+    ServerRuntime::RequestDedicatedServerWorldAutosave(0);
+    const bool platformWaitIdle =
+        ServerRuntime::WaitForDedicatedServerWorldActionIdle(0, 1);
     ServerRuntime::StopDedicatedServerPlatformRuntime();
     const std::uint64_t defaultAutosaveMs =
         ServerRuntime::GetDedicatedServerAutosaveIntervalMs(
@@ -1129,6 +1134,10 @@ int main(int argc, char* argv[])
             platformRuntimeResult.headless,
         platformRuntimeResult.runtimeName.c_str(),
         platformRuntimeResult.headless);
+    printf("platform_actions=%d action_idle=%d wait_idle=%d\n",
+        platformActionIdle && platformWaitIdle,
+        platformActionIdle,
+        platformWaitIdle);
     printf("server_storage_platform=%s game_hdd_root=%s\n",
         storagePlatformDirectory,
         storageGameHddRoot.c_str());
@@ -1447,6 +1456,8 @@ int main(int argc, char* argv[])
         !runtimeState.multiplayerJoin &&
         runtimeState.dedicatedServer &&
         runtimeState.lanAdvertise &&
+        platformActionIdle &&
+        platformWaitIdle &&
         defaultAutosaveMs == 60000U &&
         configuredAutosaveMs == 45000U &&
         nextAutosaveTick == 46000U &&

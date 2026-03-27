@@ -22,6 +22,22 @@ namespace ServerRuntime
     {
     }
 
+    bool IsDedicatedServerWorldActionIdle(int)
+    {
+        return true;
+    }
+
+    void RequestDedicatedServerWorldAutosave(int)
+    {
+    }
+
+    bool WaitForDedicatedServerWorldActionIdle(
+        int,
+        DWORD)
+    {
+        return true;
+    }
+
     void StopDedicatedServerPlatformRuntime()
     {
     }

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "..\Common\DedicatedServerPlatformRuntime.h"
+#include "..\WorldManager.h"
 
 #include "Common/App_Defines.h"
 #include "Common/Network/GameNetworkManager.h"
@@ -205,6 +206,27 @@ namespace ServerRuntime
     void HandleDedicatedServerPlatformActions()
     {
         app.HandleXuiActions();
+    }
+
+    bool IsDedicatedServerWorldActionIdle(int actionPad)
+    {
+        return app.GetXuiServerAction(actionPad) == eXuiServerAction_Idle;
+    }
+
+    void RequestDedicatedServerWorldAutosave(int actionPad)
+    {
+        app.SetXuiServerAction(actionPad, eXuiServerAction_AutoSaveGame);
+    }
+
+    bool WaitForDedicatedServerWorldActionIdle(
+        int actionPad,
+        DWORD timeoutMs)
+    {
+        return WaitForWorldActionIdle(
+            actionPad,
+            timeoutMs,
+            &TickDedicatedServerPlatformRuntime,
+            &HandleDedicatedServerPlatformActions);
     }
 
     void StopDedicatedServerPlatformRuntime()

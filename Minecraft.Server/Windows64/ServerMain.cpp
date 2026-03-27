@@ -366,17 +366,13 @@ int main(int argc, char **argv)
 		// Windows64 suppresses saveToDisc right after new world creation
 		// Dedicated Server explicitly runs the initial save here
 		LogWorldIO("requesting initial save for newly created world");
-		WaitForWorldActionIdle(
+		ServerRuntime::WaitForDedicatedServerWorldActionIdle(
 			kServerActionPad,
-			initialSavePlan.idleWaitBeforeRequestMs,
-			&ServerRuntime::TickDedicatedServerPlatformRuntime,
-			&ServerRuntime::HandleDedicatedServerPlatformActions);
-		app.SetXuiServerAction(kServerActionPad, eXuiServerAction_AutoSaveGame);
-		if (!WaitForWorldActionIdle(
+			initialSavePlan.idleWaitBeforeRequestMs);
+		ServerRuntime::RequestDedicatedServerWorldAutosave(kServerActionPad);
+		if (!ServerRuntime::WaitForDedicatedServerWorldActionIdle(
 			kServerActionPad,
-			initialSavePlan.requestTimeoutMs,
-			&ServerRuntime::TickDedicatedServerPlatformRuntime,
-			&ServerRuntime::HandleDedicatedServerPlatformActions))
+			initialSavePlan.requestTimeoutMs))
 		{
 			LogWorldIO("initial save timed out");
 			LogWarn("world-io", "Timed out waiting for initial save action to finish.");
@@ -407,8 +403,8 @@ int main(int argc, char **argv)
 		}
 
 		const bool autosaveActionIdle =
-			app.GetXuiServerAction(kServerActionPad) ==
-				eXuiServerAction_Idle;
+			ServerRuntime::IsDedicatedServerWorldActionIdle(
+				kServerActionPad);
 		const std::uint64_t now = LceGetMonotonicMilliseconds();
 		const ServerRuntime::DedicatedServerAutosaveLoopPlan autosaveLoopPlan =
 			ServerRuntime::BuildDedicatedServerAutosaveLoopPlan(
@@ -430,7 +426,8 @@ int main(int argc, char **argv)
 		if (autosaveLoopPlan.shouldRequestAutosave)
 		{
 			LogWorldIO("requesting autosave");
-			app.SetXuiServerAction(kServerActionPad, eXuiServerAction_AutoSaveGame);
+			ServerRuntime::RequestDedicatedServerWorldAutosave(
+				kServerActionPad);
 			ServerRuntime::MarkDedicatedServerAutosaveRequested(
 				&autosaveState,
 				now,
