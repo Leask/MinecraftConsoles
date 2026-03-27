@@ -351,6 +351,9 @@ This iteration starts with:
 - the live shell listener path is now also covered by automation through a
   shell self-connect mode, so native headless server smoke now verifies that
   shell-mode listeners accept a real connection instead of only binding a port
+- that live shell path now also has an acceptance-count assertion, so the
+  automated native smoke fails if shell mode binds successfully but never
+  actually accepts the expected client connection
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

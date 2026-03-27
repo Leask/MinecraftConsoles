@@ -21,6 +21,7 @@ int main(int argc, char** argv)
     bool selfConnect = false;
     bool shellSelfConnect = false;
     std::uint64_t shutdownAfterMs = 0;
+    std::uint64_t requiredAcceptedConnections = 0;
     std::vector<std::string> scriptedCommands;
     int serverArgc = 1;
     for (int i = 1; i < argc; ++i)
@@ -65,6 +66,36 @@ int main(int argc, char** argv)
             }
 
             shutdownAfterMs = (std::uint64_t)parsedValue;
+            ++i;
+            continue;
+        }
+        if (std::strcmp(argv[i], "--require-accepted-connections") == 0)
+        {
+            if (i + 1 >= argc)
+            {
+                std::fprintf(
+                    stderr,
+                    "startup error: missing value for "
+                    "--require-accepted-connections\n");
+                return 2;
+            }
+
+            errno = 0;
+            char* end = nullptr;
+            const unsigned long long parsedValue = std::strtoull(
+                argv[i + 1],
+                &end,
+                10);
+            if (argv[i + 1] == end || *end != '\0' || errno != 0)
+            {
+                std::fprintf(
+                    stderr,
+                    "startup error: invalid "
+                    "--require-accepted-connections value\n");
+                return 2;
+            }
+
+            requiredAcceptedConnections = (std::uint64_t)parsedValue;
             ++i;
             continue;
         }
@@ -121,6 +152,8 @@ int main(int argc, char** argv)
                 "Loop back one TCP client during shell mode\n");
             std::printf("  --shutdown-after-ms <ms>   "
                 "Run shell mode for a bounded time\n");
+            std::printf("  --require-accepted-connections <n> "
+                "Fail if shell accepts fewer than n clients\n");
             std::printf("  --command <cmd>            "
                 "Run one native shell command before stdin\n");
             return 0;
@@ -156,6 +189,7 @@ int main(int argc, char** argv)
             selfConnect,
             shellSelfConnect,
             shutdownAfterMs,
+            requiredAcceptedConnections,
             scriptedCommands
         };
     const int exitCode = ServerRuntime::RunDedicatedServerHeadlessRuntime(

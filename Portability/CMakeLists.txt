@@ -210,6 +210,8 @@ if(BUILD_TESTING)
     COMMAND
       $<TARGET_FILE:Minecraft.Server.NativeBootstrap>
       --shell-self-connect
+      --require-accepted-connections
+      1
       --shutdown-after-ms
       150
       -port

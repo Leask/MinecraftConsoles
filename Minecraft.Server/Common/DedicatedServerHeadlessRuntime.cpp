@@ -168,7 +168,7 @@ namespace
         return connected;
     }
 
-    void RunDedicatedServerHeadlessShell(
+    bool RunDedicatedServerHeadlessShell(
         const ServerRuntime::DedicatedServerHeadlessRuntimeOptions &options,
         const ServerRuntime::DedicatedServerHeadlessShellContext
             &shellContext,
@@ -229,6 +229,21 @@ namespace
 
             LceSleepMilliseconds(50);
         }
+
+        if (options.requiredAcceptedConnections > 0 &&
+            shellState.acceptedConnections <
+                options.requiredAcceptedConnections)
+        {
+            ServerRuntime::LogErrorf(
+                "network",
+                "native shell expected at least %llu accepted "
+                "connections but only observed %llu",
+                (unsigned long long)options.requiredAcceptedConnections,
+                (unsigned long long)shellState.acceptedConnections);
+            return false;
+        }
+
+        return true;
     }
 }
 
@@ -327,10 +342,13 @@ namespace ServerRuntime
             return 9;
         }
 
-        RunDedicatedServerHeadlessShell(
+        if (!RunDedicatedServerHeadlessShell(
             options,
             shellContext,
-            runtimeGuard.GetSocketState()->listener);
+            runtimeGuard.GetSocketState()->listener))
+        {
+            return 10;
+        }
         LogInfo("shutdown", "native bootstrap shell stopped");
         return 0;
     }
