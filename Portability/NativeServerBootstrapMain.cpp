@@ -1,5 +1,4 @@
 #include <cstdint>
-#include <csignal>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -9,16 +8,9 @@
 #include "Minecraft.Server/Common/DedicatedServerHeadlessRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerOptions.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
+#include "Minecraft.Server/Common/DedicatedServerSignalHandlers.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 #include "Minecraft.Server/ServerLogger.h"
-
-namespace
-{
-    void NativeSignalHandler(int)
-    {
-        ServerRuntime::RequestDedicatedServerShutdown();
-    }
-}
 
 int main(int argc, char** argv)
 {
@@ -42,8 +34,12 @@ int main(int argc, char** argv)
         argv[serverArgc++] = argv[i];
     }
 
-    std::signal(SIGINT, NativeSignalHandler);
-    std::signal(SIGTERM, NativeSignalHandler);
+    if (!ServerRuntime::InstallDedicatedServerShutdownSignalHandlers())
+    {
+        std::fprintf(
+            stderr,
+            "startup warning: failed to install shutdown signal handlers\n");
+    }
 
     ServerRuntime::DedicatedServerBootstrapContext bootstrapContext = {};
     std::string parseError;

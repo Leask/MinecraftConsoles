@@ -113,6 +113,7 @@ add_executable(Minecraft.Server.NativeBootstrap
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerHeadlessRuntime.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerOptions.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerPlatformState.cpp"
+  "${CMAKE_CURRENT_LIST_DIR}/NativeDedicatedServerSignalHandlers.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/NativeDedicatedServerPlatformRuntime.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerRuntime.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerSignalState.cpp"

@@ -337,6 +337,10 @@ This iteration starts with:
   `Minecraft.Server/Common/DedicatedServerHeadlessRuntime.cpp`, so the
   non-Windows listener bootstrap, self-connect smoke path, shell loop, and
   shutdown cleanup are no longer open-coded in `NativeServerBootstrapMain.cpp`
+- shutdown handler installation is now converging on a shared entry boundary
+  as well, with `ServerMain.cpp` and `NativeServerBootstrapMain.cpp` both
+  delegating signal/control-handler setup through a dedicated server signal
+  handler interface instead of open-coding that platform glue in each main
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

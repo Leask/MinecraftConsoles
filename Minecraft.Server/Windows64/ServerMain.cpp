@@ -10,6 +10,7 @@
 #include "..\Common\DedicatedServerPlatformState.h"
 #include "..\Common\DedicatedServerPlatformRuntime.h"
 #include "..\Common\DedicatedServerRuntime.h"
+#include "..\Common\DedicatedServerSignalHandlers.h"
 #include "..\Common\DedicatedServerSignalState.h"
 #include "..\Common\DedicatedServerShutdownPlan.h"
 #include "..\Common\DedicatedServerSessionConfig.h"
@@ -106,20 +107,6 @@ public:
 private:
 	bool m_active;
 };
-static BOOL WINAPI ConsoleCtrlHandlerProc(DWORD ctrlType)
-{
-	switch (ctrlType)
-	{
-	case CTRL_C_EVENT:
-	case CTRL_BREAK_EVENT:
-	case CTRL_CLOSE_EVENT:
-	case CTRL_SHUTDOWN_EVENT:
-		ServerRuntime::RequestDedicatedServerShutdown();
-		return TRUE;
-	default:
-		return FALSE;
-	}
-}
 
 /**
  * **Wait For Server Stopped Signal**
@@ -206,7 +193,12 @@ int main(int argc, char **argv)
 	DedicatedServerLogManagerGuard logManagerGuard;
 	ServerRuntime::ResetDedicatedServerShutdownRequest();
 
-	SetConsoleCtrlHandler(ConsoleCtrlHandlerProc, TRUE);
+	if (!ServerRuntime::InstallDedicatedServerShutdownSignalHandlers())
+	{
+		LogWarn(
+			"startup",
+			"Failed to install dedicated server shutdown handlers.");
+	}
 	std::string bootstrapError;
 	switch (ServerRuntime::PrepareDedicatedServerBootstrapContext(
 		argc,
