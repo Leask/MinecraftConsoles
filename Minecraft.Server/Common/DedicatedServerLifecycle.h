@@ -125,6 +125,18 @@ namespace ServerRuntime
         int abortExitCode = 0;
     };
 
+    struct DedicatedServerRunHooks
+    {
+        DedicatedServerGameplayLoopPollProc *afterStartupProc = nullptr;
+        void *afterStartupContext = nullptr;
+        DedicatedServerGameplayLoopPollProc *beforeSessionProc = nullptr;
+        void *beforeSessionContext = nullptr;
+        DedicatedServerGameplayLoopPollProc *pollProc = nullptr;
+        void *pollContext = nullptr;
+        DedicatedServerGameplayLoopPollProc *afterSessionProc = nullptr;
+        void *afterSessionContext = nullptr;
+    };
+
     DedicatedServerSessionExecutionResult ExecuteDedicatedServerSession(
         const DedicatedServerWorldBootstrapPlan &worldBootstrapPlan,
         const ServerPropertiesConfig &serverProperties,
@@ -133,6 +145,58 @@ namespace ServerRuntime
         void *pollContext,
         std::uint64_t initialTickMs,
         unsigned int sleepMs);
+
+    template <typename TInitData>
+    DedicatedServerRunExecutionResult ExecuteDedicatedServerRun(
+        const DedicatedServerConfig &config,
+        ServerPropertiesConfig *serverProperties,
+        const WorldBootstrapResult &worldBootstrap,
+        int actionPad,
+        std::int64_t generatedSeed,
+        DedicatedServerHostedGameThreadProc *threadProc,
+        TInitData *initData,
+        const DedicatedServerRunHooks &hooks,
+        std::uint64_t initialTickMs,
+        unsigned int sleepMs)
+    {
+        DedicatedServerRunExecutionResult result = {};
+        result.startup = ExecuteDedicatedServerStartup(
+            config,
+            serverProperties,
+            worldBootstrap,
+            generatedSeed,
+            threadProc,
+            initData);
+        if (result.startup.abortedStartup)
+        {
+            result.abortedStartup = true;
+            result.abortExitCode = result.startup.abortExitCode;
+            return result;
+        }
+
+        if (hooks.afterStartupProc != nullptr)
+        {
+            hooks.afterStartupProc(hooks.afterStartupContext);
+        }
+        if (hooks.beforeSessionProc != nullptr)
+        {
+            hooks.beforeSessionProc(hooks.beforeSessionContext);
+        }
+        result.session = ExecuteDedicatedServerSession(
+            result.startup.worldBootstrapPlan,
+            *serverProperties,
+            actionPad,
+            hooks.pollProc,
+            hooks.pollContext,
+            initialTickMs,
+            sleepMs);
+        if (hooks.afterSessionProc != nullptr)
+        {
+            hooks.afterSessionProc(hooks.afterSessionContext);
+        }
+        result.completedSession = true;
+        return result;
+    }
 
     template <typename TInitData>
     DedicatedServerRunExecutionResult ExecuteDedicatedServerRun(
@@ -154,43 +218,26 @@ namespace ServerRuntime
         std::uint64_t initialTickMs,
         unsigned int sleepMs)
     {
-        DedicatedServerRunExecutionResult result = {};
-        result.startup = ExecuteDedicatedServerStartup(
+        DedicatedServerRunHooks hooks = {};
+        hooks.afterStartupProc = afterStartupProc;
+        hooks.afterStartupContext = afterStartupContext;
+        hooks.beforeSessionProc = beforeSessionProc;
+        hooks.beforeSessionContext = beforeSessionContext;
+        hooks.pollProc = pollProc;
+        hooks.pollContext = pollContext;
+        hooks.afterSessionProc = afterSessionProc;
+        hooks.afterSessionContext = afterSessionContext;
+        return ExecuteDedicatedServerRun(
             config,
             serverProperties,
             worldBootstrap,
+            actionPad,
             generatedSeed,
             threadProc,
-            initData);
-        if (result.startup.abortedStartup)
-        {
-            result.abortedStartup = true;
-            result.abortExitCode = result.startup.abortExitCode;
-            return result;
-        }
-
-        if (afterStartupProc != nullptr)
-        {
-            afterStartupProc(afterStartupContext);
-        }
-        if (beforeSessionProc != nullptr)
-        {
-            beforeSessionProc(beforeSessionContext);
-        }
-        result.session = ExecuteDedicatedServerSession(
-            result.startup.worldBootstrapPlan,
-            *serverProperties,
-            actionPad,
-            pollProc,
-            pollContext,
+            initData,
+            hooks,
             initialTickMs,
             sleepMs);
-        if (afterSessionProc != nullptr)
-        {
-            afterSessionProc(afterSessionContext);
-        }
-        result.completedSession = true;
-        return result;
     }
 
     DedicatedServerShutdownExecutionResult ExecuteDedicatedServerShutdown();

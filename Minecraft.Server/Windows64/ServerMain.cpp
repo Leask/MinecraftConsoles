@@ -12,6 +12,7 @@
 #include "..\Common\DedicatedServerOptions.h"
 #include "..\Common\DedicatedServerPlatformState.h"
 #include "..\Common\DedicatedServerPlatformRuntime.h"
+#include "..\Common\DedicatedServerRunHooks.h"
 #include "..\Common\DedicatedServerRuntime.h"
 #include "..\Common\DedicatedServerSignalHandlers.h"
 #include "..\Common\DedicatedServerSignalState.h"
@@ -117,54 +118,6 @@ static void PrintUsage()
 	for (size_t i = 0; i < usageLines.size(); ++i)
 	{
 		ServerRuntime::LogInfo("usage", usageLines[i].c_str());
-	}
-}
-
-static void PollDedicatedServerCli(void *context)
-{
-	ServerRuntime::ServerCli *serverCli =
-		static_cast<ServerRuntime::ServerCli*>(context);
-	if (serverCli != NULL)
-	{
-		serverCli->Poll();
-	}
-}
-
-static void LogDedicatedServerReady(void *context)
-{
-	const ServerRuntime::DedicatedServerPlatformState *platformState =
-		static_cast<const ServerRuntime::DedicatedServerPlatformState*>(
-			context);
-	if (platformState == NULL)
-	{
-		return;
-	}
-
-	LogStartupStep("server startup complete");
-	LogInfof(
-		"startup",
-		"Dedicated server listening on %s:%d",
-		platformState->bindIp.c_str(),
-		platformState->multiplayerPort);
-}
-
-static void StartDedicatedServerCli(void *context)
-{
-	ServerRuntime::ServerCli *serverCli =
-		static_cast<ServerRuntime::ServerCli*>(context);
-	if (serverCli != NULL)
-	{
-		serverCli->Start();
-	}
-}
-
-static void StopDedicatedServerCli(void *context)
-{
-	ServerRuntime::ServerCli *serverCli =
-		static_cast<ServerRuntime::ServerCli*>(context);
-	if (serverCli != NULL)
-	{
-		serverCli->Stop();
 	}
 }
 
@@ -280,6 +233,14 @@ int main(int argc, char **argv)
 		&ServerRuntime::TickDedicatedServerPlatformRuntime);
 	NetworkGameInitData param;
 	ServerRuntime::ServerCli serverCli;
+	ServerRuntime::DedicatedServerCliRunHooksContext serverCliHooksContext =
+		{
+			&platformState,
+			&serverCli
+		};
+	const ServerRuntime::DedicatedServerRunHooks runHooks =
+		ServerRuntime::BuildDedicatedServerCliRunHooks(
+			&serverCliHooksContext);
 	LogStartupStep("starting hosted network game thread");
 	const ServerRuntime::DedicatedServerRunExecutionResult
 		runExecution =
@@ -291,14 +252,7 @@ int main(int argc, char **argv)
 		(new Random())->nextLong(),
 		&CGameNetworkManager::RunNetworkGameThreadProc,
 		&param,
-		&LogDedicatedServerReady,
-		&platformState,
-		&StartDedicatedServerCli,
-		&serverCli,
-		&PollDedicatedServerCli,
-		&serverCli,
-		&StopDedicatedServerCli,
-		&serverCli,
+		runHooks,
 		LceGetMonotonicMilliseconds(),
 		10);
 	if (runExecution.abortedStartup)

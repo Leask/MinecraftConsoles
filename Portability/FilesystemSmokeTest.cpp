@@ -884,6 +884,15 @@ int main(int argc, char* argv[])
     int runBeforeSessionCount = 0;
     int runAfterSessionCount = 0;
     GameplayLoopRunPollContext runExecutionPollContext = {};
+    ServerRuntime::DedicatedServerRunHooks runHooks = {};
+    runHooks.afterStartupProc = &IncrementHookCount;
+    runHooks.afterStartupContext = &runAfterStartupCount;
+    runHooks.beforeSessionProc = &IncrementHookCount;
+    runHooks.beforeSessionContext = &runBeforeSessionCount;
+    runHooks.pollProc = &GameplayLoopRunPoll;
+    runHooks.pollContext = &runExecutionPollContext;
+    runHooks.afterSessionProc = &IncrementHookCount;
+    runHooks.afterSessionContext = &runAfterSessionCount;
     const ServerRuntime::DedicatedServerRunExecutionResult
         runExecution =
             ServerRuntime::ExecuteDedicatedServerRun(
@@ -894,14 +903,7 @@ int main(int argc, char* argv[])
                 9999,
                 &HostedGameStartupSmokeThreadProc,
                 &runExecutionInitData,
-                &IncrementHookCount,
-                &runAfterStartupCount,
-                &IncrementHookCount,
-                &runBeforeSessionCount,
-                &GameplayLoopRunPoll,
-                &runExecutionPollContext,
-                &IncrementHookCount,
-                &runAfterSessionCount,
+                runHooks,
                 0,
                 0);
     const bool runExecutionGameplayHalted =
@@ -1590,6 +1592,19 @@ int main(int argc, char* argv[])
             platformRuntimeResult.headless,
         platformRuntimeResult.runtimeName.c_str(),
         platformRuntimeResult.headless);
+    printf("run_hooks=%d bundle=%d\n",
+        runHooks.afterStartupProc == &IncrementHookCount &&
+            runHooks.afterStartupContext == &runAfterStartupCount &&
+            runHooks.beforeSessionProc == &IncrementHookCount &&
+            runHooks.beforeSessionContext == &runBeforeSessionCount &&
+            runHooks.pollProc == &GameplayLoopRunPoll &&
+            runHooks.pollContext == &runExecutionPollContext &&
+            runHooks.afterSessionProc == &IncrementHookCount &&
+            runHooks.afterSessionContext == &runAfterSessionCount,
+        runHooks.afterStartupProc != nullptr &&
+            runHooks.beforeSessionProc != nullptr &&
+            runHooks.pollProc != nullptr &&
+            runHooks.afterSessionProc != nullptr);
     printf("platform_actions=%d action_idle=%d wait_idle=%d\n",
         platformActionIdle && platformWaitIdle,
         platformActionIdle,
@@ -1873,6 +1888,14 @@ int main(int argc, char* argv[])
             ServerRuntime::eWorldBootstrap_Failed &&
         failedWorldTargetBootstrap.saveData == NULL &&
         failedWorldTargetBootstrap.resolvedSaveId.empty() &&
+        runHooks.afterStartupProc == &IncrementHookCount &&
+        runHooks.afterStartupContext == &runAfterStartupCount &&
+        runHooks.beforeSessionProc == &IncrementHookCount &&
+        runHooks.beforeSessionContext == &runBeforeSessionCount &&
+        runHooks.pollProc == &GameplayLoopRunPoll &&
+        runHooks.pollContext == &runExecutionPollContext &&
+        runHooks.afterSessionProc == &IncrementHookCount &&
+        runHooks.afterSessionContext == &runAfterSessionCount &&
         udpReceiver != LCE_INVALID_SOCKET &&
         udpReceiverReuse && udpReceiverTimeout && udpReceiverBound &&
         udpReceiverPort > 0 && udpSender != LCE_INVALID_SOCKET &&
