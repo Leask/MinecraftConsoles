@@ -4,6 +4,7 @@
 #include <cstring>
 #include <string>
 
+#include "DedicatedServerHeadlessShell.h"
 #include "DedicatedServerPlatformRuntime.h"
 #include "DedicatedServerSignalState.h"
 #include "DedicatedServerSocketBootstrap.h"
@@ -136,16 +137,70 @@ namespace
         return 0;
     }
 
-    void RunDedicatedServerHeadlessShell(
-        const ServerRuntime::DedicatedServerHeadlessRuntimeOptions &options)
+    bool InitiateDedicatedServerShellSelfConnect(
+        const ServerRuntime::DedicatedServerBootstrapContext &context,
+        int listenerPort)
     {
+        const char *loopbackTarget = GetDedicatedServerLoopbackTarget(
+            context.runtimeState.bindIp);
+        LceSocketHandle clientSocket = LceNetOpenTcpSocket();
+        if (clientSocket == LCE_INVALID_SOCKET)
+        {
+            ServerRuntime::LogError(
+                "startup",
+                "failed to allocate shell self-connect client socket");
+            return false;
+        }
+
+        const bool connected = LceNetConnectIpv4(
+            clientSocket,
+            loopbackTarget,
+            listenerPort);
+        if (!connected)
+        {
+            ServerRuntime::LogErrorf(
+                "startup",
+                "failed to initiate shell self-connect to %s:%d",
+                loopbackTarget,
+                listenerPort);
+        }
+        LceNetCloseSocket(clientSocket);
+        return connected;
+    }
+
+    void RunDedicatedServerHeadlessShell(
+        const ServerRuntime::DedicatedServerHeadlessRuntimeOptions &options,
+        const ServerRuntime::DedicatedServerHeadlessShellContext
+            &shellContext,
+        LceSocketHandle listener)
+    {
+        ServerRuntime::DedicatedServerHeadlessShellState shellState = {};
         const std::uint64_t shellStartMs = LceGetMonotonicMilliseconds();
         ServerRuntime::LogInfo(
             "startup",
             "native bootstrap shell running; "
             "type stop or send SIGINT to exit");
+        if (!options.scriptedCommands.empty())
+        {
+            for (size_t i = 0; i < options.scriptedCommands.size(); ++i)
+            {
+                ServerRuntime::ExecuteDedicatedServerHeadlessShellCommand(
+                    options.scriptedCommands[i],
+                    shellContext,
+                    shellState);
+                if (ServerRuntime::IsDedicatedServerShutdownRequested())
+                {
+                    break;
+                }
+            }
+        }
+
         while (!ServerRuntime::IsDedicatedServerShutdownRequested())
         {
+            ServerRuntime::PollDedicatedServerHeadlessShellConnections(
+                listener,
+                &shellState);
+
             if (options.shutdownAfterMs > 0)
             {
                 const std::uint64_t now = LceGetMonotonicMilliseconds();
@@ -165,14 +220,10 @@ namespace
                 char lineBuffer[256] = {};
                 if (std::fgets(lineBuffer, sizeof(lineBuffer), stdin) != nullptr)
                 {
-                    const std::string line = lineBuffer;
-                    if (line == "stop\n" ||
-                        line == "stop\r\n" ||
-                        line == "stop")
-                    {
-                        ServerRuntime::RequestDedicatedServerShutdown();
-                        break;
-                    }
+                    ServerRuntime::ExecuteDedicatedServerHeadlessShellCommand(
+                        lineBuffer,
+                        shellContext,
+                        shellState);
                 }
             }
 
@@ -240,6 +291,11 @@ namespace ServerRuntime
             "native bootstrap bound dedicated listener on %s:%d",
             context.runtimeState.bindIp.c_str(),
             runtimeGuard.GetSocketState()->boundPort);
+        const DedicatedServerHeadlessShellContext shellContext =
+            BuildDedicatedServerHeadlessShellContext(
+                context,
+                platformState,
+                runtimeGuard.GetSocketState()->boundPort);
 
         if (options.selfConnect)
         {
@@ -253,7 +309,28 @@ namespace ServerRuntime
             return selfConnectExitCode;
         }
 
-        RunDedicatedServerHeadlessShell(options);
+        if (!LceNetSetSocketNonBlocking(
+                runtimeGuard.GetSocketState()->listener,
+                true))
+        {
+            LogWarn(
+                "startup",
+                "failed to set native listener non-blocking; "
+                "live shell accepts may stall");
+        }
+
+        if (options.shellSelfConnect &&
+            !InitiateDedicatedServerShellSelfConnect(
+                context,
+                runtimeGuard.GetSocketState()->boundPort))
+        {
+            return 9;
+        }
+
+        RunDedicatedServerHeadlessShell(
+            options,
+            shellContext,
+            runtimeGuard.GetSocketState()->listener);
         LogInfo("shutdown", "native bootstrap shell stopped");
         return 0;
     }

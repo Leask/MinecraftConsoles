@@ -111,6 +111,7 @@ add_executable(Minecraft.Server.NativeBootstrap
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Access/WhitelistManager.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerBootstrap.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerHeadlessRuntime.cpp"
+  "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerHeadlessShell.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerOptions.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerPlatformState.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/NativeDedicatedServerSignalHandlers.cpp"
@@ -187,6 +188,37 @@ if(BUILD_TESTING)
       -name
       NativeShell
   )
+  add_test(
+    NAME minecraft_native_server_scripted_shell_smoke
+    COMMAND
+      $<TARGET_FILE:Minecraft.Server.NativeBootstrap>
+      --command
+      help
+      --command
+      status
+      --command
+      stop
+      -port
+      25580
+      -bind
+      127.0.0.1
+      -name
+      NativeScriptedShell
+  )
+  add_test(
+    NAME minecraft_native_server_live_accept_smoke
+    COMMAND
+      $<TARGET_FILE:Minecraft.Server.NativeBootstrap>
+      --shell-self-connect
+      --shutdown-after-ms
+      150
+      -port
+      25581
+      -bind
+      127.0.0.1
+      -name
+      NativeLiveAccept
+  )
   set_tests_properties(minecraft_portability_smoke PROPERTIES
     LABELS "native;portability;smoke"
     WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
@@ -203,13 +235,21 @@ if(BUILD_TESTING)
     LABELS "native;server;bootstrap;shell"
     WORKING_DIRECTORY "$<TARGET_FILE_DIR:Minecraft.Server.NativeBootstrap>"
   )
+  set_tests_properties(minecraft_native_server_scripted_shell_smoke PROPERTIES
+    LABELS "native;server;bootstrap;shell"
+    WORKING_DIRECTORY "$<TARGET_FILE_DIR:Minecraft.Server.NativeBootstrap>"
+  )
+  set_tests_properties(minecraft_native_server_live_accept_smoke PROPERTIES
+    LABELS "native;server;bootstrap;shell;socket"
+    WORKING_DIRECTORY "$<TARGET_FILE_DIR:Minecraft.Server.NativeBootstrap>"
+  )
 endif()
 
 add_custom_target(Minecraft.Portability.Check
   COMMAND ${CMAKE_CTEST_COMMAND}
     --output-on-failure
     -C $<CONFIG>
-    -R "^minecraft_(portability_smoke|native_server_bootstrap|native_server_listener_smoke|native_server_shell_smoke)$"
+    -R "^minecraft_(portability_smoke|native_server_bootstrap|native_server_listener_smoke|native_server_shell_smoke|native_server_scripted_shell_smoke|native_server_live_accept_smoke)$"
   DEPENDS
     Minecraft.Portability.SmokeTest
     Minecraft.Server.NativeBootstrap

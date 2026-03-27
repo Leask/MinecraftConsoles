@@ -6,6 +6,7 @@
 #else
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -153,6 +154,36 @@ LceSocketHandle LceNetOpenUdpSocket()
     return socketHandle < 0
         ? LCE_INVALID_SOCKET
         : static_cast<LceSocketHandle>(socketHandle);
+#endif
+}
+
+bool LceNetSetSocketNonBlocking(LceSocketHandle socketHandle, bool enabled)
+{
+    if (socketHandle == LCE_INVALID_SOCKET)
+    {
+        return false;
+    }
+
+#if defined(_WINDOWS64) || defined(_WIN32)
+    u_long mode = enabled ? 1UL : 0UL;
+    return ioctlsocket(
+        static_cast<SOCKET>(socketHandle),
+        FIONBIO,
+        &mode) == 0;
+#else
+    const int flags = fcntl(static_cast<int>(socketHandle), F_GETFL, 0);
+    if (flags < 0)
+    {
+        return false;
+    }
+
+    const int nextFlags = enabled
+        ? (flags | O_NONBLOCK)
+        : (flags & ~O_NONBLOCK);
+    return fcntl(
+        static_cast<int>(socketHandle),
+        F_SETFL,
+        nextFlags) == 0;
 #endif
 }
 

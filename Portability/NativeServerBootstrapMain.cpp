@@ -19,7 +19,9 @@ int main(int argc, char** argv)
     ServerRuntime::ResetDedicatedServerShutdownRequest();
     bool bootstrapOnly = false;
     bool selfConnect = false;
+    bool shellSelfConnect = false;
     std::uint64_t shutdownAfterMs = 0;
+    std::vector<std::string> scriptedCommands;
     int serverArgc = 1;
     for (int i = 1; i < argc; ++i)
     {
@@ -31,6 +33,11 @@ int main(int argc, char** argv)
         if (std::strcmp(argv[i], "--self-connect") == 0)
         {
             selfConnect = true;
+            continue;
+        }
+        if (std::strcmp(argv[i], "--shell-self-connect") == 0)
+        {
+            shellSelfConnect = true;
             continue;
         }
         if (std::strcmp(argv[i], "--shutdown-after-ms") == 0)
@@ -58,6 +65,20 @@ int main(int argc, char** argv)
             }
 
             shutdownAfterMs = (std::uint64_t)parsedValue;
+            ++i;
+            continue;
+        }
+        if (std::strcmp(argv[i], "--command") == 0)
+        {
+            if (i + 1 >= argc)
+            {
+                std::fprintf(
+                    stderr,
+                    "startup error: missing value for --command\n");
+                return 2;
+            }
+
+            scriptedCommands.push_back(argv[i + 1]);
             ++i;
             continue;
         }
@@ -96,8 +117,12 @@ int main(int argc, char** argv)
                 "Initialize bootstrap and exit\n");
             std::printf("  --self-connect             "
                 "Loop back a TCP client and exit\n");
+            std::printf("  --shell-self-connect       "
+                "Loop back one TCP client during shell mode\n");
             std::printf("  --shutdown-after-ms <ms>   "
                 "Run shell mode for a bounded time\n");
+            std::printf("  --command <cmd>            "
+                "Run one native shell command before stdin\n");
             return 0;
         }
     case ServerRuntime::eDedicatedServerBootstrap_Failed:
@@ -129,7 +154,9 @@ int main(int argc, char** argv)
         runtimeOptions = {
             bootstrapOnly,
             selfConnect,
-            shutdownAfterMs
+            shellSelfConnect,
+            shutdownAfterMs,
+            scriptedCommands
         };
     const int exitCode = ServerRuntime::RunDedicatedServerHeadlessRuntime(
         bootstrapContext,

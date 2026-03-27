@@ -344,6 +344,13 @@ This iteration starts with:
 - native shell mode can now also auto-stop after a bounded runtime, and that
   shell path is now exercised by `CTest`, so the runnable headless server
   entry is covered by automation beyond only bootstrap-only and self-connect
+- the headless shell now also has a shared command layer for native-only
+  console commands such as `help`, `status`, and `stop`, and scripted command
+  execution is now covered by `CTest` so automation can drive actual shell
+  behavior instead of only timed shutdown
+- the live shell listener path is now also covered by automation through a
+  shell self-connect mode, so native headless server smoke now verifies that
+  shell-mode listeners accept a real connection instead of only binding a port
 
 That is intentionally narrow. The existing build graph is still too tightly
 coupled to Windows-only headers and libraries to move directly to a native

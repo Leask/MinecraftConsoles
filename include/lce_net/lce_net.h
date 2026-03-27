@@ -20,6 +20,7 @@ bool LceNetResolveIpv4(
     std::size_t outIpSize);
 LceSocketHandle LceNetOpenTcpSocket();
 LceSocketHandle LceNetOpenUdpSocket();
+bool LceNetSetSocketNonBlocking(LceSocketHandle socketHandle, bool enabled);
 bool LceNetSetSocketNoDelay(LceSocketHandle socketHandle, bool enabled);
 bool LceNetSetSocketBroadcast(LceSocketHandle socketHandle, bool enabled);
 bool LceNetSetSocketReuseAddress(LceSocketHandle socketHandle, bool enabled);
