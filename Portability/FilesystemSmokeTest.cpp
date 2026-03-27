@@ -40,6 +40,44 @@
 
 namespace
 {
+    struct SmokeNetworkGameInitData;
+
+    class ScopedCurrentDirectory
+    {
+    public:
+        explicit ScopedCurrentDirectory(const std::filesystem::path& path)
+            : m_previous(std::filesystem::current_path())
+            , m_active(false)
+        {
+            std::error_code errorCode;
+            std::filesystem::remove_all(path, errorCode);
+            errorCode.clear();
+            std::filesystem::create_directories(path, errorCode);
+            std::filesystem::current_path(path, errorCode);
+            m_active = !errorCode;
+        }
+
+        ~ScopedCurrentDirectory()
+        {
+            if (!m_active)
+            {
+                return;
+            }
+
+            std::error_code errorCode;
+            std::filesystem::current_path(m_previous, errorCode);
+        }
+
+        bool IsActive() const
+        {
+            return m_active;
+        }
+
+    private:
+        std::filesystem::path m_previous;
+        bool m_active;
+    };
+
     int HostedGameRuntimeSmokeThreadProc(void* threadParam)
     {
         int* value = static_cast<int*>(threadParam);
@@ -59,6 +97,26 @@ namespace
         unsigned int xzSize = 0;
         unsigned char hellScale = 0;
     };
+
+    int HostedGameStartupSmokeThreadProc(void* threadParam)
+    {
+        SmokeNetworkGameInitData* initData =
+            static_cast<SmokeNetworkGameInitData*>(threadParam);
+        if (initData == nullptr)
+        {
+            return -1;
+        }
+
+        return initData->seed == 4444 &&
+                initData->saveData ==
+                    reinterpret_cast<LoadSaveDataThreadParam*>(0x1234) &&
+                initData->settings != 0 &&
+                initData->dedicatedNoLocalHostPlayer &&
+                initData->xzSize == 320U &&
+                initData->hellScale == 8U
+            ? 0
+            : -2;
+    }
 
     class SmokeCliInputSink : public ServerRuntime::IServerCliInputSink
     {
@@ -407,6 +465,8 @@ int main(int argc, char* argv[])
             sessionProperties);
     const ServerRuntime::DedicatedServerAppSessionPlan appSessionPlan =
         ServerRuntime::BuildDedicatedServerAppSessionPlan(sessionConfig);
+    ServerRuntime::DedicatedServerAppSessionApplyResult
+        appSessionRuntimeResult = {};
     ServerRuntime::ServerPropertiesConfig worldBootstrapProperties = {};
     worldBootstrapProperties.worldName = L"";
     worldBootstrapProperties.worldSaveId = "WORLD";
@@ -420,6 +480,8 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerWorldLoadPlan loadedWorldLoadPlan =
         ServerRuntime::BuildDedicatedServerWorldLoadPlan(
             loadedWorldPlan);
+    ServerRuntime::DedicatedServerWorldLoadExecutionResult
+        loadedWorldExecution = {};
     ServerRuntime::WorldBootstrapResult createdWorldBootstrap;
     createdWorldBootstrap.status = ServerRuntime::eWorldBootstrap_CreatedNew;
     createdWorldBootstrap.resolvedSaveId = "world";
@@ -441,6 +503,37 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerWorldLoadPlan failedWorldLoadPlan =
         ServerRuntime::BuildDedicatedServerWorldLoadPlan(
             failedWorldPlan);
+    ServerRuntime::DedicatedServerWorldLoadExecutionResult
+        failedWorldExecution = {};
+    std::string worldLoadExecutionText;
+    bool worldLoadExecutionDirectoryReady = false;
+    {
+        ScopedCurrentDirectory directoryGuard(
+            "build/portability-world-load-smoke");
+        worldLoadExecutionDirectoryReady = directoryGuard.IsActive();
+        if (worldLoadExecutionDirectoryReady)
+        {
+            ServerRuntime::ServerPropertiesConfig loadedWorldExecutionConfig =
+                worldBootstrapProperties;
+            loadedWorldExecutionConfig.worldName = L"World Load Smoke";
+            loadedWorldExecution =
+                ServerRuntime::ExecuteDedicatedServerWorldLoadPlan(
+                    loadedWorldPlan,
+                    loadedWorldLoadPlan,
+                    &loadedWorldExecutionConfig);
+            ServerRuntime::FileUtils::ReadTextFile(
+                "server.properties",
+                &worldLoadExecutionText);
+
+            ServerRuntime::ServerPropertiesConfig failedWorldExecutionConfig =
+                worldBootstrapProperties;
+            failedWorldExecution =
+                ServerRuntime::ExecuteDedicatedServerWorldLoadPlan(
+                    failedWorldPlan,
+                    failedWorldLoadPlan,
+                    &failedWorldExecutionConfig);
+        }
+    }
     const bool shouldRunInitialSave =
         ServerRuntime::ShouldRunDedicatedServerInitialSave(
             createdWorldPlan,
@@ -532,6 +625,8 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
         platformRuntimeResult =
             ServerRuntime::StartDedicatedServerPlatformRuntime(platformState);
+    appSessionRuntimeResult =
+        ServerRuntime::ApplyDedicatedServerAppSessionPlan(appSessionPlan);
     ServerRuntime::TickDedicatedServerPlatformRuntime();
     ServerRuntime::HandleDedicatedServerPlatformActions();
     const bool platformActionIdle =
@@ -600,6 +695,13 @@ int main(int argc, char* argv[])
             hostedGamePlan,
             &HostedGameRuntimeSmokeThreadProc,
             &hostedGameRuntimeThreadValue);
+    SmokeNetworkGameInitData hostedGameStartupInitData = {};
+    const ServerRuntime::DedicatedServerHostedGameStartupExecutionResult
+        hostedGameStartupExecution =
+            ServerRuntime::ExecuteDedicatedServerHostedGameStartup(
+                hostedGamePlan,
+                &HostedGameStartupSmokeThreadProc,
+                &hostedGameStartupInitData);
     ServerRuntime::StopDedicatedServerPlatformRuntime();
     const std::uint64_t defaultAutosaveMs =
         ServerRuntime::GetDedicatedServerAutosaveIntervalMs(
@@ -1058,6 +1160,17 @@ int main(int argc, char* argv[])
             appSessionPlan.worldSizeChunks == sessionConfig.worldSizeChunks &&
             appSessionPlan.worldHellScale == sessionConfig.worldHellScale &&
             appSessionPlan.saveDisabled == sessionConfig.saveDisabled);
+    printf("app_session_runtime=%d applied=%d init=%d world_size=%d "
+        "save_disabled=%d\n",
+        appSessionRuntimeResult.applied &&
+            appSessionRuntimeResult.initializedGameSettings &&
+            appSessionRuntimeResult.appliedWorldSize &&
+            appSessionRuntimeResult.saveDisabled ==
+                appSessionPlan.saveDisabled,
+        appSessionRuntimeResult.applied,
+        appSessionRuntimeResult.initializedGameSettings,
+        appSessionRuntimeResult.appliedWorldSize,
+        appSessionRuntimeResult.saveDisabled);
     printf("world_bootstrap_plan=%d loaded_persist=%d created_new=%d "
         "failed=%d init_plan=%d init_seed=%lld init_players=%u "
         "hosted_plan=%d hosted_seed=%lld\n",
@@ -1105,6 +1218,21 @@ int main(int argc, char* argv[])
             populatedInitData.xzSize == sessionConfig.worldSizeChunks &&
             populatedInitData.hellScale == sessionConfig.worldHellScale,
         static_cast<long long>(hostedGamePlan.resolvedSeed));
+    printf("world_load_execution=%d dir=%d updated=%d saved=%d "
+        "aborted=%d abort_code=%d\n",
+        worldLoadExecutionDirectoryReady &&
+            loadedWorldExecution.updatedSaveId &&
+            loadedWorldExecution.savedResolvedSaveId &&
+            !loadedWorldExecution.abortedStartup &&
+            worldLoadExecutionText.find("level-id=world_loaded") !=
+                std::string::npos &&
+            failedWorldExecution.abortedStartup &&
+            failedWorldExecution.abortExitCode == 4,
+        worldLoadExecutionDirectoryReady,
+        loadedWorldExecution.updatedSaveId,
+        loadedWorldExecution.savedResolvedSaveId,
+        failedWorldExecution.abortedStartup,
+        failedWorldExecution.abortExitCode);
     printf("autosave_state=%d initial_save=%d skip_initial_save=%d "
         "requested=%d next_advanced=%d completed=%d\n",
         autosaveState.intervalMs == 45000U &&
@@ -1252,6 +1380,21 @@ int main(int argc, char* argv[])
             hostedGameRuntimeThreadValue == 1,
         hostedGameRuntimeResult,
         hostedGameRuntimeThreadValue);
+    printf("hosted_game_startup=%d result=%d abort=%d code=%d\n",
+        hostedGameStartupExecution.startupResult == 0 &&
+            !hostedGameStartupExecution.startupPlan.shouldAbortStartup &&
+            hostedGameStartupExecution.startupPlan.abortExitCode == 0 &&
+            hostedGameStartupInitData.seed == hostedGamePlan.resolvedSeed &&
+            hostedGameStartupInitData.saveData == fakeSaveData &&
+            hostedGameStartupInitData.settings ==
+                sessionConfig.hostSettings &&
+            hostedGameStartupInitData.dedicatedNoLocalHostPlayer &&
+            hostedGameStartupInitData.xzSize == sessionConfig.worldSizeChunks &&
+            hostedGameStartupInitData.hellScale ==
+                sessionConfig.worldHellScale,
+        hostedGameStartupExecution.startupResult,
+        hostedGameStartupExecution.startupPlan.shouldAbortStartup,
+        hostedGameStartupExecution.startupPlan.abortExitCode);
     printf("server_storage_platform=%s game_hdd_root=%s\n",
         storagePlatformDirectory,
         storageGameHddRoot.c_str());
@@ -1525,11 +1668,23 @@ int main(int argc, char* argv[])
         sessionConfig.seed == 4444 &&
         sessionConfig.worldSizeChunks == 320U &&
         sessionConfig.worldHellScale == 8U &&
+        appSessionRuntimeResult.applied &&
+        appSessionRuntimeResult.initializedGameSettings &&
+        appSessionRuntimeResult.appliedWorldSize &&
+        appSessionRuntimeResult.saveDisabled == appSessionPlan.saveDisabled &&
         loadedWorldPlan.targetWorldName == L"world" &&
         loadedWorldPlan.shouldPersistResolvedSaveId &&
         loadedWorldPlan.resolvedSaveId == "world_loaded" &&
         !loadedWorldPlan.createdNewWorld &&
         !loadedWorldPlan.loadFailed &&
+        worldLoadExecutionDirectoryReady &&
+        loadedWorldExecution.updatedSaveId &&
+        loadedWorldExecution.savedResolvedSaveId &&
+        !loadedWorldExecution.abortedStartup &&
+        failedWorldExecution.abortedStartup &&
+        failedWorldExecution.abortExitCode == 4 &&
+        worldLoadExecutionText.find("level-id=world_loaded") !=
+            std::string::npos &&
         !createdWorldPlan.shouldPersistResolvedSaveId &&
         createdWorldPlan.createdNewWorld &&
         !createdWorldPlan.loadFailed &&
@@ -1592,6 +1747,16 @@ int main(int argc, char* argv[])
         gameplayLoopExit.shouldExit &&
         hostedGameRuntimeResult == 11 &&
         hostedGameRuntimeThreadValue == 1 &&
+        hostedGameStartupExecution.startupResult == 0 &&
+        !hostedGameStartupExecution.startupPlan.shouldAbortStartup &&
+        hostedGameStartupExecution.startupPlan.abortExitCode == 0 &&
+        hostedGameStartupInitData.seed == hostedGamePlan.resolvedSeed &&
+        hostedGameStartupInitData.saveData == fakeSaveData &&
+        hostedGameStartupInitData.settings == sessionConfig.hostSettings &&
+        hostedGameStartupInitData.dedicatedNoLocalHostPlayer &&
+        hostedGameStartupInitData.xzSize == sessionConfig.worldSizeChunks &&
+        hostedGameStartupInitData.hellScale ==
+            sessionConfig.worldHellScale &&
         defaultAutosaveMs == 60000U &&
         configuredAutosaveMs == 45000U &&
         nextAutosaveTick == 46000U &&

@@ -5,6 +5,7 @@
 #include <lce_win32/lce_win32.h>
 
 #include "DedicatedServerPlatformState.h"
+#include "DedicatedServerSessionConfig.h"
 
 namespace ServerRuntime
 {
@@ -17,9 +18,20 @@ namespace ServerRuntime
         bool headless = false;
     };
 
+    struct DedicatedServerAppSessionApplyResult
+    {
+        bool applied = false;
+        bool initializedGameSettings = false;
+        bool appliedWorldSize = false;
+        bool saveDisabled = false;
+    };
+
     DedicatedServerPlatformRuntimeStartResult
     StartDedicatedServerPlatformRuntime(
         const DedicatedServerPlatformState &platformState);
+
+    DedicatedServerAppSessionApplyResult ApplyDedicatedServerAppSessionPlan(
+        const DedicatedServerAppSessionPlan &appSessionPlan);
 
     void TickDedicatedServerPlatformRuntime();
     void HandleDedicatedServerPlatformActions();

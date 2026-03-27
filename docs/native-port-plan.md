@@ -208,6 +208,9 @@ This iteration starts with:
   `Minecraft.Server/Common/DedicatedServerSessionConfig.cpp`, so tutorial,
   corrupt-save, host-settings, world-size, and save-disable defaults stop
   living inline in `ServerMain.cpp`
+- dedicated app-session application now routes through the shared platform
+  runtime boundary, so `ServerMain.cpp` no longer open-codes
+  `InitGameSettings`, host-option application, or save-disable toggles
 - autosave loop decisions now live in
   `Minecraft.Server/Common/DedicatedServerRuntime.cpp`, so completion,
   request, and deadline-pushback rules stay under native smoke coverage
@@ -217,6 +220,12 @@ This iteration starts with:
 - world-load persistence, initial-save timing, and hosted-thread failure
   handling are now expressed as shared startup plans instead of inline
   branches in `ServerMain.cpp`
+- world-load persistence and startup-abort handling now execute through
+  `Minecraft.Server/Common/DedicatedServerLifecycle.cpp`, so resolved save-id
+  writeback and load-failure exit behavior are covered by native smoke
+- hosted-game startup now has a shared execution helper in
+  `Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h`, so init-data
+  population plus startup-result handling stop living inline in `ServerMain.cpp`
 - the remaining Windows-only runtime bootstrap/teardown sequence now lives in
   `Minecraft.Server/Windows64/Windows64DedicatedServerRuntime.cpp`, making
   the native blocker boundary explicit instead of leaving it interleaved with

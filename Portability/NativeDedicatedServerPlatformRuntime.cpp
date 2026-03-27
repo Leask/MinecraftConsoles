@@ -26,6 +26,18 @@ namespace ServerRuntime
         return result;
     }
 
+    DedicatedServerAppSessionApplyResult ApplyDedicatedServerAppSessionPlan(
+        const DedicatedServerAppSessionPlan &appSessionPlan)
+    {
+        DedicatedServerAppSessionApplyResult result = {};
+        result.applied = true;
+        result.initializedGameSettings =
+            appSessionPlan.shouldInitGameSettings;
+        result.appliedWorldSize = appSessionPlan.shouldApplyWorldSize;
+        result.saveDisabled = appSessionPlan.saveDisabled;
+        return result;
+    }
+
     void TickDedicatedServerPlatformRuntime()
     {
     }

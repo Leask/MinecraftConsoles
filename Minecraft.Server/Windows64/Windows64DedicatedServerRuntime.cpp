@@ -205,6 +205,34 @@ namespace ServerRuntime
         return result;
     }
 
+    DedicatedServerAppSessionApplyResult ApplyDedicatedServerAppSessionPlan(
+        const DedicatedServerAppSessionPlan &appSessionPlan)
+    {
+        DedicatedServerAppSessionApplyResult result = {};
+        MinecraftServer::resetFlags();
+        if (appSessionPlan.shouldInitGameSettings)
+        {
+            app.InitGameSettings();
+            result.initializedGameSettings = true;
+        }
+
+        app.SetTutorialMode(appSessionPlan.tutorialMode);
+        app.SetCorruptSaveDeleted(appSessionPlan.corruptSaveDeleted);
+        app.SetGameHostOption(eGameHostOption_All, appSessionPlan.hostSettings);
+#ifdef _LARGE_WORLDS
+        if (appSessionPlan.shouldApplyWorldSize)
+        {
+            app.SetGameNewWorldSize(appSessionPlan.worldSizeChunks, true);
+            app.SetGameNewHellScale(appSessionPlan.worldHellScale);
+            result.appliedWorldSize = true;
+        }
+#endif
+        StorageManager.SetSaveDisabled(appSessionPlan.saveDisabled);
+        result.applied = true;
+        result.saveDisabled = appSessionPlan.saveDisabled;
+        return result;
+    }
+
     void TickDedicatedServerPlatformRuntime()
     {
         g_NetworkManager.DoWork();

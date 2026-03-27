@@ -18,7 +18,6 @@
 #include "..\Common\DedicatedServerShutdownPlan.h"
 #include "..\Common\DedicatedServerSessionConfig.h"
 #include "..\Common\DedicatedServerWorldBootstrap.h"
-#include "..\Common\StringUtils.h"
 #include "..\ServerLogger.h"
 #include "..\ServerLogManager.h"
 #include "..\ServerProperties.h"
@@ -138,11 +137,9 @@ using ServerRuntime::LogDebugf;
 using ServerRuntime::LogStartupStep;
 using ServerRuntime::LogWarn;
 using ServerRuntime::LogWorldIO;
-using ServerRuntime::SaveServerPropertiesConfig;
 using ServerRuntime::ServerPropertiesConfig;
 using ServerRuntime::TryParseServerLogLevel;
 using ServerRuntime::DedicatedServerConfig;
-using ServerRuntime::StringUtils::WideToUtf8;
 using ServerRuntime::BootstrapWorldForServer;
 using ServerRuntime::eWorldBootstrap_CreatedNew;
 using ServerRuntime::eWorldBootstrap_Failed;
@@ -243,26 +240,7 @@ int main(int argc, char **argv)
 			serverProperties);
 	const ServerRuntime::DedicatedServerAppSessionPlan appSessionPlan =
 		ServerRuntime::BuildDedicatedServerAppSessionPlan(sessionConfig);
-
-	MinecraftServer::resetFlags();
-	if (appSessionPlan.shouldInitGameSettings)
-	{
-		app.InitGameSettings();
-	}
-	app.SetTutorialMode(appSessionPlan.tutorialMode);
-	app.SetCorruptSaveDeleted(appSessionPlan.corruptSaveDeleted);
-	app.SetGameHostOption(eGameHostOption_All, appSessionPlan.hostSettings);
-#ifdef _LARGE_WORLDS
-	// Apply desired target size for loading existing worlds.
-	// Expansion happens only when target size is larger than current level size.
-	if (appSessionPlan.shouldApplyWorldSize)
-	{
-		app.SetGameNewWorldSize(appSessionPlan.worldSizeChunks, true);
-		app.SetGameNewHellScale(appSessionPlan.worldHellScale);
-	}
-#endif
-
-	StorageManager.SetSaveDisabled(appSessionPlan.saveDisabled);
+	ServerRuntime::ApplyDedicatedServerAppSessionPlan(appSessionPlan);
 	// Read world name and fixed save-id from server.properties
 	// Delegate load-vs-create decision to WorldManager
 	WorldBootstrapResult worldBootstrap = BootstrapWorldForServer(
@@ -276,26 +254,17 @@ int main(int argc, char **argv)
 	const ServerRuntime::DedicatedServerWorldLoadPlan worldLoadPlan =
 		ServerRuntime::BuildDedicatedServerWorldLoadPlan(
 			worldBootstrapPlan);
-	if (worldLoadPlan.shouldPersistResolvedSaveId)
+	const ServerRuntime::DedicatedServerWorldLoadExecutionResult
+		worldLoadExecution =
+			ServerRuntime::ExecuteDedicatedServerWorldLoadPlan(
+				worldBootstrapPlan,
+				worldLoadPlan,
+				&serverProperties);
+	if (worldLoadExecution.abortedStartup)
 	{
-		// Persist the actually loaded save-id back to config
-		// Keep lookup keys aligned for next startup
-		LogWorldIO("updating level-id to loaded save filename");
-		serverProperties.worldSaveId = worldLoadPlan.resolvedSaveId;
-		if (!SaveServerPropertiesConfig(serverProperties))
-		{
-			LogWorldIO("failed to persist updated level-id");
-		}
-	}
-	else if (worldLoadPlan.shouldAbortStartup)
-	{
-		LogErrorf(
-			"world-io",
-			"Failed to load configured world \"%s\".",
-			WideToUtf8(worldBootstrapPlan.targetWorldName).c_str());
 		ServerRuntime::StopDedicatedServerPlatformRuntime();
 		
-		return worldLoadPlan.abortExitCode;
+		return worldLoadExecution.abortExitCode;
 	}
 
 	const ServerRuntime::DedicatedServerHostedGamePlan hostedGamePlan =
@@ -303,30 +272,24 @@ int main(int argc, char **argv)
 			sessionConfig,
 			worldBootstrap.saveData,
 			(new Random())->nextLong());
-	const ServerRuntime::DedicatedServerNetworkInitPlan &networkInitPlan =
-		hostedGamePlan.networkInitPlan;
-	NetworkGameInitData *param = new NetworkGameInitData();
-	ServerRuntime::PopulateDedicatedServerNetworkGameInitData(
-		param,
-		networkInitPlan);
+	NetworkGameInitData param;
 
 	LogStartupStep("starting hosted network game thread");
-	int startupResult =
-		ServerRuntime::StartDedicatedServerHostedGameRuntime(
+	const ServerRuntime::DedicatedServerHostedGameStartupExecutionResult
+		hostedGameStartupExecution =
+			ServerRuntime::ExecuteDedicatedServerHostedGameStartup(
 			hostedGamePlan,
 			&CGameNetworkManager::RunNetworkGameThreadProc,
-			(LPVOID)param);
-
-	const ServerRuntime::DedicatedServerHostedThreadStartupPlan
-		hostedThreadStartupPlan =
-			ServerRuntime::BuildDedicatedServerHostedThreadStartupPlan(
-				startupResult);
-	if (hostedThreadStartupPlan.shouldAbortStartup)
+			&param);
+	if (hostedGameStartupExecution.startupPlan.shouldAbortStartup)
 	{
-		LogErrorf("startup", "Failed to start dedicated server (code %d).", startupResult);
+		LogErrorf(
+			"startup",
+			"Failed to start dedicated server (code %d).",
+			hostedGameStartupExecution.startupResult);
 		ServerRuntime::StopDedicatedServerPlatformRuntime();
 		
-		return hostedThreadStartupPlan.abortExitCode;
+		return hostedGameStartupExecution.startupPlan.abortExitCode;
 	}
 
 	LogStartupStep("server startup complete");

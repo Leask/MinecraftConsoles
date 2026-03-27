@@ -3,6 +3,7 @@
 #include "../ServerLogger.h"
 #include "DedicatedServerPlatformRuntime.h"
 #include "DedicatedServerSignalState.h"
+#include "StringUtils.h"
 
 namespace ServerRuntime
 {
@@ -42,6 +43,40 @@ namespace ServerRuntime
 
         LogWorldIO("initial save completed");
         result.completed = true;
+        return result;
+    }
+
+    DedicatedServerWorldLoadExecutionResult ExecuteDedicatedServerWorldLoadPlan(
+        const DedicatedServerWorldBootstrapPlan &worldBootstrapPlan,
+        const DedicatedServerWorldLoadPlan &worldLoadPlan,
+        ServerPropertiesConfig *serverProperties)
+    {
+        DedicatedServerWorldLoadExecutionResult result = {};
+        if (worldLoadPlan.shouldPersistResolvedSaveId &&
+            serverProperties != nullptr)
+        {
+            LogWorldIO("updating level-id to loaded save filename");
+            serverProperties->worldSaveId = worldLoadPlan.resolvedSaveId;
+            result.updatedSaveId = true;
+            result.savedResolvedSaveId =
+                SaveServerPropertiesConfig(*serverProperties);
+            if (!result.savedResolvedSaveId)
+            {
+                LogWorldIO("failed to persist updated level-id");
+            }
+        }
+
+        if (worldLoadPlan.shouldAbortStartup)
+        {
+            LogErrorf(
+                "world-io",
+                "Failed to load configured world \"%s\".",
+                StringUtils::WideToUtf8(
+                    worldBootstrapPlan.targetWorldName).c_str());
+            result.abortedStartup = true;
+            result.abortExitCode = worldLoadPlan.abortExitCode;
+        }
+
         return result;
     }
 
