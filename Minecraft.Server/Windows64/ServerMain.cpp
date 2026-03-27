@@ -48,13 +48,6 @@
 #include <atomic>
 #include <cwchar>
 
-extern void CleanupDevice();
-
-extern HWND g_hWnd;
-extern int g_iScreenWidth;
-extern int g_iScreenHeight;
-extern char g_Win64Username[17];
-extern wchar_t g_Win64UsernameW[17];
 static std::atomic<bool> g_shutdownRequested(false);
 static const int kServerActionPad = 0;
 
@@ -259,39 +252,6 @@ int main(int argc, char **argv)
 		ServerRuntime::BuildDedicatedServerPlatformState(
 			runtimeState,
 			MINECRAFT_NET_MAX_PLAYERS);
-
-	g_iScreenWidth = 1280;
-	g_iScreenHeight = 720;
-
-	strncpy_s(
-		g_Win64Username,
-		sizeof(g_Win64Username),
-		platformState.userNameUtf8.c_str(),
-		_TRUNCATE);
-	wmemset(
-		g_Win64UsernameW,
-		0,
-		sizeof(g_Win64UsernameW) / sizeof(g_Win64UsernameW[0]));
-	wcsncpy(
-		g_Win64UsernameW,
-		platformState.userNameWide.c_str(),
-		(sizeof(g_Win64UsernameW) / sizeof(g_Win64UsernameW[0])) - 1);
-	g_Win64MultiplayerHost = platformState.multiplayerHost;
-	g_Win64MultiplayerJoin = platformState.multiplayerJoin;
-	g_Win64MultiplayerPort = platformState.multiplayerPort;
-	strncpy_s(
-		g_Win64MultiplayerIP,
-		sizeof(g_Win64MultiplayerIP),
-		platformState.bindIp.c_str(),
-		_TRUNCATE);
-	g_Win64DedicatedServer = platformState.dedicatedServer;
-	g_Win64DedicatedServerPort = platformState.dedicatedServerPort;
-	strncpy_s(
-		g_Win64DedicatedServerBindIP,
-		sizeof(g_Win64DedicatedServerBindIP),
-		platformState.bindIp.c_str(),
-		_TRUNCATE);
-	g_Win64DedicatedServerLanAdvertise = platformState.lanAdvertise;
 	LogStartupStep("initializing server log manager");
 	ServerRuntime::ServerLogManager::Initialize();
 	logManagerGuard.Activate();
@@ -433,7 +393,11 @@ int main(int argc, char **argv)
 	}
 
 	LogStartupStep("server startup complete");
-	LogInfof("startup", "Dedicated server listening on %s:%d", g_Win64MultiplayerIP, g_Win64MultiplayerPort);
+	LogInfof(
+		"startup",
+		"Dedicated server listening on %s:%d",
+		platformState.bindIp.c_str(),
+		platformState.multiplayerPort);
 	const ServerRuntime::DedicatedServerInitialSavePlan initialSavePlan =
 		ServerRuntime::BuildDedicatedServerInitialSavePlan(
 		worldBootstrapPlan,

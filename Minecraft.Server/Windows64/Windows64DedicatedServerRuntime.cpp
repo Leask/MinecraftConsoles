@@ -36,6 +36,8 @@ extern void DefineActions(void);
 extern HWND g_hWnd;
 extern int g_iScreenWidth;
 extern int g_iScreenHeight;
+extern char g_Win64Username[17];
+extern wchar_t g_Win64UsernameW[17];
 extern ID3D11Device* g_pd3dDevice;
 extern ID3D11DeviceContext* g_pImmediateContext;
 extern IDXGISwapChain* g_pSwapChain;
@@ -47,6 +49,43 @@ namespace
 {
     static constexpr int kProfileValueCount = 5;
     static constexpr int kProfileSettingCount = 4;
+
+    void ApplyWindowsDedicatedServerPlatformState(
+        const ServerRuntime::DedicatedServerPlatformState &platformState)
+    {
+        g_iScreenWidth = 1280;
+        g_iScreenHeight = 720;
+
+        strncpy_s(
+            g_Win64Username,
+            sizeof(g_Win64Username),
+            platformState.userNameUtf8.c_str(),
+            _TRUNCATE);
+        wmemset(
+            g_Win64UsernameW,
+            0,
+            sizeof(g_Win64UsernameW) / sizeof(g_Win64UsernameW[0]));
+        wcsncpy(
+            g_Win64UsernameW,
+            platformState.userNameWide.c_str(),
+            (sizeof(g_Win64UsernameW) / sizeof(g_Win64UsernameW[0])) - 1);
+        g_Win64MultiplayerHost = platformState.multiplayerHost;
+        g_Win64MultiplayerJoin = platformState.multiplayerJoin;
+        g_Win64MultiplayerPort = platformState.multiplayerPort;
+        strncpy_s(
+            g_Win64MultiplayerIP,
+            sizeof(g_Win64MultiplayerIP),
+            platformState.bindIp.c_str(),
+            _TRUNCATE);
+        g_Win64DedicatedServer = platformState.dedicatedServer;
+        g_Win64DedicatedServerPort = platformState.dedicatedServerPort;
+        strncpy_s(
+            g_Win64DedicatedServerBindIP,
+            sizeof(g_Win64DedicatedServerBindIP),
+            platformState.bindIp.c_str(),
+            _TRUNCATE);
+        g_Win64DedicatedServerLanAdvertise = platformState.lanAdvertise;
+    }
 }
 
 namespace ServerRuntime
@@ -58,6 +97,7 @@ namespace ServerRuntime
         DedicatedServerPlatformRuntimeStartResult result = {};
         result.runtimeName = "Windows64Legacy";
         result.headless = false;
+        ApplyWindowsDedicatedServerPlatformState(platformState);
 
         LogStartupStep("registering hidden window class");
         HINSTANCE hInstance = GetModuleHandle(NULL);

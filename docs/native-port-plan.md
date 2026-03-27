@@ -224,6 +224,9 @@ This iteration starts with:
 - a shared platform-runtime interface now exists, with a Windows legacy
   implementation and a native headless stub, so future native server work can
   replace the runtime boundary without cloning `ServerMain.cpp`
+- Windows-specific dedicated-server globals such as username, bind IP, port,
+  and dedicated/LAN flags are now applied inside the platform runtime instead
+  of being open-coded in `ServerMain.cpp`
 - first non-Windows Win32 compatibility shim for
   `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
 - first server-common utility source (`Minecraft.Server/Common/StringUtils.cpp`)
