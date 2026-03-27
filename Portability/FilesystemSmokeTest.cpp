@@ -7,6 +7,7 @@
 #include "Minecraft.Server/Access/BanManager.h"
 #include "Minecraft.Server/Common/DedicatedServerBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
+#include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSessionConfig.h"
 #include "Minecraft.Server/Common/DedicatedServerSocketBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerWorldBootstrap.h"
@@ -505,6 +506,10 @@ int main(int argc, char* argv[])
             runtimeProperties);
     const ServerRuntime::DedicatedServerPlatformState platformState =
         ServerRuntime::BuildDedicatedServerPlatformState(runtimeState, 3);
+    const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
+        platformRuntimeResult =
+            ServerRuntime::StartDedicatedServerPlatformRuntime(platformState);
+    ServerRuntime::StopDedicatedServerPlatformRuntime();
     const std::uint64_t defaultAutosaveMs =
         ServerRuntime::GetDedicatedServerAutosaveIntervalMs(
             dedicatedProperties);
@@ -1099,6 +1104,13 @@ int main(int argc, char* argv[])
         platformState.players[0].isHostPlayer,
         platformState.players[1].gamertag.c_str(),
         platformState.players[2].gamertag.c_str());
+    printf("platform_runtime=%d name=%s headless=%d\n",
+        platformRuntimeResult.ok &&
+            platformRuntimeResult.exitCode == 0 &&
+            platformRuntimeResult.runtimeName == "NativeDesktopStub" &&
+            platformRuntimeResult.headless,
+        platformRuntimeResult.runtimeName.c_str(),
+        platformRuntimeResult.headless);
     printf("server_storage_platform=%s game_hdd_root=%s\n",
         storagePlatformDirectory,
         storageGameHddRoot.c_str());

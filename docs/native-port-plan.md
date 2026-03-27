@@ -221,6 +221,9 @@ This iteration starts with:
   `Minecraft.Server/Windows64/Windows64DedicatedServerRuntime.cpp`, making
   the native blocker boundary explicit instead of leaving it interleaved with
   the server coordinator logic
+- a shared platform-runtime interface now exists, with a Windows legacy
+  implementation and a native headless stub, so future native server work can
+  replace the runtime boundary without cloning `ServerMain.cpp`
 - first non-Windows Win32 compatibility shim for
   `DWORD/HANDLE/CRITICAL_SECTION/Tls*/Event/CreateThread/Wait*`
 - first server-common utility source (`Minecraft.Server/Common/StringUtils.cpp`)

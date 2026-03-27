@@ -8,6 +8,8 @@
 
 #include "Minecraft.Server/Common/DedicatedServerBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerOptions.h"
+#include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
+#include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerSocketBootstrap.h"
 #include "Minecraft.Server/ServerLogger.h"
 #include "lce_net/lce_net.h"
@@ -102,12 +104,35 @@ int main(int argc, char** argv)
     ServerRuntime::LogDedicatedServerBootstrapSummary(
         "native bootstrap",
         bootstrapContext);
+    const ServerRuntime::DedicatedServerPlatformState platformState =
+        ServerRuntime::BuildDedicatedServerPlatformState(
+            bootstrapContext.runtimeState,
+            1);
+    const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
+        platformRuntimeStartResult =
+            ServerRuntime::StartDedicatedServerPlatformRuntime(
+                platformState);
+    if (!platformRuntimeStartResult.ok)
+    {
+        ServerRuntime::LogError(
+            "startup",
+            platformRuntimeStartResult.errorMessage.c_str());
+        ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
+            &bootstrapContext);
+        return platformRuntimeStartResult.exitCode;
+    }
+    ServerRuntime::LogInfof(
+        "startup",
+        "native platform runtime=%s headless=%s",
+        platformRuntimeStartResult.runtimeName.c_str(),
+        platformRuntimeStartResult.headless ? "true" : "false");
 
     if (bootstrapOnly)
     {
         ServerRuntime::LogInfo(
             "startup",
             "native bootstrap completed in bootstrap-only mode");
+        ServerRuntime::StopDedicatedServerPlatformRuntime();
         ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
             &bootstrapContext);
         return 0;
@@ -118,6 +143,7 @@ int main(int argc, char** argv)
         ServerRuntime::LogError(
             "startup",
             "failed to initialize native socket runtime");
+        ServerRuntime::StopDedicatedServerPlatformRuntime();
         ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
             &bootstrapContext);
         return 4;
@@ -132,6 +158,7 @@ int main(int argc, char** argv)
     {
         ServerRuntime::LogError("startup", socketError.c_str());
         LceNetShutdown();
+        ServerRuntime::StopDedicatedServerPlatformRuntime();
         ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
             &bootstrapContext);
         return 5;
@@ -154,6 +181,7 @@ int main(int argc, char** argv)
                 "failed to allocate self-connect client socket");
             ServerRuntime::StopDedicatedServerSocketBootstrap(&socketState);
             LceNetShutdown();
+            ServerRuntime::StopDedicatedServerPlatformRuntime();
             ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
                 &bootstrapContext);
             return 6;
@@ -172,6 +200,7 @@ int main(int argc, char** argv)
                 socketState.boundPort);
             ServerRuntime::StopDedicatedServerSocketBootstrap(&socketState);
             LceNetShutdown();
+            ServerRuntime::StopDedicatedServerPlatformRuntime();
             ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
                 &bootstrapContext);
             return 7;
@@ -192,6 +221,7 @@ int main(int argc, char** argv)
                 "failed to accept self-connect socket");
             ServerRuntime::StopDedicatedServerSocketBootstrap(&socketState);
             LceNetShutdown();
+            ServerRuntime::StopDedicatedServerPlatformRuntime();
             ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
                 &bootstrapContext);
             return 8;
@@ -206,6 +236,7 @@ int main(int argc, char** argv)
         LceNetCloseSocket(clientSocket);
         ServerRuntime::StopDedicatedServerSocketBootstrap(&socketState);
         LceNetShutdown();
+        ServerRuntime::StopDedicatedServerPlatformRuntime();
         ServerRuntime::LogInfo("shutdown", "native bootstrap self-connect ok");
         ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
             &bootstrapContext);
@@ -236,6 +267,7 @@ int main(int argc, char** argv)
 
     ServerRuntime::StopDedicatedServerSocketBootstrap(&socketState);
     LceNetShutdown();
+    ServerRuntime::StopDedicatedServerPlatformRuntime();
     ServerRuntime::LogInfo("shutdown", "native bootstrap shell stopped");
     ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
         &bootstrapContext);

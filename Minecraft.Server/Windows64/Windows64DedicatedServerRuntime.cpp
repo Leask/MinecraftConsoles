@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Windows64DedicatedServerRuntime.h"
+#include "..\Common\DedicatedServerPlatformRuntime.h"
 
 #include "Common/App_Defines.h"
 #include "Common/Network/GameNetworkManager.h"
@@ -51,11 +51,13 @@ namespace
 
 namespace ServerRuntime
 {
-    DedicatedServerWindowsRuntimeStartResult
-    StartWindowsDedicatedServerRuntime(
+    DedicatedServerPlatformRuntimeStartResult
+    StartDedicatedServerPlatformRuntime(
         const DedicatedServerPlatformState &platformState)
     {
-        DedicatedServerWindowsRuntimeStartResult result = {};
+        DedicatedServerPlatformRuntimeStartResult result = {};
+        result.runtimeName = "Windows64Legacy";
+        result.headless = false;
 
         LogStartupStep("registering hidden window class");
         HINSTANCE hInstance = GetModuleHandle(NULL);
@@ -153,7 +155,7 @@ namespace ServerRuntime
         return result;
     }
 
-    void StopWindowsDedicatedServerRuntime()
+    void StopDedicatedServerPlatformRuntime()
     {
         WinsockNetLayer::Shutdown();
         LogDebugf("shutdown", "Network layer shutdown complete.");

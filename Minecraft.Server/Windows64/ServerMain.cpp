@@ -8,6 +8,7 @@
 #include "..\Common\DedicatedServerBootstrap.h"
 #include "..\Common\DedicatedServerOptions.h"
 #include "..\Common\DedicatedServerPlatformState.h"
+#include "..\Common\DedicatedServerPlatformRuntime.h"
 #include "..\Common\DedicatedServerRuntime.h"
 #include "..\Common\DedicatedServerShutdownPlan.h"
 #include "..\Common\DedicatedServerSessionConfig.h"
@@ -315,9 +316,9 @@ int main(int argc, char **argv)
 		config.worldHellScale);
 #endif
 
-	const ServerRuntime::DedicatedServerWindowsRuntimeStartResult
+	const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
 		windowsRuntimeStartResult =
-			ServerRuntime::StartWindowsDedicatedServerRuntime(platformState);
+			ServerRuntime::StartDedicatedServerPlatformRuntime(platformState);
 	if (!windowsRuntimeStartResult.ok)
 	{
 		LogError("startup", windowsRuntimeStartResult.errorMessage.c_str());
@@ -377,7 +378,7 @@ int main(int argc, char **argv)
 			"world-io",
 			"Failed to load configured world \"%s\".",
 			WideToUtf8(worldBootstrapPlan.targetWorldName).c_str());
-		ServerRuntime::StopWindowsDedicatedServerRuntime();
+		ServerRuntime::StopDedicatedServerPlatformRuntime();
 		
 		return worldLoadPlan.abortExitCode;
 	}
@@ -426,7 +427,7 @@ int main(int argc, char **argv)
 	if (hostedThreadStartupPlan.shouldAbortStartup)
 	{
 		LogErrorf("startup", "Failed to start dedicated server (code %d).", startupResult);
-		ServerRuntime::StopWindowsDedicatedServerRuntime();
+		ServerRuntime::StopDedicatedServerPlatformRuntime();
 		
 		return hostedThreadStartupPlan.abortExitCode;
 	}
@@ -550,7 +551,7 @@ int main(int argc, char **argv)
 	}
 
 	LogInfof("shutdown", "Cleaning up and exiting.");
-	ServerRuntime::StopWindowsDedicatedServerRuntime();
+	ServerRuntime::StopDedicatedServerPlatformRuntime();
 	logManagerGuard.Release();
 	ServerRuntime::ServerLogManager::Shutdown();
 	
