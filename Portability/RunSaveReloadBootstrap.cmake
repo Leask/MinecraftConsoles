@@ -63,6 +63,10 @@ foreach(expected_save_marker IN ITEMS
   endif()
 endforeach()
 
+file(RENAME
+  "${STORAGE_ROOT}/world.save"
+  "${STORAGE_ROOT}/renamed-slot.save")
+
 execute_process(
   COMMAND
     "${EXECUTABLE}"
@@ -100,4 +104,4 @@ foreach(expected_reload_marker IN ITEMS
   endif()
 endforeach()
 
-file(REMOVE "${STORAGE_ROOT}/world.save")
+file(REMOVE "${STORAGE_ROOT}/renamed-slot.save")

@@ -6,7 +6,9 @@
 #include <string>
 #include <vector>
 
+#include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
 #include "Minecraft.Server/Common/ServerStoragePaths.h"
+#include "Minecraft.Server/Common/StringUtils.h"
 
 namespace
 {
@@ -110,6 +112,33 @@ namespace
             saveEntry.path = entry.path();
             saveEntry.title = entry.path().stem().wstring();
             saveEntry.filename = entry.path().stem().wstring();
+
+            std::ifstream input(entry.path(), std::ios::binary);
+            if (input)
+            {
+                std::string fileText(
+                    (std::istreambuf_iterator<char>(input)),
+                    std::istreambuf_iterator<char>());
+                ServerRuntime::NativeDedicatedServerSaveStub stub = {};
+                if (ServerRuntime::ParseNativeDedicatedServerSaveStubText(
+                        fileText,
+                        &stub))
+                {
+                    if (!stub.worldName.empty())
+                    {
+                        saveEntry.title =
+                            ServerRuntime::StringUtils::Utf8ToWide(
+                                stub.worldName);
+                    }
+                    if (!stub.levelId.empty())
+                    {
+                        saveEntry.filename =
+                            ServerRuntime::StringUtils::Utf8ToWide(
+                                stub.levelId);
+                    }
+                }
+            }
+
             context->entries.push_back(saveEntry);
         }
 

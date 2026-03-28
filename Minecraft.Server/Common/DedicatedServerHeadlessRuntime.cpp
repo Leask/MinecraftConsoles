@@ -11,6 +11,7 @@
 #include "DedicatedServerSignalState.h"
 #include "DedicatedServerSocketBootstrap.h"
 #include "FileUtils.h"
+#include "NativeDedicatedServerSaveStub.h"
 #include "../ServerLogger.h"
 #include "../WorldManager.h"
 #include "lce_net/lce_net.h"
@@ -300,35 +301,28 @@ namespace
         RefreshDedicatedServerHeadlessShellContext(context);
         const std::string savePath =
             BuildDedicatedServerHeadlessSavePath(*context);
-        char buffer[1024] = {};
-        std::snprintf(
-            buffer,
-            sizeof(buffer),
-            "native-headless-save\n"
-            "world=%s\n"
-            "level-id=%s\n"
-            "host=%s\n"
-            "bind=%s\n"
-            "configured-port=%d\n"
-            "listener-port=%d\n"
-            "accepted-connections=%llu\n"
-            "remote-commands=%llu\n"
-            "autosave-requests=%llu\n"
-            "autosave-completions=%llu\n"
-            "saved-at-filetime=%llu\n",
-            context->shellContext.worldName.c_str(),
-            GetDedicatedServerHeadlessSaveId(*context).c_str(),
-            context->shellContext.hostName.c_str(),
-            context->shellContext.bindIp.c_str(),
-            context->shellContext.multiplayerPort,
-            context->shellContext.listenerPort,
-            (unsigned long long)context->shellState.acceptedConnections,
-            (unsigned long long)context->shellState.remoteCommands,
-            (unsigned long long)
-                ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
-            (unsigned long long)completedAutosaves,
-            (unsigned long long)ServerRuntime::FileUtils::GetCurrentUtcFileTime());
-        if (!ServerRuntime::FileUtils::WriteTextFileAtomic(savePath, buffer))
+        ServerRuntime::NativeDedicatedServerSaveStub saveStub = {};
+        saveStub.worldName = context->shellContext.worldName;
+        saveStub.levelId = GetDedicatedServerHeadlessSaveId(*context);
+        saveStub.hostName = context->shellContext.hostName;
+        saveStub.bindIp = context->shellContext.bindIp;
+        saveStub.configuredPort = context->shellContext.multiplayerPort;
+        saveStub.listenerPort = context->shellContext.listenerPort;
+        saveStub.acceptedConnections = context->shellState.acceptedConnections;
+        saveStub.remoteCommands = context->shellState.remoteCommands;
+        saveStub.autosaveRequests =
+            ServerRuntime::GetDedicatedServerAutosaveRequestCount();
+        saveStub.autosaveCompletions = completedAutosaves;
+        saveStub.savedAtFileTime =
+            ServerRuntime::FileUtils::GetCurrentUtcFileTime();
+
+        std::string saveText;
+        if (!ServerRuntime::BuildNativeDedicatedServerSaveStubText(
+                saveStub,
+                &saveText) ||
+            !ServerRuntime::FileUtils::WriteTextFileAtomic(
+                savePath,
+                saveText))
         {
             ServerRuntime::LogWarnf(
                 "world-io",
