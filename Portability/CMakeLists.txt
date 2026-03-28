@@ -59,6 +59,7 @@ add_executable(Minecraft.Portability.SmokeTest
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerBootstrap.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerGameplayLoop.cpp"
   "${CMAKE_CURRENT_LIST_DIR}/NativeDedicatedServerHostedGameRuntime.cpp"
+  "${CMAKE_CURRENT_LIST_DIR}/NativeDedicatedServerWorldLoadStorage.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerLifecycle.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerOptions.cpp"
   "${CMAKE_SOURCE_DIR}/Minecraft.Server/Common/DedicatedServerPlatformState.cpp"
@@ -162,7 +163,7 @@ if(BUILD_TESTING)
       $<TARGET_FILE:Minecraft.Server.NativeBootstrap>
       --bootstrap-only
       -port
-      25577
+      0
       -bind
       127.0.0.1
       -name
@@ -174,7 +175,7 @@ if(BUILD_TESTING)
       $<TARGET_FILE:Minecraft.Server.NativeBootstrap>
       --self-connect
       -port
-      25578
+      0
       -bind
       127.0.0.1
       -name
@@ -187,7 +188,7 @@ if(BUILD_TESTING)
       --shutdown-after-ms
       150
       -port
-      25579
+      0
       -bind
       127.0.0.1
       -name
@@ -204,7 +205,7 @@ if(BUILD_TESTING)
       --command
       stop
       -port
-      25580
+      0
       -bind
       127.0.0.1
       -name
@@ -220,7 +221,7 @@ if(BUILD_TESTING)
       --shutdown-after-ms
       150
       -port
-      25581
+      0
       -bind
       127.0.0.1
       -name

@@ -101,7 +101,8 @@ Main flow in `Windows64/ServerMain.cpp`:
 ## 4. Current Operator Surface
 
 ### 4.1 Launch Arguments
-- `-port <1-65535>`
+- `-port <0-65535>`
+  - `0` lets the OS choose an ephemeral port for native smoke/bootstrap runs.
 - `-ip <addr>` or `-bind <addr>`
 - `-name <name>` (runtime max 16 chars)
 - `-maxplayers <1-8>`

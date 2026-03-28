@@ -101,7 +101,8 @@
 ## 4. 現在の運用インターフェース
 
 ### 4.1 起動引数
-- `-port <1-65535>`
+- `-port <0-65535>`
+  - `0` を指定すると OS が一時ポートを割り当てる。native smoke / bootstrap 実行向け。
 - `-ip <addr>` または `-bind <addr>`
 - `-name <name>` (実行時上限 16 文字)
 - `-maxplayers <1-8>`

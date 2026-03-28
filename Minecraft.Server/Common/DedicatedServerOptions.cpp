@@ -166,7 +166,7 @@ namespace ServerRuntime
             else if (EqualsIgnoreCase(arg, "-port") && (i + 1 < argc))
             {
                 int port = 0;
-                if (!ParseIntArg(argv[++i], &port) || port <= 0 || port > 65535)
+                if (!ParseIntArg(argv[++i], &port) || port < 0 || port > 65535)
                 {
                     if (outError != NULL)
                     {
@@ -249,8 +249,8 @@ namespace ServerRuntime
         outLines->clear();
         outLines->push_back("Minecraft.Server [options]");
         outLines->push_back(
-            "  -port <1-65535>       Listen TCP port "
-            "(default: server.properties:server-port)");
+            "  -port <0-65535>       Listen TCP port "
+            "(0 = ephemeral, default: server.properties:server-port)");
         outLines->push_back(
             "  -ip <addr>            Bind address "
             "(default: server.properties:server-ip)");

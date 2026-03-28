@@ -512,6 +512,7 @@ set(_MINECRAFT_SERVER_COMMON_SERVER
   "${CMAKE_CURRENT_SOURCE_DIR}/Windows64/Windows64DedicatedServerRuntime.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Windows64/Windows64DedicatedServerRuntime.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Windows64/Windows64DedicatedServerSignalHandlers.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Windows64/Windows64DedicatedServerWorldLoadStorage.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/WorldManager.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/WorldManager.h"
 )
@@ -560,6 +561,7 @@ set(_MINECRAFT_SERVER_COMMON_SERVER_COMMON
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerWorldBootstrap.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerWorldLoadPipeline.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerWorldLoadPipeline.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerWorldLoadStorage.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerWorldSaveSelection.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerWorldSaveSelection.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/FileUtils.cpp"

@@ -16,6 +16,7 @@
 #include "Minecraft.Server/Common/DedicatedServerSocketBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerWorldBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerWorldLoadPipeline.h"
+#include "Minecraft.Server/Common/DedicatedServerWorldLoadStorage.h"
 #include "Minecraft.Server/Common/DedicatedServerWorldSaveSelection.h"
 #include "Minecraft.Server/Common/DedicatedServerShutdownPlan.h"
 #include "lce_filesystem/lce_filesystem.h"
@@ -652,6 +653,25 @@ int main(int argc, char* argv[])
             dedicatedHelpArgv,
             &helpDedicatedConfig,
             &dedicatedHelpError);
+    char dedicatedEphemeralArg0[] = "Minecraft.Server";
+    char dedicatedEphemeralArg1[] = "-port";
+    char dedicatedEphemeralArg2[] = "0";
+    char* dedicatedEphemeralArgv[] = {
+        dedicatedEphemeralArg0,
+        dedicatedEphemeralArg1,
+        dedicatedEphemeralArg2
+    };
+    ServerRuntime::DedicatedServerConfig ephemeralDedicatedConfig =
+        defaultDedicatedConfig;
+    std::string dedicatedEphemeralError;
+    const bool dedicatedEphemeralOk =
+        ServerRuntime::ParseDedicatedServerCommandLine(
+            static_cast<int>(
+                sizeof(dedicatedEphemeralArgv) /
+                sizeof(dedicatedEphemeralArgv[0])),
+            dedicatedEphemeralArgv,
+            &ephemeralDedicatedConfig,
+            &dedicatedEphemeralError);
     char dedicatedInvalidArg0[] = "Minecraft.Server";
     char dedicatedInvalidArg1[] = "-port";
     char dedicatedInvalidArg2[] = "70000";
@@ -673,6 +693,40 @@ int main(int argc, char* argv[])
             &dedicatedInvalidError);
     std::vector<std::string> dedicatedUsageLines;
     ServerRuntime::BuildDedicatedServerUsageLines(&dedicatedUsageLines);
+    ServerRuntime::DedicatedServerWorldLoadStorageRuntime
+        nativeWorldLoadStorageRuntime =
+            ServerRuntime::CreateDedicatedServerPlatformWorldLoadStorageRuntime();
+    const bool nativeWorldLoadStorageRuntimeReady =
+        nativeWorldLoadStorageRuntime.storageHooks.setWorldTitleProc !=
+            nullptr &&
+        nativeWorldLoadStorageRuntime.storageHooks.setWorldSaveIdProc !=
+            nullptr &&
+        nativeWorldLoadStorageRuntime.storageHooks.resetSaveDataProc !=
+            nullptr &&
+        nativeWorldLoadStorageRuntime.loadHooks.clearSavesProc != nullptr &&
+        nativeWorldLoadStorageRuntime.loadHooks.beginQueryProc != nullptr &&
+        nativeWorldLoadStorageRuntime.loadHooks.pollQueryProc != nullptr &&
+        nativeWorldLoadStorageRuntime.loadHooks.beginLoadProc != nullptr &&
+        nativeWorldLoadStorageRuntime.loadHooks.pollLoadProc != nullptr &&
+        nativeWorldLoadStorageRuntime.loadHooks.readBytesProc != nullptr &&
+        nativeWorldLoadStorageRuntime.loadHooks.context == nullptr;
+    ServerRuntime::DestroyDedicatedServerWorldLoadStorageRuntime(
+        &nativeWorldLoadStorageRuntime);
+    const bool nativeWorldLoadStorageRuntimeDestroyed =
+        nativeWorldLoadStorageRuntime.storageHooks.setWorldTitleProc ==
+            nullptr &&
+        nativeWorldLoadStorageRuntime.storageHooks.setWorldSaveIdProc ==
+            nullptr &&
+        nativeWorldLoadStorageRuntime.storageHooks.resetSaveDataProc ==
+            nullptr &&
+        nativeWorldLoadStorageRuntime.loadHooks.clearSavesProc == nullptr &&
+        nativeWorldLoadStorageRuntime.loadHooks.beginQueryProc == nullptr &&
+        nativeWorldLoadStorageRuntime.loadHooks.pollQueryProc == nullptr &&
+        nativeWorldLoadStorageRuntime.loadHooks.beginLoadProc == nullptr &&
+        nativeWorldLoadStorageRuntime.loadHooks.pollLoadProc == nullptr &&
+        nativeWorldLoadStorageRuntime.loadHooks.readBytesProc == nullptr &&
+        nativeWorldLoadStorageRuntime.platformContext == nullptr &&
+        nativeWorldLoadStorageRuntime.destroyContextProc == nullptr;
     ServerRuntime::ServerPropertiesConfig sessionProperties = {};
     sessionProperties.difficulty = 2;
     sessionProperties.gameMode = 1;
@@ -1668,7 +1722,9 @@ int main(int argc, char* argv[])
         worldLoadPipelineNotFoundStatus,
         worldLoadPipelineCorruptStatus);
     printf("dedicated_defaults=%d dedicated_props=%d dedicated_cli=%d "
-        "dedicated_help=%d dedicated_invalid=%d usage_lines=%zu\n",
+        "dedicated_help=%d dedicated_ephemeral=%d "
+        "dedicated_invalid=%d usage_lines=%zu storage_runtime=%d "
+        "storage_runtime_destroyed=%d\n",
         defaultDedicatedConfig.port == 25565 &&
             std::strcmp(defaultDedicatedConfig.bindIP, "0.0.0.0") == 0 &&
             std::strcmp(defaultDedicatedConfig.name, "DedicatedServer") == 0 &&
@@ -1708,9 +1764,14 @@ int main(int argc, char* argv[])
         dedicatedHelpOk &&
             dedicatedHelpError.empty() &&
             helpDedicatedConfig.showHelp,
+        dedicatedEphemeralOk &&
+            dedicatedEphemeralError.empty() &&
+            ephemeralDedicatedConfig.port == 0,
         !dedicatedInvalidOk &&
             !dedicatedInvalidError.empty(),
-        dedicatedUsageLines.size());
+        dedicatedUsageLines.size(),
+        nativeWorldLoadStorageRuntimeReady,
+        nativeWorldLoadStorageRuntimeDestroyed);
     printf("session_config=%d host_settings=0x%08x network_max_players=%u "
         "seed=%lld size=%u hell=%u app_plan=%d\n",
         (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_DIFFICULTY) ==
@@ -2401,9 +2462,13 @@ int main(int argc, char* argv[])
         cliDedicatedConfig.logLevel == ServerRuntime::eServerLogLevel_Debug &&
         dedicatedHelpOk && dedicatedHelpError.empty() &&
         helpDedicatedConfig.showHelp &&
+        dedicatedEphemeralOk && dedicatedEphemeralError.empty() &&
+        ephemeralDedicatedConfig.port == 0 &&
         !dedicatedInvalidOk && !dedicatedInvalidError.empty() &&
         !dedicatedUsageLines.empty() &&
         dedicatedUsageLines[0].find("Minecraft.Server") != std::string::npos &&
+        nativeWorldLoadStorageRuntimeReady &&
+        nativeWorldLoadStorageRuntimeDestroyed &&
         (sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_DIFFICULTY) ==
             2U &&
         ((sessionConfig.hostSettings & GAME_HOST_OPTION_BITMASK_GAMETYPE) >>
