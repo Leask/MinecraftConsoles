@@ -8,22 +8,38 @@ if(NOT DEFINED TEST_DIR OR TEST_DIR STREQUAL "")
   set(TEST_DIR "${EXECUTABLE_DIR}")
 endif()
 
+if(NOT DEFINED RUN_MODE OR RUN_MODE STREQUAL "")
+  set(RUN_MODE "bootstrap")
+endif()
+
 file(REMOVE_RECURSE "${TEST_DIR}")
 file(MAKE_DIRECTORY "${TEST_DIR}")
 file(REMOVE_RECURSE "${EXECUTABLE_DIR}/NativeDesktop/GameHDD")
 file(MAKE_DIRECTORY "${EXECUTABLE_DIR}/NativeDesktop/GameHDD")
 file(WRITE "${EXECUTABLE_DIR}/NativeDesktop/GameHDD/world.save" "loaded-smoke")
 
+set(run_args
+  -port 0
+  -bind 127.0.0.1
+  -name NativeLoadedBootstrap)
+set(expected_markers
+  "native world bootstrap=loaded level-id=world")
+
+if(RUN_MODE STREQUAL "bootstrap")
+  list(PREPEND run_args --bootstrap-only)
+elseif(RUN_MODE STREQUAL "shell")
+  list(APPEND run_args --command status --command stop)
+  list(APPEND expected_markers
+    "native bootstrap shell running"
+    "stop requested")
+else()
+  message(FATAL_ERROR "Unsupported RUN_MODE: ${RUN_MODE}")
+endif()
+
 execute_process(
   COMMAND
     "${EXECUTABLE}"
-    --bootstrap-only
-    -port
-    0
-    -bind
-    127.0.0.1
-    -name
-    NativeLoadedBootstrap
+    ${run_args}
   WORKING_DIRECTORY "${TEST_DIR}"
   RESULT_VARIABLE bootstrap_result
   OUTPUT_VARIABLE bootstrap_output
@@ -38,16 +54,18 @@ if(NOT bootstrap_result EQUAL 0)
 endif()
 
 set(combined_output "${bootstrap_output}\n${bootstrap_error}")
-string(FIND
-  "${combined_output}"
-  "native world bootstrap=loaded level-id=world"
-  loaded_bootstrap_index)
+foreach(expected_marker IN LISTS expected_markers)
+  string(FIND
+    "${combined_output}"
+    "${expected_marker}"
+    loaded_bootstrap_index)
 
-if(loaded_bootstrap_index LESS 0)
-  file(REMOVE "${EXECUTABLE_DIR}/NativeDesktop/GameHDD/world.save")
-  message(FATAL_ERROR
-    "Loaded bootstrap output did not contain expected marker.\n"
-    "output:\n${combined_output}\n")
-endif()
+  if(loaded_bootstrap_index LESS 0)
+    file(REMOVE "${EXECUTABLE_DIR}/NativeDesktop/GameHDD/world.save")
+    message(FATAL_ERROR
+      "Loaded bootstrap output did not contain expected marker: "
+      "${expected_marker}\noutput:\n${combined_output}\n")
+  endif()
+endforeach()
 
 file(REMOVE "${EXECUTABLE_DIR}/NativeDesktop/GameHDD/world.save")
