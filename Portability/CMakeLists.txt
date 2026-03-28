@@ -198,6 +198,15 @@ if(BUILD_TESTING)
       "${CMAKE_SOURCE_DIR}/Portability/RunLoadedWorldBootstrap.cmake"
   )
   add_test(
+    NAME minecraft_native_server_save_reload_smoke
+    COMMAND
+      ${CMAKE_COMMAND}
+      -DEXECUTABLE=$<TARGET_FILE:Minecraft.Server.NativeBootstrap>
+      -DTEST_DIR=$<TARGET_FILE_DIR:Minecraft.Server.NativeBootstrap>/save-reload-smoke
+      -P
+      "${CMAKE_SOURCE_DIR}/Portability/RunSaveReloadBootstrap.cmake"
+  )
+  add_test(
     NAME minecraft_native_server_listener_smoke
     COMMAND
       $<TARGET_FILE:Minecraft.Server.NativeBootstrap>
@@ -282,6 +291,10 @@ if(BUILD_TESTING)
     LABELS "native;server;bootstrap;shell;world-load"
     WORKING_DIRECTORY "$<TARGET_FILE_DIR:Minecraft.Server.NativeBootstrap>"
   )
+  set_tests_properties(minecraft_native_server_save_reload_smoke PROPERTIES
+    LABELS "native;server;bootstrap;shell;world-load;save"
+    WORKING_DIRECTORY "$<TARGET_FILE_DIR:Minecraft.Server.NativeBootstrap>"
+  )
   set_tests_properties(minecraft_native_server_listener_smoke PROPERTIES
     LABELS "native;server;bootstrap;socket"
     WORKING_DIRECTORY "$<TARGET_FILE_DIR:Minecraft.Server.NativeBootstrap>"
@@ -308,7 +321,7 @@ add_custom_target(Minecraft.Portability.Check
   COMMAND ${CMAKE_CTEST_COMMAND}
     --output-on-failure
     -C $<CONFIG>
-    -R "^minecraft_(portability_smoke|native_server_bootstrap|native_server_loaded_bootstrap|native_server_loaded_shell_smoke|native_server_listener_smoke|native_server_shell_smoke|native_server_scripted_shell_smoke|native_server_live_accept_smoke|native_server_remote_command_smoke)$"
+    -R "^minecraft_(portability_smoke|native_server_bootstrap|native_server_loaded_bootstrap|native_server_loaded_shell_smoke|native_server_save_reload_smoke|native_server_listener_smoke|native_server_shell_smoke|native_server_scripted_shell_smoke|native_server_live_accept_smoke|native_server_remote_command_smoke)$"
   DEPENDS
     Minecraft.Portability.SmokeTest
     Minecraft.Server.NativeBootstrap
