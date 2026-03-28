@@ -20,6 +20,66 @@ namespace ServerRuntime
         return target;
     }
 
+    DedicatedServerWorldStoragePlan
+    BuildConfiguredDedicatedServerWorldStoragePlan(
+        const DedicatedServerWorldTarget &worldTarget)
+    {
+        DedicatedServerWorldStoragePlan plan = {};
+        plan.worldName = worldTarget.worldName;
+        plan.saveId = worldTarget.saveId;
+        return plan;
+    }
+
+    DedicatedServerWorldStoragePlan
+    BuildLoadedDedicatedServerWorldStoragePlan(
+        const DedicatedServerWorldTarget &worldTarget,
+        const std::string &resolvedLoadedSaveId)
+    {
+        DedicatedServerWorldStoragePlan plan =
+            BuildConfiguredDedicatedServerWorldStoragePlan(worldTarget);
+        if (!resolvedLoadedSaveId.empty())
+        {
+            plan.saveId = resolvedLoadedSaveId;
+        }
+        return plan;
+    }
+
+    DedicatedServerWorldStoragePlan
+    BuildCreatedDedicatedServerWorldStoragePlan(
+        const DedicatedServerWorldTarget &worldTarget)
+    {
+        DedicatedServerWorldStoragePlan plan =
+            BuildConfiguredDedicatedServerWorldStoragePlan(worldTarget);
+        plan.shouldResetSaveData = true;
+        return plan;
+    }
+
+    bool ApplyDedicatedServerWorldStoragePlan(
+        const DedicatedServerWorldStoragePlan &plan,
+        const DedicatedServerWorldStorageHooks &hooks)
+    {
+        if (hooks.setWorldTitleProc == nullptr)
+        {
+            return false;
+        }
+
+        if (plan.shouldResetSaveData && hooks.resetSaveDataProc != nullptr)
+        {
+            hooks.resetSaveDataProc(hooks.resetSaveDataContext);
+        }
+
+        hooks.setWorldTitleProc(
+            plan.worldName,
+            hooks.setWorldTitleContext);
+        if (!plan.saveId.empty() && hooks.setWorldSaveIdProc != nullptr)
+        {
+            hooks.setWorldSaveIdProc(
+                plan.saveId,
+                hooks.setWorldSaveIdContext);
+        }
+        return true;
+    }
+
     WorldBootstrapResult BuildDedicatedServerWorldBootstrapResult(
         EDedicatedServerWorldLoadStatus loadStatus,
         LoadSaveDataThreadParam *saveData,

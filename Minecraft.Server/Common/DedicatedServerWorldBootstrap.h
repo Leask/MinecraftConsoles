@@ -30,6 +30,31 @@ namespace ServerRuntime
         std::string resolvedSaveId;
     };
 
+    typedef void (*DedicatedServerSetWorldTitleProc)(
+        const std::wstring &worldName,
+        void *context);
+    typedef void (*DedicatedServerSetWorldSaveIdProc)(
+        const std::string &saveId,
+        void *context);
+    typedef void (*DedicatedServerResetWorldSaveDataProc)(void *context);
+
+    struct DedicatedServerWorldStorageHooks
+    {
+        DedicatedServerSetWorldTitleProc setWorldTitleProc = nullptr;
+        void *setWorldTitleContext = nullptr;
+        DedicatedServerSetWorldSaveIdProc setWorldSaveIdProc = nullptr;
+        void *setWorldSaveIdContext = nullptr;
+        DedicatedServerResetWorldSaveDataProc resetSaveDataProc = nullptr;
+        void *resetSaveDataContext = nullptr;
+    };
+
+    struct DedicatedServerWorldStoragePlan
+    {
+        std::wstring worldName;
+        std::string saveId;
+        bool shouldResetSaveData = false;
+    };
+
     struct DedicatedServerNetworkInitPlan
     {
         std::int64_t seed = 0;
@@ -76,6 +101,23 @@ namespace ServerRuntime
 
     DedicatedServerWorldTarget ResolveDedicatedServerWorldTarget(
         const ServerPropertiesConfig &serverProperties);
+
+    DedicatedServerWorldStoragePlan
+    BuildConfiguredDedicatedServerWorldStoragePlan(
+        const DedicatedServerWorldTarget &worldTarget);
+
+    DedicatedServerWorldStoragePlan
+    BuildLoadedDedicatedServerWorldStoragePlan(
+        const DedicatedServerWorldTarget &worldTarget,
+        const std::string &resolvedLoadedSaveId);
+
+    DedicatedServerWorldStoragePlan
+    BuildCreatedDedicatedServerWorldStoragePlan(
+        const DedicatedServerWorldTarget &worldTarget);
+
+    bool ApplyDedicatedServerWorldStoragePlan(
+        const DedicatedServerWorldStoragePlan &plan,
+        const DedicatedServerWorldStorageHooks &hooks);
 
     WorldBootstrapResult BuildDedicatedServerWorldBootstrapResult(
         EDedicatedServerWorldLoadStatus loadStatus,

@@ -70,6 +70,34 @@ static void SetStorageSaveUniqueFilename(const std::string &saveFilename)
 	StorageManager.SetSaveUniqueFilename(filenameBuffer);
 }
 
+static void SetDedicatedServerWorldStorageTitle(
+	const std::wstring &worldName,
+	void *)
+{
+	StorageManager.SetSaveTitle(worldName.c_str());
+}
+
+static void SetDedicatedServerWorldStorageSaveId(
+	const std::string &saveId,
+	void *)
+{
+	SetStorageSaveUniqueFilename(saveId);
+}
+
+static void ResetDedicatedServerWorldStorageData(void *)
+{
+	StorageManager.ResetSaveData();
+}
+
+static DedicatedServerWorldStorageHooks BuildDedicatedServerWorldStorageHooks()
+{
+	DedicatedServerWorldStorageHooks hooks = {};
+	hooks.setWorldTitleProc = &SetDedicatedServerWorldStorageTitle;
+	hooks.setWorldSaveIdProc = &SetDedicatedServerWorldStorageSaveId;
+	hooks.resetSaveDataProc = &ResetDedicatedServerWorldStorageData;
+	return hooks;
+}
+
 static void LogSaveFilename(const char *prefix, const std::string &saveFilename)
 {
 	LogInfof("world-io", "%s: %s", (prefix != NULL) ? prefix : "save-filename", saveFilename.c_str());
@@ -281,22 +309,6 @@ static bool WaitForSaveLoadResult(SaveDataLoadContext *context, DWORD timeoutMs,
 }
 
 /**
- * **Apply World Identity To Storage**
- *
- * Applies world identity (`level-name` + `level-id`) to storage
- * - Always sets both display name and ID to avoid partial configuration
- * - Helps prevent unintended new save destinations across environment differences
- * 保存先と表示名の同期処理
- */
-static void ApplyWorldStorageTarget(const std::wstring &worldName, const std::string &saveId)
-{
-	// Set both title (display name) and save ID (actual folder name) explicitly
-	// Setting only one side can create unexpected new save targets in some environments
-	StorageManager.SetSaveTitle(worldName.c_str());
-	SetStorageSaveUniqueFilename(saveId);
-}
-
-/**
  * **Prepare World Save Data For Startup**
  *
  * Searches for a save matching the target world and extracts startup payload when found
@@ -402,14 +414,11 @@ static EDedicatedServerWorldLoadStatus PrepareWorldSaveData(
 		LogWorldName("matched save filename", matchedFilename);
 	}
 
-	ApplyWorldStorageTarget(targetWorldName, targetSaveFilename);
-
 	std::string resolvedSaveFilename;
 	if (matchedSaveInfo->UTF8SaveFilename[0] != 0)
 	{
 		// Prefer the save ID that was actually matched, then keep using it for future saves
 		resolvedSaveFilename = matchedSaveInfo->UTF8SaveFilename;
-		SetStorageSaveUniqueFilename(resolvedSaveFilename);
 	}
 	else if (!targetSaveFilename.empty())
 	{
@@ -420,6 +429,16 @@ static EDedicatedServerWorldLoadStatus PrepareWorldSaveData(
 	{
 		*outResolvedSaveFilename = resolvedSaveFilename;
 	}
+
+	const DedicatedServerWorldTarget worldTarget = {
+		targetWorldName,
+		targetSaveFilename
+	};
+	ApplyDedicatedServerWorldStoragePlan(
+		BuildLoadedDedicatedServerWorldStoragePlan(
+			worldTarget,
+			resolvedSaveFilename),
+		BuildDedicatedServerWorldStorageHooks());
 
 	SaveDataLoadContext loadContext;
 	int loadState = StorageManager.LoadSaveData(matchedSaveInfo, &LoadSaveDataCallbackProc, &loadContext);
@@ -493,6 +512,8 @@ WorldBootstrapResult BootstrapWorldForServer(
 		ResolveDedicatedServerWorldTarget(config);
 	const std::wstring &targetWorldName = worldTarget.worldName;
 	const std::string &targetSaveFilename = worldTarget.saveId;
+	const DedicatedServerWorldStorageHooks storageHooks =
+		BuildDedicatedServerWorldStorageHooks();
 
 	LogWorldName("configured level-name", targetWorldName);
 	if (!targetSaveFilename.empty())
@@ -500,7 +521,9 @@ WorldBootstrapResult BootstrapWorldForServer(
 		LogSaveFilename("configured level-id", targetSaveFilename);
 	}
 
-	ApplyWorldStorageTarget(targetWorldName, targetSaveFilename);
+	ApplyDedicatedServerWorldStoragePlan(
+		BuildConfiguredDedicatedServerWorldStoragePlan(worldTarget),
+		storageHooks);
 
 	LoadSaveDataThreadParam *loadedSaveData = NULL;
 	std::string loadedSaveFilename;
@@ -527,8 +550,9 @@ WorldBootstrapResult BootstrapWorldForServer(
 		// Fix saveId here so the next startup writes to the same location
 		LogStartupStep("configured world not found; creating new world");
 		LogWorldIO("creating new world save context");
-		StorageManager.ResetSaveData();
-		ApplyWorldStorageTarget(targetWorldName, targetSaveFilename);
+		ApplyDedicatedServerWorldStoragePlan(
+			BuildCreatedDedicatedServerWorldStoragePlan(worldTarget),
+			storageHooks);
 	}
 
 	return result;

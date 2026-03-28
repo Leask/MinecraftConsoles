@@ -158,6 +158,13 @@ namespace
         bool halted = false;
     };
 
+    struct WorldStorageHookSmokeContext
+    {
+        std::wstring appliedWorldName;
+        std::string appliedSaveId;
+        int resetCount = 0;
+    };
+
     void GameplayLoopRunPoll(void* context)
     {
         GameplayLoopRunPollContext* pollContext =
@@ -215,6 +222,40 @@ namespace
         if (waitContext != nullptr)
         {
             ++waitContext->handleCount;
+        }
+    }
+
+    void ApplyWorldStorageNameHook(
+        const std::wstring& worldName,
+        void* context)
+    {
+        WorldStorageHookSmokeContext* storageContext =
+            static_cast<WorldStorageHookSmokeContext*>(context);
+        if (storageContext != nullptr)
+        {
+            storageContext->appliedWorldName = worldName;
+        }
+    }
+
+    void ApplyWorldStorageSaveIdHook(
+        const std::string& saveId,
+        void* context)
+    {
+        WorldStorageHookSmokeContext* storageContext =
+            static_cast<WorldStorageHookSmokeContext*>(context);
+        if (storageContext != nullptr)
+        {
+            storageContext->appliedSaveId = saveId;
+        }
+    }
+
+    void ResetWorldStorageHook(void* context)
+    {
+        WorldStorageHookSmokeContext* storageContext =
+            static_cast<WorldStorageHookSmokeContext*>(context);
+        if (storageContext != nullptr)
+        {
+            ++storageContext->resetCount;
         }
     }
 
@@ -562,6 +603,44 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerWorldTarget configuredWorldTarget =
         ServerRuntime::ResolveDedicatedServerWorldTarget(
             configuredWorldTargetProperties);
+    const ServerRuntime::DedicatedServerWorldStoragePlan
+        configuredWorldStoragePlan =
+            ServerRuntime::BuildConfiguredDedicatedServerWorldStoragePlan(
+                configuredWorldTarget);
+    const ServerRuntime::DedicatedServerWorldStoragePlan
+        loadedWorldStoragePlan =
+            ServerRuntime::BuildLoadedDedicatedServerWorldStoragePlan(
+                configuredWorldTarget,
+                "resolved_world");
+    const ServerRuntime::DedicatedServerWorldStoragePlan
+        fallbackLoadedWorldStoragePlan =
+            ServerRuntime::BuildLoadedDedicatedServerWorldStoragePlan(
+                configuredWorldTarget,
+                "");
+    const ServerRuntime::DedicatedServerWorldStoragePlan
+        createdWorldStoragePlan =
+            ServerRuntime::BuildCreatedDedicatedServerWorldStoragePlan(
+                configuredWorldTarget);
+    WorldStorageHookSmokeContext worldStorageHookContext = {};
+    ServerRuntime::DedicatedServerWorldStorageHooks worldStorageHooks = {};
+    worldStorageHooks.setWorldTitleProc = &ApplyWorldStorageNameHook;
+    worldStorageHooks.setWorldTitleContext = &worldStorageHookContext;
+    worldStorageHooks.setWorldSaveIdProc = &ApplyWorldStorageSaveIdHook;
+    worldStorageHooks.setWorldSaveIdContext = &worldStorageHookContext;
+    worldStorageHooks.resetSaveDataProc = &ResetWorldStorageHook;
+    worldStorageHooks.resetSaveDataContext = &worldStorageHookContext;
+    const bool appliedConfiguredWorldStorage =
+        ServerRuntime::ApplyDedicatedServerWorldStoragePlan(
+            configuredWorldStoragePlan,
+            worldStorageHooks);
+    const bool appliedLoadedWorldStorage =
+        ServerRuntime::ApplyDedicatedServerWorldStoragePlan(
+            loadedWorldStoragePlan,
+            worldStorageHooks);
+    const bool appliedCreatedWorldStorage =
+        ServerRuntime::ApplyDedicatedServerWorldStoragePlan(
+            createdWorldStoragePlan,
+            worldStorageHooks);
     LoadSaveDataThreadParam *fakeBootstrapSaveData =
         reinterpret_cast<LoadSaveDataThreadParam *>(0x4321);
     const ServerRuntime::WorldBootstrapResult loadedWorldTargetBootstrap =
@@ -1375,6 +1454,33 @@ int main(int argc, char* argv[])
         loadedWorldTargetBootstrap.status,
         createdWorldTargetBootstrap.status,
         failedWorldTargetBootstrap.status);
+    printf("world_storage_plan=%d configured=%s loaded=%s fallback=%s "
+        "created_reset=%d applied=%d/%d/%d final=%ls/%s resets=%d\n",
+        configuredWorldStoragePlan.worldName == L"Smoke World" &&
+            configuredWorldStoragePlan.saveId == "SMOKE_WORLD" &&
+            !configuredWorldStoragePlan.shouldResetSaveData &&
+            loadedWorldStoragePlan.saveId == "resolved_world" &&
+            !loadedWorldStoragePlan.shouldResetSaveData &&
+            fallbackLoadedWorldStoragePlan.saveId == "SMOKE_WORLD" &&
+            !fallbackLoadedWorldStoragePlan.shouldResetSaveData &&
+            createdWorldStoragePlan.saveId == "SMOKE_WORLD" &&
+            createdWorldStoragePlan.shouldResetSaveData &&
+            appliedConfiguredWorldStorage &&
+            appliedLoadedWorldStorage &&
+            appliedCreatedWorldStorage &&
+            worldStorageHookContext.appliedWorldName == L"Smoke World" &&
+            worldStorageHookContext.appliedSaveId == "SMOKE_WORLD" &&
+            worldStorageHookContext.resetCount == 1,
+        configuredWorldStoragePlan.saveId.c_str(),
+        loadedWorldStoragePlan.saveId.c_str(),
+        fallbackLoadedWorldStoragePlan.saveId.c_str(),
+        createdWorldStoragePlan.shouldResetSaveData,
+        appliedConfiguredWorldStorage,
+        appliedLoadedWorldStorage,
+        appliedCreatedWorldStorage,
+        worldStorageHookContext.appliedWorldName.c_str(),
+        worldStorageHookContext.appliedSaveId.c_str(),
+        worldStorageHookContext.resetCount);
     printf("dedicated_defaults=%d dedicated_props=%d dedicated_cli=%d "
         "dedicated_help=%d dedicated_invalid=%d usage_lines=%zu\n",
         defaultDedicatedConfig.port == 25565 &&
@@ -1981,6 +2087,21 @@ int main(int argc, char* argv[])
         defaultWorldTarget.saveId.empty() &&
         configuredWorldTarget.worldName == L"Smoke World" &&
         configuredWorldTarget.saveId == "SMOKE_WORLD" &&
+        configuredWorldStoragePlan.worldName == L"Smoke World" &&
+        configuredWorldStoragePlan.saveId == "SMOKE_WORLD" &&
+        !configuredWorldStoragePlan.shouldResetSaveData &&
+        loadedWorldStoragePlan.saveId == "resolved_world" &&
+        !loadedWorldStoragePlan.shouldResetSaveData &&
+        fallbackLoadedWorldStoragePlan.saveId == "SMOKE_WORLD" &&
+        !fallbackLoadedWorldStoragePlan.shouldResetSaveData &&
+        createdWorldStoragePlan.saveId == "SMOKE_WORLD" &&
+        createdWorldStoragePlan.shouldResetSaveData &&
+        appliedConfiguredWorldStorage &&
+        appliedLoadedWorldStorage &&
+        appliedCreatedWorldStorage &&
+        worldStorageHookContext.appliedWorldName == L"Smoke World" &&
+        worldStorageHookContext.appliedSaveId == "SMOKE_WORLD" &&
+        worldStorageHookContext.resetCount == 1 &&
         loadedWorldTargetBootstrap.status ==
             ServerRuntime::eWorldBootstrap_Loaded &&
         loadedWorldTargetBootstrap.saveData == fakeBootstrapSaveData &&
