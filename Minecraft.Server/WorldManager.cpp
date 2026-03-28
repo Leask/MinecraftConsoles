@@ -2,8 +2,6 @@
 
 #include "WorldManager.h"
 
-#include "Minecraft.h"
-#include "MinecraftServer.h"
 #include "ServerLogger.h"
 #include "Common\\DedicatedServerWorldBootstrap.h"
 #include "Common\\ServerStoragePaths.h"
@@ -534,40 +532,5 @@ WorldBootstrapResult BootstrapWorldForServer(
 	}
 
 	return result;
-}
-
-/**
- * **Wait Until Server XUI Action Is Idle**
- *
- * Keeps tick/handle running during save action so async processing does not stall
- * XUIアクション待機中の進行維持処理
- */
-bool WaitForWorldActionIdle(
-	int actionPad,
-	DWORD timeoutMs,
-	WorldManagerTickProc tickProc,
-	WorldManagerHandleActionsProc handleActionsProc)
-{
-	const std::uint64_t start = LceGetMonotonicMilliseconds();
-	while (app.GetXuiServerAction(actionPad) != eXuiServerAction_Idle && !MinecraftServer::serverHalted())
-	{
-		// Keep network and storage progressing while waiting
-		// If this stops, save action itself may stall and time out
-		if (tickProc != NULL)
-		{
-			tickProc();
-		}
-		if (handleActionsProc != NULL)
-		{
-			handleActionsProc();
-		}
-		if ((LceGetMonotonicMilliseconds() - start) >= timeoutMs)
-		{
-			return false;
-		}
-		LceSleepMilliseconds(10);
-	}
-
-	return (app.GetXuiServerAction(actionPad) == eXuiServerAction_Idle);
 }
 }

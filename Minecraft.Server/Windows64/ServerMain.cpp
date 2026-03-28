@@ -135,7 +135,6 @@ using ServerRuntime::BootstrapWorldForServer;
 using ServerRuntime::eWorldBootstrap_CreatedNew;
 using ServerRuntime::eWorldBootstrap_Failed;
 using ServerRuntime::eWorldBootstrap_Loaded;
-using ServerRuntime::WaitForWorldActionIdle;
 using ServerRuntime::WorldBootstrapResult;
 
 /**

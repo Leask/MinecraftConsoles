@@ -13,8 +13,6 @@ namespace ServerRuntime
 {
 	/** Tick callback used while waiting on async storage/network work */
 	typedef void (*WorldManagerTickProc)();
-	/** Optional action handler used while waiting for server actions */
-	typedef void (*WorldManagerHandleActionsProc)();
 
 	/**
 	 * **World Bootstrap Status**
@@ -73,21 +71,4 @@ namespace ServerRuntime
 		int actionPad,
 		WorldManagerTickProc tickProc);
 
-	/**
-	 * **Wait Until Server Action Returns To Idle**
-	 *
-	 * Waits until server action state reaches `Idle`
-	 * サーバーアクションの待機処理
-	 *
-	 * @param actionPad padId to monitor
-	 * @param timeoutMs Timeout in milliseconds
-	 * @param tickProc Tick callback run inside the wait loop
-	 * @param handleActionsProc Optional action handler callback
-	 * @return `true` when `Idle` is reached before timeout
-	 */
-	bool WaitForWorldActionIdle(
-		int actionPad,
-		DWORD timeoutMs,
-		WorldManagerTickProc tickProc,
-		WorldManagerHandleActionsProc handleActionsProc);
 }

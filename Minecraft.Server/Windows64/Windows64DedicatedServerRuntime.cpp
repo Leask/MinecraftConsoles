@@ -1,7 +1,6 @@
 #include "stdafx.h"
 
 #include "..\Common\DedicatedServerPlatformRuntime.h"
-#include "..\WorldManager.h"
 
 #include "Common/App_Defines.h"
 #include "Common/Network/GameNetworkManager.h"
@@ -95,6 +94,26 @@ namespace
             g_NetworkManager.ServerStoppedWait();
         }
         return 0;
+    }
+
+    bool IsDedicatedServerWorldActionIdleHook(int actionPad, void *)
+    {
+        return ServerRuntime::IsDedicatedServerWorldActionIdle(actionPad);
+    }
+
+    bool IsDedicatedServerGameplayHaltedHook(void *)
+    {
+        return ServerRuntime::IsDedicatedServerGameplayHalted();
+    }
+
+    void TickDedicatedServerPlatformRuntimeHook(void *)
+    {
+        ServerRuntime::TickDedicatedServerPlatformRuntime();
+    }
+
+    void HandleDedicatedServerPlatformActionsHook(void *)
+    {
+        ServerRuntime::HandleDedicatedServerPlatformActions();
     }
 }
 
@@ -259,11 +278,15 @@ namespace ServerRuntime
         int actionPad,
         DWORD timeoutMs)
     {
-        return WaitForWorldActionIdle(
+        DedicatedServerWorldActionWaitHooks hooks = {};
+        hooks.isIdleProc = &IsDedicatedServerWorldActionIdleHook;
+        hooks.haltProc = &IsDedicatedServerGameplayHaltedHook;
+        hooks.tickProc = &TickDedicatedServerPlatformRuntimeHook;
+        hooks.handleActionsProc = &HandleDedicatedServerPlatformActionsHook;
+        return WaitForDedicatedServerWorldActionIdleWithHooks(
             actionPad,
             timeoutMs,
-            &TickDedicatedServerPlatformRuntime,
-            &HandleDedicatedServerPlatformActions);
+            hooks);
     }
 
     bool HasDedicatedServerGameplayInstance()

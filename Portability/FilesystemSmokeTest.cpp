@@ -150,6 +150,14 @@ namespace
         int shutdownOnPoll = 3;
     };
 
+    struct WaitHookSmokeContext
+    {
+        int tickCount = 0;
+        int handleCount = 0;
+        int idleAfterTicks = 0;
+        bool halted = false;
+    };
+
     void GameplayLoopRunPoll(void* context)
     {
         GameplayLoopRunPollContext* pollContext =
@@ -172,6 +180,41 @@ namespace
         if (hookCount != nullptr)
         {
             ++(*hookCount);
+        }
+    }
+
+    bool WaitHookIdleProc(int, void* context)
+    {
+        WaitHookSmokeContext* waitContext =
+            static_cast<WaitHookSmokeContext*>(context);
+        return waitContext != nullptr &&
+            waitContext->tickCount >= waitContext->idleAfterTicks;
+    }
+
+    bool WaitHookHaltProc(void* context)
+    {
+        WaitHookSmokeContext* waitContext =
+            static_cast<WaitHookSmokeContext*>(context);
+        return waitContext != nullptr && waitContext->halted;
+    }
+
+    void WaitHookTickProc(void* context)
+    {
+        WaitHookSmokeContext* waitContext =
+            static_cast<WaitHookSmokeContext*>(context);
+        if (waitContext != nullptr)
+        {
+            ++waitContext->tickCount;
+        }
+    }
+
+    void WaitHookHandleProc(void* context)
+    {
+        WaitHookSmokeContext* waitContext =
+            static_cast<WaitHookSmokeContext*>(context);
+        if (waitContext != nullptr)
+        {
+            ++waitContext->handleCount;
         }
     }
 
@@ -765,6 +808,50 @@ int main(int argc, char* argv[])
     ServerRuntime::RequestDedicatedServerWorldAutosave(0);
     const bool platformWaitIdle =
         ServerRuntime::WaitForDedicatedServerWorldActionIdle(0, 1);
+    WaitHookSmokeContext waitHookIdleContext = {};
+    waitHookIdleContext.idleAfterTicks = 2;
+    ServerRuntime::DedicatedServerWorldActionWaitHooks worldActionWaitHooks =
+        {};
+    worldActionWaitHooks.isIdleProc = &WaitHookIdleProc;
+    worldActionWaitHooks.idleContext = &waitHookIdleContext;
+    worldActionWaitHooks.haltProc = &WaitHookHaltProc;
+    worldActionWaitHooks.haltContext = &waitHookIdleContext;
+    worldActionWaitHooks.tickProc = &WaitHookTickProc;
+    worldActionWaitHooks.tickContext = &waitHookIdleContext;
+    worldActionWaitHooks.handleActionsProc = &WaitHookHandleProc;
+    worldActionWaitHooks.handleActionsContext = &waitHookIdleContext;
+    const bool worldActionWaitIdleOk =
+        ServerRuntime::WaitForDedicatedServerWorldActionIdleWithHooks(
+            0,
+            100,
+            worldActionWaitHooks);
+    WaitHookSmokeContext waitHookTimeoutContext = {};
+    waitHookTimeoutContext.idleAfterTicks = 1000;
+    ServerRuntime::DedicatedServerWorldActionWaitHooks
+        worldActionTimeoutHooks = worldActionWaitHooks;
+    worldActionTimeoutHooks.idleContext = &waitHookTimeoutContext;
+    worldActionTimeoutHooks.haltContext = &waitHookTimeoutContext;
+    worldActionTimeoutHooks.tickContext = &waitHookTimeoutContext;
+    worldActionTimeoutHooks.handleActionsContext = &waitHookTimeoutContext;
+    const bool worldActionWaitTimedOut =
+        !ServerRuntime::WaitForDedicatedServerWorldActionIdleWithHooks(
+            0,
+            0,
+            worldActionTimeoutHooks);
+    WaitHookSmokeContext waitHookHaltContext = {};
+    waitHookHaltContext.halted = true;
+    waitHookHaltContext.idleAfterTicks = 1000;
+    ServerRuntime::DedicatedServerWorldActionWaitHooks
+        worldActionHaltHooks = worldActionWaitHooks;
+    worldActionHaltHooks.idleContext = &waitHookHaltContext;
+    worldActionHaltHooks.haltContext = &waitHookHaltContext;
+    worldActionHaltHooks.tickContext = &waitHookHaltContext;
+    worldActionHaltHooks.handleActionsContext = &waitHookHaltContext;
+    const bool worldActionWaitHalted =
+        !ServerRuntime::WaitForDedicatedServerWorldActionIdleWithHooks(
+            0,
+            100,
+            worldActionHaltHooks);
     const bool platformGameplayInstance =
         ServerRuntime::HasDedicatedServerGameplayInstance();
     const bool platformAppShutdownBefore =
@@ -1609,6 +1696,22 @@ int main(int argc, char* argv[])
         platformActionIdle && platformWaitIdle,
         platformActionIdle,
         platformWaitIdle);
+    printf("world_action_wait_hooks=%d idle=%d timeout=%d halt=%d "
+        "ticks=%d handles=%d\n",
+        worldActionWaitIdleOk &&
+            waitHookIdleContext.tickCount == 2 &&
+            waitHookIdleContext.handleCount == 2 &&
+            worldActionWaitTimedOut &&
+            waitHookTimeoutContext.tickCount == 1 &&
+            waitHookTimeoutContext.handleCount == 1 &&
+            worldActionWaitHalted &&
+            waitHookHaltContext.tickCount == 0 &&
+            waitHookHaltContext.handleCount == 0,
+        worldActionWaitIdleOk,
+        worldActionWaitTimedOut,
+        worldActionWaitHalted,
+        waitHookIdleContext.tickCount,
+        waitHookIdleContext.handleCount);
     printf("platform_shutdown=%d gameplay=%d app_before=%d app_after=%d "
         "halt_before=%d halt_after=%d stop_valid=%d\n",
         platformGameplayInstance &&
@@ -1898,6 +2001,15 @@ int main(int argc, char* argv[])
         runHooks.pollContext == &runExecutionPollContext &&
         runHooks.afterSessionProc == &IncrementHookCount &&
         runHooks.afterSessionContext == &runAfterSessionCount &&
+        worldActionWaitIdleOk &&
+        waitHookIdleContext.tickCount == 2 &&
+        waitHookIdleContext.handleCount == 2 &&
+        worldActionWaitTimedOut &&
+        waitHookTimeoutContext.tickCount == 1 &&
+        waitHookTimeoutContext.handleCount == 1 &&
+        worldActionWaitHalted &&
+        waitHookHaltContext.tickCount == 0 &&
+        waitHookHaltContext.handleCount == 0 &&
         udpReceiver != LCE_INVALID_SOCKET &&
         udpReceiverReuse && udpReceiverTimeout && udpReceiverBound &&
         udpReceiverPort > 0 && udpSender != LCE_INVALID_SOCKET &&
