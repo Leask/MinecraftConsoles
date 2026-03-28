@@ -15,6 +15,7 @@
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 #include "Minecraft.Server/Common/DedicatedServerSocketBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerWorldBootstrap.h"
+#include "Minecraft.Server/Common/DedicatedServerWorldLoadPipeline.h"
 #include "Minecraft.Server/Common/DedicatedServerWorldSaveSelection.h"
 #include "Minecraft.Server/Common/DedicatedServerShutdownPlan.h"
 #include "lce_filesystem/lce_filesystem.h"
@@ -165,6 +166,20 @@ namespace
         int resetCount = 0;
     };
 
+    struct WorldLoadPipelineSmokeContext
+    {
+        std::vector<ServerRuntime::DedicatedServerWorldLoadCandidate>
+            candidates;
+        std::vector<unsigned char> bytes;
+        int beginQueryCount = 0;
+        int beginLoadCount = 0;
+        int matchedIndex = -1;
+        bool queryOk = true;
+        bool loadOk = true;
+        bool isCorrupt = false;
+        bool readOk = true;
+    };
+
     void GameplayLoopRunPoll(void* context)
     {
         GameplayLoopRunPollContext* pollContext =
@@ -257,6 +272,95 @@ namespace
         {
             ++storageContext->resetCount;
         }
+    }
+
+    bool ClearWorldLoadPipelineHook(void*)
+    {
+        return true;
+    }
+
+    bool BeginWorldLoadPipelineQueryHook(int, void* context)
+    {
+        WorldLoadPipelineSmokeContext* loadContext =
+            static_cast<WorldLoadPipelineSmokeContext*>(context);
+        if (loadContext == nullptr)
+        {
+            return false;
+        }
+
+        ++loadContext->beginQueryCount;
+        return loadContext->queryOk;
+    }
+
+    bool PollWorldLoadPipelineQueryHook(
+        DWORD,
+        ServerRuntime::DedicatedServerWorldLoadTickProc,
+        void* context,
+        std::vector<ServerRuntime::DedicatedServerWorldLoadCandidate>*
+            outCandidates)
+    {
+        WorldLoadPipelineSmokeContext* loadContext =
+            static_cast<WorldLoadPipelineSmokeContext*>(context);
+        if (loadContext == nullptr ||
+            outCandidates == nullptr ||
+            !loadContext->queryOk)
+        {
+            return false;
+        }
+
+        *outCandidates = loadContext->candidates;
+        return true;
+    }
+
+    bool BeginWorldLoadPipelineLoadHook(int matchedIndex, void* context)
+    {
+        WorldLoadPipelineSmokeContext* loadContext =
+            static_cast<WorldLoadPipelineSmokeContext*>(context);
+        if (loadContext == nullptr || !loadContext->loadOk)
+        {
+            return false;
+        }
+
+        ++loadContext->beginLoadCount;
+        loadContext->matchedIndex = matchedIndex;
+        return true;
+    }
+
+    bool PollWorldLoadPipelineLoadHook(
+        DWORD,
+        ServerRuntime::DedicatedServerWorldLoadTickProc,
+        void* context,
+        bool* outIsCorrupt)
+    {
+        WorldLoadPipelineSmokeContext* loadContext =
+            static_cast<WorldLoadPipelineSmokeContext*>(context);
+        if (loadContext == nullptr || !loadContext->loadOk)
+        {
+            return false;
+        }
+
+        if (outIsCorrupt != nullptr)
+        {
+            *outIsCorrupt = loadContext->isCorrupt;
+        }
+        return true;
+    }
+
+    bool ReadWorldLoadPipelineBytesHook(
+        void* context,
+        std::vector<unsigned char>* outBytes)
+    {
+        WorldLoadPipelineSmokeContext* loadContext =
+            static_cast<WorldLoadPipelineSmokeContext*>(context);
+        if (loadContext == nullptr ||
+            outBytes == nullptr ||
+            !loadContext->readOk)
+        {
+            return false;
+        }
+
+        *outBytes = loadContext->bytes;
+        return true;
     }
 
     DWORD WINAPI SmokeThreadMain(LPVOID lpThreadParameter)
@@ -641,6 +745,64 @@ int main(int argc, char* argv[])
         ServerRuntime::ApplyDedicatedServerWorldStoragePlan(
             createdWorldStoragePlan,
             worldStorageHooks);
+    WorldLoadPipelineSmokeContext worldLoadPipelineContext = {};
+    worldLoadPipelineContext.candidates.push_back(
+        {L"Alpha World", L"alpha_save"});
+    worldLoadPipelineContext.candidates.push_back(
+        {L"Smoke World", L"resolved_world"});
+    worldLoadPipelineContext.bytes = {1, 2, 3, 4};
+    ServerRuntime::DedicatedServerWorldLoadHooks worldLoadPipelineHooks = {};
+    worldLoadPipelineHooks.clearSavesProc = &ClearWorldLoadPipelineHook;
+    worldLoadPipelineHooks.beginQueryProc = &BeginWorldLoadPipelineQueryHook;
+    worldLoadPipelineHooks.pollQueryProc = &PollWorldLoadPipelineQueryHook;
+    worldLoadPipelineHooks.beginLoadProc = &BeginWorldLoadPipelineLoadHook;
+    worldLoadPipelineHooks.pollLoadProc = &PollWorldLoadPipelineLoadHook;
+    worldLoadPipelineHooks.readBytesProc = &ReadWorldLoadPipelineBytesHook;
+    worldLoadPipelineHooks.context = &worldLoadPipelineContext;
+    ServerRuntime::DedicatedServerWorldLoadPayload worldLoadPayload = {};
+    const ServerRuntime::EDedicatedServerWorldLoadStatus
+        worldLoadPipelineStatus =
+            ServerRuntime::LoadDedicatedServerWorldData(
+                configuredWorldTarget,
+                0,
+                nullptr,
+                worldLoadPipelineHooks,
+                &worldLoadPayload);
+    WorldLoadPipelineSmokeContext worldLoadPipelineNotFoundContext = {};
+    worldLoadPipelineNotFoundContext.candidates.push_back(
+        {L"Alpha World", L"alpha_save"});
+    ServerRuntime::DedicatedServerWorldLoadHooks
+        worldLoadPipelineNotFoundHooks = worldLoadPipelineHooks;
+    worldLoadPipelineNotFoundHooks.context = &worldLoadPipelineNotFoundContext;
+    ServerRuntime::DedicatedServerWorldLoadPayload
+        worldLoadPipelineNotFoundPayload = {};
+    const ServerRuntime::EDedicatedServerWorldLoadStatus
+        worldLoadPipelineNotFoundStatus =
+            ServerRuntime::LoadDedicatedServerWorldData(
+                configuredWorldTarget,
+                0,
+                nullptr,
+                worldLoadPipelineNotFoundHooks,
+                &worldLoadPipelineNotFoundPayload);
+    WorldLoadPipelineSmokeContext worldLoadPipelineCorruptContext = {};
+    worldLoadPipelineCorruptContext.candidates =
+        worldLoadPipelineContext.candidates;
+    worldLoadPipelineCorruptContext.bytes =
+        worldLoadPipelineContext.bytes;
+    worldLoadPipelineCorruptContext.isCorrupt = true;
+    ServerRuntime::DedicatedServerWorldLoadHooks
+        worldLoadPipelineCorruptHooks = worldLoadPipelineHooks;
+    worldLoadPipelineCorruptHooks.context = &worldLoadPipelineCorruptContext;
+    ServerRuntime::DedicatedServerWorldLoadPayload
+        worldLoadPipelineCorruptPayload = {};
+    const ServerRuntime::EDedicatedServerWorldLoadStatus
+        worldLoadPipelineCorruptStatus =
+            ServerRuntime::LoadDedicatedServerWorldData(
+                configuredWorldTarget,
+                0,
+                nullptr,
+                worldLoadPipelineCorruptHooks,
+                &worldLoadPipelineCorruptPayload);
     LoadSaveDataThreadParam *fakeBootstrapSaveData =
         reinterpret_cast<LoadSaveDataThreadParam *>(0x4321);
     const ServerRuntime::WorldBootstrapResult loadedWorldTargetBootstrap =
@@ -1481,6 +1643,30 @@ int main(int argc, char* argv[])
         worldStorageHookContext.appliedWorldName.c_str(),
         worldStorageHookContext.appliedSaveId.c_str(),
         worldStorageHookContext.resetCount);
+    printf("world_load_pipeline=%d loaded=%d matched=%d bytes=%zu "
+        "not_found=%d corrupt=%d\n",
+        worldLoadPipelineStatus ==
+                ServerRuntime::eDedicatedServerWorldLoad_Loaded &&
+            worldLoadPipelineContext.beginQueryCount == 1 &&
+            worldLoadPipelineContext.beginLoadCount == 1 &&
+            worldLoadPipelineContext.matchedIndex == 1 &&
+            worldLoadPayload.matchedTitle == L"Smoke World" &&
+            worldLoadPayload.matchedFilename == L"resolved_world" &&
+            worldLoadPayload.resolvedSaveId == "resolved_world" &&
+            worldLoadPayload.bytes.size() == 4 &&
+            worldLoadPipelineNotFoundStatus ==
+                ServerRuntime::eDedicatedServerWorldLoad_NotFound &&
+            worldLoadPipelineNotFoundContext.beginQueryCount == 1 &&
+            worldLoadPipelineNotFoundContext.beginLoadCount == 0 &&
+            worldLoadPipelineCorruptStatus ==
+                ServerRuntime::eDedicatedServerWorldLoad_Failed &&
+            worldLoadPipelineCorruptContext.beginQueryCount == 1 &&
+            worldLoadPipelineCorruptContext.beginLoadCount == 1,
+        worldLoadPipelineStatus,
+        worldLoadPipelineContext.matchedIndex,
+        worldLoadPayload.bytes.size(),
+        worldLoadPipelineNotFoundStatus,
+        worldLoadPipelineCorruptStatus);
     printf("dedicated_defaults=%d dedicated_props=%d dedicated_cli=%d "
         "dedicated_help=%d dedicated_invalid=%d usage_lines=%zu\n",
         defaultDedicatedConfig.port == 25565 &&
@@ -2102,6 +2288,23 @@ int main(int argc, char* argv[])
         worldStorageHookContext.appliedWorldName == L"Smoke World" &&
         worldStorageHookContext.appliedSaveId == "SMOKE_WORLD" &&
         worldStorageHookContext.resetCount == 1 &&
+        worldLoadPipelineStatus ==
+            ServerRuntime::eDedicatedServerWorldLoad_Loaded &&
+        worldLoadPipelineContext.beginQueryCount == 1 &&
+        worldLoadPipelineContext.beginLoadCount == 1 &&
+        worldLoadPipelineContext.matchedIndex == 1 &&
+        worldLoadPayload.matchedTitle == L"Smoke World" &&
+        worldLoadPayload.matchedFilename == L"resolved_world" &&
+        worldLoadPayload.resolvedSaveId == "resolved_world" &&
+        worldLoadPayload.bytes.size() == 4 &&
+        worldLoadPipelineNotFoundStatus ==
+            ServerRuntime::eDedicatedServerWorldLoad_NotFound &&
+        worldLoadPipelineNotFoundContext.beginQueryCount == 1 &&
+        worldLoadPipelineNotFoundContext.beginLoadCount == 0 &&
+        worldLoadPipelineCorruptStatus ==
+            ServerRuntime::eDedicatedServerWorldLoad_Failed &&
+        worldLoadPipelineCorruptContext.beginQueryCount == 1 &&
+        worldLoadPipelineCorruptContext.beginLoadCount == 1 &&
         loadedWorldTargetBootstrap.status ==
             ServerRuntime::eWorldBootstrap_Loaded &&
         loadedWorldTargetBootstrap.saveData == fakeBootstrapSaveData &&

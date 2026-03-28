@@ -4,9 +4,9 @@
 
 #include "ServerLogger.h"
 #include "Common\\DedicatedServerWorldBootstrap.h"
+#include "Common\\DedicatedServerWorldLoadPipeline.h"
 #include "Common\\ServerStoragePaths.h"
 #include "Common\\StringUtils.h"
-#include "Common\\DedicatedServerWorldSaveSelection.h"
 #include <lce_filesystem/lce_filesystem.h>
 #include <lce_time/lce_time.h>
 
@@ -45,6 +45,14 @@ struct SaveDataLoadContext
 		, isOwner(false)
 	{
 	}
+};
+
+struct WorldLoadStorageContext
+{
+	SaveInfoQueryContext saveInfo = {};
+	SaveDataLoadContext saveDataLoad = {};
+	SAVE_INFO *matchedSaveInfo = NULL;
+	int loadState = C4JStorage::ESaveGame_Idle;
 };
 
 /**
@@ -236,6 +244,178 @@ static int LoadSaveDataCallbackProc(LPVOID lpParam, const bool bIsCorrupt, const
 	return 0;
 }
 
+static bool ClearDedicatedServerWorldSaveQuery(void *context)
+{
+	WorldLoadStorageContext *storageContext =
+		static_cast<WorldLoadStorageContext *>(context);
+	if (storageContext == NULL)
+	{
+		return false;
+	}
+
+	StorageManager.ClearSavesInfo();
+	storageContext->saveInfo = SaveInfoQueryContext();
+	storageContext->saveDataLoad = SaveDataLoadContext();
+	storageContext->matchedSaveInfo = NULL;
+	storageContext->loadState = C4JStorage::ESaveGame_Idle;
+	return true;
+}
+
+static bool BeginDedicatedServerWorldSaveQuery(int actionPad, void *context)
+{
+	WorldLoadStorageContext *storageContext =
+		static_cast<WorldLoadStorageContext *>(context);
+	if (storageContext == NULL)
+	{
+		return false;
+	}
+
+	int infoState = StorageManager.GetSavesInfo(
+		actionPad,
+		&GetSavesInfoCallbackProc,
+		&storageContext->saveInfo,
+		"save");
+	if (infoState == C4JStorage::ESaveGame_Idle)
+	{
+		storageContext->saveInfo.done = true;
+		storageContext->saveInfo.success = true;
+		storageContext->saveInfo.details = StorageManager.ReturnSavesInfo();
+		return true;
+	}
+
+	return infoState == C4JStorage::ESaveGame_GetSavesInfo;
+}
+
+static bool PollDedicatedServerWorldSaveQuery(
+	DWORD timeoutMs,
+	DedicatedServerWorldLoadTickProc tickProc,
+	void *context,
+	std::vector<DedicatedServerWorldLoadCandidate> *outCandidates)
+{
+	WorldLoadStorageContext *storageContext =
+		static_cast<WorldLoadStorageContext *>(context);
+	if (storageContext == NULL || outCandidates == NULL)
+	{
+		return false;
+	}
+
+	if (!WaitForSaveInfoResult(&storageContext->saveInfo, timeoutMs, tickProc))
+	{
+		return false;
+	}
+
+	if (storageContext->saveInfo.details == NULL)
+	{
+		storageContext->saveInfo.details = StorageManager.ReturnSavesInfo();
+	}
+	if (storageContext->saveInfo.details == NULL)
+	{
+		return false;
+	}
+
+	outCandidates->clear();
+	outCandidates->reserve(storageContext->saveInfo.details->iSaveC);
+	for (int i = 0; i < storageContext->saveInfo.details->iSaveC; ++i)
+	{
+		const SAVE_INFO &saveInfo = storageContext->saveInfo.details->SaveInfoA[i];
+		LogEnumeratedSaveInfo(i, saveInfo);
+
+		DedicatedServerWorldLoadCandidate candidate = {};
+		candidate.title = Utf8ToWide(saveInfo.UTF8SaveTitle);
+		candidate.filename = Utf8ToWide(saveInfo.UTF8SaveFilename);
+		outCandidates->push_back(candidate);
+	}
+
+	return true;
+}
+
+static bool BeginDedicatedServerWorldSaveLoad(int matchedIndex, void *context)
+{
+	WorldLoadStorageContext *storageContext =
+		static_cast<WorldLoadStorageContext *>(context);
+	if (storageContext == NULL ||
+		storageContext->saveInfo.details == NULL ||
+		matchedIndex < 0 ||
+		matchedIndex >= storageContext->saveInfo.details->iSaveC)
+	{
+		return false;
+	}
+
+	storageContext->matchedSaveInfo =
+		&storageContext->saveInfo.details->SaveInfoA[matchedIndex];
+	storageContext->saveDataLoad = SaveDataLoadContext();
+	storageContext->loadState = StorageManager.LoadSaveData(
+		storageContext->matchedSaveInfo,
+		&LoadSaveDataCallbackProc,
+		&storageContext->saveDataLoad);
+	return storageContext->loadState == C4JStorage::ESaveGame_Load ||
+		storageContext->loadState == C4JStorage::ESaveGame_Idle;
+}
+
+static bool PollDedicatedServerWorldSaveLoad(
+	DWORD timeoutMs,
+	DedicatedServerWorldLoadTickProc tickProc,
+	void *context,
+	bool *outIsCorrupt)
+{
+	WorldLoadStorageContext *storageContext =
+		static_cast<WorldLoadStorageContext *>(context);
+	if (storageContext == NULL || storageContext->matchedSaveInfo == NULL)
+	{
+		return false;
+	}
+
+	if (outIsCorrupt != NULL)
+	{
+		*outIsCorrupt = false;
+	}
+
+	if (storageContext->loadState == C4JStorage::ESaveGame_Load)
+	{
+		if (!WaitForSaveLoadResult(
+				&storageContext->saveDataLoad,
+				timeoutMs,
+				tickProc))
+		{
+			return false;
+		}
+		if (outIsCorrupt != NULL)
+		{
+			*outIsCorrupt = storageContext->saveDataLoad.isCorrupt;
+		}
+	}
+
+	return true;
+}
+
+static bool ReadDedicatedServerWorldSaveBytes(
+	void *context,
+	std::vector<unsigned char> *outBytes)
+{
+	if (context == NULL || outBytes == NULL)
+	{
+		return false;
+	}
+
+	unsigned int saveSize = StorageManager.GetSaveSize();
+	if (saveSize == 0)
+	{
+		return false;
+	}
+
+	outBytes->assign(saveSize, 0);
+	unsigned int loadedSize = saveSize;
+	StorageManager.GetSaveData(&(*outBytes)[0], &loadedSize);
+	if (loadedSize == 0)
+	{
+		outBytes->clear();
+		return false;
+	}
+
+	outBytes->resize(loadedSize);
+	return true;
+}
+
 /**
  * **Wait For Save List Completion**
  *
@@ -341,147 +521,64 @@ static EDedicatedServerWorldLoadStatus PrepareWorldSaveData(
 	}
 
 	LogWorldIO("enumerating saves for configured world");
-	StorageManager.ClearSavesInfo();
-
-	SaveInfoQueryContext infoContext;
-	int infoState = StorageManager.GetSavesInfo(actionPad, &GetSavesInfoCallbackProc, &infoContext, "save");
-	if (infoState == C4JStorage::ESaveGame_Idle)
-	{
-		infoContext.done = true;
-		infoContext.success = true;
-		infoContext.details = StorageManager.ReturnSavesInfo();
-	}
-	else if (infoState != C4JStorage::ESaveGame_GetSavesInfo)
-	{
-		LogWorldIO("GetSavesInfo failed to start");
-		return eDedicatedServerWorldLoad_Failed;
-	}
-
-	if (!WaitForSaveInfoResult(&infoContext, 10000, tickProc))
-	{
-		LogWorldIO("timed out waiting for save list");
-		return eDedicatedServerWorldLoad_Failed;
-	}
-
-	if (infoContext.details == NULL)
-	{
-		infoContext.details = StorageManager.ReturnSavesInfo();
-	}
-	if (infoContext.details == NULL)
-	{
-		LogWorldIO("failed to retrieve save list");
-		return eDedicatedServerWorldLoad_Failed;
-	}
-
-	std::vector<ServerRuntime::DedicatedServerWorldSaveMatchEntry> saveEntries;
-	saveEntries.reserve(infoContext.details->iSaveC);
-	for (int i = 0; i < infoContext.details->iSaveC; ++i)
-	{
-		const SAVE_INFO &saveInfo = infoContext.details->SaveInfoA[i];
-		LogEnumeratedSaveInfo(i, saveInfo);
-
-		ServerRuntime::DedicatedServerWorldSaveMatchEntry matchEntry = {};
-		matchEntry.title = Utf8ToWide(saveInfo.UTF8SaveTitle);
-		matchEntry.filename = Utf8ToWide(saveInfo.UTF8SaveFilename);
-		saveEntries.push_back(matchEntry);
-	}
-
-	const ServerRuntime::DedicatedServerWorldSaveSelectionResult
-		saveSelection =
-			ServerRuntime::SelectDedicatedServerWorldSaveEntry(
-				saveEntries.empty() ? NULL : &saveEntries[0],
-				static_cast<int>(saveEntries.size()),
-				targetWorldName,
-				targetSaveFilename);
-	const int matchedIndex = saveSelection.matchedIndex;
-
-	if (matchedIndex < 0)
-	{
-		LogWorldIO("no save matched configured world name");
-		return eDedicatedServerWorldLoad_NotFound;
-	}
-
-	std::wstring matchedTitle = Utf8ToWide(infoContext.details->SaveInfoA[matchedIndex].UTF8SaveTitle);
-	if (matchedTitle.empty())
-	{
-		matchedTitle = targetWorldName;
-	}
-	LogWorldName("matched save title", matchedTitle);
-	SAVE_INFO *matchedSaveInfo = &infoContext.details->SaveInfoA[matchedIndex];
-	std::wstring matchedFilename = Utf8ToWide(matchedSaveInfo->UTF8SaveFilename);
-	if (!matchedFilename.empty())
-	{
-		LogWorldName("matched save filename", matchedFilename);
-	}
-
-	std::string resolvedSaveFilename;
-	if (matchedSaveInfo->UTF8SaveFilename[0] != 0)
-	{
-		// Prefer the save ID that was actually matched, then keep using it for future saves
-		resolvedSaveFilename = matchedSaveInfo->UTF8SaveFilename;
-	}
-	else if (!targetSaveFilename.empty())
-	{
-		resolvedSaveFilename = targetSaveFilename;
-	}
-
-	if (outResolvedSaveFilename != NULL)
-	{
-		*outResolvedSaveFilename = resolvedSaveFilename;
-	}
-
 	const DedicatedServerWorldTarget worldTarget = {
 		targetWorldName,
 		targetSaveFilename
 	};
+	WorldLoadStorageContext storageContext = {};
+	DedicatedServerWorldLoadHooks loadHooks = {};
+	loadHooks.clearSavesProc = &ClearDedicatedServerWorldSaveQuery;
+	loadHooks.beginQueryProc = &BeginDedicatedServerWorldSaveQuery;
+	loadHooks.pollQueryProc = &PollDedicatedServerWorldSaveQuery;
+	loadHooks.beginLoadProc = &BeginDedicatedServerWorldSaveLoad;
+	loadHooks.pollLoadProc = &PollDedicatedServerWorldSaveLoad;
+	loadHooks.readBytesProc = &ReadDedicatedServerWorldSaveBytes;
+	loadHooks.context = &storageContext;
+
+	DedicatedServerWorldLoadPayload loadPayload = {};
+	const EDedicatedServerWorldLoadStatus loadStatus =
+		LoadDedicatedServerWorldData(
+			worldTarget,
+			actionPad,
+			tickProc,
+			loadHooks,
+			&loadPayload);
+	if (loadStatus != eDedicatedServerWorldLoad_Loaded)
+	{
+		if (loadStatus == eDedicatedServerWorldLoad_NotFound)
+		{
+			LogWorldIO("no save matched configured world name");
+		}
+		else
+		{
+			LogWorldIO("failed to load matched world save");
+		}
+		return loadStatus;
+	}
+
+	LogWorldName("matched save title", loadPayload.matchedTitle);
+	if (!loadPayload.matchedFilename.empty())
+	{
+		LogWorldName("matched save filename", loadPayload.matchedFilename);
+	}
+
+	if (outResolvedSaveFilename != NULL)
+	{
+		*outResolvedSaveFilename = loadPayload.resolvedSaveId;
+	}
+
 	ApplyDedicatedServerWorldStoragePlan(
 		BuildLoadedDedicatedServerWorldStoragePlan(
 			worldTarget,
-			resolvedSaveFilename),
+			loadPayload.resolvedSaveId),
 		BuildDedicatedServerWorldStorageHooks());
 
-	SaveDataLoadContext loadContext;
-	int loadState = StorageManager.LoadSaveData(matchedSaveInfo, &LoadSaveDataCallbackProc, &loadContext);
-	if (loadState != C4JStorage::ESaveGame_Load && loadState != C4JStorage::ESaveGame_Idle)
-	{
-		LogWorldIO("LoadSaveData failed to start");
-		return eDedicatedServerWorldLoad_Failed;
-	}
-
-	if (loadState == C4JStorage::ESaveGame_Load)
-	{
-		if (!WaitForSaveLoadResult(&loadContext, 15000, tickProc))
-		{
-			LogWorldIO("timed out waiting for save data load");
-			return eDedicatedServerWorldLoad_Failed;
-		}
-		if (loadContext.isCorrupt)
-		{
-			LogWorldIO("target save is corrupt; aborting load");
-			return eDedicatedServerWorldLoad_Failed;
-		}
-	}
-
-	unsigned int saveSize = StorageManager.GetSaveSize();
-	if (saveSize == 0)
-	{
-		// Treat zero-byte payload as failure even when load API reports success
-		LogWorldIO("loaded save has zero size");
-		return eDedicatedServerWorldLoad_Failed;
-	}
-
-	byteArray loadedSaveData(saveSize, false);
-	unsigned int loadedSize = saveSize;
-	StorageManager.GetSaveData(loadedSaveData.data, &loadedSize);
-	if (loadedSize == 0)
-	{
-		LogWorldIO("failed to copy loaded save data from storage manager");
-		return eDedicatedServerWorldLoad_Failed;
-	}
-
-	*outSaveData = new LoadSaveDataThreadParam(loadedSaveData.data, loadedSize, matchedTitle);
+	*outSaveData = new LoadSaveDataThreadParam(
+		loadPayload.bytes.data(),
+		static_cast<unsigned int>(loadPayload.bytes.size()),
+		loadPayload.matchedTitle);
 	LogWorldIO("prepared save data payload for server startup");
-	return eDedicatedServerWorldLoad_Loaded;
+	return loadStatus;
 }
 
 /**
