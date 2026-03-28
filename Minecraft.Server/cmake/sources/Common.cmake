@@ -562,6 +562,7 @@ set(_MINECRAFT_SERVER_COMMON_SERVER_COMMON
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerWorldLoadPipeline.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerWorldLoadPipeline.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerWorldLoadStorage.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerWorldTypes.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerWorldSaveSelection.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerWorldSaveSelection.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/FileUtils.cpp"

@@ -1,5 +1,6 @@
 #pragma once
 #include "ConsoleInputSource.h"
+#include "..\Minecraft.Server\Common\DedicatedServerWorldTypes.h"
 #include "..\Minecraft.World\ArrayWithLength.h"
 #include "..\Minecraft.World\SharedConstants.h"
 #include "..\Minecraft.World\C4JThread.h"
@@ -27,14 +28,6 @@ class CommandDispatcher;
 #if defined _XBOX_ONE || defined _XBOX || defined __ORBIS__ || defined __PS3__ || defined __PSVITA__
 #define _ACK_CHUNK_SEND_THROTTLING
 #endif
-
-typedef struct _LoadSaveDataThreadParam
-{
-	LPVOID data;
-	int64_t fileSize;
-	const wstring saveName;
-	_LoadSaveDataThreadParam(LPVOID data, int64_t filesize, const wstring &saveName) : data( data ), fileSize( filesize ), saveName( saveName ) {}
-} LoadSaveDataThreadParam;
 
 typedef struct _NetworkGameInitData
 {

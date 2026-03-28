@@ -9,6 +9,7 @@
 #include "DedicatedServerSignalState.h"
 #include "DedicatedServerSocketBootstrap.h"
 #include "../ServerLogger.h"
+#include "../WorldManager.h"
 #include "lce_net/lce_net.h"
 #include "lce_stdin/lce_stdin.h"
 #include "lce_time/lce_time.h"
@@ -245,6 +246,44 @@ namespace
 
         return true;
     }
+
+    int BootstrapDedicatedServerHeadlessWorld(
+        const ServerRuntime::DedicatedServerBootstrapContext &context)
+    {
+        const ServerRuntime::WorldBootstrapResult worldBootstrap =
+            ServerRuntime::BootstrapWorldForServer(
+                context.serverProperties,
+                0,
+                nullptr);
+        if (worldBootstrap.status == ServerRuntime::eWorldBootstrap_Failed)
+        {
+            ServerRuntime::LogError(
+                "startup",
+                "native world bootstrap failed");
+            return 11;
+        }
+
+        const char *bootstrapMode =
+            worldBootstrap.status == ServerRuntime::eWorldBootstrap_Loaded
+                ? "loaded"
+                : "created-new";
+        ServerRuntime::LogInfof(
+            "startup",
+            "native world bootstrap=%s level-id=%s",
+            bootstrapMode,
+            worldBootstrap.resolvedSaveId.c_str());
+
+        if (worldBootstrap.saveData != nullptr)
+        {
+            ServerRuntime::LogWarn(
+                "startup",
+                "native headless runtime does not yet consume "
+                "loaded save payloads");
+            return 12;
+        }
+
+        return 0;
+    }
 }
 
 namespace ServerRuntime
@@ -272,6 +311,13 @@ namespace ServerRuntime
             "native platform runtime=%s headless=%s",
             platformRuntimeStartResult.runtimeName.c_str(),
             platformRuntimeStartResult.headless ? "true" : "false");
+
+        const int worldBootstrapExitCode =
+            BootstrapDedicatedServerHeadlessWorld(context);
+        if (worldBootstrapExitCode != 0)
+        {
+            return worldBootstrapExitCode;
+        }
 
         if (options.bootstrapOnly)
         {

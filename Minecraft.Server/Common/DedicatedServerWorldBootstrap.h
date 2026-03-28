@@ -3,7 +3,9 @@
 #include <cstdint>
 #include <string>
 
-#include "../WorldManager.h"
+#include <lce_win32/lce_win32.h>
+
+#include "DedicatedServerWorldTypes.h"
 #include "DedicatedServerSessionConfig.h"
 
 namespace ServerRuntime

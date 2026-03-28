@@ -1,12 +1,10 @@
-#include "stdafx.h"
-
 #include "WorldManager.h"
 
 #include "ServerLogger.h"
-#include "Common\\DedicatedServerWorldBootstrap.h"
-#include "Common\\DedicatedServerWorldLoadPipeline.h"
-#include "Common\\DedicatedServerWorldLoadStorage.h"
-#include "Common\\ServerStoragePaths.h"
+#include "Common/DedicatedServerWorldBootstrap.h"
+#include "Common/DedicatedServerWorldLoadPipeline.h"
+#include "Common/DedicatedServerWorldLoadStorage.h"
+#include "Common/ServerStoragePaths.h"
 #include <lce_filesystem/lce_filesystem.h>
 
 namespace ServerRuntime

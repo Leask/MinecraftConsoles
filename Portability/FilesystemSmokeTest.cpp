@@ -33,6 +33,7 @@
 #include "Minecraft.Server/Console/ServerCliInput.h"
 #include "Minecraft.Server/Common/StringUtils.h"
 #include "Minecraft.Server/ServerLogger.h"
+#include "Minecraft.Server/WorldManager.h"
 #include "Minecraft.Server/vendor/linenoise/linenoise.h"
 #include "Minecraft.World/PerformanceTimer.h"
 #include "ServerPropertiesSmoke.h"
@@ -958,6 +959,28 @@ int main(int argc, char* argv[])
                     failedWorldPlan,
                     failedWorldLoadPlan,
                     &failedWorldExecutionConfig);
+        }
+    }
+    ServerRuntime::WorldBootstrapResult nativeWorldManagerBootstrap = {};
+    bool nativeWorldManagerDirectoryReady = false;
+    bool nativeWorldManagerStorageRootReady = false;
+    {
+        ScopedCurrentDirectory directoryGuard(
+            "build/portability-world-manager-smoke");
+        nativeWorldManagerDirectoryReady = directoryGuard.IsActive();
+        if (nativeWorldManagerDirectoryReady)
+        {
+            ServerRuntime::ServerPropertiesConfig nativeWorldManagerConfig =
+                defaultWorldTargetProperties;
+            nativeWorldManagerConfig.worldName = L"Native Smoke World";
+            nativeWorldManagerConfig.worldSaveId = "NATIVE_SMOKE_WORLD";
+            nativeWorldManagerBootstrap =
+                ServerRuntime::BootstrapWorldForServer(
+                    nativeWorldManagerConfig,
+                    0,
+                    nullptr);
+            nativeWorldManagerStorageRootReady =
+                std::filesystem::exists("NativeDesktop/GameHDD");
         }
     }
     const bool shouldRunInitialSave =
@@ -1914,6 +1937,21 @@ int main(int argc, char* argv[])
         loadedWorldExecution.savedResolvedSaveId,
         failedWorldExecution.abortedStartup,
         failedWorldExecution.abortExitCode);
+    printf("world_manager_native=%d dir=%d created_new=%d save_data=%d "
+        "save_id=%s storage_root=%d\n",
+        nativeWorldManagerDirectoryReady &&
+            nativeWorldManagerBootstrap.status ==
+                ServerRuntime::eWorldBootstrap_CreatedNew &&
+            nativeWorldManagerBootstrap.saveData == nullptr &&
+            nativeWorldManagerBootstrap.resolvedSaveId ==
+                "NATIVE_SMOKE_WORLD" &&
+            nativeWorldManagerStorageRootReady,
+        nativeWorldManagerDirectoryReady,
+        nativeWorldManagerBootstrap.status ==
+            ServerRuntime::eWorldBootstrap_CreatedNew,
+        nativeWorldManagerBootstrap.saveData == nullptr,
+        nativeWorldManagerBootstrap.resolvedSaveId.c_str(),
+        nativeWorldManagerStorageRootReady);
     printf("startup_execution=%d dir=%d aborted=%d failed_abort=%d "
         "failed_code=%d\n",
         startupExecutionDirectoryReady &&
@@ -2538,6 +2576,13 @@ int main(int argc, char* argv[])
         failedWorldExecution.abortExitCode == 4 &&
         worldLoadExecutionText.find("level-id=world_loaded") !=
             std::string::npos &&
+        nativeWorldManagerDirectoryReady &&
+        nativeWorldManagerBootstrap.status ==
+            ServerRuntime::eWorldBootstrap_CreatedNew &&
+        nativeWorldManagerBootstrap.saveData == nullptr &&
+        nativeWorldManagerBootstrap.resolvedSaveId ==
+            "NATIVE_SMOKE_WORLD" &&
+        nativeWorldManagerStorageRootReady &&
         startupExecutionDirectoryReady &&
         !startupExecutionResult.abortedStartup &&
         startupExecutionResult.appSession.applied &&
