@@ -50,6 +50,31 @@ namespace
         ServerRuntime::WorldBootstrapResult worldBootstrap = {};
     };
 
+    class DedicatedServerHeadlessWorldBootstrapGuard
+    {
+    public:
+        explicit DedicatedServerHeadlessWorldBootstrapGuard(
+            ServerRuntime::WorldBootstrapResult *worldBootstrap)
+            : m_worldBootstrap(worldBootstrap)
+        {
+        }
+
+        ~DedicatedServerHeadlessWorldBootstrapGuard()
+        {
+            if (m_worldBootstrap == nullptr)
+            {
+                return;
+            }
+
+            ServerRuntime::DestroyLoadSaveDataThreadParam(
+                m_worldBootstrap->saveData);
+            m_worldBootstrap->saveData = nullptr;
+        }
+
+    private:
+        ServerRuntime::WorldBootstrapResult *m_worldBootstrap = nullptr;
+    };
+
     class DedicatedServerHeadlessRuntimeGuard
     {
     public:
@@ -372,14 +397,9 @@ namespace
 
         if (result.worldBootstrap.saveData != nullptr)
         {
-            ServerRuntime::LogWarn(
+            ServerRuntime::LogInfo(
                 "startup",
-                "native headless runtime does not yet consume "
-                "loaded save payloads");
-            ServerRuntime::DestroyLoadSaveDataThreadParam(
-                result.worldBootstrap.saveData);
-            result.worldBootstrap.saveData = nullptr;
-            result.exitCode = 12;
+                "native stub runtime prepared loaded save payload");
         }
 
         return result;
@@ -413,9 +433,11 @@ namespace ServerRuntime
             platformRuntimeStartResult.runtimeName.c_str(),
             platformRuntimeStartResult.headless ? "true" : "false");
 
-        const DedicatedServerHeadlessWorldBootstrapResult
+        DedicatedServerHeadlessWorldBootstrapResult
             worldBootstrapResult =
                 BootstrapDedicatedServerHeadlessWorld(runtimeContext);
+        DedicatedServerHeadlessWorldBootstrapGuard worldBootstrapGuard(
+            &worldBootstrapResult.worldBootstrap);
         if (worldBootstrapResult.exitCode != 0)
         {
             return worldBootstrapResult.exitCode;
