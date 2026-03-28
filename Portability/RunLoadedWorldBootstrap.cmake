@@ -14,9 +14,10 @@ endif()
 
 file(REMOVE_RECURSE "${TEST_DIR}")
 file(MAKE_DIRECTORY "${TEST_DIR}")
-file(REMOVE_RECURSE "${EXECUTABLE_DIR}/NativeDesktop/GameHDD")
-file(MAKE_DIRECTORY "${EXECUTABLE_DIR}/NativeDesktop/GameHDD")
-file(WRITE "${EXECUTABLE_DIR}/NativeDesktop/GameHDD/world.save" "loaded-smoke")
+set(STORAGE_ROOT "${TEST_DIR}/storage-root")
+file(REMOVE_RECURSE "${STORAGE_ROOT}")
+file(MAKE_DIRECTORY "${STORAGE_ROOT}")
+file(WRITE "${STORAGE_ROOT}/world.save" "loaded-smoke")
 
 set(run_args
   -port 0
@@ -38,6 +39,10 @@ endif()
 
 execute_process(
   COMMAND
+    "${CMAKE_COMMAND}"
+    -E
+    env
+    "MINECRAFT_SERVER_STORAGE_ROOT=${STORAGE_ROOT}"
     "${EXECUTABLE}"
     ${run_args}
   WORKING_DIRECTORY "${TEST_DIR}"
@@ -61,11 +66,11 @@ foreach(expected_marker IN LISTS expected_markers)
     loaded_bootstrap_index)
 
   if(loaded_bootstrap_index LESS 0)
-    file(REMOVE "${EXECUTABLE_DIR}/NativeDesktop/GameHDD/world.save")
+    file(REMOVE "${STORAGE_ROOT}/world.save")
     message(FATAL_ERROR
       "Loaded bootstrap output did not contain expected marker: "
       "${expected_marker}\noutput:\n${combined_output}\n")
   endif()
 endforeach()
 
-file(REMOVE "${EXECUTABLE_DIR}/NativeDesktop/GameHDD/world.save")
+file(REMOVE "${STORAGE_ROOT}/world.save")

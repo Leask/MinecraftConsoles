@@ -1,6 +1,11 @@
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
+#if defined(_WINDOWS64) || defined(_WIN32)
+#include <stdlib.h>
+#else
+#include <cstdlib>
+#endif
 
 #include "Minecraft.Client/Common/App_Defines.h"
 #include "Minecraft.Server/Access/Access.h"
@@ -80,6 +85,69 @@ namespace
     private:
         std::filesystem::path m_previous;
         bool m_active;
+    };
+
+    class ScopedEnvVar
+    {
+    public:
+        ScopedEnvVar(const char *name, const char *value)
+            : m_name(name != nullptr ? name : "")
+            , m_hadPrevious(false)
+        {
+            if (m_name.empty())
+            {
+                return;
+            }
+
+            const char *previous = std::getenv(m_name.c_str());
+            if (previous != nullptr)
+            {
+                m_hadPrevious = true;
+                m_previous = previous;
+            }
+
+            Set(value != nullptr ? value : "");
+        }
+
+        ~ScopedEnvVar()
+        {
+            if (m_name.empty())
+            {
+                return;
+            }
+
+            if (m_hadPrevious)
+            {
+                Set(m_previous.c_str());
+            }
+            else
+            {
+                Unset();
+            }
+        }
+
+    private:
+        void Set(const char *value)
+        {
+#if defined(_WINDOWS64) || defined(_WIN32)
+            _putenv_s(m_name.c_str(), value);
+#else
+            setenv(m_name.c_str(), value, 1);
+#endif
+        }
+
+        void Unset()
+        {
+#if defined(_WINDOWS64) || defined(_WIN32)
+            _putenv_s(m_name.c_str(), "");
+#else
+            unsetenv(m_name.c_str());
+#endif
+        }
+
+        std::string m_name;
+        std::string m_previous;
+        bool m_hadPrevious;
     };
 
     int HostedGameRuntimeSmokeThreadProc(void* threadParam)
@@ -1451,6 +1519,13 @@ int main(int argc, char* argv[])
         ServerRuntime::GetServerStoragePlatformDirectory();
     const std::string storageGameHddRoot =
         ServerRuntime::GetServerGameHddRootPath();
+    std::string overriddenStorageRoot;
+    {
+        ScopedEnvVar storageRootOverride(
+            "MINECRAFT_SERVER_STORAGE_ROOT",
+            "/tmp/minecraft-native-storage-smoke");
+        overriddenStorageRoot = ServerRuntime::GetServerGameHddRootPath();
+    }
     const bool wroteSmokeFile =
         ServerRuntime::FileUtils::WriteTextFileAtomic(
             smokeFilePath,
@@ -2308,9 +2383,10 @@ int main(int argc, char* argv[])
         runBeforeSessionCount,
         runAfterSessionCount,
         runExecutionPollContext.pollCount);
-    printf("server_storage_platform=%s game_hdd_root=%s\n",
+    printf("server_storage_platform=%s game_hdd_root=%s override_root=%s\n",
         storagePlatformDirectory,
-        storageGameHddRoot.c_str());
+        storageGameHddRoot.c_str(),
+        overriddenStorageRoot.c_str());
     printf("ban_dir=%d ban_files=%d add_player=%d add_ip=%d reload=%d "
         "player_banned=%d ip_banned=%d snapshot_players=%d snapshot_ips=%d "
         "snapshot_player_count=%zu snapshot_ip_count=%zu\n",
@@ -2807,6 +2883,7 @@ int main(int argc, char* argv[])
         nextAutosaveTick == 46000U &&
         std::strcmp(storagePlatformDirectory, "NativeDesktop") == 0 &&
         storageGameHddRoot == "NativeDesktop/GameHDD" &&
+        overriddenStorageRoot == "/tmp/minecraft-native-storage-smoke" &&
         utcFileTime > 0 &&
         createdBanDirectory && ensuredBanFiles &&
         addedPlayerBan && addedIpBan && reloadedBans &&
