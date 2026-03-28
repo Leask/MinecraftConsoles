@@ -1,24 +1,53 @@
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 
-namespace ServerRuntime
+namespace
 {
-    namespace
+    struct NativeDedicatedServerPlatformRuntimeState
     {
-        bool g_nativeGameplayInstance = false;
-        bool g_nativeAppShutdownRequested = false;
-        bool g_nativeGameplayHalted = false;
-        bool g_nativeStopSignalValid = false;
+        bool gameplayInstance = false;
+        bool appShutdownRequested = false;
+        bool gameplayHalted = false;
+        bool stopSignalValid = false;
+        bool saveOnExitEnabled = false;
+        unsigned int pendingWorldActionTicks = 0;
+        std::uint64_t tickCount = 0;
+        std::uint64_t autosaveRequestCount = 0;
+        std::uint64_t autosaveCompletionCount = 0;
+    };
+
+    NativeDedicatedServerPlatformRuntimeState g_nativeRuntimeState = {};
+
+    bool IsNativeDedicatedServerWorldActionIdleHook(int, void *)
+    {
+        return g_nativeRuntimeState.pendingWorldActionTicks == 0;
     }
 
+    bool IsNativeDedicatedServerGameplayHaltedHook(void *)
+    {
+        return g_nativeRuntimeState.gameplayHalted;
+    }
+
+    void TickNativeDedicatedServerPlatformRuntimeHook(void *)
+    {
+        ServerRuntime::TickDedicatedServerPlatformRuntime();
+    }
+
+    void HandleNativeDedicatedServerPlatformActionsHook(void *)
+    {
+        ServerRuntime::HandleDedicatedServerPlatformActions();
+    }
+}
+
+namespace ServerRuntime
+{
     DedicatedServerPlatformRuntimeStartResult
     StartDedicatedServerPlatformRuntime(
         const DedicatedServerPlatformState &)
     {
         DedicatedServerPlatformRuntimeStartResult result = {};
-        g_nativeGameplayInstance = true;
-        g_nativeAppShutdownRequested = false;
-        g_nativeGameplayHalted = false;
-        g_nativeStopSignalValid = true;
+        g_nativeRuntimeState = {};
+        g_nativeRuntimeState.gameplayInstance = true;
+        g_nativeRuntimeState.stopSignalValid = true;
         result.ok = true;
         result.exitCode = 0;
         result.runtimeName = "NativeDesktopStub";
@@ -40,6 +69,15 @@ namespace ServerRuntime
 
     void TickDedicatedServerPlatformRuntime()
     {
+        ++g_nativeRuntimeState.tickCount;
+        if (g_nativeRuntimeState.pendingWorldActionTicks > 0)
+        {
+            --g_nativeRuntimeState.pendingWorldActionTicks;
+            if (g_nativeRuntimeState.pendingWorldActionTicks == 0)
+            {
+                ++g_nativeRuntimeState.autosaveCompletionCount;
+            }
+        }
     }
 
     void HandleDedicatedServerPlatformActions()
@@ -48,61 +86,77 @@ namespace ServerRuntime
 
     bool IsDedicatedServerWorldActionIdle(int)
     {
-        return true;
+        return g_nativeRuntimeState.pendingWorldActionTicks == 0;
     }
 
     void RequestDedicatedServerWorldAutosave(int)
     {
+        ++g_nativeRuntimeState.autosaveRequestCount;
+        if (g_nativeRuntimeState.pendingWorldActionTicks < 2)
+        {
+            g_nativeRuntimeState.pendingWorldActionTicks = 2;
+        }
     }
 
     bool WaitForDedicatedServerWorldActionIdle(
-        int,
-        DWORD)
+        int actionPad,
+        DWORD timeoutMs)
     {
-        return true;
+        DedicatedServerWorldActionWaitHooks hooks = {};
+        hooks.isIdleProc = &IsNativeDedicatedServerWorldActionIdleHook;
+        hooks.haltProc = &IsNativeDedicatedServerGameplayHaltedHook;
+        hooks.tickProc = &TickNativeDedicatedServerPlatformRuntimeHook;
+        hooks.handleActionsProc = &HandleNativeDedicatedServerPlatformActionsHook;
+        return WaitForDedicatedServerWorldActionIdleWithHooks(
+            actionPad,
+            timeoutMs,
+            hooks);
     }
 
     bool HasDedicatedServerGameplayInstance()
     {
-        return g_nativeGameplayInstance;
+        return g_nativeRuntimeState.gameplayInstance;
     }
 
     bool IsDedicatedServerAppShutdownRequested()
     {
-        return g_nativeAppShutdownRequested;
+        return g_nativeRuntimeState.appShutdownRequested;
     }
 
     void SetDedicatedServerAppShutdownRequested(bool shutdownRequested)
     {
-        g_nativeAppShutdownRequested = shutdownRequested;
+        g_nativeRuntimeState.appShutdownRequested = shutdownRequested;
     }
 
     bool IsDedicatedServerGameplayHalted()
     {
-        return g_nativeGameplayHalted;
+        return g_nativeRuntimeState.gameplayHalted;
     }
 
     bool IsDedicatedServerStopSignalValid()
     {
-        return g_nativeStopSignalValid;
+        return g_nativeRuntimeState.stopSignalValid;
     }
 
     void EnableDedicatedServerSaveOnExit()
     {
+        g_nativeRuntimeState.saveOnExitEnabled = true;
     }
 
     void HaltDedicatedServerGameplay()
     {
-        g_nativeGameplayHalted = true;
+        g_nativeRuntimeState.gameplayHalted = true;
     }
 
     void WaitForDedicatedServerStopSignal()
     {
+        g_nativeRuntimeState.gameplayInstance = false;
+        g_nativeRuntimeState.stopSignalValid = false;
+        g_nativeRuntimeState.pendingWorldActionTicks = 0;
     }
 
     void StopDedicatedServerPlatformRuntime()
     {
-        g_nativeGameplayInstance = false;
-        g_nativeStopSignalValid = false;
+        g_nativeRuntimeState = {};
     }
 }

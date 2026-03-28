@@ -30,9 +30,11 @@ set(expected_markers
 if(RUN_MODE STREQUAL "bootstrap")
   list(PREPEND run_args --bootstrap-only)
 elseif(RUN_MODE STREQUAL "shell")
-  list(APPEND run_args --command status --command stop)
+  list(APPEND run_args --command save --command status --command stop)
   list(APPEND expected_markers
     "native bootstrap shell running"
+    "manual save requested"
+    "world-action=busy"
     "stop requested")
 else()
   message(FATAL_ERROR "Unsupported RUN_MODE: ${RUN_MODE}")

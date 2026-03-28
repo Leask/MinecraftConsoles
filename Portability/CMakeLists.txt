@@ -227,9 +227,11 @@ if(BUILD_TESTING)
     COMMAND
       $<TARGET_FILE:Minecraft.Server.NativeBootstrap>
       --command
-      help
+      save
       --command
       status
+      --command
+      help
       --command
       stop
       -port

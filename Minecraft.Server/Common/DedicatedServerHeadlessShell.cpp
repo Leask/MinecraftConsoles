@@ -3,6 +3,7 @@
 #include <cctype>
 #include <string>
 
+#include "DedicatedServerPlatformRuntime.h"
 #include "../ServerLogger.h"
 #include "DedicatedServerSignalState.h"
 #include "StringUtils.h"
@@ -63,7 +64,7 @@ namespace ServerRuntime
 
     void LogDedicatedServerHeadlessShellHelp()
     {
-        LogInfo("console", "native shell commands: help, status, stop");
+        LogInfo("console", "native shell commands: help, save, status, stop");
     }
 
     void PollDedicatedServerHeadlessShellConnections(
@@ -120,14 +121,17 @@ namespace ServerRuntime
 
         if (command == "status")
         {
+            const bool worldActionIdle =
+                IsDedicatedServerWorldActionIdle(0);
             LogInfof(
                 "console",
-                "status host=%s bind=%s configured-port=%d listener-port=%d accepted=%llu",
+                "status host=%s bind=%s configured-port=%d listener-port=%d accepted=%llu world-action=%s",
                 context.hostName.c_str(),
                 context.bindIp.c_str(),
                 context.multiplayerPort,
                 context.listenerPort,
-                (unsigned long long)state.acceptedConnections);
+                (unsigned long long)state.acceptedConnections,
+                worldActionIdle ? "idle" : "busy");
             LogInfof(
                 "console",
                 "status world=%s level-id=%s storage=%s whitelist=%s lan=%s",
@@ -136,6 +140,13 @@ namespace ServerRuntime
                 context.storageRoot.c_str(),
                 context.whitelistEnabled ? "enabled" : "disabled",
                 context.lanAdvertise ? "enabled" : "disabled");
+            return true;
+        }
+
+        if (command == "save")
+        {
+            RequestDedicatedServerWorldAutosave(0);
+            LogInfo("console", "manual save requested");
             return true;
         }
 

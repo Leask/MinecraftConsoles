@@ -1272,8 +1272,12 @@ int main(int argc, char* argv[])
     const bool platformActionIdle =
         ServerRuntime::IsDedicatedServerWorldActionIdle(0);
     ServerRuntime::RequestDedicatedServerWorldAutosave(0);
+    const bool platformActionPending =
+        !ServerRuntime::IsDedicatedServerWorldActionIdle(0);
+    const bool platformWaitStillBusy =
+        !ServerRuntime::WaitForDedicatedServerWorldActionIdle(0, 1);
     const bool platformWaitIdle =
-        ServerRuntime::WaitForDedicatedServerWorldActionIdle(0, 1);
+        ServerRuntime::WaitForDedicatedServerWorldActionIdle(0, 100);
     WaitHookSmokeContext waitHookIdleContext = {};
     waitHookIdleContext.idleAfterTicks = 2;
     ServerRuntime::DedicatedServerWorldActionWaitHooks worldActionWaitHooks =
@@ -1344,6 +1348,14 @@ int main(int argc, char* argv[])
     gameplayLoopState.nextTickMs = 0;
     const ServerRuntime::DedicatedServerGameplayLoopIterationResult
         gameplayLoopRequest =
+            ServerRuntime::TickDedicatedServerGameplayLoop(
+                &gameplayLoopState,
+                runtimeProperties,
+                0,
+                nullptr,
+                nullptr);
+    const ServerRuntime::DedicatedServerGameplayLoopIterationResult
+        gameplayLoopPending =
             ServerRuntime::TickDedicatedServerGameplayLoop(
                 &gameplayLoopState,
                 runtimeProperties,
@@ -2257,9 +2269,15 @@ int main(int argc, char* argv[])
             runHooks.beforeSessionProc != nullptr &&
             runHooks.pollProc != nullptr &&
             runHooks.afterSessionProc != nullptr);
-    printf("platform_actions=%d action_idle=%d wait_idle=%d\n",
-        platformActionIdle && platformWaitIdle,
+    printf("platform_actions=%d action_idle=%d pending=%d busy=%d "
+        "wait_idle=%d\n",
+        platformActionIdle &&
+            platformActionPending &&
+            platformWaitStillBusy &&
+            platformWaitIdle,
         platformActionIdle,
+        platformActionPending,
+        platformWaitStillBusy,
         platformWaitIdle);
     printf("world_action_wait_hooks=%d idle=%d timeout=%d halt=%d "
         "ticks=%d handles=%d\n",
@@ -2303,13 +2321,19 @@ int main(int argc, char* argv[])
         initialSaveExecution.timedOut,
         shutdownExecution.plan.shouldWaitForServerStop,
         shutdownExecution.haltedGameplay);
-    printf("gameplay_loop=%d request=%d complete=%d exit=%d\n",
+    printf("gameplay_loop=%d request=%d pending=%d complete=%d exit=%d\n",
         gameplayLoopRequest.autosaveRequested &&
             !gameplayLoopRequest.shouldExit &&
+            !gameplayLoopPending.autosaveCompleted &&
+            !gameplayLoopPending.autosaveRequested &&
+            !gameplayLoopPending.shouldExit &&
             gameplayLoopComplete.autosaveCompleted &&
             !gameplayLoopComplete.shouldExit &&
             gameplayLoopExit.shouldExit,
         gameplayLoopRequest.autosaveRequested,
+        !gameplayLoopPending.autosaveCompleted &&
+            !gameplayLoopPending.autosaveRequested &&
+            !gameplayLoopPending.shouldExit,
         gameplayLoopComplete.autosaveCompleted,
         gameplayLoopExit.shouldExit);
     printf("gameplay_loop_run=%d iterations=%zu polls=%d app_shutdown=%d\n",
@@ -2817,6 +2841,8 @@ int main(int argc, char* argv[])
         runtimeState.dedicatedServer &&
         runtimeState.lanAdvertise &&
         platformActionIdle &&
+        platformActionPending &&
+        platformWaitStillBusy &&
         platformWaitIdle &&
         platformGameplayInstance &&
         platformAppShutdownBefore &&
@@ -2833,6 +2859,9 @@ int main(int argc, char* argv[])
         shutdownExecution.haltedGameplay &&
         gameplayLoopRequest.autosaveRequested &&
         !gameplayLoopRequest.shouldExit &&
+        !gameplayLoopPending.autosaveCompleted &&
+        !gameplayLoopPending.autosaveRequested &&
+        !gameplayLoopPending.shouldExit &&
         gameplayLoopComplete.autosaveCompleted &&
         !gameplayLoopComplete.shouldExit &&
         gameplayLoopExit.shouldExit &&
