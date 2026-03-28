@@ -13,6 +13,8 @@ if(NOT DEFINED RUN_MODE OR RUN_MODE STREQUAL "")
 endif()
 
 file(REMOVE_RECURSE "${TEST_DIR}")
+get_filename_component(TEST_PARENT "${TEST_DIR}" DIRECTORY)
+file(MAKE_DIRECTORY "${TEST_PARENT}")
 file(MAKE_DIRECTORY "${TEST_DIR}")
 set(STORAGE_ROOT "${TEST_DIR}/storage-root")
 file(REMOVE_RECURSE "${STORAGE_ROOT}")
@@ -30,12 +32,12 @@ set(expected_markers
 if(RUN_MODE STREQUAL "bootstrap")
   list(PREPEND run_args --bootstrap-only)
 elseif(RUN_MODE STREQUAL "shell")
-  list(APPEND run_args --command save --command status --command stop)
+  list(APPEND run_args --command save --command status --shutdown-after-ms 250)
   list(APPEND expected_markers
     "native bootstrap shell running"
     "manual save requested"
     "world-action=busy"
-    "stop requested")
+    "native bootstrap auto-shutdown after 250ms")
 else()
   message(FATAL_ERROR "Unsupported RUN_MODE: ${RUN_MODE}")
 endif()
@@ -71,5 +73,24 @@ foreach(expected_marker IN LISTS expected_markers)
       "${expected_marker}\noutput:\n${combined_output}\n")
   endif()
 endforeach()
+
+if(RUN_MODE STREQUAL "shell")
+  file(READ "${STORAGE_ROOT}/world.save" saved_world_text)
+  foreach(expected_save_marker IN ITEMS
+      "native-headless-save"
+      "autosave-completions="
+      "remote-commands=0")
+    string(FIND
+      "${saved_world_text}"
+      "${expected_save_marker}"
+      saved_world_index)
+    if(saved_world_index LESS 0)
+      message(FATAL_ERROR
+        "Saved world file did not contain expected marker: "
+        "${expected_save_marker}\n"
+        "save file:\n${saved_world_text}\n")
+    endif()
+  endforeach()
+endif()
 
 file(REMOVE "${STORAGE_ROOT}/world.save")

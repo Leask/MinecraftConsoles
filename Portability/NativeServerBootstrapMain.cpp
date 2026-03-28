@@ -12,6 +12,7 @@
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalHandlers.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
+#include "Minecraft.Server/Common/ServerStoragePaths.h"
 #include "Minecraft.Server/ServerLogger.h"
 
 namespace
@@ -45,7 +46,9 @@ int main(int argc, char** argv)
     std::string storageRootOverride;
     std::uint64_t shutdownAfterMs = 0;
     std::uint64_t requiredAcceptedConnections = 0;
+    std::uint64_t requiredRemoteCommands = 0;
     std::vector<std::string> scriptedCommands;
+    std::vector<std::string> shellSelfCommands;
     int serverArgc = 1;
     for (int i = 1; i < argc; ++i)
     {
@@ -122,6 +125,36 @@ int main(int argc, char** argv)
             ++i;
             continue;
         }
+        if (std::strcmp(argv[i], "--require-remote-commands") == 0)
+        {
+            if (i + 1 >= argc)
+            {
+                std::fprintf(
+                    stderr,
+                    "startup error: missing value for "
+                    "--require-remote-commands\n");
+                return 2;
+            }
+
+            errno = 0;
+            char* end = nullptr;
+            const unsigned long long parsedValue = std::strtoull(
+                argv[i + 1],
+                &end,
+                10);
+            if (argv[i + 1] == end || *end != '\0' || errno != 0)
+            {
+                std::fprintf(
+                    stderr,
+                    "startup error: invalid "
+                    "--require-remote-commands value\n");
+                return 2;
+            }
+
+            requiredRemoteCommands = (std::uint64_t)parsedValue;
+            ++i;
+            continue;
+        }
         if (std::strcmp(argv[i], "--storage-root") == 0)
         {
             if (i + 1 >= argc)
@@ -150,8 +183,28 @@ int main(int argc, char** argv)
             ++i;
             continue;
         }
+        if (std::strcmp(argv[i], "--shell-self-command") == 0)
+        {
+            if (i + 1 >= argc)
+            {
+                std::fprintf(
+                    stderr,
+                    "startup error: missing value for "
+                    "--shell-self-command\n");
+                return 2;
+            }
+
+            shellSelfCommands.push_back(argv[i + 1]);
+            ++i;
+            continue;
+        }
 
         argv[serverArgc++] = argv[i];
+    }
+
+    if (!shellSelfCommands.empty())
+    {
+        shellSelfConnect = true;
     }
 
     if (!ServerRuntime::InstallDedicatedServerShutdownSignalHandlers())
@@ -188,10 +241,14 @@ int main(int argc, char** argv)
                 "Run shell mode for a bounded time\n");
             std::printf("  --require-accepted-connections <n> "
                 "Fail if shell accepts fewer than n clients\n");
+            std::printf("  --require-remote-commands <n> "
+                "Fail if shell runs fewer than n remote commands\n");
             std::printf("  --storage-root <path>      "
                 "Override native storage root\n");
             std::printf("  --command <cmd>            "
                 "Run one native shell command before stdin\n");
+            std::printf("  --shell-self-command <cmd> "
+                "Send one loopback remote shell command\n");
             return 0;
         }
     case ServerRuntime::eDedicatedServerBootstrap_Failed:
@@ -210,6 +267,12 @@ int main(int argc, char** argv)
             stderr,
             "startup error: failed to set storage root override\n");
         return 2;
+    }
+
+    if (!storageRootOverride.empty())
+    {
+        bootstrapContext.storageRoot =
+            ServerRuntime::GetServerGameHddRootPath();
     }
 
     std::string bootstrapError;
@@ -236,7 +299,9 @@ int main(int argc, char** argv)
             shellSelfConnect,
             shutdownAfterMs,
             requiredAcceptedConnections,
-            scriptedCommands
+            requiredRemoteCommands,
+            scriptedCommands,
+            shellSelfCommands
         };
     const int exitCode = ServerRuntime::RunDedicatedServerHeadlessRuntime(
         bootstrapContext,

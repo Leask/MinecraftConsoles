@@ -16,7 +16,9 @@ namespace ServerRuntime
         bool shellSelfConnect = false;
         std::uint64_t shutdownAfterMs = 0;
         std::uint64_t requiredAcceptedConnections = 0;
+        std::uint64_t requiredRemoteCommands = 0;
         std::vector<std::string> scriptedCommands;
+        std::vector<std::string> shellSelfCommands;
     };
 
     int RunDedicatedServerHeadlessRuntime(

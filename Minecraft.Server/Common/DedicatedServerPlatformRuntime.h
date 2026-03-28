@@ -101,6 +101,8 @@ namespace ServerRuntime
     bool IsDedicatedServerGameplayHalted();
     bool IsDedicatedServerStopSignalValid();
     void EnableDedicatedServerSaveOnExit();
+    std::uint64_t GetDedicatedServerAutosaveRequestCount();
+    std::uint64_t GetDedicatedServerAutosaveCompletionCount();
     void HaltDedicatedServerGameplay();
     void WaitForDedicatedServerStopSignal();
     void StopDedicatedServerPlatformRuntime();

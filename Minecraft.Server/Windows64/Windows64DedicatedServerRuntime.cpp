@@ -323,6 +323,16 @@ namespace ServerRuntime
         }
     }
 
+    std::uint64_t GetDedicatedServerAutosaveRequestCount()
+    {
+        return 0;
+    }
+
+    std::uint64_t GetDedicatedServerAutosaveCompletionCount()
+    {
+        return 0;
+    }
+
     void HaltDedicatedServerGameplay()
     {
         MinecraftServer::HaltServer();

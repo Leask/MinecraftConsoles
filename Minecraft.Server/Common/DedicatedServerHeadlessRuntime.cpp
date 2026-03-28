@@ -10,6 +10,7 @@
 #include "DedicatedServerPlatformRuntime.h"
 #include "DedicatedServerSignalState.h"
 #include "DedicatedServerSocketBootstrap.h"
+#include "FileUtils.h"
 #include "../ServerLogger.h"
 #include "../WorldManager.h"
 #include "lce_net/lce_net.h"
@@ -41,6 +42,7 @@ namespace
         LceSocketHandle listener = LCE_INVALID_SOCKET;
         int listenerPort = 0;
         std::uint64_t shellStartMs = 0;
+        std::uint64_t persistedAutosaveCompletions = 0;
         int failureExitCode = 0;
     };
 
@@ -142,6 +144,9 @@ namespace
             : bindIp.c_str();
     }
 
+    void RefreshDedicatedServerHeadlessShellContext(
+        DedicatedServerHeadlessRunHooksContext *context);
+
     int RunDedicatedServerSelfConnect(
         const ServerRuntime::DedicatedServerBootstrapContext &context,
         const ServerRuntime::DedicatedServerSocketBootstrapState &socketState)
@@ -199,7 +204,8 @@ namespace
 
     bool InitiateDedicatedServerShellSelfConnect(
         const ServerRuntime::DedicatedServerBootstrapContext &context,
-        int listenerPort)
+        int listenerPort,
+        const std::vector<std::string> &commands)
     {
         const char *loopbackTarget = GetDedicatedServerLoopbackTarget(
             context.runtimeState.bindIp);
@@ -224,9 +230,120 @@ namespace
                 loopbackTarget,
                 listenerPort);
         }
+        else if (!commands.empty())
+        {
+            std::string requestPayload;
+            for (size_t i = 0; i < commands.size(); ++i)
+            {
+                requestPayload.append(commands[i]);
+                requestPayload.push_back('\n');
+            }
+
+            if (!requestPayload.empty() &&
+                !LceNetSendAll(
+                    clientSocket,
+                    requestPayload.data(),
+                    (int)requestPayload.size()))
+            {
+                ServerRuntime::LogError(
+                    "startup",
+                    "failed to send shell self-connect commands");
+                LceNetCloseSocket(clientSocket);
+                return false;
+            }
+        }
 
         LceNetCloseSocket(clientSocket);
         return connected;
+    }
+
+    std::string GetDedicatedServerHeadlessSaveId(
+        const DedicatedServerHeadlessRunHooksContext &context)
+    {
+        if (!context.shellContext.worldSaveId.empty())
+        {
+            return context.shellContext.worldSaveId;
+        }
+
+        return "world";
+    }
+
+    std::string BuildDedicatedServerHeadlessSavePath(
+        const DedicatedServerHeadlessRunHooksContext &context)
+    {
+        std::string savePath = context.shellContext.storageRoot;
+        if (!savePath.empty() && savePath.back() != '/')
+        {
+            savePath.push_back('/');
+        }
+
+        savePath.append(GetDedicatedServerHeadlessSaveId(context));
+        savePath.append(".save");
+        return savePath;
+    }
+
+    bool PersistDedicatedServerHeadlessSaveStub(
+        DedicatedServerHeadlessRunHooksContext *context)
+    {
+        if (context == nullptr)
+        {
+            return false;
+        }
+
+        const std::uint64_t completedAutosaves =
+            ServerRuntime::GetDedicatedServerAutosaveCompletionCount();
+        if (completedAutosaves <= context->persistedAutosaveCompletions)
+        {
+            return true;
+        }
+
+        RefreshDedicatedServerHeadlessShellContext(context);
+        const std::string savePath =
+            BuildDedicatedServerHeadlessSavePath(*context);
+        char buffer[1024] = {};
+        std::snprintf(
+            buffer,
+            sizeof(buffer),
+            "native-headless-save\n"
+            "world=%s\n"
+            "level-id=%s\n"
+            "host=%s\n"
+            "bind=%s\n"
+            "configured-port=%d\n"
+            "listener-port=%d\n"
+            "accepted-connections=%llu\n"
+            "remote-commands=%llu\n"
+            "autosave-requests=%llu\n"
+            "autosave-completions=%llu\n"
+            "saved-at-filetime=%llu\n",
+            context->shellContext.worldName.c_str(),
+            GetDedicatedServerHeadlessSaveId(*context).c_str(),
+            context->shellContext.hostName.c_str(),
+            context->shellContext.bindIp.c_str(),
+            context->shellContext.multiplayerPort,
+            context->shellContext.listenerPort,
+            (unsigned long long)context->shellState.acceptedConnections,
+            (unsigned long long)context->shellState.remoteCommands,
+            (unsigned long long)
+                ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
+            (unsigned long long)completedAutosaves,
+            (unsigned long long)ServerRuntime::FileUtils::GetCurrentUtcFileTime());
+        if (!ServerRuntime::FileUtils::WriteTextFileAtomic(savePath, buffer))
+        {
+            ServerRuntime::LogWarnf(
+                "world-io",
+                "failed to persist native save stub %s",
+                savePath.c_str());
+            return false;
+        }
+
+        context->persistedAutosaveCompletions = completedAutosaves;
+        ServerRuntime::LogInfof(
+            "world-io",
+            "persisted native save stub #%llu to %s",
+            (unsigned long long)completedAutosaves,
+            savePath.c_str());
+        return true;
     }
 
     void RefreshDedicatedServerHeadlessShellContext(
@@ -276,7 +393,8 @@ namespace
         if (context->options->shellSelfConnect &&
             !InitiateDedicatedServerShellSelfConnect(
                 *context->bootstrapContext,
-                context->listenerPort))
+                context->listenerPort,
+                context->options->shellSelfCommands))
         {
             context->failureExitCode = 9;
             ServerRuntime::RequestDedicatedServerShutdown();
@@ -307,6 +425,7 @@ namespace
 
         ServerRuntime::PollDedicatedServerHeadlessShellConnections(
             context->listener,
+            context->shellContext,
             &context->shellState);
 
         if (context->options->shutdownAfterMs > 0)
@@ -335,6 +454,8 @@ namespace
                     context->shellState);
             }
         }
+
+        PersistDedicatedServerHeadlessSaveStub(context);
     }
 
     bool ValidateDedicatedServerHeadlessShellRun(
@@ -343,6 +464,19 @@ namespace
     {
         if (context.failureExitCode != 0)
         {
+            return false;
+        }
+
+        if (options.requiredRemoteCommands > 0 &&
+            context.shellState.remoteCommands <
+                options.requiredRemoteCommands)
+        {
+            ServerRuntime::LogErrorf(
+                "network",
+                "native shell expected at least %llu remote "
+                "commands but only observed %llu",
+                (unsigned long long)options.requiredRemoteCommands,
+                (unsigned long long)context.shellState.remoteCommands);
             return false;
         }
 
@@ -545,6 +679,8 @@ namespace ServerRuntime
 
             return 10;
         }
+
+        PersistDedicatedServerHeadlessSaveStub(&shellHooksContext);
 
         LogInfo("shutdown", "native bootstrap shell stopped");
         return 0;

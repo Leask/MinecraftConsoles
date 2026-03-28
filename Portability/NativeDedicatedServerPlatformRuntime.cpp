@@ -143,6 +143,16 @@ namespace ServerRuntime
         g_nativeRuntimeState.saveOnExitEnabled = true;
     }
 
+    std::uint64_t GetDedicatedServerAutosaveRequestCount()
+    {
+        return g_nativeRuntimeState.autosaveRequestCount;
+    }
+
+    std::uint64_t GetDedicatedServerAutosaveCompletionCount()
+    {
+        return g_nativeRuntimeState.autosaveCompletionCount;
+    }
+
     void HaltDedicatedServerGameplay()
     {
         g_nativeRuntimeState.gameplayHalted = true;

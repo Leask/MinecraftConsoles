@@ -25,6 +25,7 @@ namespace ServerRuntime
     struct DedicatedServerHeadlessShellState
     {
         std::uint64_t acceptedConnections = 0;
+        std::uint64_t remoteCommands = 0;
     };
 
     DedicatedServerHeadlessShellContext
@@ -37,10 +38,12 @@ namespace ServerRuntime
 
     void PollDedicatedServerHeadlessShellConnections(
         LceSocketHandle listener,
+        const DedicatedServerHeadlessShellContext &context,
         DedicatedServerHeadlessShellState *state);
 
     bool ExecuteDedicatedServerHeadlessShellCommand(
         const std::string &line,
         const DedicatedServerHeadlessShellContext &context,
-        const DedicatedServerHeadlessShellState &state);
+        const DedicatedServerHeadlessShellState &state,
+        std::string *response = nullptr);
 }
