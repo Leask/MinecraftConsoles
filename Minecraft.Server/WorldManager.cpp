@@ -188,10 +188,14 @@ static EDedicatedServerWorldLoadStatus PrepareWorldSaveData(
 			loadPayload.resolvedSaveId),
 		storageRuntime.storageHooks);
 
-	*outSaveData = new LoadSaveDataThreadParam(
-		loadPayload.bytes.data(),
-		static_cast<unsigned int>(loadPayload.bytes.size()),
+	*outSaveData = CreateOwnedLoadSaveDataThreadParam(
+		loadPayload.bytes,
 		loadPayload.matchedTitle);
+	if (*outSaveData == NULL)
+	{
+		LogWorldIO("failed to allocate owned save payload for server startup");
+		return eDedicatedServerWorldLoad_Failed;
+	}
 	LogWorldIO("prepared save data payload for server startup");
 	return loadStatus;
 }

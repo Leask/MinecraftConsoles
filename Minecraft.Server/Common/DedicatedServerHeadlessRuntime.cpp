@@ -1,10 +1,12 @@
 #include "DedicatedServerHeadlessRuntime.h"
 
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <string>
 
 #include "DedicatedServerHeadlessShell.h"
+#include "DedicatedServerLifecycle.h"
 #include "DedicatedServerPlatformRuntime.h"
 #include "DedicatedServerSignalState.h"
 #include "DedicatedServerSocketBootstrap.h"
@@ -16,6 +18,38 @@
 
 namespace
 {
+    struct NativeDedicatedServerNetworkGameInitData
+    {
+        std::int64_t seed = 0;
+        ServerRuntime::LoadSaveDataThreadParam *saveData = nullptr;
+        DWORD settings = 0;
+        bool dedicatedNoLocalHostPlayer = false;
+        unsigned int xzSize = 0;
+        unsigned char hellScale = 0;
+    };
+
+    struct DedicatedServerHeadlessRunHooksContext
+    {
+        ServerRuntime::DedicatedServerBootstrapContext *bootstrapContext =
+            nullptr;
+        const ServerRuntime::DedicatedServerPlatformState *platformState =
+            nullptr;
+        const ServerRuntime::DedicatedServerHeadlessRuntimeOptions *options =
+            nullptr;
+        ServerRuntime::DedicatedServerHeadlessShellContext shellContext = {};
+        ServerRuntime::DedicatedServerHeadlessShellState shellState = {};
+        LceSocketHandle listener = LCE_INVALID_SOCKET;
+        int listenerPort = 0;
+        std::uint64_t shellStartMs = 0;
+        int failureExitCode = 0;
+    };
+
+    struct DedicatedServerHeadlessWorldBootstrapResult
+    {
+        int exitCode = 0;
+        ServerRuntime::WorldBootstrapResult worldBootstrap = {};
+    };
+
     class DedicatedServerHeadlessRuntimeGuard
     {
     public:
@@ -114,7 +148,7 @@ namespace
 
         char acceptedIp[64] = {};
         int acceptedPort = -1;
-        LceSocketHandle acceptedSocket = LceNetAcceptIpv4(
+        const LceSocketHandle acceptedSocket = LceNetAcceptIpv4(
             socketState.listener,
             acceptedIp,
             sizeof(acceptedIp),
@@ -165,124 +199,190 @@ namespace
                 loopbackTarget,
                 listenerPort);
         }
+
         LceNetCloseSocket(clientSocket);
         return connected;
     }
 
-    bool RunDedicatedServerHeadlessShell(
-        const ServerRuntime::DedicatedServerHeadlessRuntimeOptions &options,
-        const ServerRuntime::DedicatedServerHeadlessShellContext
-            &shellContext,
-        LceSocketHandle listener)
+    void RefreshDedicatedServerHeadlessShellContext(
+        DedicatedServerHeadlessRunHooksContext *context)
     {
-        ServerRuntime::DedicatedServerHeadlessShellState shellState = {};
-        const std::uint64_t shellStartMs = LceGetMonotonicMilliseconds();
+        if (context == nullptr ||
+            context->bootstrapContext == nullptr ||
+            context->platformState == nullptr)
+        {
+            return;
+        }
+
+        context->shellContext =
+            ServerRuntime::BuildDedicatedServerHeadlessShellContext(
+                *context->bootstrapContext,
+                *context->platformState,
+                context->listenerPort);
+    }
+
+    void StartDedicatedServerHeadlessShellHook(void *hookContext)
+    {
+        DedicatedServerHeadlessRunHooksContext *context =
+            static_cast<DedicatedServerHeadlessRunHooksContext *>(hookContext);
+        if (context == nullptr)
+        {
+            return;
+        }
+
+        RefreshDedicatedServerHeadlessShellContext(context);
+        context->shellStartMs = LceGetMonotonicMilliseconds();
         ServerRuntime::LogInfo(
             "startup",
             "native bootstrap shell running; "
             "type stop or send SIGINT to exit");
-        if (!options.scriptedCommands.empty())
+    }
+
+    void RunDedicatedServerHeadlessShellCommandsHook(void *hookContext)
+    {
+        DedicatedServerHeadlessRunHooksContext *context =
+            static_cast<DedicatedServerHeadlessRunHooksContext *>(hookContext);
+        if (context == nullptr || context->options == nullptr)
         {
-            for (size_t i = 0; i < options.scriptedCommands.size(); ++i)
+            return;
+        }
+
+        RefreshDedicatedServerHeadlessShellContext(context);
+        if (context->options->shellSelfConnect &&
+            !InitiateDedicatedServerShellSelfConnect(
+                *context->bootstrapContext,
+                context->listenerPort))
+        {
+            context->failureExitCode = 9;
+            ServerRuntime::RequestDedicatedServerShutdown();
+            return;
+        }
+
+        for (size_t i = 0; i < context->options->scriptedCommands.size(); ++i)
+        {
+            ServerRuntime::ExecuteDedicatedServerHeadlessShellCommand(
+                context->options->scriptedCommands[i],
+                context->shellContext,
+                context->shellState);
+            if (ServerRuntime::IsDedicatedServerShutdownRequested())
+            {
+                break;
+            }
+        }
+    }
+
+    void PollDedicatedServerHeadlessShellHook(void *hookContext)
+    {
+        DedicatedServerHeadlessRunHooksContext *context =
+            static_cast<DedicatedServerHeadlessRunHooksContext *>(hookContext);
+        if (context == nullptr || context->options == nullptr)
+        {
+            return;
+        }
+
+        ServerRuntime::PollDedicatedServerHeadlessShellConnections(
+            context->listener,
+            &context->shellState);
+
+        if (context->options->shutdownAfterMs > 0)
+        {
+            const std::uint64_t now = LceGetMonotonicMilliseconds();
+            if (now - context->shellStartMs >=
+                context->options->shutdownAfterMs)
+            {
+                ServerRuntime::LogInfof(
+                    "shutdown",
+                    "native bootstrap auto-shutdown after %llums",
+                    (unsigned long long)context->options->shutdownAfterMs);
+                ServerRuntime::RequestDedicatedServerShutdown();
+                return;
+            }
+        }
+
+        if (LceStdinIsAvailable() && LceWaitForStdinReadable(0) == 1)
+        {
+            char lineBuffer[256] = {};
+            if (std::fgets(lineBuffer, sizeof(lineBuffer), stdin) != nullptr)
             {
                 ServerRuntime::ExecuteDedicatedServerHeadlessShellCommand(
-                    options.scriptedCommands[i],
-                    shellContext,
-                    shellState);
-                if (ServerRuntime::IsDedicatedServerShutdownRequested())
-                {
-                    break;
-                }
+                    lineBuffer,
+                    context->shellContext,
+                    context->shellState);
             }
         }
+    }
 
-        while (!ServerRuntime::IsDedicatedServerShutdownRequested())
+    bool ValidateDedicatedServerHeadlessShellRun(
+        const ServerRuntime::DedicatedServerHeadlessRuntimeOptions &options,
+        const DedicatedServerHeadlessRunHooksContext &context)
+    {
+        if (context.failureExitCode != 0)
         {
-            ServerRuntime::PollDedicatedServerHeadlessShellConnections(
-                listener,
-                &shellState);
-
-            if (options.shutdownAfterMs > 0)
-            {
-                const std::uint64_t now = LceGetMonotonicMilliseconds();
-                if (now - shellStartMs >= options.shutdownAfterMs)
-                {
-                    ServerRuntime::LogInfof(
-                        "shutdown",
-                        "native bootstrap auto-shutdown after %llums",
-                        (unsigned long long)options.shutdownAfterMs);
-                    ServerRuntime::RequestDedicatedServerShutdown();
-                    break;
-                }
-            }
-
-            if (LceStdinIsAvailable() && LceWaitForStdinReadable(50) == 1)
-            {
-                char lineBuffer[256] = {};
-                if (std::fgets(lineBuffer, sizeof(lineBuffer), stdin) != nullptr)
-                {
-                    ServerRuntime::ExecuteDedicatedServerHeadlessShellCommand(
-                        lineBuffer,
-                        shellContext,
-                        shellState);
-                }
-            }
-
-            LceSleepMilliseconds(50);
-        }
-
-        if (options.requiredAcceptedConnections > 0 &&
-            shellState.acceptedConnections <
-                options.requiredAcceptedConnections)
-        {
-            ServerRuntime::LogErrorf(
-                "network",
-                "native shell expected at least %llu accepted "
-                "connections but only observed %llu",
-                (unsigned long long)options.requiredAcceptedConnections,
-                (unsigned long long)shellState.acceptedConnections);
             return false;
         }
 
-        return true;
+        if (options.requiredAcceptedConnections == 0)
+        {
+            return true;
+        }
+
+        if (context.shellState.acceptedConnections >=
+            options.requiredAcceptedConnections)
+        {
+            return true;
+        }
+
+        ServerRuntime::LogErrorf(
+            "network",
+            "native shell expected at least %llu accepted "
+            "connections but only observed %llu",
+            (unsigned long long)options.requiredAcceptedConnections,
+            (unsigned long long)context.shellState.acceptedConnections);
+        return false;
     }
 
-    int BootstrapDedicatedServerHeadlessWorld(
+    DedicatedServerHeadlessWorldBootstrapResult
+    BootstrapDedicatedServerHeadlessWorld(
         const ServerRuntime::DedicatedServerBootstrapContext &context)
     {
-        const ServerRuntime::WorldBootstrapResult worldBootstrap =
-            ServerRuntime::BootstrapWorldForServer(
-                context.serverProperties,
-                0,
-                nullptr);
-        if (worldBootstrap.status == ServerRuntime::eWorldBootstrap_Failed)
+        DedicatedServerHeadlessWorldBootstrapResult result = {};
+        result.worldBootstrap = ServerRuntime::BootstrapWorldForServer(
+            context.serverProperties,
+            0,
+            nullptr);
+        if (result.worldBootstrap.status ==
+            ServerRuntime::eWorldBootstrap_Failed)
         {
             ServerRuntime::LogError(
                 "startup",
                 "native world bootstrap failed");
-            return 11;
+            result.exitCode = 11;
+            return result;
         }
 
         const char *bootstrapMode =
-            worldBootstrap.status == ServerRuntime::eWorldBootstrap_Loaded
+            result.worldBootstrap.status == ServerRuntime::eWorldBootstrap_Loaded
                 ? "loaded"
                 : "created-new";
         ServerRuntime::LogInfof(
             "startup",
             "native world bootstrap=%s level-id=%s",
             bootstrapMode,
-            worldBootstrap.resolvedSaveId.c_str());
+            result.worldBootstrap.resolvedSaveId.c_str());
 
-        if (worldBootstrap.saveData != nullptr)
+        if (result.worldBootstrap.saveData != nullptr)
         {
             ServerRuntime::LogWarn(
                 "startup",
                 "native headless runtime does not yet consume "
                 "loaded save payloads");
-            return 12;
+            ServerRuntime::DestroyLoadSaveDataThreadParam(
+                result.worldBootstrap.saveData);
+            result.worldBootstrap.saveData = nullptr;
+            result.exitCode = 12;
         }
 
-        return 0;
+        return result;
     }
 }
 
@@ -293,6 +393,7 @@ namespace ServerRuntime
         const DedicatedServerPlatformState &platformState,
         const DedicatedServerHeadlessRuntimeOptions &options)
     {
+        DedicatedServerBootstrapContext runtimeContext = context;
         DedicatedServerHeadlessRuntimeGuard runtimeGuard;
         const DedicatedServerPlatformRuntimeStartResult
             platformRuntimeStartResult =
@@ -312,11 +413,12 @@ namespace ServerRuntime
             platformRuntimeStartResult.runtimeName.c_str(),
             platformRuntimeStartResult.headless ? "true" : "false");
 
-        const int worldBootstrapExitCode =
-            BootstrapDedicatedServerHeadlessWorld(context);
-        if (worldBootstrapExitCode != 0)
+        const DedicatedServerHeadlessWorldBootstrapResult
+            worldBootstrapResult =
+                BootstrapDedicatedServerHeadlessWorld(runtimeContext);
+        if (worldBootstrapResult.exitCode != 0)
         {
-            return worldBootstrapExitCode;
+            return worldBootstrapResult.exitCode;
         }
 
         if (options.bootstrapOnly)
@@ -338,7 +440,7 @@ namespace ServerRuntime
         runtimeGuard.MarkSocketRuntimeStarted();
         std::string socketError;
         if (!StartDedicatedServerSocketBootstrap(
-                context,
+                runtimeContext,
                 runtimeGuard.GetSocketState(),
                 &socketError))
         {
@@ -350,18 +452,13 @@ namespace ServerRuntime
         LogInfof(
             "startup",
             "native bootstrap bound dedicated listener on %s:%d",
-            context.runtimeState.bindIp.c_str(),
+            runtimeContext.runtimeState.bindIp.c_str(),
             runtimeGuard.GetSocketState()->boundPort);
-        const DedicatedServerHeadlessShellContext shellContext =
-            BuildDedicatedServerHeadlessShellContext(
-                context,
-                platformState,
-                runtimeGuard.GetSocketState()->boundPort);
 
         if (options.selfConnect)
         {
             const int selfConnectExitCode = RunDedicatedServerSelfConnect(
-                context,
+                runtimeContext,
                 *runtimeGuard.GetSocketState());
             if (selfConnectExitCode == 0)
             {
@@ -380,21 +477,53 @@ namespace ServerRuntime
                 "live shell accepts may stall");
         }
 
-        if (options.shellSelfConnect &&
-            !InitiateDedicatedServerShellSelfConnect(
-                context,
-                runtimeGuard.GetSocketState()->boundPort))
+        NativeDedicatedServerNetworkGameInitData initData = {};
+        DedicatedServerHeadlessRunHooksContext shellHooksContext = {};
+        shellHooksContext.bootstrapContext = &runtimeContext;
+        shellHooksContext.platformState = &platformState;
+        shellHooksContext.options = &options;
+        shellHooksContext.listener = runtimeGuard.GetSocketState()->listener;
+        shellHooksContext.listenerPort =
+            runtimeGuard.GetSocketState()->boundPort;
+
+        DedicatedServerRunHooks runHooks = {};
+        runHooks.afterStartupProc = &StartDedicatedServerHeadlessShellHook;
+        runHooks.afterStartupContext = &shellHooksContext;
+        runHooks.beforeSessionProc =
+            &RunDedicatedServerHeadlessShellCommandsHook;
+        runHooks.beforeSessionContext = &shellHooksContext;
+        runHooks.pollProc = &PollDedicatedServerHeadlessShellHook;
+        runHooks.pollContext = &shellHooksContext;
+
+        const DedicatedServerRunExecutionResult runExecution =
+            ExecuteDedicatedServerRun(
+                runtimeContext.config,
+                &runtimeContext.serverProperties,
+                worldBootstrapResult.worldBootstrap,
+                0,
+                static_cast<std::int64_t>(LceGetMonotonicNanoseconds()),
+                nullptr,
+                &initData,
+                runHooks,
+                LceGetMonotonicMilliseconds(),
+                50);
+        if (runExecution.abortedStartup)
         {
-            return 9;
+            return runExecution.abortExitCode;
         }
 
-        if (!RunDedicatedServerHeadlessShell(
-            options,
-            shellContext,
-            runtimeGuard.GetSocketState()->listener))
+        if (!ValidateDedicatedServerHeadlessShellRun(
+                options,
+                shellHooksContext))
         {
+            if (shellHooksContext.failureExitCode != 0)
+            {
+                return shellHooksContext.failureExitCode;
+            }
+
             return 10;
         }
+
         LogInfo("shutdown", "native bootstrap shell stopped");
         return 0;
     }

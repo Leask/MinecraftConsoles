@@ -858,6 +858,23 @@ int main(int argc, char* argv[])
                 nullptr,
                 worldLoadPipelineCorruptHooks,
                 &worldLoadPipelineCorruptPayload);
+    LoadSaveDataThreadParam *ownedLoadSaveData =
+        ServerRuntime::CreateOwnedLoadSaveDataThreadParam(
+            worldLoadPayload.bytes,
+            worldLoadPayload.matchedTitle);
+    bool ownedLoadSaveDataCopied = false;
+    if (ownedLoadSaveData != nullptr)
+    {
+        worldLoadPayload.bytes[0] = 9;
+        const unsigned char *ownedBytes =
+            static_cast<const unsigned char *>(ownedLoadSaveData->data);
+        ownedLoadSaveDataCopied =
+            ownedLoadSaveData->fileSize == 4 &&
+            ownedLoadSaveData->saveName == L"Smoke World" &&
+            ownedBytes != nullptr &&
+            ownedBytes[0] == 1;
+    }
+    ServerRuntime::DestroyLoadSaveDataThreadParam(ownedLoadSaveData);
     LoadSaveDataThreadParam *fakeBootstrapSaveData =
         reinterpret_cast<LoadSaveDataThreadParam *>(0x4321);
     const ServerRuntime::WorldBootstrapResult loadedWorldTargetBootstrap =
@@ -1721,7 +1738,7 @@ int main(int argc, char* argv[])
         worldStorageHookContext.appliedSaveId.c_str(),
         worldStorageHookContext.resetCount);
     printf("world_load_pipeline=%d loaded=%d matched=%d bytes=%zu "
-        "not_found=%d corrupt=%d\n",
+        "owned=%d not_found=%d corrupt=%d\n",
         worldLoadPipelineStatus ==
                 ServerRuntime::eDedicatedServerWorldLoad_Loaded &&
             worldLoadPipelineContext.beginQueryCount == 1 &&
@@ -1731,6 +1748,7 @@ int main(int argc, char* argv[])
             worldLoadPayload.matchedFilename == L"resolved_world" &&
             worldLoadPayload.resolvedSaveId == "resolved_world" &&
             worldLoadPayload.bytes.size() == 4 &&
+            ownedLoadSaveDataCopied &&
             worldLoadPipelineNotFoundStatus ==
                 ServerRuntime::eDedicatedServerWorldLoad_NotFound &&
             worldLoadPipelineNotFoundContext.beginQueryCount == 1 &&
@@ -1742,6 +1760,7 @@ int main(int argc, char* argv[])
         worldLoadPipelineStatus,
         worldLoadPipelineContext.matchedIndex,
         worldLoadPayload.bytes.size(),
+        ownedLoadSaveDataCopied,
         worldLoadPipelineNotFoundStatus,
         worldLoadPipelineCorruptStatus);
     printf("dedicated_defaults=%d dedicated_props=%d dedicated_cli=%d "
@@ -2396,6 +2415,7 @@ int main(int argc, char* argv[])
         worldLoadPayload.matchedFilename == L"resolved_world" &&
         worldLoadPayload.resolvedSaveId == "resolved_world" &&
         worldLoadPayload.bytes.size() == 4 &&
+        ownedLoadSaveDataCopied &&
         worldLoadPipelineNotFoundStatus ==
             ServerRuntime::eDedicatedServerWorldLoad_NotFound &&
         worldLoadPipelineNotFoundContext.beginQueryCount == 1 &&

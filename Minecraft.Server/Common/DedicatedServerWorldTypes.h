@@ -1,7 +1,9 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace ServerRuntime
 {
@@ -37,6 +39,35 @@ namespace ServerRuntime
         LoadSaveDataThreadParam *saveData = nullptr;
         std::string resolvedSaveId;
     };
+
+    inline LoadSaveDataThreadParam *CreateOwnedLoadSaveDataThreadParam(
+        const std::vector<unsigned char> &bytes,
+        const std::wstring &saveName)
+    {
+        if (bytes.empty())
+        {
+            return nullptr;
+        }
+
+        unsigned char *ownedBytes = new unsigned char[bytes.size()];
+        std::copy(bytes.begin(), bytes.end(), ownedBytes);
+        return new LoadSaveDataThreadParam(
+            ownedBytes,
+            static_cast<std::int64_t>(bytes.size()),
+            saveName);
+    }
+
+    inline void DestroyLoadSaveDataThreadParam(
+        LoadSaveDataThreadParam *param)
+    {
+        if (param == nullptr)
+        {
+            return;
+        }
+
+        delete[] static_cast<unsigned char *>(param->data);
+        delete param;
+    }
 }
 
 using LoadSaveDataThreadParam = ServerRuntime::LoadSaveDataThreadParam;
