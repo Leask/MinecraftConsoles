@@ -20,6 +20,7 @@ file(MAKE_DIRECTORY "${STORAGE_ROOT}")
 file(WRITE "${STORAGE_ROOT}/world.save" "loaded-smoke")
 
 set(run_args
+  --storage-root "${STORAGE_ROOT}"
   -port 0
   -bind 127.0.0.1
   -name NativeLoadedBootstrap)
@@ -39,10 +40,6 @@ endif()
 
 execute_process(
   COMMAND
-    "${CMAKE_COMMAND}"
-    -E
-    env
-    "MINECRAFT_SERVER_STORAGE_ROOT=${STORAGE_ROOT}"
     "${EXECUTABLE}"
     ${run_args}
   WORKING_DIRECTORY "${TEST_DIR}"
