@@ -6,6 +6,27 @@
 
 namespace
 {
+    bool ParseLongLong(
+        const std::string &text,
+        std::int64_t *outValue)
+    {
+        if (outValue == nullptr || text.empty())
+        {
+            return false;
+        }
+
+        errno = 0;
+        char *end = nullptr;
+        const long long parsed = std::strtoll(text.c_str(), &end, 10);
+        if (text.c_str() == end || *end != '\0' || errno != 0)
+        {
+            return false;
+        }
+
+        *outValue = (std::int64_t)parsed;
+        return true;
+    }
+
     bool ParseUnsignedLongLong(
         const std::string &text,
         std::uint64_t *outValue)
@@ -70,10 +91,13 @@ namespace ServerRuntime
             "native-headless-save\n"
             "world=%s\n"
             "level-id=%s\n"
+            "startup-mode=%s\n"
             "host=%s\n"
             "bind=%s\n"
+            "seed=%lld\n"
             "configured-port=%d\n"
             "listener-port=%d\n"
+            "public-slots=%u\n"
             "accepted-connections=%llu\n"
             "remote-commands=%llu\n"
             "autosave-requests=%llu\n"
@@ -81,10 +105,13 @@ namespace ServerRuntime
             "saved-at-filetime=%llu\n",
             stub.worldName.c_str(),
             stub.levelId.c_str(),
+            stub.startupMode.c_str(),
             stub.hostName.c_str(),
             stub.bindIp.c_str(),
+            (long long)stub.resolvedSeed,
             stub.configuredPort,
             stub.listenerPort,
+            stub.publicSlots,
             (unsigned long long)stub.acceptedConnections,
             (unsigned long long)stub.remoteCommands,
             (unsigned long long)stub.autosaveRequests,
@@ -148,6 +175,10 @@ namespace ServerRuntime
                         {
                             outStub->levelId = value;
                         }
+                        else if (key == "startup-mode")
+                        {
+                            outStub->startupMode = value;
+                        }
                         else if (key == "host")
                         {
                             outStub->hostName = value;
@@ -156,6 +187,10 @@ namespace ServerRuntime
                         {
                             outStub->bindIp = value;
                         }
+                        else if (key == "seed")
+                        {
+                            ParseLongLong(value, &outStub->resolvedSeed);
+                        }
                         else if (key == "configured-port")
                         {
                             ParseInt(value, &outStub->configuredPort);
@@ -163,6 +198,16 @@ namespace ServerRuntime
                         else if (key == "listener-port")
                         {
                             ParseInt(value, &outStub->listenerPort);
+                        }
+                        else if (key == "public-slots")
+                        {
+                            int publicSlots = 0;
+                            if (ParseInt(value, &publicSlots) &&
+                                publicSlots >= 0)
+                            {
+                                outStub->publicSlots =
+                                    (unsigned int)publicSlots;
+                            }
                         }
                         else if (key == "accepted-connections")
                         {

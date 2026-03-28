@@ -9,10 +9,13 @@ namespace ServerRuntime
     {
         std::string worldName;
         std::string levelId;
+        std::string startupMode;
         std::string hostName;
         std::string bindIp;
+        std::int64_t resolvedSeed = 0;
         int configuredPort = 0;
         int listenerPort = 0;
+        unsigned int publicSlots = 0;
         std::uint64_t acceptedConnections = 0;
         std::uint64_t remoteCommands = 0;
         std::uint64_t autosaveRequests = 0;

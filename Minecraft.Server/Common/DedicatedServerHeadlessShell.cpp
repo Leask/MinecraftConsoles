@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "DedicatedServerHostedGameRuntimeState.h"
 #include "DedicatedServerPlatformRuntime.h"
 #include "../ServerLogger.h"
 #include "DedicatedServerSignalState.h"
@@ -89,6 +90,27 @@ namespace
             context.whitelistEnabled ? "enabled" : "disabled",
             context.lanAdvertise ? "enabled" : "disabled");
         AppendResponseLine(response, buffer);
+
+        const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
+            runtimeSnapshot =
+                ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+        if (runtimeSnapshot.startAttempted)
+        {
+            std::snprintf(
+                buffer,
+                sizeof(buffer),
+                "status runtime=%s seed=%lld world-size=%u hell-scale=%u "
+                "public-slots=%u private-slots=%u startup=%d thread=%s",
+                runtimeSnapshot.loadedFromSave ? "loaded" : "created-new",
+                (long long)runtimeSnapshot.resolvedSeed,
+                runtimeSnapshot.worldSizeChunks,
+                (unsigned int)runtimeSnapshot.worldHellScale,
+                (unsigned int)runtimeSnapshot.publicSlots,
+                (unsigned int)runtimeSnapshot.privateSlots,
+                runtimeSnapshot.startupResult,
+                runtimeSnapshot.threadInvoked ? "invoked" : "skipped");
+            AppendResponseLine(response, buffer);
+        }
     }
 
     std::vector<std::string> SplitShellRequestLines(
@@ -286,6 +308,23 @@ namespace ServerRuntime
                 context.storageRoot.c_str(),
                 context.whitelistEnabled ? "enabled" : "disabled",
                 context.lanAdvertise ? "enabled" : "disabled");
+            const DedicatedServerHostedGameRuntimeSnapshot runtimeSnapshot =
+                GetDedicatedServerHostedGameRuntimeSnapshot();
+            if (runtimeSnapshot.startAttempted)
+            {
+                LogInfof(
+                    "console",
+                    "status runtime=%s seed=%lld world-size=%u hell-scale=%u "
+                    "public-slots=%u private-slots=%u startup=%d thread=%s",
+                    runtimeSnapshot.loadedFromSave ? "loaded" : "created-new",
+                    (long long)runtimeSnapshot.resolvedSeed,
+                    runtimeSnapshot.worldSizeChunks,
+                    (unsigned int)runtimeSnapshot.worldHellScale,
+                    (unsigned int)runtimeSnapshot.publicSlots,
+                    (unsigned int)runtimeSnapshot.privateSlots,
+                    runtimeSnapshot.startupResult,
+                    runtimeSnapshot.threadInvoked ? "invoked" : "skipped");
+            }
             AppendStatusResponseLine(response, context, state);
             return true;
         }

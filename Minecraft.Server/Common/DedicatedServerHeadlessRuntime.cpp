@@ -6,6 +6,7 @@
 #include <string>
 
 #include "DedicatedServerHeadlessShell.h"
+#include "DedicatedServerHostedGameRuntimeState.h"
 #include "DedicatedServerLifecycle.h"
 #include "DedicatedServerPlatformRuntime.h"
 #include "DedicatedServerSignalState.h"
@@ -315,6 +316,16 @@ namespace
         saveStub.autosaveCompletions = completedAutosaves;
         saveStub.savedAtFileTime =
             ServerRuntime::FileUtils::GetCurrentUtcFileTime();
+        const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
+            runtimeSnapshot =
+                ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+        if (runtimeSnapshot.startAttempted)
+        {
+            saveStub.startupMode =
+                runtimeSnapshot.loadedFromSave ? "loaded" : "created-new";
+            saveStub.resolvedSeed = runtimeSnapshot.resolvedSeed;
+            saveStub.publicSlots = runtimeSnapshot.publicSlots;
+        }
 
         std::string saveText;
         if (!ServerRuntime::BuildNativeDedicatedServerSaveStubText(

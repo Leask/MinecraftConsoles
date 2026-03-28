@@ -13,6 +13,7 @@
 #include "Minecraft.Server/Common/DedicatedServerBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerGameplayLoop.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
+#include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/DedicatedServerLifecycle.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
@@ -1416,6 +1417,9 @@ int main(int argc, char* argv[])
                 hostedGamePlan,
                 &HostedGameStartupSmokeThreadProc,
                 &hostedGameStartupInitData);
+    const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
+        hostedGameRuntimeSnapshot =
+            ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
     ServerRuntime::StopDedicatedServerPlatformRuntime();
     ServerRuntime::ResetDedicatedServerShutdownRequest();
     const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
@@ -2364,6 +2368,29 @@ int main(int argc, char* argv[])
         hostedGameStartupExecution.startupResult,
         hostedGameStartupExecution.startupPlan.shouldAbortStartup,
         hostedGameStartupExecution.startupPlan.abortExitCode);
+    printf("hosted_game_snapshot=%d loaded=%d seed=%lld public=%u "
+        "startup=%d thread=%d\n",
+        hostedGameRuntimeSnapshot.startAttempted &&
+            hostedGameRuntimeSnapshot.threadInvoked &&
+            hostedGameRuntimeSnapshot.loadedFromSave &&
+            hostedGameRuntimeSnapshot.resolvedSeed ==
+                hostedGamePlan.resolvedSeed &&
+            hostedGameRuntimeSnapshot.worldSizeChunks ==
+                sessionConfig.worldSizeChunks &&
+            hostedGameRuntimeSnapshot.worldHellScale ==
+                sessionConfig.worldHellScale &&
+            hostedGameRuntimeSnapshot.publicSlots ==
+                sessionConfig.networkMaxPlayers &&
+            hostedGameRuntimeSnapshot.privateSlots == 0 &&
+            hostedGameRuntimeSnapshot.onlineGame &&
+            !hostedGameRuntimeSnapshot.privateGame &&
+            hostedGameRuntimeSnapshot.fakeLocalPlayerJoined &&
+            hostedGameRuntimeSnapshot.startupResult == 0,
+        hostedGameRuntimeSnapshot.loadedFromSave,
+        (long long)hostedGameRuntimeSnapshot.resolvedSeed,
+        (unsigned int)hostedGameRuntimeSnapshot.publicSlots,
+        hostedGameRuntimeSnapshot.startupResult,
+        hostedGameRuntimeSnapshot.threadInvoked);
     printf("session_execution=%d runtime=%d initial=%d shutdown=%d "
         "iterations=%zu polls=%d\n",
         platformSessionRuntimeResult.ok &&

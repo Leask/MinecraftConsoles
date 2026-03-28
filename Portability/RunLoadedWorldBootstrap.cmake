@@ -37,6 +37,7 @@ elseif(RUN_MODE STREQUAL "shell")
     "native bootstrap shell running"
     "manual save requested"
     "world-action=busy"
+    "status runtime=loaded"
     "native bootstrap auto-shutdown after 250ms")
 else()
   message(FATAL_ERROR "Unsupported RUN_MODE: ${RUN_MODE}")
@@ -76,10 +77,11 @@ endforeach()
 
 if(RUN_MODE STREQUAL "shell")
   file(READ "${STORAGE_ROOT}/world.save" saved_world_text)
-  foreach(expected_save_marker IN ITEMS
-      "native-headless-save"
-      "autosave-completions="
-      "remote-commands=0")
+foreach(expected_save_marker IN ITEMS
+    "native-headless-save"
+    "startup-mode=loaded"
+    "autosave-completions="
+    "remote-commands=0")
     string(FIND
       "${saved_world_text}"
       "${expected_save_marker}"

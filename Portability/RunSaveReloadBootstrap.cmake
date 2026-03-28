@@ -53,6 +53,7 @@ endforeach()
 file(READ "${STORAGE_ROOT}/world.save" saved_world_text)
 foreach(expected_save_marker IN ITEMS
     "native-headless-save"
+    "startup-mode=created-new"
     "autosave-completions=2")
   string(FIND "${saved_world_text}" "${expected_save_marker}" save_index)
   if(save_index LESS 0)

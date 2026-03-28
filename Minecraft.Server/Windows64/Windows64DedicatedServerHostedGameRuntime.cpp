@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "..\Common\DedicatedServerHostedGameRuntime.h"
+#include "..\Common\DedicatedServerHostedGameRuntimeState.h"
 #include "..\Common\DedicatedServerPlatformRuntime.h"
 #include "..\Common\DedicatedServerSignalState.h"
 
@@ -16,8 +17,11 @@ namespace ServerRuntime
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam)
     {
+        ResetDedicatedServerHostedGameRuntimeSnapshot();
+        RecordDedicatedServerHostedGameRuntimePlan(hostedGamePlan);
         if (threadProc == nullptr)
         {
+            RecordDedicatedServerHostedGameRuntimeStartupResult(-1, false);
             return -1;
         }
 
@@ -43,6 +47,10 @@ namespace ServerRuntime
         }
 
         startThread.WaitForCompletion(INFINITE);
-        return startThread.GetExitCode();
+        const int startupResult = startThread.GetExitCode();
+        RecordDedicatedServerHostedGameRuntimeStartupResult(
+            startupResult,
+            true);
+        return startupResult;
     }
 }

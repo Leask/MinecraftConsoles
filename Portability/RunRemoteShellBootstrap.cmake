@@ -46,6 +46,7 @@ foreach(expected_marker IN ITEMS
     "remote shell command #1: status"
     "remote shell command #2: save"
     "remote shell command #3: stop"
+    "status runtime=created-new"
     "manual save requested"
     "persisted native save stub #1")
   string(FIND "${combined_output}" "${expected_marker}" marker_index)
@@ -59,6 +60,7 @@ endforeach()
 file(READ "${STORAGE_ROOT}/world.save" saved_world_text)
 foreach(expected_save_marker IN ITEMS
     "native-headless-save"
+    "startup-mode=created-new"
     "remote-commands=3"
     "autosave-completions=1")
   string(FIND "${saved_world_text}" "${expected_save_marker}" save_index)
