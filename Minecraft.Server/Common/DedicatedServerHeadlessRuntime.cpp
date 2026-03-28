@@ -639,7 +639,8 @@ namespace
                     "startup",
                     "native loaded save metadata path=%s startup=%s "
                     "phase=%s remote=%llu autosaves=%llu ticks=%llu "
-                    "uptime=%llu",
+                    "uptime=%llu completed=%s app-shutdown=%s "
+                    "shutdown-halted=%s gameplay-iterations=%llu",
                     loadedSaveMetadata.savePath.c_str(),
                     loadedSaveMetadata.saveStub.startupMode.c_str(),
                     loadedSaveMetadata.saveStub.sessionPhase.c_str(),
@@ -650,7 +651,18 @@ namespace
                     (unsigned long long)
                         loadedSaveMetadata.saveStub.platformTickCount,
                     (unsigned long long)
-                        loadedSaveMetadata.saveStub.uptimeMs);
+                        loadedSaveMetadata.saveStub.uptimeMs,
+                    loadedSaveMetadata.saveStub.sessionCompleted
+                        ? "true"
+                        : "false",
+                    loadedSaveMetadata.saveStub.requestedAppShutdown
+                        ? "true"
+                        : "false",
+                    loadedSaveMetadata.saveStub.shutdownHaltedGameplay
+                        ? "true"
+                        : "false",
+                    (unsigned long long)
+                        loadedSaveMetadata.saveStub.gameplayLoopIterations);
             }
         }
 

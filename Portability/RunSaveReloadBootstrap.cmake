@@ -102,6 +102,8 @@ foreach(expected_reload_marker IN ITEMS
     "native world bootstrap=loaded level-id=world"
     "native loaded save metadata path="
     "startup=created-new phase="
+    "completed=true"
+    "gameplay-iterations="
     "native bootstrap completed in bootstrap-only mode")
   string(FIND
     "${reload_combined_output}"

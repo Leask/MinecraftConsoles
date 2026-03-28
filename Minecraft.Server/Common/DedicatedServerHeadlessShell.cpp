@@ -185,7 +185,9 @@ namespace
                     buffer,
                     sizeof(buffer),
                     "status loaded-save path=%s startup=%s phase=%s "
-                    "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu",
+                    "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu "
+                    "completed=%s app-shutdown=%s shutdown-halted=%s "
+                    "gameplay-iterations=%llu",
                     runtimeSnapshot.loadedSavePath.c_str(),
                     runtimeSnapshot.previousStartupMode.c_str(),
                     runtimeSnapshot.previousSessionPhase.c_str(),
@@ -195,7 +197,16 @@ namespace
                         runtimeSnapshot.previousAutosaveCompletions,
                     (unsigned long long)
                         runtimeSnapshot.previousPlatformTickCount,
-                    (unsigned long long)runtimeSnapshot.previousUptimeMs);
+                    (unsigned long long)runtimeSnapshot.previousUptimeMs,
+                    runtimeSnapshot.previousSessionCompleted ? "true" : "false",
+                    runtimeSnapshot.previousRequestedAppShutdown
+                        ? "true"
+                        : "false",
+                    runtimeSnapshot.previousShutdownHaltedGameplay
+                        ? "true"
+                        : "false",
+                    (unsigned long long)
+                        runtimeSnapshot.previousGameplayLoopIterations);
                 AppendResponseLine(response, buffer);
             }
         }
@@ -485,7 +496,9 @@ namespace ServerRuntime
                     LogInfof(
                         "console",
                         "status loaded-save path=%s startup=%s phase=%s "
-                        "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu",
+                        "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu "
+                        "completed=%s app-shutdown=%s shutdown-halted=%s "
+                        "gameplay-iterations=%llu",
                         runtimeSnapshot.loadedSavePath.c_str(),
                         runtimeSnapshot.previousStartupMode.c_str(),
                         runtimeSnapshot.previousSessionPhase.c_str(),
@@ -496,7 +509,18 @@ namespace ServerRuntime
                         (unsigned long long)
                             runtimeSnapshot.previousPlatformTickCount,
                         (unsigned long long)
-                            runtimeSnapshot.previousUptimeMs);
+                            runtimeSnapshot.previousUptimeMs,
+                        runtimeSnapshot.previousSessionCompleted
+                            ? "true"
+                            : "false",
+                        runtimeSnapshot.previousRequestedAppShutdown
+                            ? "true"
+                            : "false",
+                        runtimeSnapshot.previousShutdownHaltedGameplay
+                            ? "true"
+                            : "false",
+                        (unsigned long long)
+                            runtimeSnapshot.previousGameplayLoopIterations);
                 }
             }
             AppendStatusResponseLine(response, context, state);
