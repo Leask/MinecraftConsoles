@@ -125,6 +125,8 @@ int main(int argc, char** argv)
     }
 
     ServerRuntime::DedicatedServerBootstrapContext bootstrapContext = {};
+    ServerRuntime::DedicatedServerBootstrapEnvironmentGuard
+        bootstrapShutdownGuard;
     std::string parseError;
     switch (ServerRuntime::PrepareDedicatedServerBootstrapContext(
             serverArgc,
@@ -136,12 +138,7 @@ int main(int argc, char** argv)
         break;
     case ServerRuntime::eDedicatedServerBootstrap_ShowHelp:
         {
-            std::vector<std::string> usageLines;
-            ServerRuntime::BuildDedicatedServerUsageLines(&usageLines);
-            for (const std::string& line : usageLines)
-            {
-                std::printf("%s\n", line.c_str());
-            }
+            ServerRuntime::PrintDedicatedServerUsage(stdout);
             std::printf("\n");
             std::printf("Native bootstrap options:\n");
             std::printf("  --bootstrap-only           "
@@ -175,6 +172,7 @@ int main(int argc, char** argv)
         ServerRuntime::LogError("startup", bootstrapError.c_str());
         return 3;
     }
+    bootstrapShutdownGuard.Activate(&bootstrapContext);
 
     ServerRuntime::LogDedicatedServerBootstrapSummary(
         "native bootstrap",
@@ -196,7 +194,5 @@ int main(int argc, char** argv)
         bootstrapContext,
         platformState,
         runtimeOptions);
-    ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(
-        &bootstrapContext);
     return exitCode;
 }

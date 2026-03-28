@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdio>
 #include <cstdint>
 #include <string>
 
@@ -28,6 +29,36 @@ namespace ServerRuntime
         bool accessInitialized = false;
     };
 
+    void ShutdownDedicatedServerBootstrapEnvironment(
+        DedicatedServerBootstrapContext *context);
+
+    class DedicatedServerBootstrapEnvironmentGuard
+    {
+    public:
+        DedicatedServerBootstrapEnvironmentGuard()
+            : m_context(nullptr)
+        {
+        }
+
+        void Activate(DedicatedServerBootstrapContext *context)
+        {
+            m_context = context;
+        }
+
+        void Release()
+        {
+            m_context = nullptr;
+        }
+
+        ~DedicatedServerBootstrapEnvironmentGuard()
+        {
+            ShutdownDedicatedServerBootstrapEnvironment(m_context);
+        }
+
+    private:
+        DedicatedServerBootstrapContext *m_context;
+    };
+
     EDedicatedServerBootstrapStatus PrepareDedicatedServerBootstrapContext(
         int argc,
         char **argv,
@@ -40,6 +71,9 @@ namespace ServerRuntime
 
     void ShutdownDedicatedServerBootstrapEnvironment(
         DedicatedServerBootstrapContext *context);
+
+    void PrintDedicatedServerUsage(FILE *stream);
+    void LogDedicatedServerUsage();
 
     void LogDedicatedServerBootstrapSummary(
         const char *label,

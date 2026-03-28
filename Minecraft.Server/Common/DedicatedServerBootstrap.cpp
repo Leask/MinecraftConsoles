@@ -7,6 +7,8 @@
 #include "lce_filesystem/lce_filesystem.h"
 #include "lce_process/lce_process.h"
 
+#include <cstdio>
+
 namespace
 {
     bool EnsureDirectoryChain(const std::string &path)
@@ -162,6 +164,30 @@ namespace ServerRuntime
 
         Access::Shutdown();
         context->accessInitialized = false;
+    }
+
+    void PrintDedicatedServerUsage(FILE *stream)
+    {
+        std::vector<std::string> usageLines;
+        BuildDedicatedServerUsageLines(&usageLines);
+        FILE *resolvedStream = stream != nullptr ? stream : stdout;
+        for (size_t i = 0; i < usageLines.size(); ++i)
+        {
+            std::fprintf(
+                resolvedStream,
+                "%s\n",
+                usageLines[i].c_str());
+        }
+    }
+
+    void LogDedicatedServerUsage()
+    {
+        std::vector<std::string> usageLines;
+        BuildDedicatedServerUsageLines(&usageLines);
+        for (size_t i = 0; i < usageLines.size(); ++i)
+        {
+            LogInfo("usage", usageLines[i].c_str());
+        }
     }
 
     void LogDedicatedServerBootstrapSummary(

@@ -54,33 +54,6 @@
 
 static const int kServerActionPad = 0;
 
-/**
- * Calls dedicated bootstrap shutdown automatically once native/bootstrap
- * environment initialization succeeded.
- * 共有ブートストラップ初期化後のShutdownを自動化する
- */
-class DedicatedServerBootstrapGuard
-{
-public:
-	DedicatedServerBootstrapGuard()
-		: m_context(nullptr)
-	{
-	}
-
-	void Activate(ServerRuntime::DedicatedServerBootstrapContext *context)
-	{
-		m_context = context;
-	}
-
-	~DedicatedServerBootstrapGuard()
-	{
-		ServerRuntime::ShutdownDedicatedServerBootstrapEnvironment(m_context);
-	}
-
-private:
-	ServerRuntime::DedicatedServerBootstrapContext *m_context;
-};
-
 class DedicatedServerLogManagerGuard
 {
 public:
@@ -111,16 +84,6 @@ private:
 	bool m_active;
 };
 
-static void PrintUsage()
-{
-	std::vector<std::string> usageLines;
-	ServerRuntime::BuildDedicatedServerUsageLines(&usageLines);
-	for (size_t i = 0; i < usageLines.size(); ++i)
-	{
-		ServerRuntime::LogInfo("usage", usageLines[i].c_str());
-	}
-}
-
 using ServerRuntime::LogError;
 using ServerRuntime::LogErrorf;
 using ServerRuntime::LogInfof;
@@ -149,7 +112,8 @@ using ServerRuntime::WorldBootstrapResult;
 int main(int argc, char **argv)
 {
 	ServerRuntime::DedicatedServerBootstrapContext bootstrapContext = {};
-	DedicatedServerBootstrapGuard bootstrapShutdownGuard;
+	ServerRuntime::DedicatedServerBootstrapEnvironmentGuard
+		bootstrapShutdownGuard;
 	DedicatedServerLogManagerGuard logManagerGuard;
 	ServerRuntime::ResetDedicatedServerShutdownRequest();
 
@@ -169,7 +133,7 @@ int main(int argc, char **argv)
 	case ServerRuntime::eDedicatedServerBootstrap_Ready:
 		break;
 	case ServerRuntime::eDedicatedServerBootstrap_ShowHelp:
-		PrintUsage();
+		ServerRuntime::LogDedicatedServerUsage();
 		return 0;
 	case ServerRuntime::eDedicatedServerBootstrap_Failed:
 	default:
@@ -177,7 +141,7 @@ int main(int argc, char **argv)
 		{
 			LogError("startup", bootstrapError.c_str());
 		}
-		PrintUsage();
+		ServerRuntime::LogDedicatedServerUsage();
 		return 1;
 	}
 
