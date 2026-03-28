@@ -97,6 +97,7 @@ set(reload_combined_output "${reload_output}\n${reload_error}")
 foreach(expected_reload_marker IN ITEMS
     "matched save filename: world"
     "native world bootstrap=loaded level-id=world"
+    "native loaded save metadata path="
     "native bootstrap completed in bootstrap-only mode")
   string(FIND
     "${reload_combined_output}"

@@ -144,6 +144,25 @@ namespace
                 runtimeSnapshot.appShutdownRequested ? "true" : "false",
                 runtimeSnapshot.gameplayHalted ? "true" : "false");
             AppendResponseLine(response, buffer);
+
+            if (runtimeSnapshot.loadedSaveMetadataAvailable)
+            {
+                std::snprintf(
+                    buffer,
+                    sizeof(buffer),
+                    "status loaded-save path=%s startup=%s remote=%llu "
+                    "autosaves=%llu ticks=%llu uptime-ms=%llu",
+                    runtimeSnapshot.loadedSavePath.c_str(),
+                    runtimeSnapshot.previousStartupMode.c_str(),
+                    (unsigned long long)
+                        runtimeSnapshot.previousRemoteCommands,
+                    (unsigned long long)
+                        runtimeSnapshot.previousAutosaveCompletions,
+                    (unsigned long long)
+                        runtimeSnapshot.previousPlatformTickCount,
+                    (unsigned long long)runtimeSnapshot.previousUptimeMs);
+                AppendResponseLine(response, buffer);
+            }
         }
     }
 
@@ -388,6 +407,24 @@ namespace ServerRuntime
                     runtimeSnapshot.worldActionIdle ? "idle" : "busy",
                     runtimeSnapshot.appShutdownRequested ? "true" : "false",
                     runtimeSnapshot.gameplayHalted ? "true" : "false");
+
+                if (runtimeSnapshot.loadedSaveMetadataAvailable)
+                {
+                    LogInfof(
+                        "console",
+                        "status loaded-save path=%s startup=%s remote=%llu "
+                        "autosaves=%llu ticks=%llu uptime-ms=%llu",
+                        runtimeSnapshot.loadedSavePath.c_str(),
+                        runtimeSnapshot.previousStartupMode.c_str(),
+                        (unsigned long long)
+                            runtimeSnapshot.previousRemoteCommands,
+                        (unsigned long long)
+                            runtimeSnapshot.previousAutosaveCompletions,
+                        (unsigned long long)
+                            runtimeSnapshot.previousPlatformTickCount,
+                        (unsigned long long)
+                            runtimeSnapshot.previousUptimeMs);
+                }
             }
             AppendStatusResponseLine(response, context, state);
             return true;

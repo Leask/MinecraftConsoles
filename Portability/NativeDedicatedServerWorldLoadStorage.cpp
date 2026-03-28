@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
+#include "Minecraft.Server/Common/NativeDedicatedServerLoadedSaveState.h"
 #include "Minecraft.Server/Common/ServerStoragePaths.h"
 #include "Minecraft.Server/Common/StringUtils.h"
 
@@ -17,6 +18,8 @@ namespace
         std::filesystem::path path;
         std::wstring title;
         std::wstring filename;
+        bool hasStubMetadata = false;
+        ServerRuntime::NativeDedicatedServerSaveStub saveStub = {};
     };
 
     struct NativeDedicatedServerWorldLoadStorageContext
@@ -124,6 +127,8 @@ namespace
                         fileText,
                         &stub))
                 {
+                    saveEntry.hasStubMetadata = true;
+                    saveEntry.saveStub = stub;
                     if (!stub.worldName.empty())
                     {
                         saveEntry.title =
@@ -219,6 +224,15 @@ namespace
         }
 
         storageContext->matchedIndex = matchedIndex;
+        ServerRuntime::ResetNativeDedicatedServerLoadedSaveMetadata();
+        const NativeDedicatedServerWorldLoadStorageEntry &matchedEntry =
+            storageContext->entries[(size_t)matchedIndex];
+        if (matchedEntry.hasStubMetadata)
+        {
+            ServerRuntime::RecordNativeDedicatedServerLoadedSaveMetadata(
+                matchedEntry.path.string(),
+                matchedEntry.saveStub);
+        }
         return true;
     }
 
@@ -299,6 +313,7 @@ namespace ServerRuntime
     {
         NativeDedicatedServerWorldLoadStorageContext *context =
             new NativeDedicatedServerWorldLoadStorageContext();
+        ResetNativeDedicatedServerLoadedSaveMetadata();
         DedicatedServerWorldLoadStorageRuntime runtime = {};
         runtime.storageHooks.setWorldTitleProc =
             &SetNativeDedicatedServerWorldStorageTitle;

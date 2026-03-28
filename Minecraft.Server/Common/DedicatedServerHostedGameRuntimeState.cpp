@@ -1,5 +1,6 @@
 #include "DedicatedServerHostedGameRuntimeState.h"
 
+#include "NativeDedicatedServerLoadedSaveState.h"
 #include "StringUtils.h"
 
 namespace
@@ -58,6 +59,29 @@ namespace ServerRuntime
             g_dedicatedServerHostedGameRuntimeSnapshot.savePayloadName =
                 StringUtils::WideToUtf8(
                     hostedGamePlan.networkInitPlan.saveData->saveName);
+            const NativeDedicatedServerLoadedSaveMetadata loadedSaveMetadata =
+                GetNativeDedicatedServerLoadedSaveMetadata();
+            if (loadedSaveMetadata.available)
+            {
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .loadedSaveMetadataAvailable = true;
+                g_dedicatedServerHostedGameRuntimeSnapshot.loadedSavePath =
+                    loadedSaveMetadata.savePath;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousStartupMode =
+                        loadedSaveMetadata.saveStub.startupMode;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousRemoteCommands =
+                        loadedSaveMetadata.saveStub.remoteCommands;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousAutosaveCompletions =
+                        loadedSaveMetadata.saveStub.autosaveCompletions;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousPlatformTickCount =
+                        loadedSaveMetadata.saveStub.platformTickCount;
+                g_dedicatedServerHostedGameRuntimeSnapshot.previousUptimeMs =
+                    loadedSaveMetadata.saveStub.uptimeMs;
+            }
         }
         g_dedicatedServerHostedGameRuntimeSnapshot.worldSizeChunks =
             hostedGamePlan.networkInitPlan.worldSizeChunks;

@@ -15,6 +15,7 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/DedicatedServerLifecycle.h"
+#include "Minecraft.Server/Common/NativeDedicatedServerLoadedSaveState.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSessionConfig.h"
@@ -1408,6 +1409,15 @@ int main(int argc, char* argv[])
             ServerRuntime::ExecuteDedicatedServerShutdown();
     const bool platformGameplayHaltedAfter =
         ServerRuntime::IsDedicatedServerGameplayHalted();
+    ServerRuntime::NativeDedicatedServerSaveStub previousSaveStub = {};
+    previousSaveStub.startupMode = "loaded";
+    previousSaveStub.remoteCommands = 9;
+    previousSaveStub.autosaveCompletions = 7;
+    previousSaveStub.platformTickCount = 42;
+    previousSaveStub.uptimeMs = 1337;
+    ServerRuntime::RecordNativeDedicatedServerLoadedSaveMetadata(
+        "NativeDesktop/GameHDD/SmokeSession.save",
+        previousSaveStub);
     int hostedGameRuntimeThreadValue = 0;
     const int hostedGameRuntimeResult =
         ServerRuntime::StartDedicatedServerHostedGameRuntime(
@@ -2443,12 +2453,21 @@ int main(int argc, char* argv[])
             hostedGameRuntimeSnapshot.onlineGame &&
             !hostedGameRuntimeSnapshot.privateGame &&
             hostedGameRuntimeSnapshot.fakeLocalPlayerJoined &&
+            hostedGameRuntimeSnapshot.loadedSaveMetadataAvailable &&
+            hostedGameRuntimeSnapshot.loadedSavePath ==
+                "NativeDesktop/GameHDD/SmokeSession.save" &&
+            hostedGameRuntimeSnapshot.previousStartupMode == "loaded" &&
+            hostedGameRuntimeSnapshot.previousRemoteCommands == 9 &&
+            hostedGameRuntimeSnapshot.previousAutosaveCompletions == 7 &&
+            hostedGameRuntimeSnapshot.previousPlatformTickCount == 42 &&
+            hostedGameRuntimeSnapshot.previousUptimeMs == 1337 &&
             hostedGameRuntimeSnapshot.startupResult == 0,
         hostedGameRuntimeSnapshot.loadedFromSave,
         (long long)hostedGameRuntimeSnapshot.resolvedSeed,
         (unsigned int)hostedGameRuntimeSnapshot.publicSlots,
         hostedGameRuntimeSnapshot.startupResult,
         hostedGameRuntimeSnapshot.threadInvoked);
+    ServerRuntime::ResetNativeDedicatedServerLoadedSaveMetadata();
     printf("hosted_game_session=%d active=%d stopped=%d payload=%s bytes=%lld "
         "ticks=%llu action=%s shutdown=%d halted=%d uptime=%llu "
         "autosaves=%llu/%llu remote=%llu accepted=%llu\n",

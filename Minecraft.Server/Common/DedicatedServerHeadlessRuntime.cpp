@@ -12,6 +12,7 @@
 #include "DedicatedServerSignalState.h"
 #include "DedicatedServerSocketBootstrap.h"
 #include "FileUtils.h"
+#include "NativeDedicatedServerLoadedSaveState.h"
 #include "NativeDedicatedServerSaveStub.h"
 #include "../ServerLogger.h"
 #include "../WorldManager.h"
@@ -572,6 +573,7 @@ namespace
         const ServerRuntime::DedicatedServerBootstrapContext &context)
     {
         DedicatedServerHeadlessWorldBootstrapResult result = {};
+        ServerRuntime::ResetNativeDedicatedServerLoadedSaveMetadata();
         result.worldBootstrap = ServerRuntime::BootstrapWorldForServer(
             context.serverProperties,
             0,
@@ -601,6 +603,26 @@ namespace
             ServerRuntime::LogInfo(
                 "startup",
                 "native stub runtime prepared loaded save payload");
+            const ServerRuntime::NativeDedicatedServerLoadedSaveMetadata
+                loadedSaveMetadata =
+                    ServerRuntime::GetNativeDedicatedServerLoadedSaveMetadata();
+            if (loadedSaveMetadata.available)
+            {
+                ServerRuntime::LogInfof(
+                    "startup",
+                    "native loaded save metadata path=%s startup=%s "
+                    "remote=%llu autosaves=%llu ticks=%llu uptime=%llu",
+                    loadedSaveMetadata.savePath.c_str(),
+                    loadedSaveMetadata.saveStub.startupMode.c_str(),
+                    (unsigned long long)
+                        loadedSaveMetadata.saveStub.remoteCommands,
+                    (unsigned long long)
+                        loadedSaveMetadata.saveStub.autosaveCompletions,
+                    (unsigned long long)
+                        loadedSaveMetadata.saveStub.platformTickCount,
+                    (unsigned long long)
+                        loadedSaveMetadata.saveStub.uptimeMs);
+            }
         }
 
         return result;
