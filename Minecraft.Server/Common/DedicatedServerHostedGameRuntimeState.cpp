@@ -107,6 +107,18 @@ namespace ServerRuntime
                         loadedSaveMetadata.saveStub.platformTickCount;
                 g_dedicatedServerHostedGameRuntimeSnapshot.previousUptimeMs =
                     loadedSaveMetadata.saveStub.uptimeMs;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousGameplayLoopIterations =
+                        loadedSaveMetadata.saveStub.gameplayLoopIterations;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousSessionCompleted =
+                        loadedSaveMetadata.saveStub.sessionCompleted;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousRequestedAppShutdown =
+                        loadedSaveMetadata.saveStub.requestedAppShutdown;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousShutdownHaltedGameplay =
+                        loadedSaveMetadata.saveStub.shutdownHaltedGameplay;
             }
         }
         g_dedicatedServerHostedGameRuntimeSnapshot.worldSizeChunks =
@@ -215,6 +227,32 @@ namespace ServerRuntime
         UpdateDedicatedServerHostedGameRuntimeUptime(
             &g_dedicatedServerHostedGameRuntimeSnapshot,
             stoppedMs);
+    }
+
+    void RecordDedicatedServerHostedGameRuntimeGameplayLoopIteration(
+        std::uint64_t gameplayLoopIterations)
+    {
+        g_dedicatedServerHostedGameRuntimeSnapshot.gameplayLoopIterations =
+            gameplayLoopIterations;
+    }
+
+    void RecordDedicatedServerHostedGameRuntimeSessionSummary(
+        const DedicatedServerHostedGameRuntimeSessionSummary &summary)
+    {
+        g_dedicatedServerHostedGameRuntimeSnapshot.initialSaveRequested =
+            summary.initialSaveRequested;
+        g_dedicatedServerHostedGameRuntimeSnapshot.initialSaveCompleted =
+            summary.initialSaveCompleted;
+        g_dedicatedServerHostedGameRuntimeSnapshot.initialSaveTimedOut =
+            summary.initialSaveTimedOut;
+        g_dedicatedServerHostedGameRuntimeSnapshot.sessionCompleted =
+            summary.sessionCompleted;
+        g_dedicatedServerHostedGameRuntimeSnapshot.requestedAppShutdown =
+            summary.requestedAppShutdown;
+        g_dedicatedServerHostedGameRuntimeSnapshot.shutdownHaltedGameplay =
+            summary.shutdownHaltedGameplay;
+        g_dedicatedServerHostedGameRuntimeSnapshot.gameplayLoopIterations =
+            summary.gameplayLoopIterations;
     }
 
     void RecordDedicatedServerHostedGameRuntimePersistedSave(

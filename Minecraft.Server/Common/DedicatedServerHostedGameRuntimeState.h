@@ -56,11 +56,22 @@ namespace ServerRuntime
         std::uint64_t previousAutosaveCompletions = 0;
         std::uint64_t previousPlatformTickCount = 0;
         std::uint64_t previousUptimeMs = 0;
+        std::uint64_t previousGameplayLoopIterations = 0;
+        bool previousSessionCompleted = false;
+        bool previousRequestedAppShutdown = false;
+        bool previousShutdownHaltedGameplay = false;
         std::uint64_t acceptedConnections = 0;
         std::uint64_t remoteCommands = 0;
         std::uint64_t autosaveRequests = 0;
         std::uint64_t autosaveCompletions = 0;
         std::uint64_t platformTickCount = 0;
+        bool initialSaveRequested = false;
+        bool initialSaveCompleted = false;
+        bool initialSaveTimedOut = false;
+        bool sessionCompleted = false;
+        bool requestedAppShutdown = false;
+        bool shutdownHaltedGameplay = false;
+        std::uint64_t gameplayLoopIterations = 0;
         std::string lastPersistedSavePath;
         std::uint64_t lastPersistedFileTime = 0;
         std::uint64_t lastPersistedAutosaveCompletions = 0;
@@ -80,6 +91,17 @@ namespace ServerRuntime
         std::string bindIp;
         int configuredPort = 0;
         int listenerPort = 0;
+    };
+
+    struct DedicatedServerHostedGameRuntimeSessionSummary
+    {
+        bool initialSaveRequested = false;
+        bool initialSaveCompleted = false;
+        bool initialSaveTimedOut = false;
+        bool sessionCompleted = false;
+        bool requestedAppShutdown = false;
+        bool shutdownHaltedGameplay = false;
+        std::uint64_t gameplayLoopIterations = 0;
     };
 
     void ResetDedicatedServerHostedGameRuntimeSnapshot();
@@ -106,6 +128,12 @@ namespace ServerRuntime
         bool gameplayHalted,
         bool stopSignalValid,
         std::uint64_t nowMs);
+
+    void RecordDedicatedServerHostedGameRuntimeGameplayLoopIteration(
+        std::uint64_t gameplayLoopIterations);
+
+    void RecordDedicatedServerHostedGameRuntimeSessionSummary(
+        const DedicatedServerHostedGameRuntimeSessionSummary &summary);
 
     void MarkDedicatedServerHostedGameRuntimeSessionStopped(
         std::uint64_t stoppedMs);

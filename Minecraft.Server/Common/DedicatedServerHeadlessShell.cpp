@@ -148,6 +148,20 @@ namespace
                 runtimeSnapshot.gameplayHalted ? "true" : "false");
             AppendResponseLine(response, buffer);
 
+            std::snprintf(
+                buffer,
+                sizeof(buffer),
+                "status run initial-save=%s/%s/%s session-completed=%s "
+                "app-shutdown=%s shutdown-halted=%s gameplay-iterations=%llu",
+                runtimeSnapshot.initialSaveRequested ? "requested" : "skipped",
+                runtimeSnapshot.initialSaveCompleted ? "completed" : "pending",
+                runtimeSnapshot.initialSaveTimedOut ? "timed-out" : "ok",
+                runtimeSnapshot.sessionCompleted ? "true" : "false",
+                runtimeSnapshot.requestedAppShutdown ? "true" : "false",
+                runtimeSnapshot.shutdownHaltedGameplay ? "true" : "false",
+                (unsigned long long)runtimeSnapshot.gameplayLoopIterations);
+            AppendResponseLine(response, buffer);
+
             if (!runtimeSnapshot.savePath.empty() ||
                 !runtimeSnapshot.lastPersistedSavePath.empty())
             {
@@ -431,6 +445,25 @@ namespace ServerRuntime
                     runtimeSnapshot.worldActionIdle ? "idle" : "busy",
                     runtimeSnapshot.appShutdownRequested ? "true" : "false",
                     runtimeSnapshot.gameplayHalted ? "true" : "false");
+
+                LogInfof(
+                    "console",
+                    "status run initial-save=%s/%s/%s session-completed=%s "
+                    "app-shutdown=%s shutdown-halted=%s gameplay-iterations=%llu",
+                    runtimeSnapshot.initialSaveRequested
+                        ? "requested"
+                        : "skipped",
+                    runtimeSnapshot.initialSaveCompleted
+                        ? "completed"
+                        : "pending",
+                    runtimeSnapshot.initialSaveTimedOut
+                        ? "timed-out"
+                        : "ok",
+                    runtimeSnapshot.sessionCompleted ? "true" : "false",
+                    runtimeSnapshot.requestedAppShutdown ? "true" : "false",
+                    runtimeSnapshot.shutdownHaltedGameplay ? "true" : "false",
+                    (unsigned long long)
+                        runtimeSnapshot.gameplayLoopIterations);
 
                 if (!runtimeSnapshot.savePath.empty() ||
                     !runtimeSnapshot.lastPersistedSavePath.empty())

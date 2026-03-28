@@ -20,6 +20,12 @@ namespace ServerRuntime
         bool worldActionIdle = true;
         bool appShutdownRequested = false;
         bool gameplayHalted = false;
+        bool initialSaveRequested = false;
+        bool initialSaveCompleted = false;
+        bool initialSaveTimedOut = false;
+        bool sessionCompleted = false;
+        bool requestedAppShutdown = false;
+        bool shutdownHaltedGameplay = false;
         int configuredPort = 0;
         int listenerPort = 0;
         unsigned int publicSlots = 0;
@@ -29,6 +35,7 @@ namespace ServerRuntime
         std::uint64_t autosaveCompletions = 0;
         std::uint64_t platformTickCount = 0;
         std::uint64_t uptimeMs = 0;
+        std::uint64_t gameplayLoopIterations = 0;
         std::uint64_t savedAtFileTime = 0;
     };
 

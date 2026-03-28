@@ -44,6 +44,7 @@ namespace
         ServerRuntime::DedicatedServerHeadlessShellState shellState = {};
         LceSocketHandle listener = LCE_INVALID_SOCKET;
         int listenerPort = 0;
+        std::uint64_t gameplayLoopIterations = 0;
         std::uint64_t shellStartMs = 0;
         std::uint64_t persistedAutosaveCompletions = 0;
         int failureExitCode = 0;
@@ -306,7 +307,8 @@ namespace
     }
 
     bool PersistDedicatedServerHeadlessSaveStub(
-        DedicatedServerHeadlessRunHooksContext *context)
+        DedicatedServerHeadlessRunHooksContext *context,
+        bool forcePersist = false)
     {
         if (context == nullptr)
         {
@@ -315,7 +317,8 @@ namespace
 
         const std::uint64_t completedAutosaves =
             ServerRuntime::GetDedicatedServerAutosaveCompletionCount();
-        if (completedAutosaves <= context->persistedAutosaveCompletions)
+        if (!forcePersist &&
+            completedAutosaves <= context->persistedAutosaveCompletions)
         {
             return true;
         }
@@ -367,6 +370,16 @@ namespace
         saveStub.autosaveCompletions = runtimeSnapshot.autosaveCompletions;
         saveStub.platformTickCount = runtimeSnapshot.platformTickCount;
         saveStub.uptimeMs = runtimeSnapshot.uptimeMs;
+        saveStub.initialSaveRequested = runtimeSnapshot.initialSaveRequested;
+        saveStub.initialSaveCompleted = runtimeSnapshot.initialSaveCompleted;
+        saveStub.initialSaveTimedOut = runtimeSnapshot.initialSaveTimedOut;
+        saveStub.sessionCompleted = runtimeSnapshot.sessionCompleted;
+        saveStub.requestedAppShutdown =
+            runtimeSnapshot.requestedAppShutdown;
+        saveStub.shutdownHaltedGameplay =
+            runtimeSnapshot.shutdownHaltedGameplay;
+        saveStub.gameplayLoopIterations =
+            runtimeSnapshot.gameplayLoopIterations;
         saveStub.savedAtFileTime =
             ServerRuntime::FileUtils::GetCurrentUtcFileTime();
         if (runtimeSnapshot.startAttempted)
@@ -494,6 +507,9 @@ namespace
             context->listener,
             context->shellContext,
             &context->shellState);
+        ++context->gameplayLoopIterations;
+        ServerRuntime::RecordDedicatedServerHostedGameRuntimeGameplayLoopIteration(
+            context->gameplayLoopIterations);
 
         const std::uint64_t now = LceGetMonotonicMilliseconds();
         ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
@@ -770,6 +786,24 @@ namespace ServerRuntime
             return runExecution.abortExitCode;
         }
 
+        ServerRuntime::DedicatedServerHostedGameRuntimeSessionSummary
+            sessionSummary = {};
+        sessionSummary.initialSaveRequested =
+            runExecution.session.initialSave.requested;
+        sessionSummary.initialSaveCompleted =
+            runExecution.session.initialSave.completed;
+        sessionSummary.initialSaveTimedOut =
+            runExecution.session.initialSave.timedOut;
+        sessionSummary.sessionCompleted = runExecution.completedSession;
+        sessionSummary.requestedAppShutdown =
+            runExecution.session.gameplayLoop.requestedAppShutdown;
+        sessionSummary.shutdownHaltedGameplay =
+            runExecution.session.shutdown.haltedGameplay;
+        sessionSummary.gameplayLoopIterations =
+            runExecution.session.gameplayLoop.iterations;
+        ServerRuntime::RecordDedicatedServerHostedGameRuntimeSessionSummary(
+            sessionSummary);
+
         ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
             shellHooksContext.shellState.acceptedConnections,
             shellHooksContext.shellState.remoteCommands,
@@ -782,6 +816,10 @@ namespace ServerRuntime
             ServerRuntime::IsDedicatedServerStopSignalValid(),
             LceGetMonotonicMilliseconds());
 
+        ServerRuntime::MarkDedicatedServerHostedGameRuntimeSessionStopped(
+            LceGetMonotonicMilliseconds());
+        PersistDedicatedServerHeadlessSaveStub(&shellHooksContext, true);
+
         if (!ValidateDedicatedServerHeadlessShellRun(
                 options,
                 shellHooksContext))
@@ -793,10 +831,6 @@ namespace ServerRuntime
 
             return 10;
         }
-
-        PersistDedicatedServerHeadlessSaveStub(&shellHooksContext);
-        ServerRuntime::MarkDedicatedServerHostedGameRuntimeSessionStopped(
-            LceGetMonotonicMilliseconds());
 
         LogInfo("shutdown", "native bootstrap shell stopped");
         return 0;

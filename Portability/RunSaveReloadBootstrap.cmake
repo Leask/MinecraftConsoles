@@ -56,9 +56,11 @@ foreach(expected_save_marker IN ITEMS
     "startup-mode=created-new"
     "session-phase="
     "payload-bytes=0"
-    "session-active=true"
+    "session-active=false"
+    "session-completed=true"
     "world-action=idle"
     "tick-count="
+    "gameplay-iterations="
     "autosave-completions=2")
   string(FIND "${saved_world_text}" "${expected_save_marker}" save_index)
   if(save_index LESS 0)

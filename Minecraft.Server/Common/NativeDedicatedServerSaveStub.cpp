@@ -126,6 +126,12 @@ namespace ServerRuntime
             "world-action=%s\n"
             "app-shutdown=%s\n"
             "gameplay-halted=%s\n"
+            "initial-save-requested=%s\n"
+            "initial-save-completed=%s\n"
+            "initial-save-timed-out=%s\n"
+            "session-completed=%s\n"
+            "requested-app-shutdown=%s\n"
+            "shutdown-halted=%s\n"
             "configured-port=%d\n"
             "listener-port=%d\n"
             "public-slots=%u\n"
@@ -135,6 +141,7 @@ namespace ServerRuntime
             "autosave-completions=%llu\n"
             "tick-count=%llu\n"
             "uptime-ms=%llu\n"
+            "gameplay-iterations=%llu\n"
             "saved-at-filetime=%llu\n",
             stub.worldName.c_str(),
             stub.levelId.c_str(),
@@ -149,6 +156,12 @@ namespace ServerRuntime
             stub.worldActionIdle ? "idle" : "busy",
             stub.appShutdownRequested ? "true" : "false",
             stub.gameplayHalted ? "true" : "false",
+            stub.initialSaveRequested ? "true" : "false",
+            stub.initialSaveCompleted ? "true" : "false",
+            stub.initialSaveTimedOut ? "true" : "false",
+            stub.sessionCompleted ? "true" : "false",
+            stub.requestedAppShutdown ? "true" : "false",
+            stub.shutdownHaltedGameplay ? "true" : "false",
             stub.configuredPort,
             stub.listenerPort,
             stub.publicSlots,
@@ -158,6 +171,7 @@ namespace ServerRuntime
             (unsigned long long)stub.autosaveCompletions,
             (unsigned long long)stub.platformTickCount,
             (unsigned long long)stub.uptimeMs,
+            (unsigned long long)stub.gameplayLoopIterations,
             (unsigned long long)stub.savedAtFileTime);
         if (written <= 0 || written >= (int)sizeof(buffer))
         {
@@ -261,6 +275,30 @@ namespace ServerRuntime
                         {
                             ParseBool(value, &outStub->gameplayHalted);
                         }
+                        else if (key == "initial-save-requested")
+                        {
+                            ParseBool(value, &outStub->initialSaveRequested);
+                        }
+                        else if (key == "initial-save-completed")
+                        {
+                            ParseBool(value, &outStub->initialSaveCompleted);
+                        }
+                        else if (key == "initial-save-timed-out")
+                        {
+                            ParseBool(value, &outStub->initialSaveTimedOut);
+                        }
+                        else if (key == "session-completed")
+                        {
+                            ParseBool(value, &outStub->sessionCompleted);
+                        }
+                        else if (key == "requested-app-shutdown")
+                        {
+                            ParseBool(value, &outStub->requestedAppShutdown);
+                        }
+                        else if (key == "shutdown-halted")
+                        {
+                            ParseBool(value, &outStub->shutdownHaltedGameplay);
+                        }
                         else if (key == "configured-port")
                         {
                             ParseInt(value, &outStub->configuredPort);
@@ -314,6 +352,12 @@ namespace ServerRuntime
                             ParseUnsignedLongLong(
                                 value,
                                 &outStub->uptimeMs);
+                        }
+                        else if (key == "gameplay-iterations")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->gameplayLoopIterations);
                         }
                         else if (key == "saved-at-filetime")
                         {

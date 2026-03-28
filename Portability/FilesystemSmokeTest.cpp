@@ -1463,6 +1463,16 @@ int main(int argc, char* argv[])
         "NativeDesktop/GameHDD/SMOKE_SESSION.save",
         77,
         5);
+    ServerRuntime::DedicatedServerHostedGameRuntimeSessionSummary
+        hostedGameSessionSummary = {};
+    hostedGameSessionSummary.initialSaveRequested = true;
+    hostedGameSessionSummary.initialSaveCompleted = true;
+    hostedGameSessionSummary.sessionCompleted = true;
+    hostedGameSessionSummary.requestedAppShutdown = true;
+    hostedGameSessionSummary.shutdownHaltedGameplay = true;
+    hostedGameSessionSummary.gameplayLoopIterations = 8;
+    ServerRuntime::RecordDedicatedServerHostedGameRuntimeSessionSummary(
+        hostedGameSessionSummary);
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         hostedGameSessionSnapshot =
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
@@ -1494,6 +1504,13 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.appShutdownRequested &&
         !hostedGameSessionSnapshot.gameplayHalted &&
         hostedGameSessionSnapshot.stopSignalValid &&
+        hostedGameSessionSnapshot.initialSaveRequested &&
+        hostedGameSessionSnapshot.initialSaveCompleted &&
+        !hostedGameSessionSnapshot.initialSaveTimedOut &&
+        hostedGameSessionSnapshot.sessionCompleted &&
+        hostedGameSessionSnapshot.requestedAppShutdown &&
+        hostedGameSessionSnapshot.shutdownHaltedGameplay &&
+        hostedGameSessionSnapshot.gameplayLoopIterations == 8 &&
         hostedGameSessionSnapshot.lastPersistedSavePath ==
             "NativeDesktop/GameHDD/SMOKE_SESSION.save" &&
         hostedGameSessionSnapshot.lastPersistedFileTime == 77 &&
@@ -2491,7 +2508,7 @@ int main(int argc, char* argv[])
     printf("hosted_game_session=%d active=%d stopped=%d payload=%s bytes=%lld "
         "ticks=%llu action=%s shutdown=%d halted=%d uptime=%llu "
         "autosaves=%llu/%llu remote=%llu accepted=%llu phase=%s "
-        "save=%s persisted=%s filetime=%llu "
+        "save=%s persisted=%s filetime=%llu loop=%llu completed=%d "
         "stopped-phase=%s\n",
         hostedGameSessionOk,
         hostedGameSessionSnapshot.sessionActive,
@@ -2512,6 +2529,8 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.savePath.c_str(),
         hostedGameSessionSnapshot.lastPersistedSavePath.c_str(),
         (unsigned long long)hostedGameSessionSnapshot.lastPersistedFileTime,
+        (unsigned long long)hostedGameSessionSnapshot.gameplayLoopIterations,
+        hostedGameSessionSnapshot.sessionCompleted,
         ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
             hostedGameStoppedSnapshot.phase));
     printf("session_execution=%d runtime=%d initial=%d shutdown=%d "
