@@ -259,6 +259,22 @@ namespace
         return connected;
     }
 
+    ServerRuntime::DedicatedServerHostedGameRuntimeSessionContext
+    BuildDedicatedServerHostedGameRuntimeSessionContext(
+        const DedicatedServerHeadlessRunHooksContext &context)
+    {
+        ServerRuntime::DedicatedServerHostedGameRuntimeSessionContext
+            sessionContext = {};
+        sessionContext.worldName = context.shellContext.worldName;
+        sessionContext.worldSaveId = context.shellContext.worldSaveId;
+        sessionContext.storageRoot = context.shellContext.storageRoot;
+        sessionContext.hostName = context.shellContext.hostName;
+        sessionContext.bindIp = context.shellContext.bindIp;
+        sessionContext.configuredPort = context.shellContext.multiplayerPort;
+        sessionContext.listenerPort = context.listenerPort;
+        return sessionContext;
+    }
+
     std::string GetDedicatedServerHeadlessSaveId(
         const DedicatedServerHeadlessRunHooksContext &context)
     {
@@ -325,6 +341,8 @@ namespace
                 runtimeSnapshot.loadedFromSave ? "loaded" : "created-new";
             saveStub.resolvedSeed = runtimeSnapshot.resolvedSeed;
             saveStub.publicSlots = runtimeSnapshot.publicSlots;
+            saveStub.payloadBytes = runtimeSnapshot.savePayloadBytes;
+            saveStub.payloadName = runtimeSnapshot.savePayloadName;
         }
 
         std::string saveText;
@@ -379,6 +397,9 @@ namespace
 
         RefreshDedicatedServerHeadlessShellContext(context);
         context->shellStartMs = LceGetMonotonicMilliseconds();
+        ServerRuntime::RecordDedicatedServerHostedGameRuntimeSessionContext(
+            BuildDedicatedServerHostedGameRuntimeSessionContext(*context),
+            context->shellStartMs);
         ServerRuntime::LogInfo(
             "startup",
             "native bootstrap shell running; "
@@ -433,9 +454,16 @@ namespace
             context->shellContext,
             &context->shellState);
 
+        const std::uint64_t now = LceGetMonotonicMilliseconds();
+        ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
+            context->shellState.acceptedConnections,
+            context->shellState.remoteCommands,
+            ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
+            ServerRuntime::GetDedicatedServerAutosaveCompletionCount(),
+            now);
+
         if (context->options->shutdownAfterMs > 0)
         {
-            const std::uint64_t now = LceGetMonotonicMilliseconds();
             if (now - context->shellStartMs >=
                 context->options->shutdownAfterMs)
             {
@@ -686,6 +714,8 @@ namespace ServerRuntime
         }
 
         PersistDedicatedServerHeadlessSaveStub(&shellHooksContext);
+        ServerRuntime::MarkDedicatedServerHostedGameRuntimeSessionStopped(
+            LceGetMonotonicMilliseconds());
 
         LogInfo("shutdown", "native bootstrap shell stopped");
         return 0;

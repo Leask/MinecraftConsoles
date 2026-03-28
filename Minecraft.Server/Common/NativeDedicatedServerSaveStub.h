@@ -12,7 +12,9 @@ namespace ServerRuntime
         std::string startupMode;
         std::string hostName;
         std::string bindIp;
+        std::string payloadName;
         std::int64_t resolvedSeed = 0;
+        std::int64_t payloadBytes = 0;
         int configuredPort = 0;
         int listenerPort = 0;
         unsigned int publicSlots = 0;

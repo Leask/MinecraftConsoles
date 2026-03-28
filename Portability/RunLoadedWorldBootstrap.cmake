@@ -38,6 +38,8 @@ elseif(RUN_MODE STREQUAL "shell")
     "manual save requested"
     "world-action=busy"
     "status runtime=loaded"
+    "status session active=true"
+    "payload=world"
     "native bootstrap auto-shutdown after 250ms")
 else()
   message(FATAL_ERROR "Unsupported RUN_MODE: ${RUN_MODE}")
@@ -80,6 +82,8 @@ if(RUN_MODE STREQUAL "shell")
 foreach(expected_save_marker IN ITEMS
     "native-headless-save"
     "startup-mode=loaded"
+    "payload-name=world"
+    "payload-bytes=12"
     "autosave-completions="
     "remote-commands=0")
     string(FIND

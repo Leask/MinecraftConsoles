@@ -110,6 +110,23 @@ namespace
                 runtimeSnapshot.startupResult,
                 runtimeSnapshot.threadInvoked ? "invoked" : "skipped");
             AppendResponseLine(response, buffer);
+
+            std::snprintf(
+                buffer,
+                sizeof(buffer),
+                "status session active=%s world=%s level-id=%s payload=%s "
+                "payload-bytes=%lld autosaves=%llu/%llu uptime-ms=%llu",
+                runtimeSnapshot.sessionActive ? "true" : "false",
+                runtimeSnapshot.worldName.c_str(),
+                runtimeSnapshot.worldSaveId.c_str(),
+                runtimeSnapshot.savePayloadName.empty()
+                    ? "none"
+                    : runtimeSnapshot.savePayloadName.c_str(),
+                (long long)runtimeSnapshot.savePayloadBytes,
+                (unsigned long long)runtimeSnapshot.autosaveRequests,
+                (unsigned long long)runtimeSnapshot.autosaveCompletions,
+                (unsigned long long)runtimeSnapshot.uptimeMs);
+            AppendResponseLine(response, buffer);
         }
     }
 
@@ -324,6 +341,20 @@ namespace ServerRuntime
                     (unsigned int)runtimeSnapshot.privateSlots,
                     runtimeSnapshot.startupResult,
                     runtimeSnapshot.threadInvoked ? "invoked" : "skipped");
+                LogInfof(
+                    "console",
+                    "status session active=%s world=%s level-id=%s payload=%s "
+                    "payload-bytes=%lld autosaves=%llu/%llu uptime-ms=%llu",
+                    runtimeSnapshot.sessionActive ? "true" : "false",
+                    runtimeSnapshot.worldName.c_str(),
+                    runtimeSnapshot.worldSaveId.c_str(),
+                    runtimeSnapshot.savePayloadName.empty()
+                        ? "none"
+                        : runtimeSnapshot.savePayloadName.c_str(),
+                    (long long)runtimeSnapshot.savePayloadBytes,
+                    (unsigned long long)runtimeSnapshot.autosaveRequests,
+                    (unsigned long long)runtimeSnapshot.autosaveCompletions,
+                    (unsigned long long)runtimeSnapshot.uptimeMs);
             }
             AppendStatusResponseLine(response, context, state);
             return true;

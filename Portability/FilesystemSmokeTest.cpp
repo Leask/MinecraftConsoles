@@ -51,6 +51,7 @@
 namespace
 {
     struct SmokeNetworkGameInitData;
+    LoadSaveDataThreadParam *g_expectedHostedGameSaveData = nullptr;
 
     class ScopedCurrentDirectory
     {
@@ -181,8 +182,7 @@ namespace
         }
 
         return initData->seed == 4444 &&
-                initData->saveData ==
-                    reinterpret_cast<LoadSaveDataThreadParam*>(0x1234) &&
+                initData->saveData == g_expectedHostedGameSaveData &&
                 initData->settings != 0 &&
                 initData->dedicatedNoLocalHostPlayer &&
                 initData->xzSize == 320U &&
@@ -1142,8 +1142,12 @@ int main(int argc, char* argv[])
             createdWorldPlan,
             true,
             false);
+    const std::vector<unsigned char> fakeSaveBytes = { 7, 8, 9, 10 };
     LoadSaveDataThreadParam *fakeSaveData =
-        reinterpret_cast<LoadSaveDataThreadParam *>(0x1234);
+        ServerRuntime::CreateOwnedLoadSaveDataThreadParam(
+            fakeSaveBytes,
+            L"Smoke World");
+    g_expectedHostedGameSaveData = fakeSaveData;
     loadedWorldBootstrap.saveData = fakeSaveData;
     createdWorldBootstrap.saveData = fakeSaveData;
     failedWorldBootstrap.saveData = fakeSaveData;
@@ -1420,6 +1424,50 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         hostedGameRuntimeSnapshot =
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+    ServerRuntime::DedicatedServerHostedGameRuntimeSessionContext
+        hostedGameSessionContext = {};
+    hostedGameSessionContext.worldName = "Smoke Session";
+    hostedGameSessionContext.worldSaveId = "SMOKE_SESSION";
+    hostedGameSessionContext.storageRoot = "NativeDesktop/GameHDD";
+    hostedGameSessionContext.hostName = "SmokeHost";
+    hostedGameSessionContext.bindIp = "127.0.0.1";
+    hostedGameSessionContext.configuredPort = 25565;
+    hostedGameSessionContext.listenerPort = 19132;
+    ServerRuntime::RecordDedicatedServerHostedGameRuntimeSessionContext(
+        hostedGameSessionContext,
+        1000);
+    ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
+        2,
+        3,
+        4,
+        5,
+        1100);
+    const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
+        hostedGameSessionSnapshot =
+            ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+    ServerRuntime::MarkDedicatedServerHostedGameRuntimeSessionStopped(1200);
+    const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
+        hostedGameStoppedSnapshot =
+            ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+    const bool hostedGameSessionOk =
+        hostedGameSessionSnapshot.sessionActive &&
+        hostedGameSessionSnapshot.worldName == "Smoke Session" &&
+        hostedGameSessionSnapshot.worldSaveId == "SMOKE_SESSION" &&
+        hostedGameSessionSnapshot.storageRoot == "NativeDesktop/GameHDD" &&
+        hostedGameSessionSnapshot.hostName == "SmokeHost" &&
+        hostedGameSessionSnapshot.bindIp == "127.0.0.1" &&
+        hostedGameSessionSnapshot.configuredPort == 25565 &&
+        hostedGameSessionSnapshot.listenerPort == 19132 &&
+        hostedGameSessionSnapshot.savePayloadName == "Smoke World" &&
+        hostedGameSessionSnapshot.savePayloadBytes == 4 &&
+        hostedGameSessionSnapshot.acceptedConnections == 2 &&
+        hostedGameSessionSnapshot.remoteCommands == 3 &&
+        hostedGameSessionSnapshot.autosaveRequests == 4 &&
+        hostedGameSessionSnapshot.autosaveCompletions == 5 &&
+        hostedGameSessionSnapshot.uptimeMs == 100 &&
+        !hostedGameStoppedSnapshot.sessionActive &&
+        hostedGameStoppedSnapshot.stoppedMs == 1200 &&
+        hostedGameStoppedSnapshot.uptimeMs == 200;
     ServerRuntime::StopDedicatedServerPlatformRuntime();
     ServerRuntime::ResetDedicatedServerShutdownRequest();
     const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
@@ -2391,6 +2439,18 @@ int main(int argc, char* argv[])
         (unsigned int)hostedGameRuntimeSnapshot.publicSlots,
         hostedGameRuntimeSnapshot.startupResult,
         hostedGameRuntimeSnapshot.threadInvoked);
+    printf("hosted_game_session=%d active=%d stopped=%d payload=%s bytes=%lld "
+        "uptime=%llu autosaves=%llu/%llu remote=%llu accepted=%llu\n",
+        hostedGameSessionOk,
+        hostedGameSessionSnapshot.sessionActive,
+        hostedGameStoppedSnapshot.stoppedMs == 1200,
+        hostedGameSessionSnapshot.savePayloadName.c_str(),
+        (long long)hostedGameSessionSnapshot.savePayloadBytes,
+        (unsigned long long)hostedGameSessionSnapshot.uptimeMs,
+        (unsigned long long)hostedGameSessionSnapshot.autosaveRequests,
+        (unsigned long long)hostedGameSessionSnapshot.autosaveCompletions,
+        (unsigned long long)hostedGameSessionSnapshot.remoteCommands,
+        (unsigned long long)hostedGameSessionSnapshot.acceptedConnections);
     printf("session_execution=%d runtime=%d initial=%d shutdown=%d "
         "iterations=%zu polls=%d\n",
         platformSessionRuntimeResult.ok &&
@@ -2908,6 +2968,7 @@ int main(int argc, char* argv[])
         hostedGameStartupInitData.xzSize == sessionConfig.worldSizeChunks &&
         hostedGameStartupInitData.hellScale ==
             sessionConfig.worldHellScale &&
+        hostedGameSessionOk &&
         platformSessionRuntimeResult.ok &&
         sessionExecution.initialSave.requested &&
         sessionExecution.initialSave.completed &&
@@ -2991,6 +3052,10 @@ int main(int argc, char* argv[])
         waitAllAfter == WAIT_OBJECT_0 && resumed == 0 &&
         threadWait == WAIT_OBJECT_0 && gotExitCode == TRUE &&
         threadExitCode == 7 && threadValue == 1 && deltaMs > 0 && deltaNs > 0)
-        ? 0
-        : 1;
+        ? (g_expectedHostedGameSaveData = nullptr,
+            ServerRuntime::DestroyLoadSaveDataThreadParam(fakeSaveData),
+            0)
+        : (g_expectedHostedGameSaveData = nullptr,
+            ServerRuntime::DestroyLoadSaveDataThreadParam(fakeSaveData),
+            1);
 }

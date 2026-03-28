@@ -94,7 +94,9 @@ namespace ServerRuntime
             "startup-mode=%s\n"
             "host=%s\n"
             "bind=%s\n"
+            "payload-name=%s\n"
             "seed=%lld\n"
+            "payload-bytes=%lld\n"
             "configured-port=%d\n"
             "listener-port=%d\n"
             "public-slots=%u\n"
@@ -108,7 +110,9 @@ namespace ServerRuntime
             stub.startupMode.c_str(),
             stub.hostName.c_str(),
             stub.bindIp.c_str(),
+            stub.payloadName.c_str(),
             (long long)stub.resolvedSeed,
+            (long long)stub.payloadBytes,
             stub.configuredPort,
             stub.listenerPort,
             stub.publicSlots,
@@ -187,9 +191,17 @@ namespace ServerRuntime
                         {
                             outStub->bindIp = value;
                         }
+                        else if (key == "payload-name")
+                        {
+                            outStub->payloadName = value;
+                        }
                         else if (key == "seed")
                         {
                             ParseLongLong(value, &outStub->resolvedSeed);
+                        }
+                        else if (key == "payload-bytes")
+                        {
+                            ParseLongLong(value, &outStub->payloadBytes);
                         }
                         else if (key == "configured-port")
                         {
