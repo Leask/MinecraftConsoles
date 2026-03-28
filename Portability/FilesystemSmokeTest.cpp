@@ -1441,6 +1441,11 @@ int main(int argc, char* argv[])
         3,
         4,
         5,
+        6,
+        false,
+        true,
+        false,
+        true,
         1100);
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         hostedGameSessionSnapshot =
@@ -1464,6 +1469,11 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.remoteCommands == 3 &&
         hostedGameSessionSnapshot.autosaveRequests == 4 &&
         hostedGameSessionSnapshot.autosaveCompletions == 5 &&
+        hostedGameSessionSnapshot.platformTickCount == 6 &&
+        !hostedGameSessionSnapshot.worldActionIdle &&
+        hostedGameSessionSnapshot.appShutdownRequested &&
+        !hostedGameSessionSnapshot.gameplayHalted &&
+        hostedGameSessionSnapshot.stopSignalValid &&
         hostedGameSessionSnapshot.uptimeMs == 100 &&
         !hostedGameStoppedSnapshot.sessionActive &&
         hostedGameStoppedSnapshot.stoppedMs == 1200 &&
@@ -2440,12 +2450,17 @@ int main(int argc, char* argv[])
         hostedGameRuntimeSnapshot.startupResult,
         hostedGameRuntimeSnapshot.threadInvoked);
     printf("hosted_game_session=%d active=%d stopped=%d payload=%s bytes=%lld "
-        "uptime=%llu autosaves=%llu/%llu remote=%llu accepted=%llu\n",
+        "ticks=%llu action=%s shutdown=%d halted=%d uptime=%llu "
+        "autosaves=%llu/%llu remote=%llu accepted=%llu\n",
         hostedGameSessionOk,
         hostedGameSessionSnapshot.sessionActive,
         hostedGameStoppedSnapshot.stoppedMs == 1200,
         hostedGameSessionSnapshot.savePayloadName.c_str(),
         (long long)hostedGameSessionSnapshot.savePayloadBytes,
+        (unsigned long long)hostedGameSessionSnapshot.platformTickCount,
+        hostedGameSessionSnapshot.worldActionIdle ? "idle" : "busy",
+        hostedGameSessionSnapshot.appShutdownRequested,
+        hostedGameSessionSnapshot.gameplayHalted,
         (unsigned long long)hostedGameSessionSnapshot.uptimeMs,
         (unsigned long long)hostedGameSessionSnapshot.autosaveRequests,
         (unsigned long long)hostedGameSessionSnapshot.autosaveCompletions,

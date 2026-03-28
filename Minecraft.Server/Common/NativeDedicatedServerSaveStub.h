@@ -15,6 +15,10 @@ namespace ServerRuntime
         std::string payloadName;
         std::int64_t resolvedSeed = 0;
         std::int64_t payloadBytes = 0;
+        bool sessionActive = false;
+        bool worldActionIdle = true;
+        bool appShutdownRequested = false;
+        bool gameplayHalted = false;
         int configuredPort = 0;
         int listenerPort = 0;
         unsigned int publicSlots = 0;
@@ -22,6 +26,8 @@ namespace ServerRuntime
         std::uint64_t remoteCommands = 0;
         std::uint64_t autosaveRequests = 0;
         std::uint64_t autosaveCompletions = 0;
+        std::uint64_t platformTickCount = 0;
+        std::uint64_t uptimeMs = 0;
         std::uint64_t savedAtFileTime = 0;
     };
 

@@ -49,6 +49,7 @@ namespace
 {
     static constexpr int kProfileValueCount = 5;
     static constexpr int kProfileSettingCount = 4;
+    static std::uint64_t g_dedicatedServerPlatformTickCount = 0;
 
     void ApplyWindowsDedicatedServerPlatformState(
         const ServerRuntime::DedicatedServerPlatformState &platformState)
@@ -126,6 +127,7 @@ namespace ServerRuntime
         DedicatedServerPlatformRuntimeStartResult result = {};
         result.runtimeName = "Windows64Legacy";
         result.headless = false;
+        g_dedicatedServerPlatformTickCount = 0;
         ApplyWindowsDedicatedServerPlatformState(platformState);
 
         LogStartupStep("registering hidden window class");
@@ -254,6 +256,7 @@ namespace ServerRuntime
 
     void TickDedicatedServerPlatformRuntime()
     {
+        ++g_dedicatedServerPlatformTickCount;
         g_NetworkManager.DoWork();
         ProfileManager.Tick();
         StorageManager.Tick();
@@ -323,6 +326,11 @@ namespace ServerRuntime
         }
     }
 
+    std::uint64_t GetDedicatedServerPlatformTickCount()
+    {
+        return g_dedicatedServerPlatformTickCount;
+    }
+
     std::uint64_t GetDedicatedServerAutosaveRequestCount()
     {
         return 0;
@@ -350,6 +358,7 @@ namespace ServerRuntime
 
     void StopDedicatedServerPlatformRuntime()
     {
+        g_dedicatedServerPlatformTickCount = 0;
         WinsockNetLayer::Shutdown();
         LogDebugf("shutdown", "Network layer shutdown complete.");
         g_NetworkManager.Terminate();

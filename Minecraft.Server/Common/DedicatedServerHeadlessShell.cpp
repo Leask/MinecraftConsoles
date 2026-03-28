@@ -10,6 +10,7 @@
 #include "../ServerLogger.h"
 #include "DedicatedServerSignalState.h"
 #include "StringUtils.h"
+#include "lce_time/lce_time.h"
 
 namespace
 {
@@ -66,6 +67,17 @@ namespace
 
         const bool worldActionIdle =
             ServerRuntime::IsDedicatedServerWorldActionIdle(0);
+        ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
+            state.acceptedConnections,
+            state.remoteCommands,
+            ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
+            ServerRuntime::GetDedicatedServerAutosaveCompletionCount(),
+            ServerRuntime::GetDedicatedServerPlatformTickCount(),
+            worldActionIdle,
+            ServerRuntime::IsDedicatedServerAppShutdownRequested(),
+            ServerRuntime::IsDedicatedServerGameplayHalted(),
+            ServerRuntime::IsDedicatedServerStopSignalValid(),
+            LceGetMonotonicMilliseconds());
         char buffer[512] = {};
         std::snprintf(
             buffer,
@@ -115,7 +127,8 @@ namespace
                 buffer,
                 sizeof(buffer),
                 "status session active=%s world=%s level-id=%s payload=%s "
-                "payload-bytes=%lld autosaves=%llu/%llu uptime-ms=%llu",
+                "payload-bytes=%lld autosaves=%llu/%llu ticks=%llu "
+                "uptime-ms=%llu action=%s shutdown=%s halted=%s",
                 runtimeSnapshot.sessionActive ? "true" : "false",
                 runtimeSnapshot.worldName.c_str(),
                 runtimeSnapshot.worldSaveId.c_str(),
@@ -125,7 +138,11 @@ namespace
                 (long long)runtimeSnapshot.savePayloadBytes,
                 (unsigned long long)runtimeSnapshot.autosaveRequests,
                 (unsigned long long)runtimeSnapshot.autosaveCompletions,
-                (unsigned long long)runtimeSnapshot.uptimeMs);
+                (unsigned long long)runtimeSnapshot.platformTickCount,
+                (unsigned long long)runtimeSnapshot.uptimeMs,
+                runtimeSnapshot.worldActionIdle ? "idle" : "busy",
+                runtimeSnapshot.appShutdownRequested ? "true" : "false",
+                runtimeSnapshot.gameplayHalted ? "true" : "false");
             AppendResponseLine(response, buffer);
         }
     }
@@ -325,6 +342,17 @@ namespace ServerRuntime
                 context.storageRoot.c_str(),
                 context.whitelistEnabled ? "enabled" : "disabled",
                 context.lanAdvertise ? "enabled" : "disabled");
+            UpdateDedicatedServerHostedGameRuntimeSessionState(
+                state.acceptedConnections,
+                state.remoteCommands,
+                GetDedicatedServerAutosaveRequestCount(),
+                GetDedicatedServerAutosaveCompletionCount(),
+                GetDedicatedServerPlatformTickCount(),
+                worldActionIdle,
+                IsDedicatedServerAppShutdownRequested(),
+                IsDedicatedServerGameplayHalted(),
+                IsDedicatedServerStopSignalValid(),
+                LceGetMonotonicMilliseconds());
             const DedicatedServerHostedGameRuntimeSnapshot runtimeSnapshot =
                 GetDedicatedServerHostedGameRuntimeSnapshot();
             if (runtimeSnapshot.startAttempted)
@@ -344,7 +372,8 @@ namespace ServerRuntime
                 LogInfof(
                     "console",
                     "status session active=%s world=%s level-id=%s payload=%s "
-                    "payload-bytes=%lld autosaves=%llu/%llu uptime-ms=%llu",
+                    "payload-bytes=%lld autosaves=%llu/%llu ticks=%llu "
+                    "uptime-ms=%llu action=%s shutdown=%s halted=%s",
                     runtimeSnapshot.sessionActive ? "true" : "false",
                     runtimeSnapshot.worldName.c_str(),
                     runtimeSnapshot.worldSaveId.c_str(),
@@ -354,7 +383,11 @@ namespace ServerRuntime
                     (long long)runtimeSnapshot.savePayloadBytes,
                     (unsigned long long)runtimeSnapshot.autosaveRequests,
                     (unsigned long long)runtimeSnapshot.autosaveCompletions,
-                    (unsigned long long)runtimeSnapshot.uptimeMs);
+                    (unsigned long long)runtimeSnapshot.platformTickCount,
+                    (unsigned long long)runtimeSnapshot.uptimeMs,
+                    runtimeSnapshot.worldActionIdle ? "idle" : "busy",
+                    runtimeSnapshot.appShutdownRequested ? "true" : "false",
+                    runtimeSnapshot.gameplayHalted ? "true" : "false");
             }
             AppendStatusResponseLine(response, context, state);
             return true;

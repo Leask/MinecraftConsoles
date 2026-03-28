@@ -48,6 +48,8 @@ foreach(expected_marker IN ITEMS
     "remote shell command #3: stop"
     "status runtime=created-new"
     "status session active=true"
+    "ticks="
+    "action="
     "payload=none"
     "manual save requested"
     "persisted native save stub #1")
@@ -65,6 +67,9 @@ foreach(expected_save_marker IN ITEMS
     "startup-mode=created-new"
     "payload-name="
     "payload-bytes=0"
+    "session-active=true"
+    "world-action=busy"
+    "tick-count="
     "remote-commands=3"
     "autosave-completions=1")
   string(FIND "${saved_world_text}" "${expected_save_marker}" save_index)

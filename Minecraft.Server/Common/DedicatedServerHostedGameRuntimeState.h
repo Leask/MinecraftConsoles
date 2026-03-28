@@ -31,10 +31,15 @@ namespace ServerRuntime
         std::string savePayloadName;
         int configuredPort = 0;
         int listenerPort = 0;
+        bool worldActionIdle = true;
+        bool appShutdownRequested = false;
+        bool gameplayHalted = false;
+        bool stopSignalValid = false;
         std::uint64_t acceptedConnections = 0;
         std::uint64_t remoteCommands = 0;
         std::uint64_t autosaveRequests = 0;
         std::uint64_t autosaveCompletions = 0;
+        std::uint64_t platformTickCount = 0;
         std::uint64_t sessionStartMs = 0;
         std::uint64_t lastUpdateMs = 0;
         std::uint64_t stoppedMs = 0;
@@ -70,6 +75,11 @@ namespace ServerRuntime
         std::uint64_t remoteCommands,
         std::uint64_t autosaveRequests,
         std::uint64_t autosaveCompletions,
+        std::uint64_t platformTickCount,
+        bool worldActionIdle,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid,
         std::uint64_t nowMs);
 
     void MarkDedicatedServerHostedGameRuntimeSessionStopped(

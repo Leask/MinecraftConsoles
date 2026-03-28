@@ -55,6 +55,9 @@ foreach(expected_save_marker IN ITEMS
     "native-headless-save"
     "startup-mode=created-new"
     "payload-bytes=0"
+    "session-active=true"
+    "world-action=idle"
+    "tick-count="
     "autosave-completions=2")
   string(FIND "${saved_world_text}" "${expected_save_marker}" save_index)
   if(save_index LESS 0)

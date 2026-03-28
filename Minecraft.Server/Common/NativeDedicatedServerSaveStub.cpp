@@ -6,6 +6,30 @@
 
 namespace
 {
+    bool ParseBool(
+        const std::string &text,
+        bool *outValue)
+    {
+        if (outValue == nullptr)
+        {
+            return false;
+        }
+
+        if (text == "true")
+        {
+            *outValue = true;
+            return true;
+        }
+
+        if (text == "false")
+        {
+            *outValue = false;
+            return true;
+        }
+
+        return false;
+    }
+
     bool ParseLongLong(
         const std::string &text,
         std::int64_t *outValue)
@@ -97,6 +121,10 @@ namespace ServerRuntime
             "payload-name=%s\n"
             "seed=%lld\n"
             "payload-bytes=%lld\n"
+            "session-active=%s\n"
+            "world-action=%s\n"
+            "app-shutdown=%s\n"
+            "gameplay-halted=%s\n"
             "configured-port=%d\n"
             "listener-port=%d\n"
             "public-slots=%u\n"
@@ -104,6 +132,8 @@ namespace ServerRuntime
             "remote-commands=%llu\n"
             "autosave-requests=%llu\n"
             "autosave-completions=%llu\n"
+            "tick-count=%llu\n"
+            "uptime-ms=%llu\n"
             "saved-at-filetime=%llu\n",
             stub.worldName.c_str(),
             stub.levelId.c_str(),
@@ -113,6 +143,10 @@ namespace ServerRuntime
             stub.payloadName.c_str(),
             (long long)stub.resolvedSeed,
             (long long)stub.payloadBytes,
+            stub.sessionActive ? "true" : "false",
+            stub.worldActionIdle ? "idle" : "busy",
+            stub.appShutdownRequested ? "true" : "false",
+            stub.gameplayHalted ? "true" : "false",
             stub.configuredPort,
             stub.listenerPort,
             stub.publicSlots,
@@ -120,6 +154,8 @@ namespace ServerRuntime
             (unsigned long long)stub.remoteCommands,
             (unsigned long long)stub.autosaveRequests,
             (unsigned long long)stub.autosaveCompletions,
+            (unsigned long long)stub.platformTickCount,
+            (unsigned long long)stub.uptimeMs,
             (unsigned long long)stub.savedAtFileTime);
         if (written <= 0 || written >= (int)sizeof(buffer))
         {
@@ -203,6 +239,22 @@ namespace ServerRuntime
                         {
                             ParseLongLong(value, &outStub->payloadBytes);
                         }
+                        else if (key == "session-active")
+                        {
+                            ParseBool(value, &outStub->sessionActive);
+                        }
+                        else if (key == "world-action")
+                        {
+                            outStub->worldActionIdle = value != "busy";
+                        }
+                        else if (key == "app-shutdown")
+                        {
+                            ParseBool(value, &outStub->appShutdownRequested);
+                        }
+                        else if (key == "gameplay-halted")
+                        {
+                            ParseBool(value, &outStub->gameplayHalted);
+                        }
                         else if (key == "configured-port")
                         {
                             ParseInt(value, &outStub->configuredPort);
@@ -244,6 +296,18 @@ namespace ServerRuntime
                             ParseUnsignedLongLong(
                                 value,
                                 &outStub->autosaveCompletions);
+                        }
+                        else if (key == "tick-count")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->platformTickCount);
+                        }
+                        else if (key == "uptime-ms")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->uptimeMs);
                         }
                         else if (key == "saved-at-filetime")
                         {

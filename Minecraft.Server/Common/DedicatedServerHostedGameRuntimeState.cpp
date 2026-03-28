@@ -112,6 +112,11 @@ namespace ServerRuntime
         std::uint64_t remoteCommands,
         std::uint64_t autosaveRequests,
         std::uint64_t autosaveCompletions,
+        std::uint64_t platformTickCount,
+        bool worldActionIdle,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid,
         std::uint64_t nowMs)
     {
         g_dedicatedServerHostedGameRuntimeSnapshot.acceptedConnections =
@@ -122,6 +127,16 @@ namespace ServerRuntime
             autosaveRequests;
         g_dedicatedServerHostedGameRuntimeSnapshot.autosaveCompletions =
             autosaveCompletions;
+        g_dedicatedServerHostedGameRuntimeSnapshot.platformTickCount =
+            platformTickCount;
+        g_dedicatedServerHostedGameRuntimeSnapshot.worldActionIdle =
+            worldActionIdle;
+        g_dedicatedServerHostedGameRuntimeSnapshot.appShutdownRequested =
+            appShutdownRequested;
+        g_dedicatedServerHostedGameRuntimeSnapshot.gameplayHalted =
+            gameplayHalted;
+        g_dedicatedServerHostedGameRuntimeSnapshot.stopSignalValid =
+            stopSignalValid;
         UpdateDedicatedServerHostedGameRuntimeUptime(
             &g_dedicatedServerHostedGameRuntimeSnapshot,
             nowMs);

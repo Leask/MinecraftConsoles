@@ -143,6 +143,11 @@ namespace ServerRuntime
         g_nativeRuntimeState.saveOnExitEnabled = true;
     }
 
+    std::uint64_t GetDedicatedServerPlatformTickCount()
+    {
+        return g_nativeRuntimeState.tickCount;
+    }
+
     std::uint64_t GetDedicatedServerAutosaveRequestCount()
     {
         return g_nativeRuntimeState.autosaveRequestCount;

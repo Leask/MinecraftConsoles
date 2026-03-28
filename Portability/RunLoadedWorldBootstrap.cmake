@@ -39,6 +39,8 @@ elseif(RUN_MODE STREQUAL "shell")
     "world-action=busy"
     "status runtime=loaded"
     "status session active=true"
+    "ticks="
+    "action="
     "payload=world"
     "native bootstrap auto-shutdown after 250ms")
 else()
@@ -84,6 +86,9 @@ foreach(expected_save_marker IN ITEMS
     "startup-mode=loaded"
     "payload-name=world"
     "payload-bytes=12"
+    "session-active=true"
+    "world-action=idle"
+    "tick-count="
     "autosave-completions="
     "remote-commands=0")
     string(FIND

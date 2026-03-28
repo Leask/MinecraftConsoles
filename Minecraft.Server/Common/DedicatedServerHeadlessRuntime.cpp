@@ -316,25 +316,54 @@ namespace
         }
 
         RefreshDedicatedServerHeadlessShellContext(context);
+        ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
+            context->shellState.acceptedConnections,
+            context->shellState.remoteCommands,
+            ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
+            completedAutosaves,
+            ServerRuntime::GetDedicatedServerPlatformTickCount(),
+            ServerRuntime::IsDedicatedServerWorldActionIdle(0),
+            ServerRuntime::IsDedicatedServerAppShutdownRequested(),
+            ServerRuntime::IsDedicatedServerGameplayHalted(),
+            ServerRuntime::IsDedicatedServerStopSignalValid(),
+            LceGetMonotonicMilliseconds());
         const std::string savePath =
             BuildDedicatedServerHeadlessSavePath(*context);
         ServerRuntime::NativeDedicatedServerSaveStub saveStub = {};
-        saveStub.worldName = context->shellContext.worldName;
-        saveStub.levelId = GetDedicatedServerHeadlessSaveId(*context);
-        saveStub.hostName = context->shellContext.hostName;
-        saveStub.bindIp = context->shellContext.bindIp;
-        saveStub.configuredPort = context->shellContext.multiplayerPort;
-        saveStub.listenerPort = context->shellContext.listenerPort;
-        saveStub.acceptedConnections = context->shellState.acceptedConnections;
-        saveStub.remoteCommands = context->shellState.remoteCommands;
-        saveStub.autosaveRequests =
-            ServerRuntime::GetDedicatedServerAutosaveRequestCount();
-        saveStub.autosaveCompletions = completedAutosaves;
-        saveStub.savedAtFileTime =
-            ServerRuntime::FileUtils::GetCurrentUtcFileTime();
         const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
             runtimeSnapshot =
                 ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+        saveStub.worldName = runtimeSnapshot.worldName.empty()
+            ? context->shellContext.worldName
+            : runtimeSnapshot.worldName;
+        saveStub.levelId = runtimeSnapshot.worldSaveId.empty()
+            ? GetDedicatedServerHeadlessSaveId(*context)
+            : runtimeSnapshot.worldSaveId;
+        saveStub.hostName = runtimeSnapshot.hostName.empty()
+            ? context->shellContext.hostName
+            : runtimeSnapshot.hostName;
+        saveStub.bindIp = runtimeSnapshot.bindIp.empty()
+            ? context->shellContext.bindIp
+            : runtimeSnapshot.bindIp;
+        saveStub.configuredPort = runtimeSnapshot.configuredPort > 0
+            ? runtimeSnapshot.configuredPort
+            : context->shellContext.multiplayerPort;
+        saveStub.listenerPort = runtimeSnapshot.listenerPort > 0
+            ? runtimeSnapshot.listenerPort
+            : context->shellContext.listenerPort;
+        saveStub.sessionActive = runtimeSnapshot.sessionActive;
+        saveStub.worldActionIdle = runtimeSnapshot.worldActionIdle;
+        saveStub.appShutdownRequested =
+            runtimeSnapshot.appShutdownRequested;
+        saveStub.gameplayHalted = runtimeSnapshot.gameplayHalted;
+        saveStub.acceptedConnections = runtimeSnapshot.acceptedConnections;
+        saveStub.remoteCommands = runtimeSnapshot.remoteCommands;
+        saveStub.autosaveRequests = runtimeSnapshot.autosaveRequests;
+        saveStub.autosaveCompletions = runtimeSnapshot.autosaveCompletions;
+        saveStub.platformTickCount = runtimeSnapshot.platformTickCount;
+        saveStub.uptimeMs = runtimeSnapshot.uptimeMs;
+        saveStub.savedAtFileTime =
+            ServerRuntime::FileUtils::GetCurrentUtcFileTime();
         if (runtimeSnapshot.startAttempted)
         {
             saveStub.startupMode =
@@ -460,6 +489,11 @@ namespace
             context->shellState.remoteCommands,
             ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
             ServerRuntime::GetDedicatedServerAutosaveCompletionCount(),
+            ServerRuntime::GetDedicatedServerPlatformTickCount(),
+            ServerRuntime::IsDedicatedServerWorldActionIdle(0),
+            ServerRuntime::IsDedicatedServerAppShutdownRequested(),
+            ServerRuntime::IsDedicatedServerGameplayHalted(),
+            ServerRuntime::IsDedicatedServerStopSignalValid(),
             now);
 
         if (context->options->shutdownAfterMs > 0)
@@ -700,6 +734,18 @@ namespace ServerRuntime
         {
             return runExecution.abortExitCode;
         }
+
+        ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
+            shellHooksContext.shellState.acceptedConnections,
+            shellHooksContext.shellState.remoteCommands,
+            ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
+            ServerRuntime::GetDedicatedServerAutosaveCompletionCount(),
+            ServerRuntime::GetDedicatedServerPlatformTickCount(),
+            ServerRuntime::IsDedicatedServerWorldActionIdle(0),
+            ServerRuntime::IsDedicatedServerAppShutdownRequested(),
+            ServerRuntime::IsDedicatedServerGameplayHalted(),
+            ServerRuntime::IsDedicatedServerStopSignalValid(),
+            LceGetMonotonicMilliseconds());
 
         if (!ValidateDedicatedServerHeadlessShellRun(
                 options,
