@@ -38,7 +38,9 @@ elseif(RUN_MODE STREQUAL "shell")
     "manual save requested"
     "world-action=busy"
     "status runtime=loaded"
+    "phase="
     "status session active=true"
+    "status save path="
     "ticks="
     "action="
     "payload=world"
@@ -84,11 +86,13 @@ if(RUN_MODE STREQUAL "shell")
 foreach(expected_save_marker IN ITEMS
     "native-headless-save"
     "startup-mode=loaded"
+    "session-phase="
     "payload-name=world"
     "payload-bytes=12"
     "session-active=true"
     "world-action=idle"
     "tick-count="
+    "saved-at-filetime="
     "autosave-completions="
     "remote-commands=0")
     string(FIND

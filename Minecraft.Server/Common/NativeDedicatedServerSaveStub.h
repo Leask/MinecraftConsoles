@@ -10,6 +10,7 @@ namespace ServerRuntime
         std::string worldName;
         std::string levelId;
         std::string startupMode;
+        std::string sessionPhase;
         std::string hostName;
         std::string bindIp;
         std::string payloadName;

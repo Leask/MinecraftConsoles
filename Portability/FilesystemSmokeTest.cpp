@@ -1438,6 +1438,8 @@ int main(int argc, char* argv[])
         hostedGameSessionContext = {};
     hostedGameSessionContext.worldName = "Smoke Session";
     hostedGameSessionContext.worldSaveId = "SMOKE_SESSION";
+    hostedGameSessionContext.savePath =
+        "NativeDesktop/GameHDD/SMOKE_SESSION.save";
     hostedGameSessionContext.storageRoot = "NativeDesktop/GameHDD";
     hostedGameSessionContext.hostName = "SmokeHost";
     hostedGameSessionContext.bindIp = "127.0.0.1";
@@ -1457,6 +1459,10 @@ int main(int argc, char* argv[])
         false,
         true,
         1100);
+    ServerRuntime::RecordDedicatedServerHostedGameRuntimePersistedSave(
+        "NativeDesktop/GameHDD/SMOKE_SESSION.save",
+        77,
+        5);
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         hostedGameSessionSnapshot =
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
@@ -1466,8 +1472,12 @@ int main(int argc, char* argv[])
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
     const bool hostedGameSessionOk =
         hostedGameSessionSnapshot.sessionActive &&
+        hostedGameSessionSnapshot.phase ==
+            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_ShutdownRequested &&
         hostedGameSessionSnapshot.worldName == "Smoke Session" &&
         hostedGameSessionSnapshot.worldSaveId == "SMOKE_SESSION" &&
+        hostedGameSessionSnapshot.savePath ==
+            "NativeDesktop/GameHDD/SMOKE_SESSION.save" &&
         hostedGameSessionSnapshot.storageRoot == "NativeDesktop/GameHDD" &&
         hostedGameSessionSnapshot.hostName == "SmokeHost" &&
         hostedGameSessionSnapshot.bindIp == "127.0.0.1" &&
@@ -1484,8 +1494,14 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.appShutdownRequested &&
         !hostedGameSessionSnapshot.gameplayHalted &&
         hostedGameSessionSnapshot.stopSignalValid &&
+        hostedGameSessionSnapshot.lastPersistedSavePath ==
+            "NativeDesktop/GameHDD/SMOKE_SESSION.save" &&
+        hostedGameSessionSnapshot.lastPersistedFileTime == 77 &&
+        hostedGameSessionSnapshot.lastPersistedAutosaveCompletions == 5 &&
         hostedGameSessionSnapshot.uptimeMs == 100 &&
         !hostedGameStoppedSnapshot.sessionActive &&
+        hostedGameStoppedSnapshot.phase ==
+            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
         hostedGameStoppedSnapshot.stoppedMs == 1200 &&
         hostedGameStoppedSnapshot.uptimeMs == 200;
     ServerRuntime::StopDedicatedServerPlatformRuntime();
@@ -2437,7 +2453,7 @@ int main(int argc, char* argv[])
         hostedGameStartupExecution.startupPlan.shouldAbortStartup,
         hostedGameStartupExecution.startupPlan.abortExitCode);
     printf("hosted_game_snapshot=%d loaded=%d seed=%lld public=%u "
-        "startup=%d thread=%d\n",
+        "startup=%d thread=%d phase=%s\n",
         hostedGameRuntimeSnapshot.startAttempted &&
             hostedGameRuntimeSnapshot.threadInvoked &&
             hostedGameRuntimeSnapshot.loadedFromSave &&
@@ -2461,16 +2477,22 @@ int main(int argc, char* argv[])
             hostedGameRuntimeSnapshot.previousAutosaveCompletions == 7 &&
             hostedGameRuntimeSnapshot.previousPlatformTickCount == 42 &&
             hostedGameRuntimeSnapshot.previousUptimeMs == 1337 &&
+            hostedGameRuntimeSnapshot.phase ==
+                ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Startup &&
             hostedGameRuntimeSnapshot.startupResult == 0,
         hostedGameRuntimeSnapshot.loadedFromSave,
         (long long)hostedGameRuntimeSnapshot.resolvedSeed,
         (unsigned int)hostedGameRuntimeSnapshot.publicSlots,
         hostedGameRuntimeSnapshot.startupResult,
-        hostedGameRuntimeSnapshot.threadInvoked);
+        hostedGameRuntimeSnapshot.threadInvoked,
+        ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
+            hostedGameRuntimeSnapshot.phase));
     ServerRuntime::ResetNativeDedicatedServerLoadedSaveMetadata();
     printf("hosted_game_session=%d active=%d stopped=%d payload=%s bytes=%lld "
         "ticks=%llu action=%s shutdown=%d halted=%d uptime=%llu "
-        "autosaves=%llu/%llu remote=%llu accepted=%llu\n",
+        "autosaves=%llu/%llu remote=%llu accepted=%llu phase=%s "
+        "save=%s persisted=%s filetime=%llu "
+        "stopped-phase=%s\n",
         hostedGameSessionOk,
         hostedGameSessionSnapshot.sessionActive,
         hostedGameStoppedSnapshot.stoppedMs == 1200,
@@ -2484,7 +2506,14 @@ int main(int argc, char* argv[])
         (unsigned long long)hostedGameSessionSnapshot.autosaveRequests,
         (unsigned long long)hostedGameSessionSnapshot.autosaveCompletions,
         (unsigned long long)hostedGameSessionSnapshot.remoteCommands,
-        (unsigned long long)hostedGameSessionSnapshot.acceptedConnections);
+        (unsigned long long)hostedGameSessionSnapshot.acceptedConnections,
+        ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
+            hostedGameSessionSnapshot.phase),
+        hostedGameSessionSnapshot.savePath.c_str(),
+        hostedGameSessionSnapshot.lastPersistedSavePath.c_str(),
+        (unsigned long long)hostedGameSessionSnapshot.lastPersistedFileTime,
+        ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
+            hostedGameStoppedSnapshot.phase));
     printf("session_execution=%d runtime=%d initial=%d shutdown=%d "
         "iterations=%zu polls=%d\n",
         platformSessionRuntimeResult.ok &&

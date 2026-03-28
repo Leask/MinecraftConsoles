@@ -147,6 +147,9 @@ namespace
             : bindIp.c_str();
     }
 
+    std::string BuildDedicatedServerHeadlessSavePath(
+        const DedicatedServerHeadlessRunHooksContext &context);
+
     void RefreshDedicatedServerHeadlessShellContext(
         DedicatedServerHeadlessRunHooksContext *context);
 
@@ -268,6 +271,7 @@ namespace
             sessionContext = {};
         sessionContext.worldName = context.shellContext.worldName;
         sessionContext.worldSaveId = context.shellContext.worldSaveId;
+        sessionContext.savePath = BuildDedicatedServerHeadlessSavePath(context);
         sessionContext.storageRoot = context.shellContext.storageRoot;
         sessionContext.hostName = context.shellContext.hostName;
         sessionContext.bindIp = context.shellContext.bindIp;
@@ -369,6 +373,9 @@ namespace
         {
             saveStub.startupMode =
                 runtimeSnapshot.loadedFromSave ? "loaded" : "created-new";
+            saveStub.sessionPhase =
+                ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
+                    runtimeSnapshot.phase);
             saveStub.resolvedSeed = runtimeSnapshot.resolvedSeed;
             saveStub.publicSlots = runtimeSnapshot.publicSlots;
             saveStub.payloadBytes = runtimeSnapshot.savePayloadBytes;
@@ -391,6 +398,10 @@ namespace
         }
 
         context->persistedAutosaveCompletions = completedAutosaves;
+        ServerRuntime::RecordDedicatedServerHostedGameRuntimePersistedSave(
+            savePath,
+            saveStub.savedAtFileTime,
+            completedAutosaves);
         ServerRuntime::LogInfof(
             "world-io",
             "persisted native save stub #%llu to %s",
@@ -611,9 +622,11 @@ namespace
                 ServerRuntime::LogInfof(
                     "startup",
                     "native loaded save metadata path=%s startup=%s "
-                    "remote=%llu autosaves=%llu ticks=%llu uptime=%llu",
+                    "phase=%s remote=%llu autosaves=%llu ticks=%llu "
+                    "uptime=%llu",
                     loadedSaveMetadata.savePath.c_str(),
                     loadedSaveMetadata.saveStub.startupMode.c_str(),
+                    loadedSaveMetadata.saveStub.sessionPhase.c_str(),
                     (unsigned long long)
                         loadedSaveMetadata.saveStub.remoteCommands,
                     (unsigned long long)

@@ -54,6 +54,7 @@ file(READ "${STORAGE_ROOT}/world.save" saved_world_text)
 foreach(expected_save_marker IN ITEMS
     "native-headless-save"
     "startup-mode=created-new"
+    "session-phase="
     "payload-bytes=0"
     "session-active=true"
     "world-action=idle"
@@ -98,6 +99,7 @@ foreach(expected_reload_marker IN ITEMS
     "matched save filename: world"
     "native world bootstrap=loaded level-id=world"
     "native loaded save metadata path="
+    "startup=created-new phase="
     "native bootstrap completed in bootstrap-only mode")
   string(FIND
     "${reload_combined_output}"

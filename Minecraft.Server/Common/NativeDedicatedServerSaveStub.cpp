@@ -116,6 +116,7 @@ namespace ServerRuntime
             "world=%s\n"
             "level-id=%s\n"
             "startup-mode=%s\n"
+            "session-phase=%s\n"
             "host=%s\n"
             "bind=%s\n"
             "payload-name=%s\n"
@@ -138,6 +139,7 @@ namespace ServerRuntime
             stub.worldName.c_str(),
             stub.levelId.c_str(),
             stub.startupMode.c_str(),
+            stub.sessionPhase.c_str(),
             stub.hostName.c_str(),
             stub.bindIp.c_str(),
             stub.payloadName.c_str(),
@@ -218,6 +220,10 @@ namespace ServerRuntime
                         else if (key == "startup-mode")
                         {
                             outStub->startupMode = value;
+                        }
+                        else if (key == "session-phase")
+                        {
+                            outStub->sessionPhase = value;
                         }
                         else if (key == "host")
                         {

@@ -26,6 +26,27 @@ namespace
 
         snapshot->uptimeMs = nowMs - snapshot->sessionStartMs;
     }
+
+    ServerRuntime::EDedicatedServerHostedGameRuntimePhase
+    ResolveDedicatedServerHostedGameRuntimePhase(
+        const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
+            &snapshot,
+        bool appShutdownRequested,
+        bool gameplayHalted)
+    {
+        if (!snapshot.sessionActive)
+        {
+            return snapshot.phase;
+        }
+
+        if (gameplayHalted || appShutdownRequested)
+        {
+            return
+                ServerRuntime::eDedicatedServerHostedGameRuntimePhase_ShutdownRequested;
+        }
+
+        return ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running;
+    }
 }
 
 namespace ServerRuntime
@@ -41,6 +62,8 @@ namespace ServerRuntime
     {
         g_dedicatedServerHostedGameRuntimeSnapshot =
             DedicatedServerHostedGameRuntimeSnapshot{};
+        g_dedicatedServerHostedGameRuntimeSnapshot.phase =
+            eDedicatedServerHostedGameRuntimePhase_Startup;
         g_dedicatedServerHostedGameRuntimeSnapshot.startAttempted = true;
         g_dedicatedServerHostedGameRuntimeSnapshot.loadedFromSave =
             hostedGamePlan.networkInitPlan.saveData != nullptr;
@@ -70,6 +93,9 @@ namespace ServerRuntime
                 g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousStartupMode =
                         loadedSaveMetadata.saveStub.startupMode;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousSessionPhase =
+                        loadedSaveMetadata.saveStub.sessionPhase;
                 g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousRemoteCommands =
                         loadedSaveMetadata.saveStub.remoteCommands;
@@ -103,6 +129,10 @@ namespace ServerRuntime
             threadInvoked;
         g_dedicatedServerHostedGameRuntimeSnapshot.sessionActive =
             startupResult == 0;
+        g_dedicatedServerHostedGameRuntimeSnapshot.phase =
+            startupResult == 0
+                ? eDedicatedServerHostedGameRuntimePhase_Startup
+                : eDedicatedServerHostedGameRuntimePhase_Failed;
     }
 
     void RecordDedicatedServerHostedGameRuntimeSessionContext(
@@ -113,6 +143,8 @@ namespace ServerRuntime
             sessionContext.worldName;
         g_dedicatedServerHostedGameRuntimeSnapshot.worldSaveId =
             sessionContext.worldSaveId;
+        g_dedicatedServerHostedGameRuntimeSnapshot.savePath =
+            sessionContext.savePath;
         g_dedicatedServerHostedGameRuntimeSnapshot.storageRoot =
             sessionContext.storageRoot;
         g_dedicatedServerHostedGameRuntimeSnapshot.hostName =
@@ -126,6 +158,8 @@ namespace ServerRuntime
         g_dedicatedServerHostedGameRuntimeSnapshot.sessionStartMs =
             sessionStartMs;
         g_dedicatedServerHostedGameRuntimeSnapshot.stoppedMs = 0;
+        g_dedicatedServerHostedGameRuntimeSnapshot.phase =
+            eDedicatedServerHostedGameRuntimePhase_Running;
         UpdateDedicatedServerHostedGameRuntimeUptime(
             &g_dedicatedServerHostedGameRuntimeSnapshot,
             sessionStartMs);
@@ -161,6 +195,11 @@ namespace ServerRuntime
             gameplayHalted;
         g_dedicatedServerHostedGameRuntimeSnapshot.stopSignalValid =
             stopSignalValid;
+        g_dedicatedServerHostedGameRuntimeSnapshot.phase =
+            ResolveDedicatedServerHostedGameRuntimePhase(
+                g_dedicatedServerHostedGameRuntimeSnapshot,
+                appShutdownRequested,
+                gameplayHalted);
         UpdateDedicatedServerHostedGameRuntimeUptime(
             &g_dedicatedServerHostedGameRuntimeSnapshot,
             nowMs);
@@ -171,9 +210,45 @@ namespace ServerRuntime
     {
         g_dedicatedServerHostedGameRuntimeSnapshot.sessionActive = false;
         g_dedicatedServerHostedGameRuntimeSnapshot.stoppedMs = stoppedMs;
+        g_dedicatedServerHostedGameRuntimeSnapshot.phase =
+            eDedicatedServerHostedGameRuntimePhase_Stopped;
         UpdateDedicatedServerHostedGameRuntimeUptime(
             &g_dedicatedServerHostedGameRuntimeSnapshot,
             stoppedMs);
+    }
+
+    void RecordDedicatedServerHostedGameRuntimePersistedSave(
+        const std::string &savePath,
+        std::uint64_t savedAtFileTime,
+        std::uint64_t autosaveCompletions)
+    {
+        g_dedicatedServerHostedGameRuntimeSnapshot.lastPersistedSavePath =
+            savePath;
+        g_dedicatedServerHostedGameRuntimeSnapshot.lastPersistedFileTime =
+            savedAtFileTime;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .lastPersistedAutosaveCompletions = autosaveCompletions;
+    }
+
+    const char *GetDedicatedServerHostedGameRuntimePhaseName(
+        EDedicatedServerHostedGameRuntimePhase phase)
+    {
+        switch (phase)
+        {
+        case eDedicatedServerHostedGameRuntimePhase_Startup:
+            return "startup";
+        case eDedicatedServerHostedGameRuntimePhase_Running:
+            return "running";
+        case eDedicatedServerHostedGameRuntimePhase_ShutdownRequested:
+            return "shutdown-requested";
+        case eDedicatedServerHostedGameRuntimePhase_Stopped:
+            return "stopped";
+        case eDedicatedServerHostedGameRuntimePhase_Failed:
+            return "failed";
+        case eDedicatedServerHostedGameRuntimePhase_Idle:
+        default:
+            return "idle";
+        }
     }
 
     DedicatedServerHostedGameRuntimeSnapshot

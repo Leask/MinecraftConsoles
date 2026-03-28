@@ -7,8 +7,20 @@
 
 namespace ServerRuntime
 {
+    enum EDedicatedServerHostedGameRuntimePhase
+    {
+        eDedicatedServerHostedGameRuntimePhase_Idle,
+        eDedicatedServerHostedGameRuntimePhase_Startup,
+        eDedicatedServerHostedGameRuntimePhase_Running,
+        eDedicatedServerHostedGameRuntimePhase_ShutdownRequested,
+        eDedicatedServerHostedGameRuntimePhase_Stopped,
+        eDedicatedServerHostedGameRuntimePhase_Failed
+    };
+
     struct DedicatedServerHostedGameRuntimeSnapshot
     {
+        EDedicatedServerHostedGameRuntimePhase phase =
+            eDedicatedServerHostedGameRuntimePhase_Idle;
         bool startAttempted = false;
         bool threadInvoked = false;
         bool sessionActive = false;
@@ -25,10 +37,12 @@ namespace ServerRuntime
         unsigned char privateSlots = 0;
         std::string worldName;
         std::string worldSaveId;
+        std::string savePath;
         std::string storageRoot;
         std::string hostName;
         std::string bindIp;
         std::string savePayloadName;
+        std::string previousSessionPhase;
         bool loadedSaveMetadataAvailable = false;
         std::string loadedSavePath;
         std::string previousStartupMode;
@@ -47,6 +61,9 @@ namespace ServerRuntime
         std::uint64_t autosaveRequests = 0;
         std::uint64_t autosaveCompletions = 0;
         std::uint64_t platformTickCount = 0;
+        std::string lastPersistedSavePath;
+        std::uint64_t lastPersistedFileTime = 0;
+        std::uint64_t lastPersistedAutosaveCompletions = 0;
         std::uint64_t sessionStartMs = 0;
         std::uint64_t lastUpdateMs = 0;
         std::uint64_t stoppedMs = 0;
@@ -57,6 +74,7 @@ namespace ServerRuntime
     {
         std::string worldName;
         std::string worldSaveId;
+        std::string savePath;
         std::string storageRoot;
         std::string hostName;
         std::string bindIp;
@@ -91,6 +109,14 @@ namespace ServerRuntime
 
     void MarkDedicatedServerHostedGameRuntimeSessionStopped(
         std::uint64_t stoppedMs);
+
+    void RecordDedicatedServerHostedGameRuntimePersistedSave(
+        const std::string &savePath,
+        std::uint64_t savedAtFileTime,
+        std::uint64_t autosaveCompletions);
+
+    const char *GetDedicatedServerHostedGameRuntimePhaseName(
+        EDedicatedServerHostedGameRuntimePhase phase);
 
     DedicatedServerHostedGameRuntimeSnapshot
     GetDedicatedServerHostedGameRuntimeSnapshot();

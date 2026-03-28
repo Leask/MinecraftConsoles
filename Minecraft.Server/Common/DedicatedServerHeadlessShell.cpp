@@ -112,7 +112,8 @@ namespace
                 buffer,
                 sizeof(buffer),
                 "status runtime=%s seed=%lld world-size=%u hell-scale=%u "
-                "public-slots=%u private-slots=%u startup=%d thread=%s",
+                "public-slots=%u private-slots=%u startup=%d thread=%s "
+                "phase=%s",
                 runtimeSnapshot.loadedFromSave ? "loaded" : "created-new",
                 (long long)runtimeSnapshot.resolvedSeed,
                 runtimeSnapshot.worldSizeChunks,
@@ -120,7 +121,9 @@ namespace
                 (unsigned int)runtimeSnapshot.publicSlots,
                 (unsigned int)runtimeSnapshot.privateSlots,
                 runtimeSnapshot.startupResult,
-                runtimeSnapshot.threadInvoked ? "invoked" : "skipped");
+                runtimeSnapshot.threadInvoked ? "invoked" : "skipped",
+                ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
+                    runtimeSnapshot.phase));
             AppendResponseLine(response, buffer);
 
             std::snprintf(
@@ -145,15 +148,33 @@ namespace
                 runtimeSnapshot.gameplayHalted ? "true" : "false");
             AppendResponseLine(response, buffer);
 
+            if (!runtimeSnapshot.savePath.empty() ||
+                !runtimeSnapshot.lastPersistedSavePath.empty())
+            {
+                std::snprintf(
+                    buffer,
+                    sizeof(buffer),
+                    "status save path=%s last-persisted=%s "
+                    "saved-at-filetime=%llu persisted-autosaves=%llu",
+                    runtimeSnapshot.savePath.c_str(),
+                    runtimeSnapshot.lastPersistedSavePath.c_str(),
+                    (unsigned long long)
+                        runtimeSnapshot.lastPersistedFileTime,
+                    (unsigned long long)
+                        runtimeSnapshot.lastPersistedAutosaveCompletions);
+                AppendResponseLine(response, buffer);
+            }
+
             if (runtimeSnapshot.loadedSaveMetadataAvailable)
             {
                 std::snprintf(
                     buffer,
                     sizeof(buffer),
-                    "status loaded-save path=%s startup=%s remote=%llu "
-                    "autosaves=%llu ticks=%llu uptime-ms=%llu",
+                    "status loaded-save path=%s startup=%s phase=%s "
+                    "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu",
                     runtimeSnapshot.loadedSavePath.c_str(),
                     runtimeSnapshot.previousStartupMode.c_str(),
+                    runtimeSnapshot.previousSessionPhase.c_str(),
                     (unsigned long long)
                         runtimeSnapshot.previousRemoteCommands,
                     (unsigned long long)
@@ -379,7 +400,8 @@ namespace ServerRuntime
                 LogInfof(
                     "console",
                     "status runtime=%s seed=%lld world-size=%u hell-scale=%u "
-                    "public-slots=%u private-slots=%u startup=%d thread=%s",
+                    "public-slots=%u private-slots=%u startup=%d thread=%s "
+                    "phase=%s",
                     runtimeSnapshot.loadedFromSave ? "loaded" : "created-new",
                     (long long)runtimeSnapshot.resolvedSeed,
                     runtimeSnapshot.worldSizeChunks,
@@ -387,7 +409,9 @@ namespace ServerRuntime
                     (unsigned int)runtimeSnapshot.publicSlots,
                     (unsigned int)runtimeSnapshot.privateSlots,
                     runtimeSnapshot.startupResult,
-                    runtimeSnapshot.threadInvoked ? "invoked" : "skipped");
+                    runtimeSnapshot.threadInvoked ? "invoked" : "skipped",
+                    GetDedicatedServerHostedGameRuntimePhaseName(
+                        runtimeSnapshot.phase));
                 LogInfof(
                     "console",
                     "status session active=%s world=%s level-id=%s payload=%s "
@@ -408,14 +432,30 @@ namespace ServerRuntime
                     runtimeSnapshot.appShutdownRequested ? "true" : "false",
                     runtimeSnapshot.gameplayHalted ? "true" : "false");
 
+                if (!runtimeSnapshot.savePath.empty() ||
+                    !runtimeSnapshot.lastPersistedSavePath.empty())
+                {
+                    LogInfof(
+                        "console",
+                        "status save path=%s last-persisted=%s "
+                        "saved-at-filetime=%llu persisted-autosaves=%llu",
+                        runtimeSnapshot.savePath.c_str(),
+                        runtimeSnapshot.lastPersistedSavePath.c_str(),
+                        (unsigned long long)
+                            runtimeSnapshot.lastPersistedFileTime,
+                        (unsigned long long)
+                            runtimeSnapshot.lastPersistedAutosaveCompletions);
+                }
+
                 if (runtimeSnapshot.loadedSaveMetadataAvailable)
                 {
                     LogInfof(
                         "console",
-                        "status loaded-save path=%s startup=%s remote=%llu "
-                        "autosaves=%llu ticks=%llu uptime-ms=%llu",
+                        "status loaded-save path=%s startup=%s phase=%s "
+                        "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu",
                         runtimeSnapshot.loadedSavePath.c_str(),
                         runtimeSnapshot.previousStartupMode.c_str(),
+                        runtimeSnapshot.previousSessionPhase.c_str(),
                         (unsigned long long)
                             runtimeSnapshot.previousRemoteCommands,
                         (unsigned long long)
