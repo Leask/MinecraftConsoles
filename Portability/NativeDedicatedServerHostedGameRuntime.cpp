@@ -3,6 +3,9 @@
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
+#include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
+
+#include <string>
 
 #include "lce_win32/lce_win32.h"
 #include "lce_time/lce_time.h"
@@ -35,6 +38,31 @@ namespace ServerRuntime
                 context->threadProc(context->threadParam));
         }
 
+        bool ValidateNativeDedicatedServerHostedGamePayload(
+            const NativeDedicatedServerHostedGameRuntimeStubInitData &initData)
+        {
+            if (initData.saveData == nullptr)
+            {
+                return true;
+            }
+
+            if (initData.saveData->data == nullptr ||
+                initData.saveData->fileSize <= 0)
+            {
+                return false;
+            }
+
+            const char *payloadBytes =
+                static_cast<const char *>(initData.saveData->data);
+            const std::string payloadText(
+                payloadBytes,
+                payloadBytes + initData.saveData->fileSize);
+            NativeDedicatedServerSaveStub saveStub = {};
+            return ParseNativeDedicatedServerSaveStubText(
+                payloadText,
+                &saveStub);
+        }
+
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)
         {
             const std::uint64_t startMs = LceGetMonotonicMilliseconds();
@@ -54,9 +82,7 @@ namespace ServerRuntime
 
             const bool startupPayloadPresent = initData->saveData != nullptr;
             const bool startupPayloadValidated =
-                !startupPayloadPresent ||
-                (initData->saveData->data != nullptr &&
-                    initData->saveData->fileSize >= 0);
+                ValidateNativeDedicatedServerHostedGamePayload(*initData);
             const std::uint64_t startupIterations =
                 kNativeHostedStartupBaseIterations +
                 (startupPayloadPresent ? 2ULL : 0ULL);

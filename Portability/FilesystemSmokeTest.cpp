@@ -18,6 +18,7 @@
 #include "Minecraft.Server/Common/DedicatedServerLifecycle.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerLoadedSaveState.h"
+#include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSessionConfig.h"
@@ -1162,6 +1163,32 @@ int main(int argc, char* argv[])
         ServerRuntime::CreateOwnedLoadSaveDataThreadParam(
             fakeSaveBytes,
             L"Smoke World");
+    ServerRuntime::NativeDedicatedServerSaveStub nativeHostedSaveStub = {};
+    nativeHostedSaveStub.worldName = "world";
+    nativeHostedSaveStub.levelId = "world";
+    nativeHostedSaveStub.startupMode = "loaded";
+    nativeHostedSaveStub.sessionPhase = "stopped";
+    nativeHostedSaveStub.payloadName = "world";
+    nativeHostedSaveStub.sessionCompleted = true;
+    nativeHostedSaveStub.worldActionIdle = true;
+    nativeHostedSaveStub.startupPayloadPresent = true;
+    nativeHostedSaveStub.startupPayloadValidated = true;
+    nativeHostedSaveStub.startupThreadIterations = 4;
+    nativeHostedSaveStub.startupThreadDurationMs = 20;
+    std::string nativeHostedSaveText;
+    const bool nativeHostedSaveTextBuilt =
+        ServerRuntime::BuildNativeDedicatedServerSaveStubText(
+            nativeHostedSaveStub,
+            &nativeHostedSaveText);
+    const std::vector<unsigned char> nativeHostedSaveBytes(
+        nativeHostedSaveText.begin(),
+        nativeHostedSaveText.end());
+    LoadSaveDataThreadParam *nativeHostedSaveData =
+        nativeHostedSaveTextBuilt
+            ? ServerRuntime::CreateOwnedLoadSaveDataThreadParam(
+                nativeHostedSaveBytes,
+                L"world")
+            : nullptr;
     g_expectedHostedGameSaveData = fakeSaveData;
     loadedWorldBootstrap.saveData = fakeSaveData;
     createdWorldBootstrap.saveData = fakeSaveData;
@@ -1458,6 +1485,7 @@ int main(int argc, char* argv[])
     ServerRuntime::PopulateDedicatedServerNetworkGameInitData(
         &nativeHostedStubInitData,
         hostedGamePlan.networkInitPlan);
+    nativeHostedStubInitData.saveData = nativeHostedSaveData;
     const std::uint64_t nativeHostedStubTickBefore =
         ServerRuntime::GetDedicatedServerPlatformTickCount();
     const int nativeHostedStubResult =
@@ -2541,8 +2569,9 @@ int main(int argc, char* argv[])
     printf("native_hosted_stub=%d result=%d steps=%llu duration-ms=%llu "
         "ticks=%llu validated=%d\n",
         nativeHostedStubResult == 0 &&
-            nativeHostedStubInitData.seed == hostedGamePlan.resolvedSeed &&
-            nativeHostedStubInitData.saveData == fakeSaveData &&
+        nativeHostedStubInitData.seed == hostedGamePlan.resolvedSeed &&
+            nativeHostedSaveTextBuilt &&
+            nativeHostedStubInitData.saveData == nativeHostedSaveData &&
             nativeHostedStubInitData.settings == sessionConfig.hostSettings &&
             nativeHostedStubInitData.dedicatedNoLocalHostPlayer &&
             nativeHostedStubInitData.xzSize == sessionConfig.worldSizeChunks &&
@@ -3202,8 +3231,9 @@ int main(int argc, char* argv[])
         hostedGameRuntimeSleepThreadValue == 2 &&
         hostedGameRuntimeTickAfter > hostedGameRuntimeTickBefore &&
         nativeHostedStubResult == 0 &&
+        nativeHostedSaveTextBuilt &&
         nativeHostedStubInitData.seed == hostedGamePlan.resolvedSeed &&
-        nativeHostedStubInitData.saveData == fakeSaveData &&
+        nativeHostedStubInitData.saveData == nativeHostedSaveData &&
         nativeHostedStubInitData.settings == sessionConfig.hostSettings &&
         nativeHostedStubInitData.dedicatedNoLocalHostPlayer &&
         nativeHostedStubInitData.xzSize == sessionConfig.worldSizeChunks &&
@@ -3319,9 +3349,13 @@ int main(int argc, char* argv[])
         threadWait == WAIT_OBJECT_0 && gotExitCode == TRUE &&
         threadExitCode == 7 && threadValue == 1 && deltaMs > 0 && deltaNs > 0)
         ? (g_expectedHostedGameSaveData = nullptr,
+            ServerRuntime::DestroyLoadSaveDataThreadParam(
+                nativeHostedSaveData),
             ServerRuntime::DestroyLoadSaveDataThreadParam(fakeSaveData),
             0)
         : (g_expectedHostedGameSaveData = nullptr,
+            ServerRuntime::DestroyLoadSaveDataThreadParam(
+                nativeHostedSaveData),
             ServerRuntime::DestroyLoadSaveDataThreadParam(fakeSaveData),
             1);
 }

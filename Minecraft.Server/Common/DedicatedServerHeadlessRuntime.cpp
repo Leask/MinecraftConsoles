@@ -831,6 +831,14 @@ namespace ServerRuntime
                 50);
         if (runExecution.abortedStartup)
         {
+            if (runExecution.startup.hostedGameStartup.startupPlan
+                    .shouldAbortStartup)
+            {
+                LogErrorf(
+                    "startup",
+                    "Failed to start native dedicated server (code %d).",
+                    runExecution.startup.hostedGameStartup.startupResult);
+            }
             return runExecution.abortExitCode;
         }
 
