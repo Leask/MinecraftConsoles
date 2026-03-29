@@ -1,4 +1,5 @@
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
+#include "Minecraft.Server/Common/DedicatedServerAutosaveTracker.h"
 
 namespace
 {
@@ -46,6 +47,7 @@ namespace ServerRuntime
     {
         DedicatedServerPlatformRuntimeStartResult result = {};
         g_nativeRuntimeState = {};
+        ResetDedicatedServerAutosaveTracker();
         g_nativeRuntimeState.gameplayInstance = true;
         g_nativeRuntimeState.stopSignalValid = true;
         result.ok = true;
@@ -78,6 +80,8 @@ namespace ServerRuntime
                 ++g_nativeRuntimeState.autosaveCompletionCount;
             }
         }
+        UpdateDedicatedServerAutosaveTracker(
+            g_nativeRuntimeState.pendingWorldActionTicks == 0);
     }
 
     void HandleDedicatedServerPlatformActions()
@@ -91,6 +95,7 @@ namespace ServerRuntime
 
     void RequestDedicatedServerWorldAutosave(int)
     {
+        MarkDedicatedServerAutosaveTrackerRequested();
         ++g_nativeRuntimeState.autosaveRequestCount;
         if (g_nativeRuntimeState.pendingWorldActionTicks < 2)
         {
@@ -150,12 +155,12 @@ namespace ServerRuntime
 
     std::uint64_t GetDedicatedServerAutosaveRequestCount()
     {
-        return g_nativeRuntimeState.autosaveRequestCount;
+        return GetDedicatedServerAutosaveTrackerRequestCount();
     }
 
     std::uint64_t GetDedicatedServerAutosaveCompletionCount()
     {
-        return g_nativeRuntimeState.autosaveCompletionCount;
+        return GetDedicatedServerAutosaveTrackerCompletionCount();
     }
 
     void HaltDedicatedServerGameplay()
@@ -172,6 +177,7 @@ namespace ServerRuntime
 
     void StopDedicatedServerPlatformRuntime()
     {
+        ResetDedicatedServerAutosaveTracker();
         g_nativeRuntimeState = {};
     }
 }

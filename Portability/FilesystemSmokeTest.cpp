@@ -10,6 +10,7 @@
 #include "Minecraft.Client/Common/App_Defines.h"
 #include "Minecraft.Server/Access/Access.h"
 #include "Minecraft.Server/Access/BanManager.h"
+#include "Minecraft.Server/Common/DedicatedServerAutosaveTracker.h"
 #include "Minecraft.Server/Common/DedicatedServerBootstrap.h"
 #include "Minecraft.Server/Common/DedicatedServerGameplayLoop.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
@@ -1205,6 +1206,18 @@ int main(int argc, char* argv[])
     ServerRuntime::ResetDedicatedServerShutdownRequest();
     const bool shutdownSignalReset =
         !ServerRuntime::IsDedicatedServerShutdownRequested();
+    ServerRuntime::ResetDedicatedServerAutosaveTracker();
+    ServerRuntime::MarkDedicatedServerAutosaveTrackerRequested();
+    ServerRuntime::MarkDedicatedServerAutosaveTrackerRequested();
+    ServerRuntime::UpdateDedicatedServerAutosaveTracker(false);
+    const ServerRuntime::DedicatedServerAutosaveTrackerSnapshot
+        autosaveTrackerPendingSnapshot =
+            ServerRuntime::GetDedicatedServerAutosaveTrackerSnapshot();
+    ServerRuntime::UpdateDedicatedServerAutosaveTracker(true);
+    ServerRuntime::UpdateDedicatedServerAutosaveTracker(true);
+    const ServerRuntime::DedicatedServerAutosaveTrackerSnapshot
+        autosaveTrackerCompletedSnapshot =
+            ServerRuntime::GetDedicatedServerAutosaveTrackerSnapshot();
     const std::string smokeFilePath = "build/portability-smoke-file.txt";
     const std::string smokeFileText = "native smoke file\n";
     ServerRuntime::ServerPropertiesConfig runtimeProperties = {};
@@ -1285,6 +1298,10 @@ int main(int argc, char* argv[])
         !ServerRuntime::WaitForDedicatedServerWorldActionIdle(0, 1);
     const bool platformWaitIdle =
         ServerRuntime::WaitForDedicatedServerWorldActionIdle(0, 100);
+    const std::uint64_t platformAutosaveRequestsAfterWait =
+        ServerRuntime::GetDedicatedServerAutosaveRequestCount();
+    const std::uint64_t platformAutosaveCompletionsAfterWait =
+        ServerRuntime::GetDedicatedServerAutosaveCompletionCount();
     WaitHookSmokeContext waitHookIdleContext = {};
     waitHookIdleContext.idleAfterTicks = 2;
     ServerRuntime::DedicatedServerWorldActionWaitHooks worldActionWaitHooks =
@@ -2599,6 +2616,22 @@ int main(int argc, char* argv[])
         runBeforeSessionCount,
         runAfterSessionCount,
         runExecutionPollContext.pollCount);
+    printf("autosave_tracker=%d requests=%llu completions=%llu "
+        "pending_before=%d pending_after=%d\n",
+        autosaveTrackerPendingSnapshot.autosavePending &&
+            !autosaveTrackerPendingSnapshot.lastObservedIdle &&
+            autosaveTrackerPendingSnapshot.requestCount == 2 &&
+            autosaveTrackerPendingSnapshot.completionCount == 0 &&
+            !autosaveTrackerCompletedSnapshot.autosavePending &&
+            autosaveTrackerCompletedSnapshot.lastObservedIdle &&
+            autosaveTrackerCompletedSnapshot.requestCount == 2 &&
+            autosaveTrackerCompletedSnapshot.completionCount == 1 &&
+            platformAutosaveRequestsAfterWait == 1 &&
+            platformAutosaveCompletionsAfterWait == 1,
+        (unsigned long long)autosaveTrackerCompletedSnapshot.requestCount,
+        (unsigned long long)autosaveTrackerCompletedSnapshot.completionCount,
+        autosaveTrackerPendingSnapshot.autosavePending,
+        autosaveTrackerCompletedSnapshot.autosavePending);
     printf("server_storage_platform=%s game_hdd_root=%s override_root=%s\n",
         storagePlatformDirectory,
         storageGameHddRoot.c_str(),
@@ -3032,10 +3065,20 @@ int main(int argc, char* argv[])
         !runtimeState.multiplayerJoin &&
         runtimeState.dedicatedServer &&
         runtimeState.lanAdvertise &&
+        autosaveTrackerPendingSnapshot.autosavePending &&
+        !autosaveTrackerPendingSnapshot.lastObservedIdle &&
+        autosaveTrackerPendingSnapshot.requestCount == 2 &&
+        autosaveTrackerPendingSnapshot.completionCount == 0 &&
+        !autosaveTrackerCompletedSnapshot.autosavePending &&
+        autosaveTrackerCompletedSnapshot.lastObservedIdle &&
+        autosaveTrackerCompletedSnapshot.requestCount == 2 &&
+        autosaveTrackerCompletedSnapshot.completionCount == 1 &&
         platformActionIdle &&
         platformActionPending &&
         platformWaitStillBusy &&
         platformWaitIdle &&
+        platformAutosaveRequestsAfterWait == 1 &&
+        platformAutosaveCompletionsAfterWait == 1 &&
         platformGameplayInstance &&
         platformAppShutdownBefore &&
         platformAppShutdownAfter &&

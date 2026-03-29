@@ -1,5 +1,6 @@
 #include "stdafx.h"
 
+#include "..\Common\DedicatedServerAutosaveTracker.h"
 #include "..\Common\DedicatedServerPlatformRuntime.h"
 
 #include "Common/App_Defines.h"
@@ -128,6 +129,7 @@ namespace ServerRuntime
         result.runtimeName = "Windows64Legacy";
         result.headless = false;
         g_dedicatedServerPlatformTickCount = 0;
+        ResetDedicatedServerAutosaveTracker();
         ApplyWindowsDedicatedServerPlatformState(platformState);
 
         LogStartupStep("registering hidden window class");
@@ -265,6 +267,8 @@ namespace ServerRuntime
     void HandleDedicatedServerPlatformActions()
     {
         app.HandleXuiActions();
+        UpdateDedicatedServerAutosaveTracker(
+            IsDedicatedServerWorldActionIdle(0));
     }
 
     bool IsDedicatedServerWorldActionIdle(int actionPad)
@@ -274,6 +278,7 @@ namespace ServerRuntime
 
     void RequestDedicatedServerWorldAutosave(int actionPad)
     {
+        MarkDedicatedServerAutosaveTrackerRequested();
         app.SetXuiServerAction(actionPad, eXuiServerAction_AutoSaveGame);
     }
 
@@ -333,12 +338,12 @@ namespace ServerRuntime
 
     std::uint64_t GetDedicatedServerAutosaveRequestCount()
     {
-        return 0;
+        return GetDedicatedServerAutosaveTrackerRequestCount();
     }
 
     std::uint64_t GetDedicatedServerAutosaveCompletionCount()
     {
-        return 0;
+        return GetDedicatedServerAutosaveTrackerCompletionCount();
     }
 
     void HaltDedicatedServerGameplay()
@@ -359,6 +364,7 @@ namespace ServerRuntime
     void StopDedicatedServerPlatformRuntime()
     {
         g_dedicatedServerPlatformTickCount = 0;
+        ResetDedicatedServerAutosaveTracker();
         WinsockNetLayer::Shutdown();
         LogDebugf("shutdown", "Network layer shutdown complete.");
         g_NetworkManager.Terminate();
