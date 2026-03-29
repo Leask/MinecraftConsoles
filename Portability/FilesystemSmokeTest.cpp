@@ -164,6 +164,17 @@ namespace
         return 11;
     }
 
+    int HostedGameRuntimeSleepSmokeThreadProc(void* threadParam)
+    {
+        int* value = static_cast<int*>(threadParam);
+        LceSleepMilliseconds(30);
+        if (value != nullptr)
+        {
+            *value = 2;
+        }
+        return 13;
+    }
+
     struct SmokeNetworkGameInitData
     {
         std::int64_t seed = 0;
@@ -1449,6 +1460,16 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         hostedGameRuntimeNullThreadSnapshot =
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+    const std::uint64_t hostedGameRuntimeTickBefore =
+        ServerRuntime::GetDedicatedServerPlatformTickCount();
+    int hostedGameRuntimeSleepThreadValue = 0;
+    const int hostedGameRuntimeSleepResult =
+        ServerRuntime::StartDedicatedServerHostedGameRuntime(
+            hostedGamePlan,
+            &HostedGameRuntimeSleepSmokeThreadProc,
+            &hostedGameRuntimeSleepThreadValue);
+    const std::uint64_t hostedGameRuntimeTickAfter =
+        ServerRuntime::GetDedicatedServerPlatformTickCount();
     int hostedGameRuntimeThreadValue = 0;
     const int hostedGameRuntimeResult =
         ServerRuntime::StartDedicatedServerHostedGameRuntime(
@@ -2486,6 +2507,9 @@ int main(int argc, char* argv[])
         gameplayLoopRunPollContext.pollCount,
         gameplayLoopRunResult.requestedAppShutdown);
     printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
+        hostedGameRuntimeSleepResult == 13 &&
+            hostedGameRuntimeSleepThreadValue == 2 &&
+            hostedGameRuntimeTickAfter > hostedGameRuntimeTickBefore &&
         hostedGameRuntimeResult == 11 &&
             hostedGameRuntimeThreadValue == 1 &&
             hostedGameRuntimeNullThreadResult == -1 &&
@@ -3124,6 +3148,9 @@ int main(int argc, char* argv[])
         hostedGameRuntimeNullThreadSnapshot.startupResult == -1 &&
         hostedGameRuntimeNullThreadSnapshot.phase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Failed &&
+        hostedGameRuntimeSleepResult == 13 &&
+        hostedGameRuntimeSleepThreadValue == 2 &&
+        hostedGameRuntimeTickAfter > hostedGameRuntimeTickBefore &&
         hostedGameRuntimeResult == 11 &&
         hostedGameRuntimeThreadValue == 1 &&
         hostedGameStartupExecution.startupResult == 0 &&
