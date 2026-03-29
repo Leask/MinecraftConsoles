@@ -38,6 +38,7 @@ elseif(RUN_MODE STREQUAL "shell")
     "manual save requested"
     "world-action=busy"
     "status runtime=loaded"
+    "thread=invoked"
     "phase="
     "status session active=true"
     "status run initial-save="

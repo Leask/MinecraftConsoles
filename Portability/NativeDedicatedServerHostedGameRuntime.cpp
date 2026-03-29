@@ -3,6 +3,14 @@
 
 namespace ServerRuntime
 {
+    namespace
+    {
+        int RunNativeDedicatedServerHostedGameThread(void *)
+        {
+            return 0;
+        }
+    }
+
     int StartDedicatedServerHostedGameRuntime(
         const DedicatedServerHostedGamePlan &hostedGamePlan,
         DedicatedServerHostedGameThreadProc *threadProc,
@@ -18,5 +26,11 @@ namespace ServerRuntime
             startupResult,
             threadInvoked);
         return startupResult;
+    }
+
+    DedicatedServerHostedGameThreadProc
+        *GetDedicatedServerHostedGameRuntimeThreadProc()
+    {
+        return &RunNativeDedicatedServerHostedGameThread;
     }
 }

@@ -47,6 +47,7 @@ foreach(expected_marker IN ITEMS
     "remote shell command #2: save"
     "remote shell command #3: stop"
     "status runtime=created-new"
+    "thread=invoked"
     "phase="
     "status session active=true"
     "status run initial-save="

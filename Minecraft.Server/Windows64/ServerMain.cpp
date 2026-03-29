@@ -213,7 +213,7 @@ int main(int argc, char **argv)
 		worldBootstrap,
 		kServerActionPad,
 		(new Random())->nextLong(),
-		&CGameNetworkManager::RunNetworkGameThreadProc,
+		ServerRuntime::GetDedicatedServerHostedGameRuntimeThreadProc(),
 		&param,
 		runHooks,
 		LceGetMonotonicMilliseconds(),

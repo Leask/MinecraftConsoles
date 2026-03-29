@@ -17,6 +17,9 @@ namespace ServerRuntime
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam);
 
+    DedicatedServerHostedGameThreadProc
+        *GetDedicatedServerHostedGameRuntimeThreadProc();
+
     template <typename TInitData>
     DedicatedServerHostedGameStartupExecutionResult
     ExecuteDedicatedServerHostedGameStartup(

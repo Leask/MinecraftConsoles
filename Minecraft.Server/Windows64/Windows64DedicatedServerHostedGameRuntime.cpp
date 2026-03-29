@@ -12,6 +12,12 @@
 
 namespace ServerRuntime
 {
+    DedicatedServerHostedGameThreadProc
+        *GetDedicatedServerHostedGameRuntimeThreadProc()
+    {
+        return &CGameNetworkManager::RunNetworkGameThreadProc;
+    }
+
     int StartDedicatedServerHostedGameRuntime(
         const DedicatedServerHostedGamePlan &hostedGamePlan,
         DedicatedServerHostedGameThreadProc *threadProc,

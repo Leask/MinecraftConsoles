@@ -788,7 +788,7 @@ namespace ServerRuntime
                 worldBootstrapResult.worldBootstrap,
                 0,
                 static_cast<std::int64_t>(LceGetMonotonicNanoseconds()),
-                nullptr,
+                GetDedicatedServerHostedGameRuntimeThreadProc(),
                 &initData,
                 runHooks,
                 LceGetMonotonicMilliseconds(),
