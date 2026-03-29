@@ -17,6 +17,15 @@ namespace ServerRuntime
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam);
 
+    bool BeginDedicatedServerHostedGameRuntimeStartup(
+        const DedicatedServerHostedGamePlan &hostedGamePlan,
+        DedicatedServerHostedGameThreadProc *threadProc,
+        int *outFailureResult);
+
+    int CompleteDedicatedServerHostedGameRuntimeStartup(
+        int startupResult,
+        bool threadInvoked);
+
     DedicatedServerHostedGameThreadProc
         *GetDedicatedServerHostedGameRuntimeThreadProc();
 

@@ -540,6 +540,7 @@ set(_MINECRAFT_SERVER_COMMON_SERVER_COMMON
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerHeadlessRuntime.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerHeadlessShell.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerHeadlessShell.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerHostedGameRuntime.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerHostedGameRuntime.h"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerHostedGameRuntimeState.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/DedicatedServerHostedGameRuntimeState.h"

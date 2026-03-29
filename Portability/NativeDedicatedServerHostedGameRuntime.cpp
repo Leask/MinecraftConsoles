@@ -16,16 +16,19 @@ namespace ServerRuntime
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam)
     {
-        ResetDedicatedServerHostedGameRuntimeSnapshot();
-        RecordDedicatedServerHostedGameRuntimePlan(hostedGamePlan);
-        const bool threadInvoked = threadProc != nullptr;
-        const int startupResult = threadInvoked
-            ? threadProc(threadParam)
-            : 0;
-        RecordDedicatedServerHostedGameRuntimeStartupResult(
+        int startupResult = 0;
+        if (!BeginDedicatedServerHostedGameRuntimeStartup(
+                hostedGamePlan,
+                threadProc,
+                &startupResult))
+        {
+            return startupResult;
+        }
+
+        startupResult = threadProc(threadParam);
+        return CompleteDedicatedServerHostedGameRuntimeStartup(
             startupResult,
-            threadInvoked);
-        return startupResult;
+            true);
     }
 
     DedicatedServerHostedGameThreadProc

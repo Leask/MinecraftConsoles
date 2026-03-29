@@ -1441,6 +1441,14 @@ int main(int argc, char* argv[])
     ServerRuntime::RecordNativeDedicatedServerLoadedSaveMetadata(
         "NativeDesktop/GameHDD/SmokeSession.save",
         previousSaveStub);
+    const int hostedGameRuntimeNullThreadResult =
+        ServerRuntime::StartDedicatedServerHostedGameRuntime(
+            hostedGamePlan,
+            nullptr,
+            nullptr);
+    const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
+        hostedGameRuntimeNullThreadSnapshot =
+            ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
     int hostedGameRuntimeThreadValue = 0;
     const int hostedGameRuntimeResult =
         ServerRuntime::StartDedicatedServerHostedGameRuntime(
@@ -2479,7 +2487,13 @@ int main(int argc, char* argv[])
         gameplayLoopRunResult.requestedAppShutdown);
     printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
         hostedGameRuntimeResult == 11 &&
-            hostedGameRuntimeThreadValue == 1,
+            hostedGameRuntimeThreadValue == 1 &&
+            hostedGameRuntimeNullThreadResult == -1 &&
+            hostedGameRuntimeNullThreadSnapshot.startAttempted &&
+            !hostedGameRuntimeNullThreadSnapshot.threadInvoked &&
+            hostedGameRuntimeNullThreadSnapshot.startupResult == -1 &&
+            hostedGameRuntimeNullThreadSnapshot.phase ==
+                ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Failed,
         hostedGameRuntimeResult,
         hostedGameRuntimeThreadValue);
     printf("hosted_game_startup=%d result=%d abort=%d code=%d\n",
@@ -3104,6 +3118,12 @@ int main(int argc, char* argv[])
         gameplayLoopRunPollContext.pollCount == 3 &&
         gameplayLoopRunResult.requestedAppShutdown &&
         gameplayLoopRunResult.lastIteration.shouldExit &&
+        hostedGameRuntimeNullThreadResult == -1 &&
+        hostedGameRuntimeNullThreadSnapshot.startAttempted &&
+        !hostedGameRuntimeNullThreadSnapshot.threadInvoked &&
+        hostedGameRuntimeNullThreadSnapshot.startupResult == -1 &&
+        hostedGameRuntimeNullThreadSnapshot.phase ==
+            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Failed &&
         hostedGameRuntimeResult == 11 &&
         hostedGameRuntimeThreadValue == 1 &&
         hostedGameStartupExecution.startupResult == 0 &&

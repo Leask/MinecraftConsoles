@@ -23,12 +23,13 @@ namespace ServerRuntime
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam)
     {
-        ResetDedicatedServerHostedGameRuntimeSnapshot();
-        RecordDedicatedServerHostedGameRuntimePlan(hostedGamePlan);
-        if (threadProc == nullptr)
+        int startupResult = 0;
+        if (!BeginDedicatedServerHostedGameRuntimeStartup(
+                hostedGamePlan,
+                threadProc,
+                &startupResult))
         {
-            RecordDedicatedServerHostedGameRuntimeStartupResult(-1, false);
-            return -1;
+            return startupResult;
         }
 
         g_NetworkManager.HostGame(
@@ -53,10 +54,9 @@ namespace ServerRuntime
         }
 
         startThread.WaitForCompletion(INFINITE);
-        const int startupResult = startThread.GetExitCode();
-        RecordDedicatedServerHostedGameRuntimeStartupResult(
+        startupResult = startThread.GetExitCode();
+        return CompleteDedicatedServerHostedGameRuntimeStartup(
             startupResult,
             true);
-        return startupResult;
     }
 }
