@@ -34,6 +34,10 @@ namespace ServerRuntime
         int configuredPort = 0;
         int listenerPort = 0;
         unsigned int publicSlots = 0;
+        bool startupPayloadPresent = false;
+        bool startupPayloadValidated = false;
+        std::uint64_t startupThreadIterations = 0;
+        std::uint64_t startupThreadDurationMs = 0;
         std::uint64_t acceptedConnections = 0;
         std::uint64_t remoteCommands = 0;
         std::uint64_t autosaveRequests = 0;

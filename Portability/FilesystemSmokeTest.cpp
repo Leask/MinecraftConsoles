@@ -16,6 +16,7 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/DedicatedServerLifecycle.h"
+#include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerLoadedSaveState.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
@@ -1452,6 +1453,23 @@ int main(int argc, char* argv[])
     ServerRuntime::RecordNativeDedicatedServerLoadedSaveMetadata(
         "NativeDesktop/GameHDD/SmokeSession.save",
         previousSaveStub);
+    ServerRuntime::NativeDedicatedServerHostedGameRuntimeStubInitData
+        nativeHostedStubInitData = {};
+    ServerRuntime::PopulateDedicatedServerNetworkGameInitData(
+        &nativeHostedStubInitData,
+        hostedGamePlan.networkInitPlan);
+    const std::uint64_t nativeHostedStubTickBefore =
+        ServerRuntime::GetDedicatedServerPlatformTickCount();
+    const int nativeHostedStubResult =
+        ServerRuntime::StartDedicatedServerHostedGameRuntime(
+            hostedGamePlan,
+            ServerRuntime::GetDedicatedServerHostedGameRuntimeThreadProc(),
+            &nativeHostedStubInitData);
+    const std::uint64_t nativeHostedStubTickAfter =
+        ServerRuntime::GetDedicatedServerPlatformTickCount();
+    const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
+        nativeHostedStubSnapshot =
+            ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
     const int hostedGameRuntimeNullThreadResult =
         ServerRuntime::StartDedicatedServerHostedGameRuntime(
             hostedGamePlan,
@@ -2520,6 +2538,38 @@ int main(int argc, char* argv[])
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Failed,
         hostedGameRuntimeResult,
         hostedGameRuntimeThreadValue);
+    printf("native_hosted_stub=%d result=%d steps=%llu duration-ms=%llu "
+        "ticks=%llu validated=%d\n",
+        nativeHostedStubResult == 0 &&
+            nativeHostedStubInitData.seed == hostedGamePlan.resolvedSeed &&
+            nativeHostedStubInitData.saveData == fakeSaveData &&
+            nativeHostedStubInitData.settings == sessionConfig.hostSettings &&
+            nativeHostedStubInitData.dedicatedNoLocalHostPlayer &&
+            nativeHostedStubInitData.xzSize == sessionConfig.worldSizeChunks &&
+            nativeHostedStubInitData.hellScale ==
+                sessionConfig.worldHellScale &&
+            nativeHostedStubTickAfter > nativeHostedStubTickBefore &&
+            nativeHostedStubSnapshot.startAttempted &&
+            nativeHostedStubSnapshot.threadInvoked &&
+            nativeHostedStubSnapshot.startupResult == 0 &&
+            nativeHostedStubSnapshot.startupPayloadPresent &&
+            nativeHostedStubSnapshot.startupPayloadValidated &&
+            nativeHostedStubSnapshot.startupThreadIterations == 4U &&
+            nativeHostedStubSnapshot.startupThreadDurationMs > 0U &&
+            nativeHostedStubSnapshot.loadedSaveMetadataAvailable &&
+            nativeHostedStubSnapshot.previousStartupMode == "loaded" &&
+            nativeHostedStubSnapshot.previousStartupPayloadPresent == false &&
+            nativeHostedStubSnapshot.previousStartupPayloadValidated == false &&
+            nativeHostedStubSnapshot.previousStartupThreadIterations == 0U &&
+            nativeHostedStubSnapshot.previousStartupThreadDurationMs == 0U,
+        nativeHostedStubResult,
+        (unsigned long long)
+            nativeHostedStubSnapshot.startupThreadIterations,
+        (unsigned long long)
+            nativeHostedStubSnapshot.startupThreadDurationMs,
+        (unsigned long long)
+            (nativeHostedStubTickAfter - nativeHostedStubTickBefore),
+        nativeHostedStubSnapshot.startupPayloadValidated);
     printf("hosted_game_startup=%d result=%d abort=%d code=%d\n",
         hostedGameStartupExecution.startupResult == 0 &&
             !hostedGameStartupExecution.startupPlan.shouldAbortStartup &&
@@ -3151,6 +3201,27 @@ int main(int argc, char* argv[])
         hostedGameRuntimeSleepResult == 13 &&
         hostedGameRuntimeSleepThreadValue == 2 &&
         hostedGameRuntimeTickAfter > hostedGameRuntimeTickBefore &&
+        nativeHostedStubResult == 0 &&
+        nativeHostedStubInitData.seed == hostedGamePlan.resolvedSeed &&
+        nativeHostedStubInitData.saveData == fakeSaveData &&
+        nativeHostedStubInitData.settings == sessionConfig.hostSettings &&
+        nativeHostedStubInitData.dedicatedNoLocalHostPlayer &&
+        nativeHostedStubInitData.xzSize == sessionConfig.worldSizeChunks &&
+        nativeHostedStubInitData.hellScale == sessionConfig.worldHellScale &&
+        nativeHostedStubTickAfter > nativeHostedStubTickBefore &&
+        nativeHostedStubSnapshot.startAttempted &&
+        nativeHostedStubSnapshot.threadInvoked &&
+        nativeHostedStubSnapshot.startupResult == 0 &&
+        nativeHostedStubSnapshot.startupPayloadPresent &&
+        nativeHostedStubSnapshot.startupPayloadValidated &&
+        nativeHostedStubSnapshot.startupThreadIterations == 4U &&
+        nativeHostedStubSnapshot.startupThreadDurationMs > 0U &&
+        nativeHostedStubSnapshot.loadedSaveMetadataAvailable &&
+        nativeHostedStubSnapshot.previousStartupMode == "loaded" &&
+        !nativeHostedStubSnapshot.previousStartupPayloadPresent &&
+        !nativeHostedStubSnapshot.previousStartupPayloadValidated &&
+        nativeHostedStubSnapshot.previousStartupThreadIterations == 0U &&
+        nativeHostedStubSnapshot.previousStartupThreadDurationMs == 0U &&
         hostedGameRuntimeResult == 11 &&
         hostedGameRuntimeThreadValue == 1 &&
         hostedGameStartupExecution.startupResult == 0 &&

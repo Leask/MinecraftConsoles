@@ -130,12 +130,19 @@ namespace
                 buffer,
                 sizeof(buffer),
                 "status payload settings=0x%08x no-local=%s "
-                "checksum=0x%016llx",
+                "checksum=0x%016llx startup-payload=%s "
+                "validated=%s startup-steps=%llu startup-ms=%llu",
                 (unsigned int)runtimeSnapshot.hostSettings,
                 runtimeSnapshot.dedicatedNoLocalHostPlayer
                     ? "true"
                     : "false",
-                (unsigned long long)runtimeSnapshot.savePayloadChecksum);
+                (unsigned long long)runtimeSnapshot.savePayloadChecksum,
+                runtimeSnapshot.startupPayloadPresent ? "present" : "none",
+                runtimeSnapshot.startupPayloadValidated ? "true" : "false",
+                (unsigned long long)
+                    runtimeSnapshot.startupThreadIterations,
+                (unsigned long long)
+                    runtimeSnapshot.startupThreadDurationMs);
             AppendResponseLine(response, buffer);
 
             std::snprintf(
@@ -225,7 +232,9 @@ namespace
                     buffer,
                     sizeof(buffer),
                     "status loaded-payload settings=0x%08x no-local=%s "
-                    "world-size=%u hell-scale=%u checksum=0x%016llx",
+                    "world-size=%u hell-scale=%u checksum=0x%016llx "
+                    "startup-payload=%s validated=%s startup-steps=%llu "
+                    "startup-ms=%llu",
                     (unsigned int)runtimeSnapshot.previousHostSettings,
                     runtimeSnapshot.previousDedicatedNoLocalHostPlayer
                         ? "true"
@@ -233,7 +242,17 @@ namespace
                     runtimeSnapshot.previousWorldSizeChunks,
                     (unsigned int)runtimeSnapshot.previousWorldHellScale,
                     (unsigned long long)
-                        runtimeSnapshot.previousSavePayloadChecksum);
+                        runtimeSnapshot.previousSavePayloadChecksum,
+                    runtimeSnapshot.previousStartupPayloadPresent
+                        ? "present"
+                        : "none",
+                    runtimeSnapshot.previousStartupPayloadValidated
+                        ? "true"
+                        : "false",
+                    (unsigned long long)
+                        runtimeSnapshot.previousStartupThreadIterations,
+                    (unsigned long long)
+                        runtimeSnapshot.previousStartupThreadDurationMs);
                 AppendResponseLine(response, buffer);
             }
         }
@@ -467,13 +486,24 @@ namespace ServerRuntime
                 LogInfof(
                     "console",
                     "status payload settings=0x%08x no-local=%s "
-                    "checksum=0x%016llx",
+                    "checksum=0x%016llx startup-payload=%s "
+                    "validated=%s startup-steps=%llu startup-ms=%llu",
                     (unsigned int)runtimeSnapshot.hostSettings,
                     runtimeSnapshot.dedicatedNoLocalHostPlayer
                         ? "true"
                         : "false",
                     (unsigned long long)
-                        runtimeSnapshot.savePayloadChecksum);
+                        runtimeSnapshot.savePayloadChecksum,
+                    runtimeSnapshot.startupPayloadPresent
+                        ? "present"
+                        : "none",
+                    runtimeSnapshot.startupPayloadValidated
+                        ? "true"
+                        : "false",
+                    (unsigned long long)
+                        runtimeSnapshot.startupThreadIterations,
+                    (unsigned long long)
+                        runtimeSnapshot.startupThreadDurationMs);
                 LogInfof(
                     "console",
                     "status session active=%s world=%s level-id=%s payload=%s "
@@ -561,7 +591,9 @@ namespace ServerRuntime
                     LogInfof(
                         "console",
                         "status loaded-payload settings=0x%08x no-local=%s "
-                        "world-size=%u hell-scale=%u checksum=0x%016llx",
+                        "world-size=%u hell-scale=%u checksum=0x%016llx "
+                        "startup-payload=%s validated=%s startup-steps=%llu "
+                        "startup-ms=%llu",
                         (unsigned int)runtimeSnapshot.previousHostSettings,
                         runtimeSnapshot.previousDedicatedNoLocalHostPlayer
                             ? "true"
@@ -570,7 +602,17 @@ namespace ServerRuntime
                         (unsigned int)
                             runtimeSnapshot.previousWorldHellScale,
                         (unsigned long long)
-                            runtimeSnapshot.previousSavePayloadChecksum);
+                            runtimeSnapshot.previousSavePayloadChecksum,
+                        runtimeSnapshot.previousStartupPayloadPresent
+                            ? "present"
+                            : "none",
+                        runtimeSnapshot.previousStartupPayloadValidated
+                            ? "true"
+                            : "false",
+                        (unsigned long long)
+                            runtimeSnapshot.previousStartupThreadIterations,
+                        (unsigned long long)
+                            runtimeSnapshot.previousStartupThreadDurationMs);
                 }
             }
             AppendStatusResponseLine(response, context, state);

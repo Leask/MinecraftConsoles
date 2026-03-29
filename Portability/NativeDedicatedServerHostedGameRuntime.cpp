@@ -1,13 +1,19 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
+#include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
+#include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 
 #include "lce_win32/lce_win32.h"
+#include "lce_time/lce_time.h"
 
 namespace ServerRuntime
 {
     namespace
     {
+        constexpr std::uint64_t kNativeHostedStartupStepDelayMs = 5;
+        constexpr std::uint64_t kNativeHostedStartupBaseIterations = 2;
+
         struct NativeDedicatedServerHostedGameThreadContext
         {
             DedicatedServerHostedGameThreadProc *threadProc = nullptr;
@@ -29,8 +35,48 @@ namespace ServerRuntime
                 context->threadProc(context->threadParam));
         }
 
-        int RunNativeDedicatedServerHostedGameThread(void *)
+        int RunNativeDedicatedServerHostedGameThread(void *threadParam)
         {
+            const std::uint64_t startMs = LceGetMonotonicMilliseconds();
+            NativeDedicatedServerHostedGameRuntimeStubInitData *initData =
+                static_cast<
+                    NativeDedicatedServerHostedGameRuntimeStubInitData *>(
+                        threadParam);
+            if (initData == nullptr)
+            {
+                RecordDedicatedServerHostedGameRuntimeStartupTelemetry(
+                    false,
+                    false,
+                    0,
+                    0);
+                return -2;
+            }
+
+            const bool startupPayloadPresent = initData->saveData != nullptr;
+            const bool startupPayloadValidated =
+                !startupPayloadPresent ||
+                (initData->saveData->data != nullptr &&
+                    initData->saveData->fileSize >= 0);
+            const std::uint64_t startupIterations =
+                kNativeHostedStartupBaseIterations +
+                (startupPayloadPresent ? 2ULL : 0ULL);
+            for (std::uint64_t i = 0; i < startupIterations; ++i)
+            {
+                LceSleepMilliseconds(kNativeHostedStartupStepDelayMs);
+            }
+
+            const std::uint64_t durationMs =
+                LceGetMonotonicMilliseconds() - startMs;
+            RecordDedicatedServerHostedGameRuntimeStartupTelemetry(
+                startupPayloadPresent,
+                startupPayloadValidated,
+                startupIterations,
+                durationMs);
+            if (!startupPayloadValidated)
+            {
+                return -2;
+            }
+
             return 0;
         }
     }

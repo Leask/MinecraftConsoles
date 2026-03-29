@@ -60,6 +60,10 @@ namespace ServerRuntime
         bool gameplayHalted = false;
         bool stopSignalValid = false;
         std::uint64_t previousSavePayloadChecksum = 0;
+        bool previousStartupPayloadPresent = false;
+        bool previousStartupPayloadValidated = false;
+        std::uint64_t previousStartupThreadIterations = 0;
+        std::uint64_t previousStartupThreadDurationMs = 0;
         std::uint64_t previousRemoteCommands = 0;
         std::uint64_t previousAutosaveCompletions = 0;
         std::uint64_t previousPlatformTickCount = 0;
@@ -80,6 +84,10 @@ namespace ServerRuntime
         bool requestedAppShutdown = false;
         bool shutdownHaltedGameplay = false;
         std::uint64_t gameplayLoopIterations = 0;
+        bool startupPayloadPresent = false;
+        bool startupPayloadValidated = false;
+        std::uint64_t startupThreadIterations = 0;
+        std::uint64_t startupThreadDurationMs = 0;
         std::string lastPersistedSavePath;
         std::uint64_t lastPersistedFileTime = 0;
         std::uint64_t lastPersistedAutosaveCompletions = 0;
@@ -139,6 +147,12 @@ namespace ServerRuntime
 
     void RecordDedicatedServerHostedGameRuntimeGameplayLoopIteration(
         std::uint64_t gameplayLoopIterations);
+
+    void RecordDedicatedServerHostedGameRuntimeStartupTelemetry(
+        bool startupPayloadPresent,
+        bool startupPayloadValidated,
+        std::uint64_t startupThreadIterations,
+        std::uint64_t startupThreadDurationMs);
 
     void RecordDedicatedServerHostedGameRuntimeSessionSummary(
         const DedicatedServerHostedGameRuntimeSessionSummary &summary);

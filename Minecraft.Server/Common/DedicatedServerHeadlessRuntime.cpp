@@ -8,6 +8,7 @@
 #include "DedicatedServerHeadlessShell.h"
 #include "DedicatedServerHostedGameRuntimeState.h"
 #include "DedicatedServerLifecycle.h"
+#include "NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "DedicatedServerPlatformRuntime.h"
 #include "DedicatedServerSignalState.h"
 #include "DedicatedServerSocketBootstrap.h"
@@ -22,16 +23,6 @@
 
 namespace
 {
-    struct NativeDedicatedServerNetworkGameInitData
-    {
-        std::int64_t seed = 0;
-        ServerRuntime::LoadSaveDataThreadParam *saveData = nullptr;
-        DWORD settings = 0;
-        bool dedicatedNoLocalHostPlayer = false;
-        unsigned int xzSize = 0;
-        unsigned char hellScale = 0;
-    };
-
     struct DedicatedServerHeadlessRunHooksContext
     {
         ServerRuntime::DedicatedServerBootstrapContext *bootstrapContext =
@@ -408,6 +399,14 @@ namespace
                 runtimeSnapshot.dedicatedNoLocalHostPlayer;
             saveStub.worldSizeChunks = runtimeSnapshot.worldSizeChunks;
             saveStub.worldHellScale = runtimeSnapshot.worldHellScale;
+            saveStub.startupPayloadPresent =
+                runtimeSnapshot.startupPayloadPresent;
+            saveStub.startupPayloadValidated =
+                runtimeSnapshot.startupPayloadValidated;
+            saveStub.startupThreadIterations =
+                runtimeSnapshot.startupThreadIterations;
+            saveStub.startupThreadDurationMs =
+                runtimeSnapshot.startupThreadDurationMs;
         }
 
         std::string saveText;
@@ -654,9 +653,10 @@ namespace
                     "startup",
                     "native loaded save metadata path=%s startup=%s "
                     "phase=%s settings=0x%08x no-local=%s world-size=%u "
-                    "hell-scale=%u payload-checksum=0x%016llx remote=%llu "
-                    "autosaves=%llu ticks=%llu uptime=%llu completed=%s "
-                    "app-shutdown=%s "
+                    "hell-scale=%u payload-checksum=0x%016llx "
+                    "startup-payload=%s validated=%s startup-steps=%llu "
+                    "startup-ms=%llu remote=%llu autosaves=%llu ticks=%llu "
+                    "uptime=%llu completed=%s app-shutdown=%s "
                     "shutdown-halted=%s gameplay-iterations=%llu",
                     loadedSaveMetadata.savePath.c_str(),
                     loadedSaveMetadata.saveStub.startupMode.c_str(),
@@ -670,6 +670,16 @@ namespace
                     loadedSaveMetadata.saveStub.worldHellScale,
                     (unsigned long long)
                         loadedSaveMetadata.saveStub.payloadChecksum,
+                    loadedSaveMetadata.saveStub.startupPayloadPresent
+                        ? "present"
+                        : "none",
+                    loadedSaveMetadata.saveStub.startupPayloadValidated
+                        ? "true"
+                        : "false",
+                    (unsigned long long)
+                        loadedSaveMetadata.saveStub.startupThreadIterations,
+                    (unsigned long long)
+                        loadedSaveMetadata.saveStub.startupThreadDurationMs,
                     (unsigned long long)
                         loadedSaveMetadata.saveStub.remoteCommands,
                     (unsigned long long)
@@ -789,7 +799,7 @@ namespace ServerRuntime
                 "live shell accepts may stall");
         }
 
-        NativeDedicatedServerNetworkGameInitData initData = {};
+        NativeDedicatedServerHostedGameRuntimeStubInitData initData = {};
         DedicatedServerHeadlessRunHooksContext shellHooksContext = {};
         shellHooksContext.bootstrapContext = &runtimeContext;
         shellHooksContext.platformState = &platformState;

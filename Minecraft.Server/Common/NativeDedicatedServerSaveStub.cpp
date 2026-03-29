@@ -134,7 +134,7 @@ namespace ServerRuntime
             return false;
         }
 
-        char buffer[2048] = {};
+        char buffer[4096] = {};
         const int written = std::snprintf(
             buffer,
             sizeof(buffer),
@@ -166,6 +166,10 @@ namespace ServerRuntime
             "configured-port=%d\n"
             "listener-port=%d\n"
             "public-slots=%u\n"
+            "startup-payload-present=%s\n"
+            "startup-payload-validated=%s\n"
+            "startup-thread-iterations=%llu\n"
+            "startup-thread-duration-ms=%llu\n"
             "accepted-connections=%llu\n"
             "remote-commands=%llu\n"
             "autosave-requests=%llu\n"
@@ -201,6 +205,10 @@ namespace ServerRuntime
             stub.configuredPort,
             stub.listenerPort,
             stub.publicSlots,
+            stub.startupPayloadPresent ? "true" : "false",
+            stub.startupPayloadValidated ? "true" : "false",
+            (unsigned long long)stub.startupThreadIterations,
+            (unsigned long long)stub.startupThreadDurationMs,
             (unsigned long long)stub.acceptedConnections,
             (unsigned long long)stub.remoteCommands,
             (unsigned long long)stub.autosaveRequests,
@@ -380,6 +388,30 @@ namespace ServerRuntime
                                 outStub->publicSlots =
                                     (unsigned int)publicSlots;
                             }
+                        }
+                        else if (key == "startup-payload-present")
+                        {
+                            ParseBool(
+                                value,
+                                &outStub->startupPayloadPresent);
+                        }
+                        else if (key == "startup-payload-validated")
+                        {
+                            ParseBool(
+                                value,
+                                &outStub->startupPayloadValidated);
+                        }
+                        else if (key == "startup-thread-iterations")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->startupThreadIterations);
+                        }
+                        else if (key == "startup-thread-duration-ms")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->startupThreadDurationMs);
                         }
                         else if (key == "accepted-connections")
                         {

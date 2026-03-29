@@ -161,6 +161,18 @@ namespace ServerRuntime
                     .previousSavePayloadChecksum =
                         loadedSaveMetadata.saveStub.payloadChecksum;
                 g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousStartupPayloadPresent =
+                        loadedSaveMetadata.saveStub.startupPayloadPresent;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousStartupPayloadValidated =
+                        loadedSaveMetadata.saveStub.startupPayloadValidated;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousStartupThreadIterations =
+                        loadedSaveMetadata.saveStub.startupThreadIterations;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousStartupThreadDurationMs =
+                        loadedSaveMetadata.saveStub.startupThreadDurationMs;
+                g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousSessionCompleted =
                         loadedSaveMetadata.saveStub.sessionCompleted;
                 g_dedicatedServerHostedGameRuntimeSnapshot
@@ -284,6 +296,22 @@ namespace ServerRuntime
     {
         g_dedicatedServerHostedGameRuntimeSnapshot.gameplayLoopIterations =
             gameplayLoopIterations;
+    }
+
+    void RecordDedicatedServerHostedGameRuntimeStartupTelemetry(
+        bool startupPayloadPresent,
+        bool startupPayloadValidated,
+        std::uint64_t startupThreadIterations,
+        std::uint64_t startupThreadDurationMs)
+    {
+        g_dedicatedServerHostedGameRuntimeSnapshot.startupPayloadPresent =
+            startupPayloadPresent;
+        g_dedicatedServerHostedGameRuntimeSnapshot.startupPayloadValidated =
+            startupPayloadValidated;
+        g_dedicatedServerHostedGameRuntimeSnapshot.startupThreadIterations =
+            startupThreadIterations;
+        g_dedicatedServerHostedGameRuntimeSnapshot.startupThreadDurationMs =
+            startupThreadDurationMs;
     }
 
     void RecordDedicatedServerHostedGameRuntimeSessionSummary(
