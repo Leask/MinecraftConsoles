@@ -170,6 +170,8 @@ namespace ServerRuntime
             "startup-payload-validated=%s\n"
             "startup-thread-iterations=%llu\n"
             "startup-thread-duration-ms=%llu\n"
+            "hosted-thread-active=%s\n"
+            "hosted-thread-ticks=%llu\n"
             "accepted-connections=%llu\n"
             "remote-commands=%llu\n"
             "autosave-requests=%llu\n"
@@ -209,6 +211,8 @@ namespace ServerRuntime
             stub.startupPayloadValidated ? "true" : "false",
             (unsigned long long)stub.startupThreadIterations,
             (unsigned long long)stub.startupThreadDurationMs,
+            stub.hostedThreadActive ? "true" : "false",
+            (unsigned long long)stub.hostedThreadTicks,
             (unsigned long long)stub.acceptedConnections,
             (unsigned long long)stub.remoteCommands,
             (unsigned long long)stub.autosaveRequests,
@@ -412,6 +416,18 @@ namespace ServerRuntime
                             ParseUnsignedLongLong(
                                 value,
                                 &outStub->startupThreadDurationMs);
+                        }
+                        else if (key == "hosted-thread-active")
+                        {
+                            ParseBool(
+                                value,
+                                &outStub->hostedThreadActive);
+                        }
+                        else if (key == "hosted-thread-ticks")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->hostedThreadTicks);
                         }
                         else if (key == "accepted-connections")
                         {

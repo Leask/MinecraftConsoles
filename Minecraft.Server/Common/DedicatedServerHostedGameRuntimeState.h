@@ -64,6 +64,8 @@ namespace ServerRuntime
         bool previousStartupPayloadValidated = false;
         std::uint64_t previousStartupThreadIterations = 0;
         std::uint64_t previousStartupThreadDurationMs = 0;
+        bool previousHostedThreadActive = false;
+        std::uint64_t previousHostedThreadTicks = 0;
         std::uint64_t previousRemoteCommands = 0;
         std::uint64_t previousAutosaveCompletions = 0;
         std::uint64_t previousPlatformTickCount = 0;
@@ -88,6 +90,8 @@ namespace ServerRuntime
         bool startupPayloadValidated = false;
         std::uint64_t startupThreadIterations = 0;
         std::uint64_t startupThreadDurationMs = 0;
+        bool hostedThreadActive = false;
+        std::uint64_t hostedThreadTicks = 0;
         std::string lastPersistedSavePath;
         std::uint64_t lastPersistedFileTime = 0;
         std::uint64_t lastPersistedAutosaveCompletions = 0;
@@ -153,6 +157,10 @@ namespace ServerRuntime
         bool startupPayloadValidated,
         std::uint64_t startupThreadIterations,
         std::uint64_t startupThreadDurationMs);
+
+    void RecordDedicatedServerHostedGameRuntimeThreadState(
+        bool hostedThreadActive,
+        std::uint64_t hostedThreadTicks);
 
     void RecordDedicatedServerHostedGameRuntimeSessionSummary(
         const DedicatedServerHostedGameRuntimeSessionSummary &summary);

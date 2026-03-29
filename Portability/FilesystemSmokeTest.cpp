@@ -19,6 +19,7 @@
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerLoadedSaveState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
+#include "NativeDedicatedServerHostedGameSession.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSessionConfig.h"
@@ -1466,6 +1467,11 @@ int main(int argc, char* argv[])
             ServerRuntime::ExecuteDedicatedServerShutdown();
     const bool platformGameplayHaltedAfter =
         ServerRuntime::IsDedicatedServerGameplayHalted();
+    ServerRuntime::StopDedicatedServerPlatformRuntime();
+    ServerRuntime::ResetDedicatedServerShutdownRequest();
+    const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
+        platformHostedRuntimeResult =
+            ServerRuntime::StartDedicatedServerPlatformRuntime(platformState);
     ServerRuntime::NativeDedicatedServerSaveStub previousSaveStub = {};
     previousSaveStub.startupMode = "loaded";
     previousSaveStub.remoteCommands = 9;
@@ -1497,6 +1503,19 @@ int main(int argc, char* argv[])
         ServerRuntime::GetDedicatedServerPlatformTickCount();
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         nativeHostedStubSnapshot =
+            ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+    LceSleepMilliseconds(25);
+    const std::uint64_t nativeHostedStubThreadTicks =
+        ServerRuntime::GetNativeDedicatedServerHostedGameSessionThreadTicks();
+    ServerRuntime::SetDedicatedServerAppShutdownRequested(true);
+    DWORD nativeHostedStubExitCode = 0;
+    const bool nativeHostedStubStopped =
+        ServerRuntime::WaitForNativeDedicatedServerHostedGameSessionStop(
+            INFINITE,
+            &nativeHostedStubExitCode);
+    ServerRuntime::SetDedicatedServerAppShutdownRequested(false);
+    const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
+        nativeHostedStubStoppedSnapshot =
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
     const int hostedGameRuntimeNullThreadResult =
         ServerRuntime::StartDedicatedServerHostedGameRuntime(
@@ -2567,7 +2586,7 @@ int main(int argc, char* argv[])
         hostedGameRuntimeResult,
         hostedGameRuntimeThreadValue);
     printf("native_hosted_stub=%d result=%d steps=%llu duration-ms=%llu "
-        "ticks=%llu validated=%d\n",
+        "ticks=%llu validated=%d stopped=%d exit=%lu thread-ticks=%llu\n",
         nativeHostedStubResult == 0 &&
         nativeHostedStubInitData.seed == hostedGamePlan.resolvedSeed &&
             nativeHostedSaveTextBuilt &&
@@ -2585,12 +2604,19 @@ int main(int argc, char* argv[])
             nativeHostedStubSnapshot.startupPayloadValidated &&
             nativeHostedStubSnapshot.startupThreadIterations == 4U &&
             nativeHostedStubSnapshot.startupThreadDurationMs > 0U &&
+            nativeHostedStubSnapshot.hostedThreadActive &&
             nativeHostedStubSnapshot.loadedSaveMetadataAvailable &&
             nativeHostedStubSnapshot.previousStartupMode == "loaded" &&
             nativeHostedStubSnapshot.previousStartupPayloadPresent == false &&
             nativeHostedStubSnapshot.previousStartupPayloadValidated == false &&
             nativeHostedStubSnapshot.previousStartupThreadIterations == 0U &&
-            nativeHostedStubSnapshot.previousStartupThreadDurationMs == 0U,
+            nativeHostedStubSnapshot.previousStartupThreadDurationMs == 0U &&
+            nativeHostedStubStopped &&
+            nativeHostedStubExitCode == 0 &&
+            nativeHostedStubThreadTicks > 0U &&
+            !nativeHostedStubStoppedSnapshot.hostedThreadActive &&
+            nativeHostedStubStoppedSnapshot.hostedThreadTicks >=
+                nativeHostedStubThreadTicks,
         nativeHostedStubResult,
         (unsigned long long)
             nativeHostedStubSnapshot.startupThreadIterations,
@@ -2598,7 +2624,10 @@ int main(int argc, char* argv[])
             nativeHostedStubSnapshot.startupThreadDurationMs,
         (unsigned long long)
             (nativeHostedStubTickAfter - nativeHostedStubTickBefore),
-        nativeHostedStubSnapshot.startupPayloadValidated);
+        nativeHostedStubSnapshot.startupPayloadValidated,
+        nativeHostedStubStopped,
+        (unsigned long)nativeHostedStubExitCode,
+        (unsigned long long)nativeHostedStubThreadTicks);
     printf("hosted_game_startup=%d result=%d abort=%d code=%d\n",
         hostedGameStartupExecution.startupResult == 0 &&
             !hostedGameStartupExecution.startupPlan.shouldAbortStartup &&
@@ -3202,6 +3231,7 @@ int main(int argc, char* argv[])
         platformGameplayHaltedBefore &&
         platformGameplayHaltedAfter &&
         platformStopSignalValid &&
+        platformHostedRuntimeResult.ok &&
         initialSaveExecution.requested &&
         initialSaveExecution.completed &&
         !initialSaveExecution.timedOut &&
@@ -3246,12 +3276,19 @@ int main(int argc, char* argv[])
         nativeHostedStubSnapshot.startupPayloadValidated &&
         nativeHostedStubSnapshot.startupThreadIterations == 4U &&
         nativeHostedStubSnapshot.startupThreadDurationMs > 0U &&
+        nativeHostedStubSnapshot.hostedThreadActive &&
         nativeHostedStubSnapshot.loadedSaveMetadataAvailable &&
         nativeHostedStubSnapshot.previousStartupMode == "loaded" &&
         !nativeHostedStubSnapshot.previousStartupPayloadPresent &&
         !nativeHostedStubSnapshot.previousStartupPayloadValidated &&
         nativeHostedStubSnapshot.previousStartupThreadIterations == 0U &&
         nativeHostedStubSnapshot.previousStartupThreadDurationMs == 0U &&
+        nativeHostedStubStopped &&
+        nativeHostedStubExitCode == 0 &&
+        nativeHostedStubThreadTicks > 0U &&
+        !nativeHostedStubStoppedSnapshot.hostedThreadActive &&
+        nativeHostedStubStoppedSnapshot.hostedThreadTicks >=
+            nativeHostedStubThreadTicks &&
         hostedGameRuntimeResult == 11 &&
         hostedGameRuntimeThreadValue == 1 &&
         hostedGameStartupExecution.startupResult == 0 &&

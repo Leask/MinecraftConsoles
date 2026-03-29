@@ -1,5 +1,7 @@
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerAutosaveTracker.h"
+#include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
+#include "NativeDedicatedServerHostedGameSession.h"
 
 namespace
 {
@@ -48,6 +50,7 @@ namespace ServerRuntime
         DedicatedServerPlatformRuntimeStartResult result = {};
         g_nativeRuntimeState = {};
         ResetDedicatedServerAutosaveTracker();
+        ResetNativeDedicatedServerHostedGameSessionState();
         g_nativeRuntimeState.gameplayInstance = true;
         g_nativeRuntimeState.stopSignalValid = true;
         result.ok = true;
@@ -82,6 +85,9 @@ namespace ServerRuntime
         }
         UpdateDedicatedServerAutosaveTracker(
             g_nativeRuntimeState.pendingWorldActionTicks == 0);
+        RecordDedicatedServerHostedGameRuntimeThreadState(
+            IsNativeDedicatedServerHostedGameSessionRunning(),
+            GetNativeDedicatedServerHostedGameSessionThreadTicks());
     }
 
     void HandleDedicatedServerPlatformActions()
@@ -170,13 +176,22 @@ namespace ServerRuntime
 
     void WaitForDedicatedServerStopSignal()
     {
+        WaitForNativeDedicatedServerHostedGameSessionStop(INFINITE);
         g_nativeRuntimeState.gameplayInstance = false;
         g_nativeRuntimeState.stopSignalValid = false;
         g_nativeRuntimeState.pendingWorldActionTicks = 0;
+        RecordDedicatedServerHostedGameRuntimeThreadState(
+            IsNativeDedicatedServerHostedGameSessionRunning(),
+            GetNativeDedicatedServerHostedGameSessionThreadTicks());
     }
 
     void StopDedicatedServerPlatformRuntime()
     {
+        if (!WaitForNativeDedicatedServerHostedGameSessionStop(0))
+        {
+            g_nativeRuntimeState.appShutdownRequested = true;
+            WaitForNativeDedicatedServerHostedGameSessionStop(INFINITE);
+        }
         ResetDedicatedServerAutosaveTracker();
         g_nativeRuntimeState = {};
     }

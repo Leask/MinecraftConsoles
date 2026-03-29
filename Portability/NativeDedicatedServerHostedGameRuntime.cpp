@@ -4,7 +4,9 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
+#include "NativeDedicatedServerHostedGameSession.h"
 
+#include <atomic>
 #include <string>
 
 #include "lce_win32/lce_win32.h"
@@ -16,6 +18,11 @@ namespace ServerRuntime
     {
         constexpr std::uint64_t kNativeHostedStartupStepDelayMs = 5;
         constexpr std::uint64_t kNativeHostedStartupBaseIterations = 2;
+
+        HANDLE g_nativeHostedStartupReadyEvent = nullptr;
+        HANDLE g_nativeHostedThreadHandle = nullptr;
+        std::atomic<bool> g_nativeHostedThreadRunning(false);
+        std::atomic<std::uint64_t> g_nativeHostedThreadTicks(0);
 
         struct NativeDedicatedServerHostedGameThreadContext
         {
@@ -63,9 +70,28 @@ namespace ServerRuntime
                 &saveStub);
         }
 
+        void CloseNativeDedicatedServerHostedStartupReadyEvent()
+        {
+            if (g_nativeHostedStartupReadyEvent != nullptr &&
+                g_nativeHostedStartupReadyEvent != INVALID_HANDLE_VALUE)
+            {
+                CloseHandle(g_nativeHostedStartupReadyEvent);
+                g_nativeHostedStartupReadyEvent = nullptr;
+            }
+        }
+
+        void RecordNativeDedicatedServerHostedThreadSnapshot()
+        {
+            RecordDedicatedServerHostedGameRuntimeThreadState(
+                g_nativeHostedThreadRunning.load(),
+                g_nativeHostedThreadTicks.load());
+        }
+
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)
         {
             const std::uint64_t startMs = LceGetMonotonicMilliseconds();
+            g_nativeHostedThreadRunning.store(false);
+            g_nativeHostedThreadTicks.store(0);
             NativeDedicatedServerHostedGameRuntimeStubInitData *initData =
                 static_cast<
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
@@ -98,13 +124,106 @@ namespace ServerRuntime
                 startupPayloadValidated,
                 startupIterations,
                 durationMs);
+            RecordNativeDedicatedServerHostedThreadSnapshot();
             if (!startupPayloadValidated)
             {
                 return -2;
             }
 
+            g_nativeHostedThreadRunning.store(true);
+            RecordNativeDedicatedServerHostedThreadSnapshot();
+            if (g_nativeHostedStartupReadyEvent != nullptr &&
+                g_nativeHostedStartupReadyEvent != INVALID_HANDLE_VALUE)
+            {
+                SetEvent(g_nativeHostedStartupReadyEvent);
+            }
+
+            while (!IsDedicatedServerShutdownRequested() &&
+                !IsDedicatedServerAppShutdownRequested() &&
+                !IsDedicatedServerGameplayHalted())
+            {
+                g_nativeHostedThreadTicks.fetch_add(1);
+                RecordNativeDedicatedServerHostedThreadSnapshot();
+                LceSleepMilliseconds(10);
+            }
+
+            g_nativeHostedThreadRunning.store(false);
+            RecordNativeDedicatedServerHostedThreadSnapshot();
             return 0;
         }
+    }
+
+    void ResetNativeDedicatedServerHostedGameSessionState()
+    {
+        if (g_nativeHostedThreadHandle != nullptr &&
+            g_nativeHostedThreadHandle != INVALID_HANDLE_VALUE)
+        {
+            if (WaitForSingleObject(g_nativeHostedThreadHandle, 0) ==
+                WAIT_OBJECT_0)
+            {
+                CloseHandle(g_nativeHostedThreadHandle);
+                g_nativeHostedThreadHandle = nullptr;
+            }
+        }
+
+        CloseNativeDedicatedServerHostedStartupReadyEvent();
+        g_nativeHostedThreadRunning.store(false);
+        g_nativeHostedThreadTicks.store(0);
+    }
+
+    bool IsNativeDedicatedServerHostedGameSessionRunning()
+    {
+        return g_nativeHostedThreadRunning.load();
+    }
+
+    std::uint64_t GetNativeDedicatedServerHostedGameSessionThreadTicks()
+    {
+        return g_nativeHostedThreadTicks.load();
+    }
+
+    bool WaitForNativeDedicatedServerHostedGameSessionStop(
+        DWORD timeoutMs,
+        DWORD *outExitCode)
+    {
+        if (outExitCode != nullptr)
+        {
+            *outExitCode = 0;
+        }
+
+        if (g_nativeHostedThreadHandle == nullptr ||
+            g_nativeHostedThreadHandle == INVALID_HANDLE_VALUE)
+        {
+            CloseNativeDedicatedServerHostedStartupReadyEvent();
+            g_nativeHostedThreadRunning.store(false);
+            RecordNativeDedicatedServerHostedThreadSnapshot();
+            return true;
+        }
+
+        const DWORD waitResult = WaitForSingleObject(
+            g_nativeHostedThreadHandle,
+            timeoutMs);
+        if (waitResult != WAIT_OBJECT_0)
+        {
+            return false;
+        }
+
+        DWORD threadExitCode = 0;
+        if (!GetExitCodeThread(g_nativeHostedThreadHandle, &threadExitCode))
+        {
+            threadExitCode = static_cast<DWORD>(-1);
+        }
+
+        if (outExitCode != nullptr)
+        {
+            *outExitCode = threadExitCode;
+        }
+
+        CloseHandle(g_nativeHostedThreadHandle);
+        g_nativeHostedThreadHandle = nullptr;
+        CloseNativeDedicatedServerHostedStartupReadyEvent();
+        g_nativeHostedThreadRunning.store(false);
+        RecordNativeDedicatedServerHostedThreadSnapshot();
+        return true;
     }
 
     int StartDedicatedServerHostedGameRuntime(
@@ -121,6 +240,26 @@ namespace ServerRuntime
             return startupResult;
         }
 
+        const bool usePersistentNativeSession =
+            threadProc == &RunNativeDedicatedServerHostedGameThread;
+        if (usePersistentNativeSession)
+        {
+            ResetNativeDedicatedServerHostedGameSessionState();
+            g_nativeHostedStartupReadyEvent = CreateEvent(
+                nullptr,
+                TRUE,
+                FALSE,
+                nullptr);
+            if (g_nativeHostedStartupReadyEvent == nullptr ||
+                g_nativeHostedStartupReadyEvent == INVALID_HANDLE_VALUE)
+            {
+                CloseNativeDedicatedServerHostedStartupReadyEvent();
+                return CompleteDedicatedServerHostedGameRuntimeStartup(
+                    -1,
+                    false);
+            }
+        }
+
         NativeDedicatedServerHostedGameThreadContext threadContext = {};
         threadContext.threadProc = threadProc;
         threadContext.threadParam = threadParam;
@@ -133,14 +272,46 @@ namespace ServerRuntime
             nullptr);
         if (threadHandle == nullptr || threadHandle == INVALID_HANDLE_VALUE)
         {
+            if (usePersistentNativeSession)
+            {
+                CloseNativeDedicatedServerHostedStartupReadyEvent();
+            }
             return CompleteDedicatedServerHostedGameRuntimeStartup(-1, false);
         }
 
-        while (WaitForSingleObject(threadHandle, 10) == WAIT_TIMEOUT &&
-            !IsDedicatedServerShutdownRequested())
+        if (usePersistentNativeSession)
         {
-            TickDedicatedServerPlatformRuntime();
-            HandleDedicatedServerPlatformActions();
+            g_nativeHostedThreadHandle = threadHandle;
+            while (!IsDedicatedServerShutdownRequested())
+            {
+                if (WaitForSingleObject(
+                        g_nativeHostedStartupReadyEvent,
+                        0) == WAIT_OBJECT_0)
+                {
+                    RecordNativeDedicatedServerHostedThreadSnapshot();
+                    return CompleteDedicatedServerHostedGameRuntimeStartup(
+                        0,
+                        true);
+                }
+
+                const DWORD threadWait = WaitForSingleObject(threadHandle, 10);
+                if (threadWait == WAIT_OBJECT_0)
+                {
+                    break;
+                }
+
+                TickDedicatedServerPlatformRuntime();
+                HandleDedicatedServerPlatformActions();
+            }
+        }
+        else
+        {
+            while (WaitForSingleObject(threadHandle, 10) == WAIT_TIMEOUT &&
+                !IsDedicatedServerShutdownRequested())
+            {
+                TickDedicatedServerPlatformRuntime();
+                HandleDedicatedServerPlatformActions();
+            }
         }
 
         WaitForSingleObject(threadHandle, INFINITE);
@@ -148,10 +319,20 @@ namespace ServerRuntime
         if (!GetExitCodeThread(threadHandle, &threadExitCode))
         {
             CloseHandle(threadHandle);
+            if (usePersistentNativeSession)
+            {
+                g_nativeHostedThreadHandle = nullptr;
+                CloseNativeDedicatedServerHostedStartupReadyEvent();
+            }
             return CompleteDedicatedServerHostedGameRuntimeStartup(-1, true);
         }
 
         CloseHandle(threadHandle);
+        if (usePersistentNativeSession)
+        {
+            g_nativeHostedThreadHandle = nullptr;
+            CloseNativeDedicatedServerHostedStartupReadyEvent();
+        }
         startupResult = static_cast<int>(threadExitCode);
         return CompleteDedicatedServerHostedGameRuntimeStartup(
             startupResult,

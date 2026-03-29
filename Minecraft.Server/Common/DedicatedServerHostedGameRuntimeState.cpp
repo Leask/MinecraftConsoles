@@ -173,6 +173,12 @@ namespace ServerRuntime
                     .previousStartupThreadDurationMs =
                         loadedSaveMetadata.saveStub.startupThreadDurationMs;
                 g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousHostedThreadActive =
+                        loadedSaveMetadata.saveStub.hostedThreadActive;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousHostedThreadTicks =
+                        loadedSaveMetadata.saveStub.hostedThreadTicks;
+                g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousSessionCompleted =
                         loadedSaveMetadata.saveStub.sessionCompleted;
                 g_dedicatedServerHostedGameRuntimeSnapshot
@@ -312,6 +318,16 @@ namespace ServerRuntime
             startupThreadIterations;
         g_dedicatedServerHostedGameRuntimeSnapshot.startupThreadDurationMs =
             startupThreadDurationMs;
+    }
+
+    void RecordDedicatedServerHostedGameRuntimeThreadState(
+        bool hostedThreadActive,
+        std::uint64_t hostedThreadTicks)
+    {
+        g_dedicatedServerHostedGameRuntimeSnapshot.hostedThreadActive =
+            hostedThreadActive;
+        g_dedicatedServerHostedGameRuntimeSnapshot.hostedThreadTicks =
+            hostedThreadTicks;
     }
 
     void RecordDedicatedServerHostedGameRuntimeSessionSummary(

@@ -38,6 +38,8 @@ namespace ServerRuntime
         bool startupPayloadValidated = false;
         std::uint64_t startupThreadIterations = 0;
         std::uint64_t startupThreadDurationMs = 0;
+        bool hostedThreadActive = false;
+        std::uint64_t hostedThreadTicks = 0;
         std::uint64_t acceptedConnections = 0;
         std::uint64_t remoteCommands = 0;
         std::uint64_t autosaveRequests = 0;

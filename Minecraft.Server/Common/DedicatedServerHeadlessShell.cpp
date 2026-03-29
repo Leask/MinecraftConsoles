@@ -150,7 +150,8 @@ namespace
                 sizeof(buffer),
                 "status session active=%s world=%s level-id=%s payload=%s "
                 "payload-bytes=%lld autosaves=%llu/%llu ticks=%llu "
-                "uptime-ms=%llu action=%s shutdown=%s halted=%s",
+                "uptime-ms=%llu action=%s shutdown=%s halted=%s "
+                "hosted-thread=%s thread-ticks=%llu",
                 runtimeSnapshot.sessionActive ? "true" : "false",
                 runtimeSnapshot.worldName.c_str(),
                 runtimeSnapshot.worldSaveId.c_str(),
@@ -164,7 +165,9 @@ namespace
                 (unsigned long long)runtimeSnapshot.uptimeMs,
                 runtimeSnapshot.worldActionIdle ? "idle" : "busy",
                 runtimeSnapshot.appShutdownRequested ? "true" : "false",
-                runtimeSnapshot.gameplayHalted ? "true" : "false");
+                runtimeSnapshot.gameplayHalted ? "true" : "false",
+                runtimeSnapshot.hostedThreadActive ? "active" : "stopped",
+                (unsigned long long)runtimeSnapshot.hostedThreadTicks);
             AppendResponseLine(response, buffer);
 
             std::snprintf(
@@ -206,7 +209,8 @@ namespace
                     "status loaded-save path=%s startup=%s phase=%s "
                     "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu "
                     "completed=%s app-shutdown=%s shutdown-halted=%s "
-                    "gameplay-iterations=%llu",
+                    "gameplay-iterations=%llu hosted-thread=%s "
+                    "thread-ticks=%llu",
                     runtimeSnapshot.loadedSavePath.c_str(),
                     runtimeSnapshot.previousStartupMode.c_str(),
                     runtimeSnapshot.previousSessionPhase.c_str(),
@@ -225,7 +229,12 @@ namespace
                         ? "true"
                         : "false",
                     (unsigned long long)
-                        runtimeSnapshot.previousGameplayLoopIterations);
+                        runtimeSnapshot.previousGameplayLoopIterations,
+                    runtimeSnapshot.previousHostedThreadActive
+                        ? "active"
+                        : "stopped",
+                    (unsigned long long)
+                        runtimeSnapshot.previousHostedThreadTicks);
                 AppendResponseLine(response, buffer);
 
                 std::snprintf(
@@ -508,7 +517,8 @@ namespace ServerRuntime
                     "console",
                     "status session active=%s world=%s level-id=%s payload=%s "
                     "payload-bytes=%lld autosaves=%llu/%llu ticks=%llu "
-                    "uptime-ms=%llu action=%s shutdown=%s halted=%s",
+                    "uptime-ms=%llu action=%s shutdown=%s halted=%s "
+                    "hosted-thread=%s thread-ticks=%llu",
                     runtimeSnapshot.sessionActive ? "true" : "false",
                     runtimeSnapshot.worldName.c_str(),
                     runtimeSnapshot.worldSaveId.c_str(),
@@ -522,7 +532,11 @@ namespace ServerRuntime
                     (unsigned long long)runtimeSnapshot.uptimeMs,
                     runtimeSnapshot.worldActionIdle ? "idle" : "busy",
                     runtimeSnapshot.appShutdownRequested ? "true" : "false",
-                    runtimeSnapshot.gameplayHalted ? "true" : "false");
+                    runtimeSnapshot.gameplayHalted ? "true" : "false",
+                    runtimeSnapshot.hostedThreadActive
+                        ? "active"
+                        : "stopped",
+                    (unsigned long long)runtimeSnapshot.hostedThreadTicks);
 
                 LogInfof(
                     "console",
@@ -565,7 +579,8 @@ namespace ServerRuntime
                         "status loaded-save path=%s startup=%s phase=%s "
                         "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu "
                         "completed=%s app-shutdown=%s shutdown-halted=%s "
-                        "gameplay-iterations=%llu",
+                        "gameplay-iterations=%llu hosted-thread=%s "
+                        "thread-ticks=%llu",
                         runtimeSnapshot.loadedSavePath.c_str(),
                         runtimeSnapshot.previousStartupMode.c_str(),
                         runtimeSnapshot.previousSessionPhase.c_str(),
@@ -587,7 +602,12 @@ namespace ServerRuntime
                             ? "true"
                             : "false",
                         (unsigned long long)
-                            runtimeSnapshot.previousGameplayLoopIterations);
+                            runtimeSnapshot.previousGameplayLoopIterations,
+                        runtimeSnapshot.previousHostedThreadActive
+                            ? "active"
+                            : "stopped",
+                        (unsigned long long)
+                            runtimeSnapshot.previousHostedThreadTicks);
                     LogInfof(
                         "console",
                         "status loaded-payload settings=0x%08x no-local=%s "

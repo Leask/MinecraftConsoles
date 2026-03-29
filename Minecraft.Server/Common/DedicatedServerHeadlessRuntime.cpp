@@ -407,6 +407,10 @@ namespace
                 runtimeSnapshot.startupThreadIterations;
             saveStub.startupThreadDurationMs =
                 runtimeSnapshot.startupThreadDurationMs;
+            saveStub.hostedThreadActive =
+                runtimeSnapshot.hostedThreadActive;
+            saveStub.hostedThreadTicks =
+                runtimeSnapshot.hostedThreadTicks;
         }
 
         std::string saveText;

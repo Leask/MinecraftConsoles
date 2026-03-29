@@ -65,6 +65,8 @@ foreach(expected_save_marker IN ITEMS
     "startup-payload-validated=true"
     "startup-thread-iterations="
     "startup-thread-duration-ms="
+    "hosted-thread-active=false"
+    "hosted-thread-ticks="
     "session-active=false"
     "session-completed=true"
     "world-action=idle"
@@ -190,6 +192,8 @@ foreach(expected_reloaded_save_marker IN ITEMS
     "startup-payload-validated=true"
     "startup-thread-iterations="
     "startup-thread-duration-ms="
+    "hosted-thread-active=false"
+    "hosted-thread-ticks="
     "session-completed=true")
   string(FIND
     "${reloaded_saved_world_text}"
