@@ -56,6 +56,10 @@ foreach(expected_save_marker IN ITEMS
     "startup-mode=created-new"
     "session-phase="
     "payload-bytes=0"
+    "host-settings="
+    "dedicated-no-local-player=true"
+    "world-size-chunks="
+    "hell-scale="
     "session-active=false"
     "session-completed=true"
     "world-action=idle"
@@ -102,6 +106,9 @@ foreach(expected_reload_marker IN ITEMS
     "native world bootstrap=loaded level-id=world"
     "native loaded save metadata path="
     "startup=created-new phase="
+    "settings=0x"
+    "world-size="
+    "hell-scale="
     "completed=true"
     "gameplay-iterations="
     "native bootstrap completed in bootstrap-only mode")
@@ -113,6 +120,73 @@ foreach(expected_reload_marker IN ITEMS
     message(FATAL_ERROR
       "Reload output did not contain expected marker: "
       "${expected_reload_marker}\noutput:\n${reload_combined_output}\n")
+  endif()
+endforeach()
+
+execute_process(
+  COMMAND
+    "${EXECUTABLE}"
+    --storage-root "${STORAGE_ROOT}"
+    --command save
+    --shutdown-after-ms 250
+    -port 0
+    -bind 127.0.0.1
+    -name NativeSaveReload
+  WORKING_DIRECTORY "${TEST_DIR}"
+  RESULT_VARIABLE reload_shell_result
+  OUTPUT_VARIABLE reload_shell_output
+  ERROR_VARIABLE reload_shell_error
+)
+
+if(NOT reload_shell_result EQUAL 0)
+  message(FATAL_ERROR
+    "Reload-shell run failed with exit ${reload_shell_result}\n"
+    "stdout:\n${reload_shell_output}\n"
+    "stderr:\n${reload_shell_error}\n")
+endif()
+
+set(reload_shell_combined_output "${reload_shell_output}\n${reload_shell_error}")
+foreach(expected_reload_shell_marker IN ITEMS
+    "native world bootstrap=loaded level-id=world"
+    "manual save requested"
+    "renamed-slot.save")
+  string(FIND
+    "${reload_shell_combined_output}"
+    "${expected_reload_shell_marker}"
+    reload_shell_marker_index)
+  if(reload_shell_marker_index LESS 0)
+    message(FATAL_ERROR
+      "Reload-shell output did not contain expected marker: "
+      "${expected_reload_shell_marker}\n"
+      "output:\n${reload_shell_combined_output}\n")
+  endif()
+endforeach()
+
+if(EXISTS "${STORAGE_ROOT}/world.save")
+  message(FATAL_ERROR
+    "Reload-shell unexpectedly created a new world.save instead of "
+    "persisting back to the loaded slot")
+endif()
+
+file(READ "${STORAGE_ROOT}/renamed-slot.save" reloaded_saved_world_text)
+foreach(expected_reloaded_save_marker IN ITEMS
+    "native-headless-save"
+    "startup-mode=loaded"
+    "session-phase="
+    "host-settings="
+    "dedicated-no-local-player=true"
+    "world-size-chunks="
+    "hell-scale="
+    "session-completed=true")
+  string(FIND
+    "${reloaded_saved_world_text}"
+    "${expected_reloaded_save_marker}"
+    reloaded_save_index)
+  if(reloaded_save_index LESS 0)
+    message(FATAL_ERROR
+      "Reload-shell save file did not contain expected marker: "
+      "${expected_reloaded_save_marker}\n"
+      "save file:\n${reloaded_saved_world_text}\n")
   endif()
 endforeach()
 

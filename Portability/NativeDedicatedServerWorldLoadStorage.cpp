@@ -227,6 +227,8 @@ namespace
         ServerRuntime::ResetNativeDedicatedServerLoadedSaveMetadata();
         const NativeDedicatedServerWorldLoadStorageEntry &matchedEntry =
             storageContext->entries[(size_t)matchedIndex];
+        ServerRuntime::RecordNativeDedicatedServerLoadedSavePath(
+            matchedEntry.path.string());
         if (matchedEntry.hasStubMetadata)
         {
             ServerRuntime::RecordNativeDedicatedServerLoadedSaveMetadata(

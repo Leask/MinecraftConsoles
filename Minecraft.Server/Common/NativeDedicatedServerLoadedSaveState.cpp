@@ -14,11 +14,19 @@ namespace ServerRuntime
             NativeDedicatedServerLoadedSaveMetadata{};
     }
 
+    void RecordNativeDedicatedServerLoadedSavePath(
+        const std::string &savePath)
+    {
+        g_nativeDedicatedServerLoadedSaveMetadata.available = true;
+        g_nativeDedicatedServerLoadedSaveMetadata.savePath = savePath;
+    }
+
     void RecordNativeDedicatedServerLoadedSaveMetadata(
         const std::string &savePath,
         const NativeDedicatedServerSaveStub &saveStub)
     {
         g_nativeDedicatedServerLoadedSaveMetadata.available = true;
+        g_nativeDedicatedServerLoadedSaveMetadata.hasSaveStub = true;
         g_nativeDedicatedServerLoadedSaveMetadata.savePath = savePath;
         g_nativeDedicatedServerLoadedSaveMetadata.saveStub = saveStub;
     }

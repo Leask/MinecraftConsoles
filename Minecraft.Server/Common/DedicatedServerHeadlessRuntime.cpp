@@ -295,6 +295,15 @@ namespace
     std::string BuildDedicatedServerHeadlessSavePath(
         const DedicatedServerHeadlessRunHooksContext &context)
     {
+        const ServerRuntime::NativeDedicatedServerLoadedSaveMetadata
+            loadedSaveMetadata =
+                ServerRuntime::GetNativeDedicatedServerLoadedSaveMetadata();
+        if (loadedSaveMetadata.available &&
+            !loadedSaveMetadata.savePath.empty())
+        {
+            return loadedSaveMetadata.savePath;
+        }
+
         std::string savePath = context.shellContext.storageRoot;
         if (!savePath.empty() && savePath.back() != '/')
         {
@@ -393,6 +402,11 @@ namespace
             saveStub.publicSlots = runtimeSnapshot.publicSlots;
             saveStub.payloadBytes = runtimeSnapshot.savePayloadBytes;
             saveStub.payloadName = runtimeSnapshot.savePayloadName;
+            saveStub.hostSettings = runtimeSnapshot.hostSettings;
+            saveStub.dedicatedNoLocalHostPlayer =
+                runtimeSnapshot.dedicatedNoLocalHostPlayer;
+            saveStub.worldSizeChunks = runtimeSnapshot.worldSizeChunks;
+            saveStub.worldHellScale = runtimeSnapshot.worldHellScale;
         }
 
         std::string saveText;
@@ -638,12 +652,20 @@ namespace
                 ServerRuntime::LogInfof(
                     "startup",
                     "native loaded save metadata path=%s startup=%s "
-                    "phase=%s remote=%llu autosaves=%llu ticks=%llu "
+                    "phase=%s settings=0x%08x no-local=%s world-size=%u "
+                    "hell-scale=%u remote=%llu autosaves=%llu ticks=%llu "
                     "uptime=%llu completed=%s app-shutdown=%s "
                     "shutdown-halted=%s gameplay-iterations=%llu",
                     loadedSaveMetadata.savePath.c_str(),
                     loadedSaveMetadata.saveStub.startupMode.c_str(),
                     loadedSaveMetadata.saveStub.sessionPhase.c_str(),
+                    (unsigned int)
+                        loadedSaveMetadata.saveStub.hostSettings,
+                    loadedSaveMetadata.saveStub.dedicatedNoLocalHostPlayer
+                        ? "true"
+                        : "false",
+                    loadedSaveMetadata.saveStub.worldSizeChunks,
+                    loadedSaveMetadata.saveStub.worldHellScale,
                     (unsigned long long)
                         loadedSaveMetadata.saveStub.remoteCommands,
                     (unsigned long long)

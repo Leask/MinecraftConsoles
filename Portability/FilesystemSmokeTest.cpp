@@ -1415,6 +1415,10 @@ int main(int argc, char* argv[])
     previousSaveStub.autosaveCompletions = 7;
     previousSaveStub.platformTickCount = 42;
     previousSaveStub.uptimeMs = 1337;
+    previousSaveStub.hostSettings = 0xCAFEU;
+    previousSaveStub.dedicatedNoLocalHostPlayer = false;
+    previousSaveStub.worldSizeChunks = 160U;
+    previousSaveStub.worldHellScale = 3U;
     ServerRuntime::RecordNativeDedicatedServerLoadedSaveMetadata(
         "NativeDesktop/GameHDD/SmokeSession.save",
         previousSaveStub);
@@ -1495,6 +1499,9 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.listenerPort == 19132 &&
         hostedGameSessionSnapshot.savePayloadName == "Smoke World" &&
         hostedGameSessionSnapshot.savePayloadBytes == 4 &&
+        hostedGameSessionSnapshot.hostSettings ==
+            sessionConfig.hostSettings &&
+        hostedGameSessionSnapshot.dedicatedNoLocalHostPlayer &&
         hostedGameSessionSnapshot.acceptedConnections == 2 &&
         hostedGameSessionSnapshot.remoteCommands == 3 &&
         hostedGameSessionSnapshot.autosaveRequests == 4 &&
@@ -2494,6 +2501,14 @@ int main(int argc, char* argv[])
             hostedGameRuntimeSnapshot.previousAutosaveCompletions == 7 &&
             hostedGameRuntimeSnapshot.previousPlatformTickCount == 42 &&
             hostedGameRuntimeSnapshot.previousUptimeMs == 1337 &&
+            hostedGameRuntimeSnapshot.previousHostSettings == 0xCAFEU &&
+            !hostedGameRuntimeSnapshot
+                .previousDedicatedNoLocalHostPlayer &&
+            hostedGameRuntimeSnapshot.previousWorldSizeChunks == 160U &&
+            hostedGameRuntimeSnapshot.previousWorldHellScale == 3U &&
+            hostedGameRuntimeSnapshot.hostSettings ==
+                sessionConfig.hostSettings &&
+            hostedGameRuntimeSnapshot.dedicatedNoLocalHostPlayer &&
             hostedGameRuntimeSnapshot.phase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Startup &&
             hostedGameRuntimeSnapshot.startupResult == 0,

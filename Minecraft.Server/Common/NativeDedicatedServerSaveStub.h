@@ -16,6 +16,10 @@ namespace ServerRuntime
         std::string payloadName;
         std::int64_t resolvedSeed = 0;
         std::int64_t payloadBytes = 0;
+        std::uint32_t hostSettings = 0;
+        bool dedicatedNoLocalHostPlayer = true;
+        unsigned int worldSizeChunks = 0;
+        unsigned int worldHellScale = 0;
         bool sessionActive = false;
         bool worldActionIdle = true;
         bool appShutdownRequested = false;

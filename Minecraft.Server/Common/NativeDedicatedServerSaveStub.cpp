@@ -1,6 +1,7 @@
 #include "NativeDedicatedServerSaveStub.h"
 
 #include <cerrno>
+#include <climits>
 #include <cstdio>
 #include <cstdlib>
 
@@ -95,6 +96,31 @@ namespace
         *outValue = (int)parsed;
         return true;
     }
+
+    bool ParseUnsignedInt(
+        const std::string &text,
+        unsigned int *outValue)
+    {
+        if (outValue == nullptr || text.empty())
+        {
+            return false;
+        }
+
+        errno = 0;
+        char *end = nullptr;
+        const unsigned long parsed = std::strtoul(
+            text.c_str(),
+            &end,
+            10);
+        if (text.c_str() == end || *end != '\0' || errno != 0 ||
+            parsed > UINT_MAX)
+        {
+            return false;
+        }
+
+        *outValue = (unsigned int)parsed;
+        return true;
+    }
 }
 
 namespace ServerRuntime
@@ -108,7 +134,7 @@ namespace ServerRuntime
             return false;
         }
 
-        char buffer[1024] = {};
+        char buffer[2048] = {};
         const int written = std::snprintf(
             buffer,
             sizeof(buffer),
@@ -122,6 +148,10 @@ namespace ServerRuntime
             "payload-name=%s\n"
             "seed=%lld\n"
             "payload-bytes=%lld\n"
+            "host-settings=%u\n"
+            "dedicated-no-local-player=%s\n"
+            "world-size-chunks=%u\n"
+            "hell-scale=%u\n"
             "session-active=%s\n"
             "world-action=%s\n"
             "app-shutdown=%s\n"
@@ -152,6 +182,10 @@ namespace ServerRuntime
             stub.payloadName.c_str(),
             (long long)stub.resolvedSeed,
             (long long)stub.payloadBytes,
+            stub.hostSettings,
+            stub.dedicatedNoLocalHostPlayer ? "true" : "false",
+            stub.worldSizeChunks,
+            stub.worldHellScale,
             stub.sessionActive ? "true" : "false",
             stub.worldActionIdle ? "idle" : "busy",
             stub.appShutdownRequested ? "true" : "false",
@@ -258,6 +292,28 @@ namespace ServerRuntime
                         else if (key == "payload-bytes")
                         {
                             ParseLongLong(value, &outStub->payloadBytes);
+                        }
+                        else if (key == "host-settings")
+                        {
+                            ParseUnsignedInt(value, &outStub->hostSettings);
+                        }
+                        else if (key == "dedicated-no-local-player")
+                        {
+                            ParseBool(
+                                value,
+                                &outStub->dedicatedNoLocalHostPlayer);
+                        }
+                        else if (key == "world-size-chunks")
+                        {
+                            ParseUnsignedInt(
+                                value,
+                                &outStub->worldSizeChunks);
+                        }
+                        else if (key == "hell-scale")
+                        {
+                            ParseUnsignedInt(
+                                value,
+                                &outStub->worldHellScale);
                         }
                         else if (key == "session-active")
                         {

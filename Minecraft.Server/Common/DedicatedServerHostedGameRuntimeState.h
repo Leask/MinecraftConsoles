@@ -31,6 +31,8 @@ namespace ServerRuntime
         int startupResult = 0;
         std::int64_t resolvedSeed = 0;
         std::int64_t savePayloadBytes = 0;
+        std::uint32_t hostSettings = 0;
+        bool dedicatedNoLocalHostPlayer = true;
         unsigned int worldSizeChunks = 0;
         unsigned char worldHellScale = 0;
         unsigned char publicSlots = 0;
@@ -48,6 +50,10 @@ namespace ServerRuntime
         std::string previousStartupMode;
         int configuredPort = 0;
         int listenerPort = 0;
+        std::uint32_t previousHostSettings = 0;
+        bool previousDedicatedNoLocalHostPlayer = true;
+        unsigned int previousWorldSizeChunks = 0;
+        unsigned char previousWorldHellScale = 0;
         bool worldActionIdle = true;
         bool appShutdownRequested = false;
         bool gameplayHalted = false;

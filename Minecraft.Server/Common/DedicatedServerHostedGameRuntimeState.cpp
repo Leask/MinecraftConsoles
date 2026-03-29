@@ -75,6 +75,11 @@ namespace ServerRuntime
             hostedGamePlan.fakeLocalPlayerJoined;
         g_dedicatedServerHostedGameRuntimeSnapshot.resolvedSeed =
             hostedGamePlan.resolvedSeed;
+        g_dedicatedServerHostedGameRuntimeSnapshot.hostSettings =
+            hostedGamePlan.networkInitPlan.settings;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .dedicatedNoLocalHostPlayer =
+                hostedGamePlan.networkInitPlan.dedicatedNoLocalHostPlayer;
         if (hostedGamePlan.networkInitPlan.saveData != nullptr)
         {
             g_dedicatedServerHostedGameRuntimeSnapshot.savePayloadBytes =
@@ -86,10 +91,13 @@ namespace ServerRuntime
                 GetNativeDedicatedServerLoadedSaveMetadata();
             if (loadedSaveMetadata.available)
             {
-                g_dedicatedServerHostedGameRuntimeSnapshot
-                    .loadedSaveMetadataAvailable = true;
                 g_dedicatedServerHostedGameRuntimeSnapshot.loadedSavePath =
                     loadedSaveMetadata.savePath;
+            }
+            if (loadedSaveMetadata.hasSaveStub)
+            {
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .loadedSaveMetadataAvailable = true;
                 g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousStartupMode =
                         loadedSaveMetadata.saveStub.startupMode;
@@ -110,6 +118,20 @@ namespace ServerRuntime
                 g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousGameplayLoopIterations =
                         loadedSaveMetadata.saveStub.gameplayLoopIterations;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousHostSettings =
+                        loadedSaveMetadata.saveStub.hostSettings;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousDedicatedNoLocalHostPlayer =
+                        loadedSaveMetadata.saveStub
+                            .dedicatedNoLocalHostPlayer;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousWorldSizeChunks =
+                        loadedSaveMetadata.saveStub.worldSizeChunks;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousWorldHellScale =
+                        (unsigned char)
+                            loadedSaveMetadata.saveStub.worldHellScale;
                 g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousSessionCompleted =
                         loadedSaveMetadata.saveStub.sessionCompleted;

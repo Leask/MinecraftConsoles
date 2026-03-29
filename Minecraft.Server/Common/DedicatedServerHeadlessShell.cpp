@@ -129,6 +129,16 @@ namespace
             std::snprintf(
                 buffer,
                 sizeof(buffer),
+                "status payload settings=0x%08x no-local=%s",
+                (unsigned int)runtimeSnapshot.hostSettings,
+                runtimeSnapshot.dedicatedNoLocalHostPlayer
+                    ? "true"
+                    : "false");
+            AppendResponseLine(response, buffer);
+
+            std::snprintf(
+                buffer,
+                sizeof(buffer),
                 "status session active=%s world=%s level-id=%s payload=%s "
                 "payload-bytes=%lld autosaves=%llu/%llu ticks=%llu "
                 "uptime-ms=%llu action=%s shutdown=%s halted=%s",
@@ -207,6 +217,19 @@ namespace
                         : "false",
                     (unsigned long long)
                         runtimeSnapshot.previousGameplayLoopIterations);
+                AppendResponseLine(response, buffer);
+
+                std::snprintf(
+                    buffer,
+                    sizeof(buffer),
+                    "status loaded-payload settings=0x%08x no-local=%s "
+                    "world-size=%u hell-scale=%u",
+                    (unsigned int)runtimeSnapshot.previousHostSettings,
+                    runtimeSnapshot.previousDedicatedNoLocalHostPlayer
+                        ? "true"
+                        : "false",
+                    runtimeSnapshot.previousWorldSizeChunks,
+                    (unsigned int)runtimeSnapshot.previousWorldHellScale);
                 AppendResponseLine(response, buffer);
             }
         }
@@ -439,6 +462,13 @@ namespace ServerRuntime
                         runtimeSnapshot.phase));
                 LogInfof(
                     "console",
+                    "status payload settings=0x%08x no-local=%s",
+                    (unsigned int)runtimeSnapshot.hostSettings,
+                    runtimeSnapshot.dedicatedNoLocalHostPlayer
+                        ? "true"
+                        : "false");
+                LogInfof(
+                    "console",
                     "status session active=%s world=%s level-id=%s payload=%s "
                     "payload-bytes=%lld autosaves=%llu/%llu ticks=%llu "
                     "uptime-ms=%llu action=%s shutdown=%s halted=%s",
@@ -521,6 +551,17 @@ namespace ServerRuntime
                             : "false",
                         (unsigned long long)
                             runtimeSnapshot.previousGameplayLoopIterations);
+                    LogInfof(
+                        "console",
+                        "status loaded-payload settings=0x%08x no-local=%s "
+                        "world-size=%u hell-scale=%u",
+                        (unsigned int)runtimeSnapshot.previousHostSettings,
+                        runtimeSnapshot.previousDedicatedNoLocalHostPlayer
+                            ? "true"
+                            : "false",
+                        runtimeSnapshot.previousWorldSizeChunks,
+                        (unsigned int)
+                            runtimeSnapshot.previousWorldHellScale);
                 }
             }
             AppendStatusResponseLine(response, context, state);
