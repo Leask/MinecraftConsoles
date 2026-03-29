@@ -401,6 +401,7 @@ namespace
             saveStub.resolvedSeed = runtimeSnapshot.resolvedSeed;
             saveStub.publicSlots = runtimeSnapshot.publicSlots;
             saveStub.payloadBytes = runtimeSnapshot.savePayloadBytes;
+            saveStub.payloadChecksum = runtimeSnapshot.savePayloadChecksum;
             saveStub.payloadName = runtimeSnapshot.savePayloadName;
             saveStub.hostSettings = runtimeSnapshot.hostSettings;
             saveStub.dedicatedNoLocalHostPlayer =
@@ -653,8 +654,9 @@ namespace
                     "startup",
                     "native loaded save metadata path=%s startup=%s "
                     "phase=%s settings=0x%08x no-local=%s world-size=%u "
-                    "hell-scale=%u remote=%llu autosaves=%llu ticks=%llu "
-                    "uptime=%llu completed=%s app-shutdown=%s "
+                    "hell-scale=%u payload-checksum=0x%016llx remote=%llu "
+                    "autosaves=%llu ticks=%llu uptime=%llu completed=%s "
+                    "app-shutdown=%s "
                     "shutdown-halted=%s gameplay-iterations=%llu",
                     loadedSaveMetadata.savePath.c_str(),
                     loadedSaveMetadata.saveStub.startupMode.c_str(),
@@ -666,6 +668,8 @@ namespace
                         : "false",
                     loadedSaveMetadata.saveStub.worldSizeChunks,
                     loadedSaveMetadata.saveStub.worldHellScale,
+                    (unsigned long long)
+                        loadedSaveMetadata.saveStub.payloadChecksum,
                     (unsigned long long)
                         loadedSaveMetadata.saveStub.remoteCommands,
                     (unsigned long long)

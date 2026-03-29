@@ -8,6 +8,27 @@ namespace
     ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         g_dedicatedServerHostedGameRuntimeSnapshot = {};
 
+    std::uint64_t ComputeDedicatedServerPayloadChecksum(
+        const void *data,
+        std::int64_t fileSize)
+    {
+        if (data == nullptr || fileSize <= 0)
+        {
+            return 0;
+        }
+
+        const unsigned char *bytes =
+            static_cast<const unsigned char *>(data);
+        std::uint64_t checksum = 14695981039346656037ULL;
+        for (std::int64_t i = 0; i < fileSize; ++i)
+        {
+            checksum ^= bytes[i];
+            checksum *= 1099511628211ULL;
+        }
+
+        return checksum;
+    }
+
     void UpdateDedicatedServerHostedGameRuntimeUptime(
         ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot *snapshot,
         std::uint64_t nowMs)
@@ -84,6 +105,10 @@ namespace ServerRuntime
         {
             g_dedicatedServerHostedGameRuntimeSnapshot.savePayloadBytes =
                 hostedGamePlan.networkInitPlan.saveData->fileSize;
+            g_dedicatedServerHostedGameRuntimeSnapshot.savePayloadChecksum =
+                ComputeDedicatedServerPayloadChecksum(
+                    hostedGamePlan.networkInitPlan.saveData->data,
+                    hostedGamePlan.networkInitPlan.saveData->fileSize);
             g_dedicatedServerHostedGameRuntimeSnapshot.savePayloadName =
                 StringUtils::WideToUtf8(
                     hostedGamePlan.networkInitPlan.saveData->saveName);
@@ -132,6 +157,9 @@ namespace ServerRuntime
                     .previousWorldHellScale =
                         (unsigned char)
                             loadedSaveMetadata.saveStub.worldHellScale;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousSavePayloadChecksum =
+                        loadedSaveMetadata.saveStub.payloadChecksum;
                 g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousSessionCompleted =
                         loadedSaveMetadata.saveStub.sessionCompleted;

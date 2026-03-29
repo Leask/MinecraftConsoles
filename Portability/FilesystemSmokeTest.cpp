@@ -1144,6 +1144,7 @@ int main(int argc, char* argv[])
             true,
             false);
     const std::vector<unsigned char> fakeSaveBytes = { 7, 8, 9, 10 };
+    const std::uint64_t fakeSaveChecksum = 0xb2697a66c2589349ULL;
     LoadSaveDataThreadParam *fakeSaveData =
         ServerRuntime::CreateOwnedLoadSaveDataThreadParam(
             fakeSaveBytes,
@@ -1419,6 +1420,7 @@ int main(int argc, char* argv[])
     previousSaveStub.dedicatedNoLocalHostPlayer = false;
     previousSaveStub.worldSizeChunks = 160U;
     previousSaveStub.worldHellScale = 3U;
+    previousSaveStub.payloadChecksum = 0x123456789abcdef0ULL;
     ServerRuntime::RecordNativeDedicatedServerLoadedSaveMetadata(
         "NativeDesktop/GameHDD/SmokeSession.save",
         previousSaveStub);
@@ -1499,6 +1501,8 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.listenerPort == 19132 &&
         hostedGameSessionSnapshot.savePayloadName == "Smoke World" &&
         hostedGameSessionSnapshot.savePayloadBytes == 4 &&
+        hostedGameSessionSnapshot.savePayloadChecksum ==
+            fakeSaveChecksum &&
         hostedGameSessionSnapshot.hostSettings ==
             sessionConfig.hostSettings &&
         hostedGameSessionSnapshot.dedicatedNoLocalHostPlayer &&
@@ -2506,6 +2510,10 @@ int main(int argc, char* argv[])
                 .previousDedicatedNoLocalHostPlayer &&
             hostedGameRuntimeSnapshot.previousWorldSizeChunks == 160U &&
             hostedGameRuntimeSnapshot.previousWorldHellScale == 3U &&
+            hostedGameRuntimeSnapshot.previousSavePayloadChecksum ==
+                0x123456789abcdef0ULL &&
+            hostedGameRuntimeSnapshot.savePayloadChecksum ==
+                fakeSaveChecksum &&
             hostedGameRuntimeSnapshot.hostSettings ==
                 sessionConfig.hostSettings &&
             hostedGameRuntimeSnapshot.dedicatedNoLocalHostPlayer &&

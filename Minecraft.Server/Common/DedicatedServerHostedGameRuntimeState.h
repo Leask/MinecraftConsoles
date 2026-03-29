@@ -31,6 +31,7 @@ namespace ServerRuntime
         int startupResult = 0;
         std::int64_t resolvedSeed = 0;
         std::int64_t savePayloadBytes = 0;
+        std::uint64_t savePayloadChecksum = 0;
         std::uint32_t hostSettings = 0;
         bool dedicatedNoLocalHostPlayer = true;
         unsigned int worldSizeChunks = 0;
@@ -58,6 +59,7 @@ namespace ServerRuntime
         bool appShutdownRequested = false;
         bool gameplayHalted = false;
         bool stopSignalValid = false;
+        std::uint64_t previousSavePayloadChecksum = 0;
         std::uint64_t previousRemoteCommands = 0;
         std::uint64_t previousAutosaveCompletions = 0;
         std::uint64_t previousPlatformTickCount = 0;

@@ -129,11 +129,13 @@ namespace
             std::snprintf(
                 buffer,
                 sizeof(buffer),
-                "status payload settings=0x%08x no-local=%s",
+                "status payload settings=0x%08x no-local=%s "
+                "checksum=0x%016llx",
                 (unsigned int)runtimeSnapshot.hostSettings,
                 runtimeSnapshot.dedicatedNoLocalHostPlayer
                     ? "true"
-                    : "false");
+                    : "false",
+                (unsigned long long)runtimeSnapshot.savePayloadChecksum);
             AppendResponseLine(response, buffer);
 
             std::snprintf(
@@ -223,13 +225,15 @@ namespace
                     buffer,
                     sizeof(buffer),
                     "status loaded-payload settings=0x%08x no-local=%s "
-                    "world-size=%u hell-scale=%u",
+                    "world-size=%u hell-scale=%u checksum=0x%016llx",
                     (unsigned int)runtimeSnapshot.previousHostSettings,
                     runtimeSnapshot.previousDedicatedNoLocalHostPlayer
                         ? "true"
                         : "false",
                     runtimeSnapshot.previousWorldSizeChunks,
-                    (unsigned int)runtimeSnapshot.previousWorldHellScale);
+                    (unsigned int)runtimeSnapshot.previousWorldHellScale,
+                    (unsigned long long)
+                        runtimeSnapshot.previousSavePayloadChecksum);
                 AppendResponseLine(response, buffer);
             }
         }
@@ -462,11 +466,14 @@ namespace ServerRuntime
                         runtimeSnapshot.phase));
                 LogInfof(
                     "console",
-                    "status payload settings=0x%08x no-local=%s",
+                    "status payload settings=0x%08x no-local=%s "
+                    "checksum=0x%016llx",
                     (unsigned int)runtimeSnapshot.hostSettings,
                     runtimeSnapshot.dedicatedNoLocalHostPlayer
                         ? "true"
-                        : "false");
+                        : "false",
+                    (unsigned long long)
+                        runtimeSnapshot.savePayloadChecksum);
                 LogInfof(
                     "console",
                     "status session active=%s world=%s level-id=%s payload=%s "
@@ -554,14 +561,16 @@ namespace ServerRuntime
                     LogInfof(
                         "console",
                         "status loaded-payload settings=0x%08x no-local=%s "
-                        "world-size=%u hell-scale=%u",
+                        "world-size=%u hell-scale=%u checksum=0x%016llx",
                         (unsigned int)runtimeSnapshot.previousHostSettings,
                         runtimeSnapshot.previousDedicatedNoLocalHostPlayer
                             ? "true"
                             : "false",
                         runtimeSnapshot.previousWorldSizeChunks,
                         (unsigned int)
-                            runtimeSnapshot.previousWorldHellScale);
+                            runtimeSnapshot.previousWorldHellScale,
+                        (unsigned long long)
+                            runtimeSnapshot.previousSavePayloadChecksum);
                 }
             }
             AppendStatusResponseLine(response, context, state);
