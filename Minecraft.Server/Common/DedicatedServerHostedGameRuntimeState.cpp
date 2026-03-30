@@ -108,10 +108,22 @@ namespace
             snapshot->workerPendingWorldActionTicks);
         checksum = MixDedicatedServerStateChecksum(
             checksum,
+            snapshot->workerPendingSaveCommands);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->workerPendingStopCommands);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
             snapshot->workerTickCount);
         checksum = MixDedicatedServerStateChecksum(
             checksum,
             snapshot->completedWorkerActions);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->processedSaveCommands);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->processedStopCommands);
         checksum = MixDedicatedServerStateChecksum(
             checksum,
             snapshot->platformTickCount);
@@ -513,12 +525,22 @@ namespace ServerRuntime
 
     void RecordDedicatedServerHostedGameRuntimeWorkerState(
         std::uint64_t workerPendingWorldActionTicks,
+        std::uint64_t workerPendingSaveCommands,
+        std::uint64_t workerPendingStopCommands,
         std::uint64_t workerTickCount,
-        std::uint64_t completedWorkerActions)
+        std::uint64_t completedWorkerActions,
+        std::uint64_t processedSaveCommands,
+        std::uint64_t processedStopCommands)
     {
         g_dedicatedServerHostedGameRuntimeSnapshot
             .workerPendingWorldActionTicks =
                 workerPendingWorldActionTicks;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .workerPendingSaveCommands =
+                workerPendingSaveCommands;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .workerPendingStopCommands =
+                workerPendingStopCommands;
         g_dedicatedServerHostedGameRuntimeSnapshot.workerTickCount =
             g_dedicatedServerHostedGameRuntimeSnapshot
                 .previousWorkerTickCount +
@@ -527,6 +549,10 @@ namespace ServerRuntime
             g_dedicatedServerHostedGameRuntimeSnapshot
                 .previousCompletedWorkerActions +
             completedWorkerActions;
+        g_dedicatedServerHostedGameRuntimeSnapshot.processedSaveCommands =
+            processedSaveCommands;
+        g_dedicatedServerHostedGameRuntimeSnapshot.processedStopCommands =
+            processedStopCommands;
         RefreshDedicatedServerHostedGameRuntimeStateChecksum(
             &g_dedicatedServerHostedGameRuntimeSnapshot);
     }

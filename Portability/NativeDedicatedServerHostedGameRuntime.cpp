@@ -95,12 +95,20 @@ namespace ServerRuntime
                     GetNativeDedicatedServerHostedGameWorkerSnapshot();
             ObserveNativeDedicatedServerHostedGameSessionWorkerState(
                 workerSnapshot.pendingWorldActionTicks,
+                workerSnapshot.pendingSaveCommands,
+                workerSnapshot.pendingStopCommands,
                 workerSnapshot.workerTickCount,
-                workerSnapshot.completedWorldActions);
+                workerSnapshot.completedWorldActions,
+                workerSnapshot.processedSaveCommands,
+                workerSnapshot.processedStopCommands);
             RecordDedicatedServerHostedGameRuntimeWorkerState(
                 workerSnapshot.pendingWorldActionTicks,
+                workerSnapshot.pendingSaveCommands,
+                workerSnapshot.pendingStopCommands,
                 workerSnapshot.workerTickCount,
-                workerSnapshot.completedWorldActions);
+                workerSnapshot.completedWorldActions,
+                workerSnapshot.processedSaveCommands,
+                workerSnapshot.processedStopCommands);
             const NativeDedicatedServerHostedGameSessionSnapshot
                 sessionSnapshot =
                     GetNativeDedicatedServerHostedGameSessionSnapshot();

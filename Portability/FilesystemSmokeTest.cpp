@@ -1559,6 +1559,11 @@ int main(int argc, char* argv[])
     previousSaveStub.dedicatedNoLocalHostPlayer = false;
     previousSaveStub.worldSizeChunks = 160U;
     previousSaveStub.worldHellScale = 3U;
+    previousSaveStub.onlineGame = true;
+    previousSaveStub.privateGame = false;
+    previousSaveStub.fakeLocalPlayerJoined = true;
+    previousSaveStub.publicSlots = 16;
+    previousSaveStub.privateSlots = 1;
     previousSaveStub.payloadChecksum = 0x123456789abcdef0ULL;
     previousSaveStub.saveGeneration = 11U;
     previousSaveStub.stateChecksum = 0x0fedcba987654321ULL;
@@ -1584,12 +1589,12 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         nativeHostedStubSnapshot =
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
-    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
-        nativeHostedSessionCoreSnapshot =
-            ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
     LceSleepMilliseconds(25);
     const std::uint64_t nativeHostedStubThreadTicks =
         ServerRuntime::GetNativeDedicatedServerHostedGameSessionThreadTicks();
+    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+        nativeHostedSessionCoreSnapshot =
+            ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
     ServerRuntime::SetDedicatedServerAppShutdownRequested(true);
     DWORD nativeHostedStubExitCode = 0;
     const bool nativeHostedStubStopped =
@@ -1684,7 +1689,11 @@ int main(int argc, char* argv[])
     ServerRuntime::RecordDedicatedServerHostedGameRuntimeWorkerState(
         9,
         10,
-        11);
+        11,
+        22,
+        32,
+        42,
+        52);
     ServerRuntime::RecordDedicatedServerHostedGameRuntimePersistedSave(
         "NativeDesktop/GameHDD/SMOKE_SESSION.save",
         77,
@@ -1712,7 +1721,11 @@ int main(int argc, char* argv[])
     ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionWorkerState(
         9,
         10,
-        11);
+        11,
+        22,
+        32,
+        42,
+        52);
     ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
         8,
         true,
@@ -1764,8 +1777,12 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.autosaveRequests == 4 &&
         hostedGameSessionSnapshot.autosaveCompletions == 5 &&
         hostedGameSessionSnapshot.workerPendingWorldActionTicks == 9 &&
-        hostedGameSessionSnapshot.workerTickCount == 32 &&
-        hostedGameSessionSnapshot.completedWorkerActions == 17 &&
+        hostedGameSessionSnapshot.workerPendingSaveCommands == 10 &&
+        hostedGameSessionSnapshot.workerPendingStopCommands == 11 &&
+        hostedGameSessionSnapshot.workerTickCount == 44 &&
+        hostedGameSessionSnapshot.completedWorkerActions == 38 &&
+        hostedGameSessionSnapshot.processedSaveCommands == 42 &&
+        hostedGameSessionSnapshot.processedStopCommands == 52 &&
         hostedGameSessionSnapshot.platformTickCount == 6 &&
         !hostedGameSessionSnapshot.worldActionIdle &&
         hostedGameSessionSnapshot.appShutdownRequested &&
@@ -1806,8 +1823,12 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.remoteCommands == 3 &&
         nativeHostedSessionObservedSnapshot.autosaveRequests == 4 &&
         nativeHostedSessionObservedSnapshot.workerPendingWorldActionTicks == 9 &&
-        nativeHostedSessionObservedSnapshot.workerTickCount == 10 &&
-        nativeHostedSessionObservedSnapshot.completedWorkerActions == 11 &&
+        nativeHostedSessionObservedSnapshot.workerPendingSaveCommands == 10 &&
+        nativeHostedSessionObservedSnapshot.workerPendingStopCommands == 11 &&
+        nativeHostedSessionObservedSnapshot.workerTickCount == 22 &&
+        nativeHostedSessionObservedSnapshot.completedWorkerActions == 32 &&
+        nativeHostedSessionObservedSnapshot.processedSaveCommands == 42 &&
+        nativeHostedSessionObservedSnapshot.processedStopCommands == 52 &&
         nativeHostedSessionObservedSnapshot.gameplayLoopIterations == 8 &&
         nativeHostedSessionObservedSnapshot.platformTickCount == 6 &&
         nativeHostedSessionObservedSnapshot.lastPersistedFileTime == 77 &&
@@ -2853,10 +2874,10 @@ int main(int argc, char* argv[])
             !nativeHostedSessionCoreStoppedSnapshot.active &&
             nativeHostedSessionCoreStoppedSnapshot.threadInvoked &&
             nativeHostedSessionCoreStoppedSnapshot.startupResult == 0 &&
-            nativeHostedSessionCoreStoppedSnapshot.saveGeneration == 11U &&
             nativeHostedSessionCoreStoppedSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
             !nativeHostedSessionCoreStoppedSnapshot.hostedThreadActive &&
+            nativeHostedSessionCoreStoppedSnapshot.stateChecksum != 0U &&
             nativeHostedSessionCoreStoppedSnapshot.hostedThreadTicks >=
                 nativeHostedStubThreadTicks &&
             nativeHostedSessionCoreStoppedSnapshot.sessionTicks >=
@@ -2938,7 +2959,6 @@ int main(int argc, char* argv[])
             hostedGameRuntimeSnapshot.previousSaveGeneration == 11U &&
             hostedGameRuntimeSnapshot.previousSessionStateChecksum ==
                 0x0fedcba987654321ULL &&
-            hostedGameRuntimeSnapshot.sessionStateChecksum != 0U &&
             hostedGameRuntimeSnapshot.savePayloadChecksum ==
                 fakeSaveChecksum &&
             hostedGameRuntimeSnapshot.hostSettings ==

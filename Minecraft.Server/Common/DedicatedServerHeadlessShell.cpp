@@ -7,6 +7,7 @@
 
 #include "DedicatedServerHostedGameRuntimeState.h"
 #include "Portability/NativeDedicatedServerHostedGameSession.h"
+#include "Portability/NativeDedicatedServerHostedGameWorker.h"
 #include "DedicatedServerPlatformRuntime.h"
 #include "../ServerLogger.h"
 #include "DedicatedServerSignalState.h"
@@ -181,14 +182,23 @@ namespace
             std::snprintf(
                 buffer,
                 sizeof(buffer),
-                "status worker pending=%llu ticks=%llu completed=%llu "
+                "status worker pending=%llu saveq=%llu stopq=%llu "
+                "ticks=%llu completed=%llu save-ops=%llu stop-ops=%llu "
                 "core-checksum=0x%016llx",
                 (unsigned long long)
                     runtimeSnapshot.workerPendingWorldActionTicks,
                 (unsigned long long)
+                    runtimeSnapshot.workerPendingSaveCommands,
+                (unsigned long long)
+                    runtimeSnapshot.workerPendingStopCommands,
+                (unsigned long long)
                     runtimeSnapshot.workerTickCount,
                 (unsigned long long)
                     runtimeSnapshot.completedWorkerActions,
+                (unsigned long long)
+                    runtimeSnapshot.processedSaveCommands,
+                (unsigned long long)
+                    runtimeSnapshot.processedStopCommands,
                 (unsigned long long)runtimeSnapshot.sessionStateChecksum);
             AppendResponseLine(response, buffer);
 
@@ -594,14 +604,23 @@ namespace ServerRuntime
 
                 LogInfof(
                     "console",
-                    "status worker pending=%llu ticks=%llu completed=%llu "
+                    "status worker pending=%llu saveq=%llu stopq=%llu "
+                    "ticks=%llu completed=%llu save-ops=%llu stop-ops=%llu "
                     "core-checksum=0x%016llx",
                     (unsigned long long)
                         runtimeSnapshot.workerPendingWorldActionTicks,
                     (unsigned long long)
+                        runtimeSnapshot.workerPendingSaveCommands,
+                    (unsigned long long)
+                        runtimeSnapshot.workerPendingStopCommands,
+                    (unsigned long long)
                         runtimeSnapshot.workerTickCount,
                     (unsigned long long)
                         runtimeSnapshot.completedWorkerActions,
+                    (unsigned long long)
+                        runtimeSnapshot.processedSaveCommands,
+                    (unsigned long long)
+                        runtimeSnapshot.processedStopCommands,
                     (unsigned long long)
                         runtimeSnapshot.sessionStateChecksum);
 
@@ -730,7 +749,14 @@ namespace ServerRuntime
 
         if (command == "save")
         {
-            RequestDedicatedServerWorldAutosave(0);
+            if (IsNativeDedicatedServerHostedGameSessionRunning())
+            {
+                EnqueueNativeDedicatedServerHostedGameWorkerSaveCommand();
+            }
+            else
+            {
+                RequestDedicatedServerWorldAutosave(0);
+            }
             LogInfo("console", "manual save requested");
             AppendResponseLine(response, "ok manual save requested");
             return true;
@@ -738,8 +764,15 @@ namespace ServerRuntime
 
         if (command == "stop")
         {
+            if (IsNativeDedicatedServerHostedGameSessionRunning())
+            {
+                EnqueueNativeDedicatedServerHostedGameWorkerStopCommand();
+            }
+            else
+            {
+                RequestDedicatedServerShutdown();
+            }
             LogInfo("console", "stop requested");
-            RequestDedicatedServerShutdown();
             AppendResponseLine(response, "ok stop requested");
             return true;
         }

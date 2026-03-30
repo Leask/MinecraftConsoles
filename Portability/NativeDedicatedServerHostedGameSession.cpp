@@ -147,10 +147,22 @@ namespace ServerRuntime
                 state->snapshot.workerPendingWorldActionTicks);
             checksum = MixNativeHostedSessionHash(
                 checksum,
+                state->snapshot.workerPendingSaveCommands);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.workerPendingStopCommands);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
                 state->snapshot.workerTickCount);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.completedWorkerActions);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.processedSaveCommands);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.processedStopCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.acceptedConnections);
@@ -533,18 +545,30 @@ namespace ServerRuntime
 
     void ObserveNativeDedicatedServerHostedGameSessionWorkerState(
         std::uint64_t pendingWorldActionTicks,
+        std::uint64_t pendingSaveCommands,
+        std::uint64_t pendingStopCommands,
         std::uint64_t workerTickCount,
-        std::uint64_t completedWorkerActions)
+        std::uint64_t completedWorkerActions,
+        std::uint64_t processedSaveCommands,
+        std::uint64_t processedStopCommands)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState.snapshot.workerPendingWorldActionTicks =
             pendingWorldActionTicks;
+        g_nativeHostedSessionState.snapshot.workerPendingSaveCommands =
+            pendingSaveCommands;
+        g_nativeHostedSessionState.snapshot.workerPendingStopCommands =
+            pendingStopCommands;
         g_nativeHostedSessionState.snapshot.workerTickCount =
             g_nativeHostedSessionState.baseWorkerTickCount +
             workerTickCount;
         g_nativeHostedSessionState.snapshot.completedWorkerActions =
             g_nativeHostedSessionState.baseCompletedWorkerActions +
             completedWorkerActions;
+        g_nativeHostedSessionState.snapshot.processedSaveCommands =
+            processedSaveCommands;
+        g_nativeHostedSessionState.snapshot.processedStopCommands =
+            processedStopCommands;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }
