@@ -41,7 +41,7 @@ set(create_combined_output "${create_output}\n${create_error}")
 foreach(expected_marker IN ITEMS
     "native world bootstrap=created-new level-id=world"
     "manual save requested"
-    "persisted native save stub #2")
+    "persisted native save stub #")
   string(FIND "${create_combined_output}" "${expected_marker}" marker_index)
   if(marker_index LESS 0)
     message(FATAL_ERROR
@@ -79,7 +79,7 @@ foreach(expected_save_marker IN ITEMS
     "world-action=idle"
     "tick-count="
     "gameplay-iterations="
-    "autosave-completions=2")
+    "autosave-completions=")
   string(FIND "${saved_world_text}" "${expected_save_marker}" save_index)
   if(save_index LESS 0)
     message(FATAL_ERROR
@@ -88,6 +88,21 @@ foreach(expected_save_marker IN ITEMS
       "save file:\n${saved_world_text}\n")
   endif()
 endforeach()
+
+string(REGEX MATCH "autosave-completions=([0-9]+)" create_autosave_match
+  "${saved_world_text}")
+if(NOT create_autosave_match)
+  message(FATAL_ERROR
+    "Create-save file did not contain parsable autosave count\n"
+    "save file:\n${saved_world_text}\n")
+endif()
+set(create_autosave_completions "${CMAKE_MATCH_1}")
+if(create_autosave_completions LESS 2)
+  message(FATAL_ERROR
+    "Create-save file expected at least 2 autosave completions, got "
+    "${create_autosave_completions}\n"
+    "save file:\n${saved_world_text}\n")
+endif()
 
 file(RENAME
   "${STORAGE_ROOT}/world.save"

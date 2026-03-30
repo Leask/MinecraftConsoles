@@ -62,7 +62,7 @@ foreach(expected_marker IN ITEMS
     "action="
     "payload=none"
     "manual save requested"
-    "persisted native save stub #1")
+    "persisted native save stub #")
   string(FIND "${combined_output}" "${expected_marker}" marker_index)
   if(marker_index LESS 0)
     message(FATAL_ERROR
@@ -98,7 +98,7 @@ foreach(expected_save_marker IN ITEMS
     "gameplay-iterations="
     "saved-at-filetime="
     "remote-commands=3"
-    "autosave-completions=1")
+    "autosave-completions=")
   string(FIND "${saved_world_text}" "${expected_save_marker}" save_index)
   if(save_index LESS 0)
     message(FATAL_ERROR
@@ -107,5 +107,20 @@ foreach(expected_save_marker IN ITEMS
       "save file:\n${saved_world_text}\n")
   endif()
 endforeach()
+
+string(REGEX MATCH "autosave-completions=([0-9]+)" remote_autosave_match
+  "${saved_world_text}")
+if(NOT remote_autosave_match)
+  message(FATAL_ERROR
+    "Remote shell save file did not contain parsable autosave count\n"
+    "save file:\n${saved_world_text}\n")
+endif()
+set(remote_autosave_completions "${CMAKE_MATCH_1}")
+if(remote_autosave_completions LESS 2)
+  message(FATAL_ERROR
+    "Remote shell expected at least 2 autosave completions, got "
+    "${remote_autosave_completions}\n"
+    "save file:\n${saved_world_text}\n")
+endif()
 
 file(REMOVE "${STORAGE_ROOT}/world.save")

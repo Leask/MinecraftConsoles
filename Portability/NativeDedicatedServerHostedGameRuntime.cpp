@@ -1,9 +1,11 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
+#include "Minecraft.Server/Common/DedicatedServerAutosaveTracker.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
+#include "NativeDedicatedServerHostedGameWorker.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 
 #include <atomic>
@@ -158,10 +160,21 @@ namespace ServerRuntime
                 SetEvent(g_nativeHostedStartupReadyEvent);
             }
 
-            while (!IsDedicatedServerShutdownRequested() &&
-                !IsDedicatedServerAppShutdownRequested() &&
-                !IsDedicatedServerGameplayHalted())
+            while (true)
             {
+                const bool shutdownRequested =
+                    IsDedicatedServerShutdownRequested() ||
+                    IsDedicatedServerAppShutdownRequested() ||
+                    IsDedicatedServerGameplayHalted();
+                if (shutdownRequested &&
+                    IsNativeDedicatedServerHostedGameWorkerIdle())
+                {
+                    break;
+                }
+
+                TickNativeDedicatedServerHostedGameWorker();
+                UpdateDedicatedServerAutosaveTracker(
+                    IsNativeDedicatedServerHostedGameWorkerIdle());
                 TickNativeDedicatedServerHostedGameSession();
                 RecordNativeDedicatedServerHostedThreadSnapshot();
                 LceSleepMilliseconds(10);
@@ -189,6 +202,7 @@ namespace ServerRuntime
 
         CloseNativeDedicatedServerHostedStartupReadyEvent();
         g_nativeHostedThreadRunning.store(false);
+        ResetNativeDedicatedServerHostedGameWorkerState();
         ResetNativeDedicatedServerHostedGameSessionCoreState();
         RecordNativeDedicatedServerHostedThreadSnapshot();
     }

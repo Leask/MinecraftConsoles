@@ -1,6 +1,7 @@
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerAutosaveTracker.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
+#include "NativeDedicatedServerHostedGameWorker.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 
 namespace
@@ -12,17 +13,15 @@ namespace
         bool gameplayHalted = false;
         bool stopSignalValid = false;
         bool saveOnExitEnabled = false;
-        unsigned int pendingWorldActionTicks = 0;
+        unsigned int fallbackWorldActionTicks = 0;
         std::uint64_t tickCount = 0;
-        std::uint64_t autosaveRequestCount = 0;
-        std::uint64_t autosaveCompletionCount = 0;
     };
 
     NativeDedicatedServerPlatformRuntimeState g_nativeRuntimeState = {};
 
     bool IsNativeDedicatedServerWorldActionIdleHook(int, void *)
     {
-        return g_nativeRuntimeState.pendingWorldActionTicks == 0;
+        return ServerRuntime::IsDedicatedServerWorldActionIdle(0);
     }
 
     bool IsNativeDedicatedServerGameplayHaltedHook(void *)
@@ -50,6 +49,7 @@ namespace ServerRuntime
         DedicatedServerPlatformRuntimeStartResult result = {};
         g_nativeRuntimeState = {};
         ResetDedicatedServerAutosaveTracker();
+        ResetNativeDedicatedServerHostedGameWorkerState();
         ResetNativeDedicatedServerHostedGameSessionState();
         g_nativeRuntimeState.gameplayInstance = true;
         g_nativeRuntimeState.stopSignalValid = true;
@@ -75,16 +75,13 @@ namespace ServerRuntime
     void TickDedicatedServerPlatformRuntime()
     {
         ++g_nativeRuntimeState.tickCount;
-        if (g_nativeRuntimeState.pendingWorldActionTicks > 0)
+        if (!IsNativeDedicatedServerHostedGameSessionRunning() &&
+            g_nativeRuntimeState.fallbackWorldActionTicks > 0)
         {
-            --g_nativeRuntimeState.pendingWorldActionTicks;
-            if (g_nativeRuntimeState.pendingWorldActionTicks == 0)
-            {
-                ++g_nativeRuntimeState.autosaveCompletionCount;
-            }
+            --g_nativeRuntimeState.fallbackWorldActionTicks;
         }
         UpdateDedicatedServerAutosaveTracker(
-            g_nativeRuntimeState.pendingWorldActionTicks == 0);
+            IsDedicatedServerWorldActionIdle(0));
         ObserveNativeDedicatedServerHostedGameSessionAutosaves(
             GetDedicatedServerAutosaveCompletionCount());
         ObserveNativeDedicatedServerHostedGameSessionPlatformState(
@@ -106,16 +103,24 @@ namespace ServerRuntime
 
     bool IsDedicatedServerWorldActionIdle(int)
     {
-        return g_nativeRuntimeState.pendingWorldActionTicks == 0;
+        if (IsNativeDedicatedServerHostedGameSessionRunning())
+        {
+            return IsNativeDedicatedServerHostedGameWorkerIdle();
+        }
+
+        return g_nativeRuntimeState.fallbackWorldActionTicks == 0;
     }
 
     void RequestDedicatedServerWorldAutosave(int)
     {
         MarkDedicatedServerAutosaveTrackerRequested();
-        ++g_nativeRuntimeState.autosaveRequestCount;
-        if (g_nativeRuntimeState.pendingWorldActionTicks < 2)
+        if (IsNativeDedicatedServerHostedGameSessionRunning())
         {
-            g_nativeRuntimeState.pendingWorldActionTicks = 2;
+            RequestNativeDedicatedServerHostedGameWorkerAutosave(2);
+        }
+        else if (g_nativeRuntimeState.fallbackWorldActionTicks < 2)
+        {
+            g_nativeRuntimeState.fallbackWorldActionTicks = 2;
         }
         ObserveNativeDedicatedServerHostedGameSessionPlatformState(
             GetDedicatedServerAutosaveRequestCount(),
@@ -184,6 +189,10 @@ namespace ServerRuntime
 
     void HaltDedicatedServerGameplay()
     {
+        if (g_nativeRuntimeState.saveOnExitEnabled)
+        {
+            RequestDedicatedServerWorldAutosave(0);
+        }
         g_nativeRuntimeState.gameplayHalted = true;
     }
 
@@ -192,7 +201,8 @@ namespace ServerRuntime
         WaitForNativeDedicatedServerHostedGameSessionStop(INFINITE);
         g_nativeRuntimeState.gameplayInstance = false;
         g_nativeRuntimeState.stopSignalValid = false;
-        g_nativeRuntimeState.pendingWorldActionTicks = 0;
+        g_nativeRuntimeState.fallbackWorldActionTicks = 0;
+        ClearNativeDedicatedServerHostedGameWorkerState();
         RecordDedicatedServerHostedGameRuntimeThreadState(
             IsNativeDedicatedServerHostedGameSessionRunning(),
             GetNativeDedicatedServerHostedGameSessionThreadTicks());
@@ -205,6 +215,7 @@ namespace ServerRuntime
             g_nativeRuntimeState.appShutdownRequested = true;
             WaitForNativeDedicatedServerHostedGameSessionStop(INFINITE);
         }
+        ClearNativeDedicatedServerHostedGameWorkerState();
         ResetDedicatedServerAutosaveTracker();
         g_nativeRuntimeState = {};
     }
