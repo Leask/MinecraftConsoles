@@ -1467,6 +1467,20 @@ int main(int argc, char* argv[])
     ServerRuntime::SetDedicatedServerAppShutdownRequested(true);
     const bool platformAppShutdownAfter =
         ServerRuntime::IsDedicatedServerAppShutdownRequested();
+    ServerRuntime::TickDedicatedServerPlatformRuntime();
+    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+        platformFlagsSessionSnapshot =
+            ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
+    const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
+        platformFlagsRuntimeSnapshot =
+            ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+    const bool platformFlagsProjected =
+        platformFlagsSessionSnapshot.appShutdownRequested &&
+        !platformFlagsSessionSnapshot.gameplayHalted &&
+        platformFlagsSessionSnapshot.stopSignalValid &&
+        platformFlagsRuntimeSnapshot.appShutdownRequested &&
+        !platformFlagsRuntimeSnapshot.gameplayHalted &&
+        platformFlagsRuntimeSnapshot.stopSignalValid;
     const bool platformGameplayHaltedBefore =
         !ServerRuntime::IsDedicatedServerGameplayHalted();
     const bool platformStopSignalValid =
@@ -2814,19 +2828,21 @@ int main(int argc, char* argv[])
         waitHookIdleContext.tickCount,
         waitHookIdleContext.handleCount);
     printf("platform_shutdown=%d gameplay=%d app_before=%d app_after=%d "
-        "halt_before=%d halt_after=%d stop_valid=%d\n",
+        "halt_before=%d halt_after=%d stop_valid=%d projected=%d\n",
         platformGameplayInstance &&
             platformAppShutdownBefore &&
             platformAppShutdownAfter &&
             platformGameplayHaltedBefore &&
             platformGameplayHaltedAfter &&
-            platformStopSignalValid,
+            platformStopSignalValid &&
+            platformFlagsProjected,
         platformGameplayInstance,
         platformAppShutdownBefore,
         platformAppShutdownAfter,
         platformGameplayHaltedBefore,
         platformGameplayHaltedAfter,
-        platformStopSignalValid);
+        platformStopSignalValid,
+        platformFlagsProjected);
     printf("platform_lifecycle=%d initial_requested=%d initial_completed=%d "
         "initial_timeout=%d shutdown_wait=%d shutdown_halt=%d\n",
         initialSaveExecution.requested &&
@@ -3696,6 +3712,7 @@ int main(int argc, char* argv[])
         platformAppShutdownAfter &&
         platformGameplayHaltedBefore &&
         platformGameplayHaltedAfter &&
+        platformFlagsProjected &&
         platformStopSignalValid &&
         platformHostedRuntimeResult.ok &&
         restartedHostedRuntimeResult.ok &&

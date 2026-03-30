@@ -583,17 +583,7 @@ namespace
             context->listener,
             context->shellContext,
             &context->shellState);
-        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
-            sessionSnapshot =
-                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
         const std::uint64_t now = LceGetMonotonicMilliseconds();
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
-            sessionSnapshot.gameplayLoopIterations,
-            ServerRuntime::IsDedicatedServerAppShutdownRequested(),
-            ServerRuntime::IsDedicatedServerGameplayHalted(),
-            ServerRuntime::IsDedicatedServerStopSignalValid());
-        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
-            now);
 
         if (context->options->shutdownAfterMs > 0)
         {

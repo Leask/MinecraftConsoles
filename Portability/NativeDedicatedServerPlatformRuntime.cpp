@@ -49,6 +49,24 @@ namespace
             workerSnapshot);
         ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot();
     }
+
+    void RefreshNativeDedicatedServerRuntimeProjection(
+        std::uint64_t nowMs = 0)
+    {
+        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+            sessionSnapshot =
+                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPlatformState(
+            ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
+            ServerRuntime::GetDedicatedServerPlatformTickCount());
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
+            sessionSnapshot.gameplayLoopIterations,
+            g_nativeRuntimeState.appShutdownRequested,
+            g_nativeRuntimeState.gameplayHalted,
+            g_nativeRuntimeState.stopSignalValid);
+        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+            nowMs);
+    }
 }
 
 namespace ServerRuntime
@@ -100,10 +118,7 @@ namespace ServerRuntime
             ObserveNativeDedicatedServerHostedGameSessionAutosaves(
                 GetDedicatedServerAutosaveCompletionCount());
         }
-        ObserveNativeDedicatedServerHostedGameSessionPlatformState(
-            GetDedicatedServerAutosaveRequestCount(),
-            GetDedicatedServerPlatformTickCount());
-        ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+        RefreshNativeDedicatedServerRuntimeProjection(
             LceGetMonotonicMilliseconds());
     }
 
@@ -134,9 +149,8 @@ namespace ServerRuntime
         {
             g_nativeRuntimeState.fallbackWorldActionTicks = 2;
         }
-        ObserveNativeDedicatedServerHostedGameSessionPlatformState(
-            GetDedicatedServerAutosaveRequestCount(),
-            GetDedicatedServerPlatformTickCount());
+        RefreshNativeDedicatedServerRuntimeProjection(
+            LceGetMonotonicMilliseconds());
     }
 
     bool WaitForDedicatedServerWorldActionIdle(
@@ -167,6 +181,8 @@ namespace ServerRuntime
     void SetDedicatedServerAppShutdownRequested(bool shutdownRequested)
     {
         g_nativeRuntimeState.appShutdownRequested = shutdownRequested;
+        RefreshNativeDedicatedServerRuntimeProjection(
+            LceGetMonotonicMilliseconds());
     }
 
     bool IsDedicatedServerGameplayHalted()
@@ -208,9 +224,8 @@ namespace ServerRuntime
                 2);
             RefreshNativeDedicatedServerWorkerProjection();
             g_nativeRuntimeState.gameplayHalted = true;
-            ObserveNativeDedicatedServerHostedGameSessionPlatformState(
-                GetDedicatedServerAutosaveRequestCount(),
-                GetDedicatedServerPlatformTickCount());
+            RefreshNativeDedicatedServerRuntimeProjection(
+                LceGetMonotonicMilliseconds());
             return;
         }
 
@@ -219,6 +234,8 @@ namespace ServerRuntime
             RequestDedicatedServerWorldAutosave(0);
         }
         g_nativeRuntimeState.gameplayHalted = true;
+        RefreshNativeDedicatedServerRuntimeProjection(
+            LceGetMonotonicMilliseconds());
     }
 
     void WaitForDedicatedServerStopSignal()
@@ -231,6 +248,8 @@ namespace ServerRuntime
         RecordDedicatedServerHostedGameRuntimeThreadState(
             IsNativeDedicatedServerHostedGameSessionRunning(),
             GetNativeDedicatedServerHostedGameSessionThreadTicks());
+        RefreshNativeDedicatedServerRuntimeProjection(
+            LceGetMonotonicMilliseconds());
     }
 
     void StopDedicatedServerPlatformRuntime()
@@ -238,6 +257,8 @@ namespace ServerRuntime
         if (!WaitForNativeDedicatedServerHostedGameSessionStop(0))
         {
             g_nativeRuntimeState.appShutdownRequested = true;
+            RefreshNativeDedicatedServerRuntimeProjection(
+                LceGetMonotonicMilliseconds());
             WaitForNativeDedicatedServerHostedGameSessionStop(INFINITE);
         }
         ClearNativeDedicatedServerHostedGameWorkerState();
