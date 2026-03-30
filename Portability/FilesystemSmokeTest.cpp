@@ -1679,6 +1679,16 @@ int main(int argc, char* argv[])
         true,
         true,
         true);
+    ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionSummary(
+        true,
+        true,
+        false,
+        true,
+        true,
+        true);
+    ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
+        77,
+        5);
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
         nativeHostedSessionObservedSnapshot =
             ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
@@ -1734,10 +1744,19 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.acceptedConnections == 2 &&
         nativeHostedSessionObservedSnapshot.remoteCommands == 3 &&
         nativeHostedSessionObservedSnapshot.gameplayLoopIterations == 8 &&
+        nativeHostedSessionObservedSnapshot.lastPersistedFileTime == 77 &&
+        nativeHostedSessionObservedSnapshot
+            .lastPersistedAutosaveCompletions == 5 &&
         !nativeHostedSessionObservedSnapshot.worldActionIdle &&
         nativeHostedSessionObservedSnapshot.appShutdownRequested &&
         nativeHostedSessionObservedSnapshot.gameplayHalted &&
         nativeHostedSessionObservedSnapshot.stopSignalValid &&
+        nativeHostedSessionObservedSnapshot.initialSaveRequested &&
+        nativeHostedSessionObservedSnapshot.initialSaveCompleted &&
+        !nativeHostedSessionObservedSnapshot.initialSaveTimedOut &&
+        nativeHostedSessionObservedSnapshot.sessionCompleted &&
+        nativeHostedSessionObservedSnapshot.requestedAppShutdown &&
+        nativeHostedSessionObservedSnapshot.shutdownHaltedGameplay &&
         nativeHostedSessionObservedSnapshot.stateChecksum != 0U &&
         !hostedGameStoppedSnapshot.sessionActive &&
         hostedGameStoppedSnapshot.phase ==

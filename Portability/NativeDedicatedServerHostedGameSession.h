@@ -21,10 +21,18 @@ namespace ServerRuntime
         std::uint64_t gameplayLoopIterations = 0;
         std::uint64_t saveGeneration = 0;
         std::uint64_t stateChecksum = 0;
+        std::uint64_t lastPersistedFileTime = 0;
+        std::uint64_t lastPersistedAutosaveCompletions = 0;
         bool worldActionIdle = true;
         bool appShutdownRequested = false;
         bool gameplayHalted = false;
         bool stopSignalValid = false;
+        bool initialSaveRequested = false;
+        bool initialSaveCompleted = false;
+        bool initialSaveTimedOut = false;
+        bool sessionCompleted = false;
+        bool requestedAppShutdown = false;
+        bool shutdownHaltedGameplay = false;
     };
 
     void ResetNativeDedicatedServerHostedGameSessionState();
@@ -48,6 +56,18 @@ namespace ServerRuntime
         bool appShutdownRequested,
         bool gameplayHalted,
         bool stopSignalValid);
+
+    void ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
+        std::uint64_t savedAtFileTime,
+        std::uint64_t autosaveCompletions);
+
+    void ObserveNativeDedicatedServerHostedGameSessionSummary(
+        bool initialSaveRequested,
+        bool initialSaveCompleted,
+        bool initialSaveTimedOut,
+        bool sessionCompleted,
+        bool requestedAppShutdown,
+        bool shutdownHaltedGameplay);
 
     void StopNativeDedicatedServerHostedGameSession();
 

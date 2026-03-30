@@ -434,6 +434,9 @@ namespace
         }
 
         context->persistedAutosaveCompletions = completedAutosaves;
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
+            saveStub.savedAtFileTime,
+            completedAutosaves);
         ServerRuntime::RecordDedicatedServerHostedGameRuntimePersistedSave(
             savePath,
             saveStub.savedAtFileTime,
@@ -890,6 +893,13 @@ namespace ServerRuntime
             runExecution.session.gameplayLoop.iterations;
         ServerRuntime::RecordDedicatedServerHostedGameRuntimeSessionSummary(
             sessionSummary);
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionSummary(
+            sessionSummary.initialSaveRequested,
+            sessionSummary.initialSaveCompleted,
+            sessionSummary.initialSaveTimedOut,
+            sessionSummary.sessionCompleted,
+            sessionSummary.requestedAppShutdown,
+            sessionSummary.shutdownHaltedGameplay);
 
         ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivity(
             shellHooksContext.shellState.acceptedConnections,

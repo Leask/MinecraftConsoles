@@ -98,6 +98,12 @@ namespace ServerRuntime
                 state->snapshot.saveGeneration);
             checksum = MixNativeHostedSessionHash(
                 checksum,
+                state->snapshot.lastPersistedFileTime);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.lastPersistedAutosaveCompletions);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
                 state->snapshot.loadedFromSave ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
@@ -117,6 +123,24 @@ namespace ServerRuntime
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.stopSignalValid ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.initialSaveRequested ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.initialSaveCompleted ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.initialSaveTimedOut ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.sessionCompleted ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.requestedAppShutdown ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.shutdownHaltedGameplay ? 1U : 0U);
             state->snapshot.stateChecksum = checksum;
         }
     }
@@ -159,6 +183,11 @@ namespace ServerRuntime
                     saveStub.saveGeneration;
                 g_nativeHostedSessionState.baseStateChecksum =
                     saveStub.stateChecksum;
+                g_nativeHostedSessionState.snapshot.lastPersistedFileTime =
+                    saveStub.savedAtFileTime;
+                g_nativeHostedSessionState.snapshot
+                    .lastPersistedAutosaveCompletions =
+                    saveStub.autosaveCompletions;
             }
         }
 
@@ -221,6 +250,50 @@ namespace ServerRuntime
             gameplayHalted;
         g_nativeHostedSessionState.snapshot.stopSignalValid =
             stopSignalValid;
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
+        std::uint64_t savedAtFileTime,
+        std::uint64_t autosaveCompletions)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.lastPersistedFileTime =
+            savedAtFileTime;
+        g_nativeHostedSessionState.snapshot
+            .lastPersistedAutosaveCompletions = autosaveCompletions;
+        if (autosaveCompletions >
+            g_nativeHostedSessionState.snapshot.observedAutosaveCompletions)
+        {
+            g_nativeHostedSessionState.snapshot.observedAutosaveCompletions =
+                autosaveCompletions;
+        }
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionSummary(
+        bool initialSaveRequested,
+        bool initialSaveCompleted,
+        bool initialSaveTimedOut,
+        bool sessionCompleted,
+        bool requestedAppShutdown,
+        bool shutdownHaltedGameplay)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.initialSaveRequested =
+            initialSaveRequested;
+        g_nativeHostedSessionState.snapshot.initialSaveCompleted =
+            initialSaveCompleted;
+        g_nativeHostedSessionState.snapshot.initialSaveTimedOut =
+            initialSaveTimedOut;
+        g_nativeHostedSessionState.snapshot.sessionCompleted =
+            sessionCompleted;
+        g_nativeHostedSessionState.snapshot.requestedAppShutdown =
+            requestedAppShutdown;
+        g_nativeHostedSessionState.snapshot.shutdownHaltedGameplay =
+            shutdownHaltedGameplay;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }
