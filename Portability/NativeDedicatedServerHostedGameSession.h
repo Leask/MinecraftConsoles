@@ -42,11 +42,13 @@ namespace ServerRuntime
         std::uint64_t workerPendingAutosaveCommands = 0;
         std::uint64_t workerPendingSaveCommands = 0;
         std::uint64_t workerPendingStopCommands = 0;
+        std::uint64_t workerPendingHaltCommands = 0;
         std::uint64_t workerTickCount = 0;
         std::uint64_t completedWorkerActions = 0;
         std::uint64_t processedAutosaveCommands = 0;
         std::uint64_t processedSaveCommands = 0;
         std::uint64_t processedStopCommands = 0;
+        std::uint64_t processedHaltCommands = 0;
         std::uint64_t lastQueuedCommandId = 0;
         std::uint64_t activeCommandId = 0;
         std::uint64_t activeCommandTicksRemaining = 0;
@@ -155,11 +157,13 @@ namespace ServerRuntime
         std::uint64_t pendingAutosaveCommands,
         std::uint64_t pendingSaveCommands,
         std::uint64_t pendingStopCommands,
+        std::uint64_t pendingHaltCommands,
         std::uint64_t workerTickCount,
         std::uint64_t completedWorkerActions,
         std::uint64_t processedAutosaveCommands,
         std::uint64_t processedSaveCommands,
         std::uint64_t processedStopCommands,
+        std::uint64_t processedHaltCommands,
         std::uint64_t lastQueuedCommandId,
         std::uint64_t activeCommandId,
         std::uint64_t activeCommandTicksRemaining,

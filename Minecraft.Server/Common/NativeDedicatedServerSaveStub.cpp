@@ -186,11 +186,13 @@ namespace ServerRuntime
             "worker-pending-autosave-commands=%llu\n"
             "worker-pending-save-commands=%llu\n"
             "worker-pending-stop-commands=%llu\n"
+            "worker-pending-halt-commands=%llu\n"
             "worker-ticks=%llu\n"
             "worker-completions=%llu\n"
             "worker-autosave-commands=%llu\n"
             "worker-save-commands=%llu\n"
             "worker-stop-commands=%llu\n"
+            "worker-halt-commands=%llu\n"
             "worker-last-queued-command=%llu\n"
             "worker-active-command=%llu\n"
             "worker-active-kind=%u\n"
@@ -248,11 +250,13 @@ namespace ServerRuntime
             (unsigned long long)stub.workerPendingAutosaveCommands,
             (unsigned long long)stub.workerPendingSaveCommands,
             (unsigned long long)stub.workerPendingStopCommands,
+            (unsigned long long)stub.workerPendingHaltCommands,
             (unsigned long long)stub.workerTickCount,
             (unsigned long long)stub.completedWorkerActions,
             (unsigned long long)stub.processedAutosaveCommands,
             (unsigned long long)stub.processedSaveCommands,
             (unsigned long long)stub.processedStopCommands,
+            (unsigned long long)stub.processedHaltCommands,
             (unsigned long long)stub.lastQueuedCommandId,
             (unsigned long long)stub.activeCommandId,
             stub.activeCommandKind,
@@ -555,6 +559,12 @@ namespace ServerRuntime
                                 value,
                                 &outStub->workerPendingStopCommands);
                         }
+                        else if (key == "worker-pending-halt-commands")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->workerPendingHaltCommands);
+                        }
                         else if (key == "worker-ticks")
                         {
                             ParseUnsignedLongLong(
@@ -584,6 +594,12 @@ namespace ServerRuntime
                             ParseUnsignedLongLong(
                                 value,
                                 &outStub->processedStopCommands);
+                        }
+                        else if (key == "worker-halt-commands")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->processedHaltCommands);
                         }
                         else if (key == "worker-last-queued-command")
                         {

@@ -26,11 +26,13 @@ namespace
     std::atomic<std::uint64_t> g_nativeHostedWorkerPendingAutosaveCommands(0);
     std::atomic<std::uint64_t> g_nativeHostedWorkerPendingSaveCommands(0);
     std::atomic<std::uint64_t> g_nativeHostedWorkerPendingStopCommands(0);
+    std::atomic<std::uint64_t> g_nativeHostedWorkerPendingHaltCommands(0);
     std::atomic<std::uint64_t> g_nativeHostedWorkerTickCount(0);
     std::atomic<std::uint64_t> g_nativeHostedWorkerCompletedActions(0);
     std::atomic<std::uint64_t> g_nativeHostedWorkerProcessedAutosaveCommands(0);
     std::atomic<std::uint64_t> g_nativeHostedWorkerProcessedSaveCommands(0);
     std::atomic<std::uint64_t> g_nativeHostedWorkerProcessedStopCommands(0);
+    std::atomic<std::uint64_t> g_nativeHostedWorkerProcessedHaltCommands(0);
     std::atomic<std::uint64_t> g_nativeHostedWorkerNextCommandId(1);
     std::atomic<std::uint64_t> g_nativeHostedWorkerLastQueuedCommandId(0);
     std::atomic<std::uint64_t> g_nativeHostedWorkerActiveCommandId(0);
@@ -117,6 +119,11 @@ namespace ServerRuntime
             {
                 g_nativeHostedWorkerProcessedStopCommands.fetch_add(1);
             }
+            else if (
+                command.kind == eNativeDedicatedServerHostedGameWorkerCommand_Halt)
+            {
+                g_nativeHostedWorkerProcessedHaltCommands.fetch_add(1);
+            }
 
             g_nativeHostedWorkerLastProcessedCommandId.store(command.id);
             g_nativeHostedWorkerLastProcessedCommandKind.store(command.kind);
@@ -178,6 +185,22 @@ namespace ServerRuntime
                 return true;
             }
 
+            if (command.kind ==
+                eNativeDedicatedServerHostedGameWorkerCommand_Halt)
+            {
+                if (!TryConsumePendingNativeDedicatedServerHostedGameWorkerCommand(
+                        &g_nativeHostedWorkerPendingHaltCommands))
+                {
+                    return false;
+                }
+
+                RequestDedicatedServerShutdown();
+                SetNativeDedicatedServerHostedGameWorkerActiveCommand(
+                    command,
+                    1);
+                return true;
+            }
+
             return false;
         }
     }
@@ -190,11 +213,13 @@ namespace ServerRuntime
         g_nativeHostedWorkerPendingAutosaveCommands.store(0);
         g_nativeHostedWorkerPendingSaveCommands.store(0);
         g_nativeHostedWorkerPendingStopCommands.store(0);
+        g_nativeHostedWorkerPendingHaltCommands.store(0);
         g_nativeHostedWorkerTickCount.store(0);
         g_nativeHostedWorkerCompletedActions.store(0);
         g_nativeHostedWorkerProcessedAutosaveCommands.store(0);
         g_nativeHostedWorkerProcessedSaveCommands.store(0);
         g_nativeHostedWorkerProcessedStopCommands.store(0);
+        g_nativeHostedWorkerProcessedHaltCommands.store(0);
         g_nativeHostedWorkerNextCommandId.store(1);
         g_nativeHostedWorkerLastQueuedCommandId.store(0);
         ClearNativeDedicatedServerHostedGameWorkerActiveCommand();
@@ -210,6 +235,7 @@ namespace ServerRuntime
         g_nativeHostedWorkerPendingAutosaveCommands.store(0);
         g_nativeHostedWorkerPendingSaveCommands.store(0);
         g_nativeHostedWorkerPendingStopCommands.store(0);
+        g_nativeHostedWorkerPendingHaltCommands.store(0);
         ClearNativeDedicatedServerHostedGameWorkerActiveCommand();
     }
 
@@ -258,6 +284,22 @@ namespace ServerRuntime
                     eNativeDedicatedServerHostedGameWorkerCommand_Stop});
         }
         g_nativeHostedWorkerPendingStopCommands.fetch_add(1);
+        g_nativeHostedWorkerLastQueuedCommandId.store(commandId);
+        return commandId;
+    }
+
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameWorkerHaltCommand()
+    {
+        const std::uint64_t commandId =
+            g_nativeHostedWorkerNextCommandId.fetch_add(1);
+        {
+            std::lock_guard<std::mutex> lock(g_nativeHostedWorkerQueueMutex);
+            g_nativeHostedWorkerCommandQueue.push_back(
+                NativeDedicatedServerHostedGameWorkerCommand{
+                    commandId,
+                    eNativeDedicatedServerHostedGameWorkerCommand_Halt});
+        }
+        g_nativeHostedWorkerPendingHaltCommands.fetch_add(1);
         g_nativeHostedWorkerLastQueuedCommandId.store(commandId);
         return commandId;
     }
@@ -324,6 +366,7 @@ namespace ServerRuntime
             g_nativeHostedWorkerPendingAutosaveCommands.load() == 0 &&
             g_nativeHostedWorkerPendingSaveCommands.load() == 0 &&
             g_nativeHostedWorkerPendingStopCommands.load() == 0 &&
+            g_nativeHostedWorkerPendingHaltCommands.load() == 0 &&
             (ENativeDedicatedServerHostedGameWorkerCommandKind)
                     g_nativeHostedWorkerActiveCommandKind.load() ==
                 eNativeDedicatedServerHostedGameWorkerCommand_None;
@@ -340,6 +383,8 @@ namespace ServerRuntime
             return "save";
         case eNativeDedicatedServerHostedGameWorkerCommand_Stop:
             return "stop";
+        case eNativeDedicatedServerHostedGameWorkerCommand_Halt:
+            return "halt";
         default:
             return "none";
         }
@@ -357,6 +402,8 @@ namespace ServerRuntime
             g_nativeHostedWorkerPendingSaveCommands.load();
         snapshot.pendingStopCommands =
             g_nativeHostedWorkerPendingStopCommands.load();
+        snapshot.pendingHaltCommands =
+            g_nativeHostedWorkerPendingHaltCommands.load();
         snapshot.workerTickCount =
             g_nativeHostedWorkerTickCount.load();
         snapshot.completedWorldActions =
@@ -367,6 +414,8 @@ namespace ServerRuntime
             g_nativeHostedWorkerProcessedSaveCommands.load();
         snapshot.processedStopCommands =
             g_nativeHostedWorkerProcessedStopCommands.load();
+        snapshot.processedHaltCommands =
+            g_nativeHostedWorkerProcessedHaltCommands.load();
         snapshot.lastQueuedCommandId =
             g_nativeHostedWorkerLastQueuedCommandId.load();
         snapshot.activeCommandId =

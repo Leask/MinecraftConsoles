@@ -208,7 +208,7 @@ namespace ServerRuntime
                 RequestDedicatedServerWorldAutosave(0);
             }
 
-            EnqueueNativeDedicatedServerHostedGameWorkerStopCommand();
+            EnqueueNativeDedicatedServerHostedGameWorkerHaltCommand();
             g_nativeRuntimeState.gameplayHalted = true;
             ObserveNativeDedicatedServerHostedGameSessionPlatformState(
                 GetDedicatedServerAutosaveRequestCount(),

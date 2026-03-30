@@ -385,6 +385,8 @@ namespace
             runtimeSnapshot.workerPendingSaveCommands;
         saveStub.workerPendingStopCommands =
             runtimeSnapshot.workerPendingStopCommands;
+        saveStub.workerPendingHaltCommands =
+            runtimeSnapshot.workerPendingHaltCommands;
         saveStub.workerTickCount =
             runtimeSnapshot.workerTickCount;
         saveStub.completedWorkerActions =
@@ -395,6 +397,8 @@ namespace
             runtimeSnapshot.processedSaveCommands;
         saveStub.processedStopCommands =
             runtimeSnapshot.processedStopCommands;
+        saveStub.processedHaltCommands =
+            runtimeSnapshot.processedHaltCommands;
         saveStub.lastQueuedCommandId =
             runtimeSnapshot.lastQueuedCommandId;
         saveStub.activeCommandId =

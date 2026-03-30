@@ -117,6 +117,9 @@ namespace
             snapshot->workerPendingStopCommands);
         checksum = MixDedicatedServerStateChecksum(
             checksum,
+            snapshot->workerPendingHaltCommands);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
             snapshot->workerTickCount);
         checksum = MixDedicatedServerStateChecksum(
             checksum,
@@ -130,6 +133,9 @@ namespace
         checksum = MixDedicatedServerStateChecksum(
             checksum,
             snapshot->processedStopCommands);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->processedHaltCommands);
         checksum = MixDedicatedServerStateChecksum(
             checksum,
             snapshot->lastQueuedCommandId);
@@ -301,6 +307,10 @@ namespace ServerRuntime
                         loadedSaveMetadata.saveStub
                             .workerPendingStopCommands;
                 g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousWorkerPendingHaltCommands =
+                        loadedSaveMetadata.saveStub
+                            .workerPendingHaltCommands;
+                g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousWorkerTickCount =
                         loadedSaveMetadata.saveStub.workerTickCount;
                 g_dedicatedServerHostedGameRuntimeSnapshot
@@ -319,6 +329,10 @@ namespace ServerRuntime
                     .previousProcessedStopCommands =
                         loadedSaveMetadata.saveStub
                             .processedStopCommands;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousProcessedHaltCommands =
+                        loadedSaveMetadata.saveStub
+                            .processedHaltCommands;
                 g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousLastQueuedCommandId =
                         loadedSaveMetadata.saveStub
@@ -600,11 +614,13 @@ namespace ServerRuntime
         std::uint64_t workerPendingAutosaveCommands,
         std::uint64_t workerPendingSaveCommands,
         std::uint64_t workerPendingStopCommands,
+        std::uint64_t workerPendingHaltCommands,
         std::uint64_t workerTickCount,
         std::uint64_t completedWorkerActions,
         std::uint64_t processedAutosaveCommands,
         std::uint64_t processedSaveCommands,
         std::uint64_t processedStopCommands,
+        std::uint64_t processedHaltCommands,
         std::uint64_t lastQueuedCommandId,
         std::uint64_t activeCommandId,
         std::uint64_t activeCommandTicksRemaining,
@@ -624,6 +640,9 @@ namespace ServerRuntime
         g_dedicatedServerHostedGameRuntimeSnapshot
             .workerPendingStopCommands =
                 workerPendingStopCommands;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .workerPendingHaltCommands =
+                workerPendingHaltCommands;
         g_dedicatedServerHostedGameRuntimeSnapshot.workerTickCount =
             g_dedicatedServerHostedGameRuntimeSnapshot
                 .previousWorkerTickCount +
@@ -644,6 +663,10 @@ namespace ServerRuntime
             g_dedicatedServerHostedGameRuntimeSnapshot
                 .previousProcessedStopCommands +
             processedStopCommands;
+        g_dedicatedServerHostedGameRuntimeSnapshot.processedHaltCommands =
+            g_dedicatedServerHostedGameRuntimeSnapshot
+                .previousProcessedHaltCommands +
+            processedHaltCommands;
         g_dedicatedServerHostedGameRuntimeSnapshot.lastQueuedCommandId =
             lastQueuedCommandId;
         g_dedicatedServerHostedGameRuntimeSnapshot.activeCommandId =

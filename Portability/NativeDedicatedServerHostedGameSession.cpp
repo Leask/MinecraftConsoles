@@ -25,6 +25,7 @@ namespace ServerRuntime
             std::uint64_t baseProcessedAutosaveCommands = 0;
             std::uint64_t baseProcessedSaveCommands = 0;
             std::uint64_t baseProcessedStopCommands = 0;
+            std::uint64_t baseProcessedHaltCommands = 0;
             std::uint64_t baseGameplayLoopIterations = 0;
         };
 
@@ -159,6 +160,9 @@ namespace ServerRuntime
                 state->snapshot.workerPendingStopCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
+                state->snapshot.workerPendingHaltCommands);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
                 state->snapshot.workerTickCount);
             checksum = MixNativeHostedSessionHash(
                 checksum,
@@ -172,6 +176,9 @@ namespace ServerRuntime
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.processedStopCommands);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.processedHaltCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.lastQueuedCommandId);
@@ -335,6 +342,8 @@ namespace ServerRuntime
                     saveStub.processedSaveCommands;
                 g_nativeHostedSessionState.baseProcessedStopCommands =
                     saveStub.processedStopCommands;
+                g_nativeHostedSessionState.baseProcessedHaltCommands =
+                    saveStub.processedHaltCommands;
                 g_nativeHostedSessionState.baseGameplayLoopIterations =
                     saveStub.gameplayLoopIterations;
                 g_nativeHostedSessionState.snapshot.sessionTicks =
@@ -353,6 +362,10 @@ namespace ServerRuntime
                     saveStub.processedSaveCommands;
                 g_nativeHostedSessionState.snapshot.processedStopCommands =
                     saveStub.processedStopCommands;
+                g_nativeHostedSessionState.snapshot.workerPendingHaltCommands =
+                    saveStub.workerPendingHaltCommands;
+                g_nativeHostedSessionState.snapshot.processedHaltCommands =
+                    saveStub.processedHaltCommands;
                 g_nativeHostedSessionState.snapshot.lastQueuedCommandId =
                     saveStub.lastQueuedCommandId;
                 g_nativeHostedSessionState.snapshot.activeCommandId =
@@ -608,11 +621,13 @@ namespace ServerRuntime
         std::uint64_t pendingAutosaveCommands,
         std::uint64_t pendingSaveCommands,
         std::uint64_t pendingStopCommands,
+        std::uint64_t pendingHaltCommands,
         std::uint64_t workerTickCount,
         std::uint64_t completedWorkerActions,
         std::uint64_t processedAutosaveCommands,
         std::uint64_t processedSaveCommands,
         std::uint64_t processedStopCommands,
+        std::uint64_t processedHaltCommands,
         std::uint64_t lastQueuedCommandId,
         std::uint64_t activeCommandId,
         std::uint64_t activeCommandTicksRemaining,
@@ -631,6 +646,8 @@ namespace ServerRuntime
             pendingSaveCommands;
         g_nativeHostedSessionState.snapshot.workerPendingStopCommands =
             pendingStopCommands;
+        g_nativeHostedSessionState.snapshot.workerPendingHaltCommands =
+            pendingHaltCommands;
         g_nativeHostedSessionState.snapshot.workerTickCount =
             g_nativeHostedSessionState.baseWorkerTickCount +
             workerTickCount;
@@ -646,6 +663,9 @@ namespace ServerRuntime
         g_nativeHostedSessionState.snapshot.processedStopCommands =
             g_nativeHostedSessionState.baseProcessedStopCommands +
             processedStopCommands;
+        g_nativeHostedSessionState.snapshot.processedHaltCommands =
+            g_nativeHostedSessionState.baseProcessedHaltCommands +
+            processedHaltCommands;
         g_nativeHostedSessionState.snapshot.lastQueuedCommandId =
             lastQueuedCommandId;
         g_nativeHostedSessionState.snapshot.activeCommandId =

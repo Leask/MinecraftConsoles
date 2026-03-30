@@ -81,11 +81,13 @@ namespace ServerRuntime
         std::uint64_t previousWorkerPendingAutosaveCommands = 0;
         std::uint64_t previousWorkerPendingSaveCommands = 0;
         std::uint64_t previousWorkerPendingStopCommands = 0;
+        std::uint64_t previousWorkerPendingHaltCommands = 0;
         std::uint64_t previousWorkerTickCount = 0;
         std::uint64_t previousCompletedWorkerActions = 0;
         std::uint64_t previousProcessedAutosaveCommands = 0;
         std::uint64_t previousProcessedSaveCommands = 0;
         std::uint64_t previousProcessedStopCommands = 0;
+        std::uint64_t previousProcessedHaltCommands = 0;
         std::uint64_t previousLastQueuedCommandId = 0;
         std::uint64_t previousActiveCommandId = 0;
         std::uint64_t previousActiveCommandTicksRemaining = 0;
@@ -106,11 +108,13 @@ namespace ServerRuntime
         std::uint64_t workerPendingAutosaveCommands = 0;
         std::uint64_t workerPendingSaveCommands = 0;
         std::uint64_t workerPendingStopCommands = 0;
+        std::uint64_t workerPendingHaltCommands = 0;
         std::uint64_t workerTickCount = 0;
         std::uint64_t completedWorkerActions = 0;
         std::uint64_t processedAutosaveCommands = 0;
         std::uint64_t processedSaveCommands = 0;
         std::uint64_t processedStopCommands = 0;
+        std::uint64_t processedHaltCommands = 0;
         std::uint64_t lastQueuedCommandId = 0;
         std::uint64_t activeCommandId = 0;
         std::uint64_t activeCommandTicksRemaining = 0;
@@ -210,11 +214,13 @@ namespace ServerRuntime
         std::uint64_t workerPendingAutosaveCommands,
         std::uint64_t workerPendingSaveCommands,
         std::uint64_t workerPendingStopCommands,
+        std::uint64_t workerPendingHaltCommands,
         std::uint64_t workerTickCount,
         std::uint64_t completedWorkerActions,
         std::uint64_t processedAutosaveCommands,
         std::uint64_t processedSaveCommands,
         std::uint64_t processedStopCommands,
+        std::uint64_t processedHaltCommands,
         std::uint64_t lastQueuedCommandId,
         std::uint64_t activeCommandId,
         std::uint64_t activeCommandTicksRemaining,

@@ -182,9 +182,9 @@ namespace
             std::snprintf(
                 buffer,
                 sizeof(buffer),
-                "status worker pending=%llu autoq=%llu saveq=%llu stopq=%llu "
+                "status worker pending=%llu autoq=%llu saveq=%llu stopq=%llu haltq=%llu "
                 "ticks=%llu completed=%llu auto-ops=%llu save-ops=%llu "
-                "stop-ops=%llu active=%s#%llu/%llu "
+                "stop-ops=%llu halt-ops=%llu active=%s#%llu/%llu "
                 "last-queued=%llu last-processed=%s#%llu "
                 "core-checksum=0x%016llx",
                 (unsigned long long)
@@ -196,6 +196,8 @@ namespace
                 (unsigned long long)
                     runtimeSnapshot.workerPendingStopCommands,
                 (unsigned long long)
+                    runtimeSnapshot.workerPendingHaltCommands,
+                (unsigned long long)
                     runtimeSnapshot.workerTickCount,
                 (unsigned long long)
                     runtimeSnapshot.completedWorkerActions,
@@ -205,6 +207,8 @@ namespace
                     runtimeSnapshot.processedSaveCommands,
                 (unsigned long long)
                     runtimeSnapshot.processedStopCommands,
+                (unsigned long long)
+                    runtimeSnapshot.processedHaltCommands,
                 GetNativeDedicatedServerHostedGameWorkerCommandKindName(
                     (ServerRuntime::
                         ENativeDedicatedServerHostedGameWorkerCommandKind)
@@ -262,9 +266,9 @@ namespace
                     sizeof(buffer),
                     "status loaded-save path=%s startup=%s phase=%s "
                     "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu "
-                    "worker-pending=%llu autoq=%llu saveq=%llu stopq=%llu "
+                    "worker-pending=%llu autoq=%llu saveq=%llu stopq=%llu haltq=%llu "
                     "worker-ticks=%llu worker-completions=%llu "
-                    "auto-ops=%llu save-ops=%llu stop-ops=%llu "
+                    "auto-ops=%llu save-ops=%llu stop-ops=%llu halt-ops=%llu "
                     "active=%s#%llu/%llu last-queued=%llu "
                     "last-processed=%s#%llu completed=%s "
                     "app-shutdown=%s shutdown-halted=%s "
@@ -290,6 +294,8 @@ namespace
                     (unsigned long long)
                         runtimeSnapshot.previousWorkerPendingStopCommands,
                     (unsigned long long)
+                        runtimeSnapshot.previousWorkerPendingHaltCommands,
+                    (unsigned long long)
                         runtimeSnapshot.previousWorkerTickCount,
                     (unsigned long long)
                         runtimeSnapshot.previousCompletedWorkerActions,
@@ -299,6 +305,8 @@ namespace
                         runtimeSnapshot.previousProcessedSaveCommands,
                     (unsigned long long)
                         runtimeSnapshot.previousProcessedStopCommands,
+                    (unsigned long long)
+                        runtimeSnapshot.previousProcessedHaltCommands,
                     GetNativeDedicatedServerHostedGameWorkerCommandKindName(
                         (ServerRuntime::
                             ENativeDedicatedServerHostedGameWorkerCommandKind)
@@ -657,9 +665,9 @@ namespace ServerRuntime
 
                 LogInfof(
                     "console",
-                    "status worker pending=%llu autoq=%llu saveq=%llu stopq=%llu "
+                    "status worker pending=%llu autoq=%llu saveq=%llu stopq=%llu haltq=%llu "
                     "ticks=%llu completed=%llu auto-ops=%llu save-ops=%llu "
-                    "stop-ops=%llu active=%s#%llu/%llu "
+                    "stop-ops=%llu halt-ops=%llu active=%s#%llu/%llu "
                     "last-queued=%llu last-processed=%s#%llu "
                     "core-checksum=0x%016llx",
                     (unsigned long long)
@@ -671,6 +679,8 @@ namespace ServerRuntime
                     (unsigned long long)
                         runtimeSnapshot.workerPendingStopCommands,
                     (unsigned long long)
+                        runtimeSnapshot.workerPendingHaltCommands,
+                    (unsigned long long)
                         runtimeSnapshot.workerTickCount,
                     (unsigned long long)
                         runtimeSnapshot.completedWorkerActions,
@@ -680,6 +690,8 @@ namespace ServerRuntime
                         runtimeSnapshot.processedSaveCommands,
                     (unsigned long long)
                         runtimeSnapshot.processedStopCommands,
+                    (unsigned long long)
+                        runtimeSnapshot.processedHaltCommands,
                     GetNativeDedicatedServerHostedGameWorkerCommandKindName(
                         (ServerRuntime::
                             ENativeDedicatedServerHostedGameWorkerCommandKind)
@@ -739,9 +751,9 @@ namespace ServerRuntime
                         "console",
                         "status loaded-save path=%s startup=%s phase=%s "
                         "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu "
-                        "worker-pending=%llu autoq=%llu saveq=%llu stopq=%llu "
+                        "worker-pending=%llu autoq=%llu saveq=%llu stopq=%llu haltq=%llu "
                         "worker-ticks=%llu worker-completions=%llu "
-                        "auto-ops=%llu save-ops=%llu stop-ops=%llu "
+                        "auto-ops=%llu save-ops=%llu stop-ops=%llu halt-ops=%llu "
                         "active=%s#%llu/%llu last-queued=%llu "
                         "last-processed=%s#%llu completed=%s "
                         "app-shutdown=%s shutdown-halted=%s "
@@ -769,6 +781,8 @@ namespace ServerRuntime
                         (unsigned long long)
                             runtimeSnapshot.previousWorkerPendingStopCommands,
                         (unsigned long long)
+                            runtimeSnapshot.previousWorkerPendingHaltCommands,
+                        (unsigned long long)
                             runtimeSnapshot.previousWorkerTickCount,
                         (unsigned long long)
                             runtimeSnapshot.previousCompletedWorkerActions,
@@ -778,6 +792,8 @@ namespace ServerRuntime
                             runtimeSnapshot.previousProcessedSaveCommands,
                         (unsigned long long)
                             runtimeSnapshot.previousProcessedStopCommands,
+                        (unsigned long long)
+                            runtimeSnapshot.previousProcessedHaltCommands,
                         GetNativeDedicatedServerHostedGameWorkerCommandKindName(
                             (ServerRuntime::
                                 ENativeDedicatedServerHostedGameWorkerCommandKind)
