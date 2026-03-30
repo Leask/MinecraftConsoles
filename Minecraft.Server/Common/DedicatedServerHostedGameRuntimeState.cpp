@@ -105,6 +105,15 @@ namespace
             snapshot->autosaveCompletions);
         checksum = MixDedicatedServerStateChecksum(
             checksum,
+            snapshot->workerPendingWorldActionTicks);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->workerTickCount);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->completedWorkerActions);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
             snapshot->platformTickCount);
         checksum = MixDedicatedServerStateChecksum(
             checksum,
@@ -500,6 +509,26 @@ namespace ServerRuntime
             saveGeneration;
         g_dedicatedServerHostedGameRuntimeSnapshot.sessionStateChecksum =
             sessionStateChecksum;
+    }
+
+    void RecordDedicatedServerHostedGameRuntimeWorkerState(
+        std::uint64_t workerPendingWorldActionTicks,
+        std::uint64_t workerTickCount,
+        std::uint64_t completedWorkerActions)
+    {
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .workerPendingWorldActionTicks =
+                workerPendingWorldActionTicks;
+        g_dedicatedServerHostedGameRuntimeSnapshot.workerTickCount =
+            g_dedicatedServerHostedGameRuntimeSnapshot
+                .previousWorkerTickCount +
+            workerTickCount;
+        g_dedicatedServerHostedGameRuntimeSnapshot.completedWorkerActions =
+            g_dedicatedServerHostedGameRuntimeSnapshot
+                .previousCompletedWorkerActions +
+            completedWorkerActions;
+        RefreshDedicatedServerHostedGameRuntimeStateChecksum(
+            &g_dedicatedServerHostedGameRuntimeSnapshot);
     }
 
     void RecordDedicatedServerHostedGameRuntimeSessionSummary(

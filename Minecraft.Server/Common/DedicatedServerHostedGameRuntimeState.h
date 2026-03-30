@@ -90,6 +90,9 @@ namespace ServerRuntime
         std::uint64_t remoteCommands = 0;
         std::uint64_t autosaveRequests = 0;
         std::uint64_t autosaveCompletions = 0;
+        std::uint64_t workerPendingWorldActionTicks = 0;
+        std::uint64_t workerTickCount = 0;
+        std::uint64_t completedWorkerActions = 0;
         std::uint64_t platformTickCount = 0;
         bool initialSaveRequested = false;
         bool initialSaveCompleted = false;
@@ -177,6 +180,11 @@ namespace ServerRuntime
     void RecordDedicatedServerHostedGameRuntimeCoreState(
         std::uint64_t saveGeneration,
         std::uint64_t sessionStateChecksum);
+
+    void RecordDedicatedServerHostedGameRuntimeWorkerState(
+        std::uint64_t workerPendingWorldActionTicks,
+        std::uint64_t workerTickCount,
+        std::uint64_t completedWorkerActions);
 
     void RecordDedicatedServerHostedGameRuntimeSessionSummary(
         const DedicatedServerHostedGameRuntimeSessionSummary &summary);

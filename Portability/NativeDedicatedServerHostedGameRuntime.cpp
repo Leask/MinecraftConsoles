@@ -97,6 +97,10 @@ namespace ServerRuntime
                 workerSnapshot.pendingWorldActionTicks,
                 workerSnapshot.workerTickCount,
                 workerSnapshot.completedWorldActions);
+            RecordDedicatedServerHostedGameRuntimeWorkerState(
+                workerSnapshot.pendingWorldActionTicks,
+                workerSnapshot.workerTickCount,
+                workerSnapshot.completedWorldActions);
             const NativeDedicatedServerHostedGameSessionSnapshot
                 sessionSnapshot =
                     GetNativeDedicatedServerHostedGameSessionSnapshot();

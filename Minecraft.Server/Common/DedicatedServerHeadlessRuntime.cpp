@@ -344,9 +344,6 @@ namespace
         const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
             runtimeSnapshot =
                 ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
-        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
-            sessionCoreSnapshot =
-                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
         saveStub.worldName = runtimeSnapshot.worldName.empty()
             ? context->shellContext.worldName
             : runtimeSnapshot.worldName;
@@ -381,11 +378,11 @@ namespace
         saveStub.autosaveRequests = runtimeSnapshot.autosaveRequests;
         saveStub.autosaveCompletions = runtimeSnapshot.autosaveCompletions;
         saveStub.workerPendingWorldActionTicks =
-            sessionCoreSnapshot.workerPendingWorldActionTicks;
+            runtimeSnapshot.workerPendingWorldActionTicks;
         saveStub.workerTickCount =
-            sessionCoreSnapshot.workerTickCount;
+            runtimeSnapshot.workerTickCount;
         saveStub.completedWorkerActions =
-            sessionCoreSnapshot.completedWorkerActions;
+            runtimeSnapshot.completedWorkerActions;
         saveStub.platformTickCount = runtimeSnapshot.platformTickCount;
         saveStub.uptimeMs = runtimeSnapshot.uptimeMs;
         saveStub.initialSaveRequested = runtimeSnapshot.initialSaveRequested;

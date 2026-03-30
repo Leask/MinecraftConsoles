@@ -111,9 +111,6 @@ namespace
         const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
             runtimeSnapshot =
                 ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
-        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
-            sessionCoreSnapshot =
-                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
         if (runtimeSnapshot.startAttempted)
         {
             std::snprintf(
@@ -187,12 +184,12 @@ namespace
                 "status worker pending=%llu ticks=%llu completed=%llu "
                 "core-checksum=0x%016llx",
                 (unsigned long long)
-                    sessionCoreSnapshot.workerPendingWorldActionTicks,
+                    runtimeSnapshot.workerPendingWorldActionTicks,
                 (unsigned long long)
-                    sessionCoreSnapshot.workerTickCount,
+                    runtimeSnapshot.workerTickCount,
                 (unsigned long long)
-                    sessionCoreSnapshot.completedWorkerActions,
-                (unsigned long long)sessionCoreSnapshot.stateChecksum);
+                    runtimeSnapshot.completedWorkerActions,
+                (unsigned long long)runtimeSnapshot.sessionStateChecksum);
             AppendResponseLine(response, buffer);
 
             std::snprintf(
@@ -526,9 +523,6 @@ namespace ServerRuntime
                 worldActionIdle);
             const DedicatedServerHostedGameRuntimeSnapshot runtimeSnapshot =
                 GetDedicatedServerHostedGameRuntimeSnapshot();
-            const NativeDedicatedServerHostedGameSessionSnapshot
-                sessionCoreSnapshot =
-                    GetNativeDedicatedServerHostedGameSessionSnapshot();
             if (runtimeSnapshot.startAttempted)
             {
                 LogInfof(
@@ -603,13 +597,13 @@ namespace ServerRuntime
                     "status worker pending=%llu ticks=%llu completed=%llu "
                     "core-checksum=0x%016llx",
                     (unsigned long long)
-                        sessionCoreSnapshot.workerPendingWorldActionTicks,
+                        runtimeSnapshot.workerPendingWorldActionTicks,
                     (unsigned long long)
-                        sessionCoreSnapshot.workerTickCount,
+                        runtimeSnapshot.workerTickCount,
                     (unsigned long long)
-                        sessionCoreSnapshot.completedWorkerActions,
+                        runtimeSnapshot.completedWorkerActions,
                     (unsigned long long)
-                        sessionCoreSnapshot.stateChecksum);
+                        runtimeSnapshot.sessionStateChecksum);
 
                 LogInfof(
                     "console",
