@@ -203,12 +203,9 @@ namespace ServerRuntime
     {
         if (IsNativeDedicatedServerHostedGameSessionRunning())
         {
-            if (g_nativeRuntimeState.saveOnExitEnabled)
-            {
-                RequestDedicatedServerWorldAutosave(0);
-            }
-
-            EnqueueNativeDedicatedServerHostedGameWorkerHaltCommand();
+            EnqueueNativeDedicatedServerHostedGameWorkerHaltSequence(
+                g_nativeRuntimeState.saveOnExitEnabled,
+                2);
             g_nativeRuntimeState.gameplayHalted = true;
             ObserveNativeDedicatedServerHostedGameSessionPlatformState(
                 GetDedicatedServerAutosaveRequestCount(),

@@ -304,6 +304,19 @@ namespace ServerRuntime
         return commandId;
     }
 
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameWorkerHaltSequence(
+        bool requestAutosaveFirst,
+        unsigned int autosaveWorkTicks)
+    {
+        if (requestAutosaveFirst)
+        {
+            RequestNativeDedicatedServerHostedGameWorkerAutosave(
+                autosaveWorkTicks);
+        }
+
+        return EnqueueNativeDedicatedServerHostedGameWorkerHaltCommand();
+    }
+
     void TickNativeDedicatedServerHostedGameWorker()
     {
         NativeDedicatedServerHostedGameWorkerCommand command = {};

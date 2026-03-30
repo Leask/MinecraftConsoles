@@ -51,6 +51,10 @@ namespace ServerRuntime
 
     std::uint64_t EnqueueNativeDedicatedServerHostedGameWorkerHaltCommand();
 
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameWorkerHaltSequence(
+        bool requestAutosaveFirst,
+        unsigned int autosaveWorkTicks);
+
     void TickNativeDedicatedServerHostedGameWorker();
 
     bool IsNativeDedicatedServerHostedGameWorkerIdle();
