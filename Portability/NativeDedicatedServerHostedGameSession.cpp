@@ -177,6 +177,16 @@ namespace ServerRuntime
                 state->snapshot.lastQueuedCommandId);
             checksum = MixNativeHostedSessionHash(
                 checksum,
+                state->snapshot.activeCommandId);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.activeCommandTicksRemaining);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                static_cast<std::uint64_t>(
+                    state->snapshot.activeCommandKind));
+            checksum = MixNativeHostedSessionHash(
+                checksum,
                 state->snapshot.lastProcessedCommandId);
             checksum = MixNativeHostedSessionHash(
                 checksum,
@@ -345,6 +355,14 @@ namespace ServerRuntime
                     saveStub.processedStopCommands;
                 g_nativeHostedSessionState.snapshot.lastQueuedCommandId =
                     saveStub.lastQueuedCommandId;
+                g_nativeHostedSessionState.snapshot.activeCommandId =
+                    saveStub.activeCommandId;
+                g_nativeHostedSessionState.snapshot
+                    .activeCommandTicksRemaining =
+                        saveStub.activeCommandTicksRemaining;
+                g_nativeHostedSessionState.snapshot.activeCommandKind =
+                    (ENativeDedicatedServerHostedGameWorkerCommandKind)
+                        saveStub.activeCommandKind;
                 g_nativeHostedSessionState.snapshot.lastProcessedCommandId =
                     saveStub.lastProcessedCommandId;
                 g_nativeHostedSessionState.snapshot.lastProcessedCommandKind =
@@ -596,6 +614,10 @@ namespace ServerRuntime
         std::uint64_t processedSaveCommands,
         std::uint64_t processedStopCommands,
         std::uint64_t lastQueuedCommandId,
+        std::uint64_t activeCommandId,
+        std::uint64_t activeCommandTicksRemaining,
+        ENativeDedicatedServerHostedGameWorkerCommandKind
+            activeCommandKind,
         std::uint64_t lastProcessedCommandId,
         ENativeDedicatedServerHostedGameWorkerCommandKind
             lastProcessedCommandKind)
@@ -626,6 +648,12 @@ namespace ServerRuntime
             processedStopCommands;
         g_nativeHostedSessionState.snapshot.lastQueuedCommandId =
             lastQueuedCommandId;
+        g_nativeHostedSessionState.snapshot.activeCommandId =
+            activeCommandId;
+        g_nativeHostedSessionState.snapshot.activeCommandTicksRemaining =
+            activeCommandTicksRemaining;
+        g_nativeHostedSessionState.snapshot.activeCommandKind =
+            activeCommandKind;
         g_nativeHostedSessionState.snapshot.lastProcessedCommandId =
             lastProcessedCommandId;
         g_nativeHostedSessionState.snapshot.lastProcessedCommandKind =

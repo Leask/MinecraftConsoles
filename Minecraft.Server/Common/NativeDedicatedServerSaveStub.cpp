@@ -192,6 +192,9 @@ namespace ServerRuntime
             "worker-save-commands=%llu\n"
             "worker-stop-commands=%llu\n"
             "worker-last-queued-command=%llu\n"
+            "worker-active-command=%llu\n"
+            "worker-active-kind=%u\n"
+            "worker-active-ticks=%llu\n"
             "worker-last-processed-command=%llu\n"
             "worker-last-processed-kind=%u\n"
             "tick-count=%llu\n"
@@ -251,6 +254,9 @@ namespace ServerRuntime
             (unsigned long long)stub.processedSaveCommands,
             (unsigned long long)stub.processedStopCommands,
             (unsigned long long)stub.lastQueuedCommandId,
+            (unsigned long long)stub.activeCommandId,
+            stub.activeCommandKind,
+            (unsigned long long)stub.activeCommandTicksRemaining,
             (unsigned long long)stub.lastProcessedCommandId,
             stub.lastProcessedCommandKind,
             (unsigned long long)stub.platformTickCount,
@@ -584,6 +590,24 @@ namespace ServerRuntime
                             ParseUnsignedLongLong(
                                 value,
                                 &outStub->lastQueuedCommandId);
+                        }
+                        else if (key == "worker-active-command")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->activeCommandId);
+                        }
+                        else if (key == "worker-active-kind")
+                        {
+                            ParseUnsignedInt(
+                                value,
+                                &outStub->activeCommandKind);
+                        }
+                        else if (key == "worker-active-ticks")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->activeCommandTicksRemaining);
                         }
                         else if (key == "worker-last-processed-command")
                         {

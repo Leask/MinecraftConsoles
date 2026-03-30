@@ -87,6 +87,9 @@ namespace ServerRuntime
         std::uint64_t previousProcessedSaveCommands = 0;
         std::uint64_t previousProcessedStopCommands = 0;
         std::uint64_t previousLastQueuedCommandId = 0;
+        std::uint64_t previousActiveCommandId = 0;
+        std::uint64_t previousActiveCommandTicksRemaining = 0;
+        unsigned int previousActiveCommandKind = 0;
         std::uint64_t previousLastProcessedCommandId = 0;
         unsigned int previousLastProcessedCommandKind = 0;
         std::uint64_t previousPlatformTickCount = 0;
@@ -109,6 +112,9 @@ namespace ServerRuntime
         std::uint64_t processedSaveCommands = 0;
         std::uint64_t processedStopCommands = 0;
         std::uint64_t lastQueuedCommandId = 0;
+        std::uint64_t activeCommandId = 0;
+        std::uint64_t activeCommandTicksRemaining = 0;
+        unsigned int activeCommandKind = 0;
         std::uint64_t lastProcessedCommandId = 0;
         unsigned int lastProcessedCommandKind = 0;
         std::uint64_t platformTickCount = 0;
@@ -210,6 +216,9 @@ namespace ServerRuntime
         std::uint64_t processedSaveCommands,
         std::uint64_t processedStopCommands,
         std::uint64_t lastQueuedCommandId,
+        std::uint64_t activeCommandId,
+        std::uint64_t activeCommandTicksRemaining,
+        unsigned int activeCommandKind,
         std::uint64_t lastProcessedCommandId,
         unsigned int lastProcessedCommandKind);
 

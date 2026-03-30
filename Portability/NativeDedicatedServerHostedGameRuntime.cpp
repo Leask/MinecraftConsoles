@@ -104,6 +104,9 @@ namespace ServerRuntime
                 workerSnapshot.processedSaveCommands,
                 workerSnapshot.processedStopCommands,
                 workerSnapshot.lastQueuedCommandId,
+                workerSnapshot.activeCommandId,
+                workerSnapshot.activeCommandTicksRemaining,
+                workerSnapshot.activeCommandKind,
                 workerSnapshot.lastProcessedCommandId,
                 workerSnapshot.lastProcessedCommandKind);
             RecordDedicatedServerHostedGameRuntimeWorkerState(
@@ -117,6 +120,9 @@ namespace ServerRuntime
                 workerSnapshot.processedSaveCommands,
                 workerSnapshot.processedStopCommands,
                 workerSnapshot.lastQueuedCommandId,
+                workerSnapshot.activeCommandId,
+                workerSnapshot.activeCommandTicksRemaining,
+                (unsigned int)workerSnapshot.activeCommandKind,
                 workerSnapshot.lastProcessedCommandId,
                 (unsigned int)workerSnapshot.lastProcessedCommandKind);
             const NativeDedicatedServerHostedGameSessionSnapshot

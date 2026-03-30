@@ -33,12 +33,155 @@ namespace
     std::atomic<std::uint64_t> g_nativeHostedWorkerProcessedStopCommands(0);
     std::atomic<std::uint64_t> g_nativeHostedWorkerNextCommandId(1);
     std::atomic<std::uint64_t> g_nativeHostedWorkerLastQueuedCommandId(0);
+    std::atomic<std::uint64_t> g_nativeHostedWorkerActiveCommandId(0);
+    std::atomic<std::uint64_t> g_nativeHostedWorkerActiveCommandTicks(0);
+    std::atomic<std::uint64_t> g_nativeHostedWorkerActiveCommandKind(0);
     std::atomic<std::uint64_t> g_nativeHostedWorkerLastProcessedCommandId(0);
     std::atomic<std::uint64_t> g_nativeHostedWorkerLastProcessedCommandKind(0);
 }
 
 namespace ServerRuntime
 {
+    namespace
+    {
+        bool TryConsumePendingNativeDedicatedServerHostedGameWorkerCommand(
+            std::atomic<std::uint64_t> *pendingCounter)
+        {
+            if (pendingCounter == nullptr)
+            {
+                return false;
+            }
+
+            std::uint64_t pending = pendingCounter->load();
+            while (pending > 0)
+            {
+                if (pendingCounter->compare_exchange_weak(
+                        pending,
+                        pending - 1))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        void SetNativeDedicatedServerHostedGameWorkerActiveCommand(
+            const NativeDedicatedServerHostedGameWorkerCommand &command,
+            std::uint64_t remainingTicks)
+        {
+            g_nativeHostedWorkerActiveCommandId.store(command.id);
+            g_nativeHostedWorkerActiveCommandKind.store(command.kind);
+            g_nativeHostedWorkerActiveCommandTicks.store(remainingTicks);
+        }
+
+        void ClearNativeDedicatedServerHostedGameWorkerActiveCommand()
+        {
+            g_nativeHostedWorkerActiveCommandId.store(0);
+            g_nativeHostedWorkerActiveCommandKind.store(
+                eNativeDedicatedServerHostedGameWorkerCommand_None);
+            g_nativeHostedWorkerActiveCommandTicks.store(0);
+        }
+
+        void ApplyNativeDedicatedServerHostedGameWorkerWorldActionTicks(
+            unsigned int workTicks)
+        {
+            unsigned int current =
+                g_nativeHostedWorkerPendingWorldActionTicks.load();
+            while (current < workTicks &&
+                !g_nativeHostedWorkerPendingWorldActionTicks
+                    .compare_exchange_weak(
+                        current,
+                        workTicks))
+            {
+            }
+        }
+
+        void CompleteNativeDedicatedServerHostedGameWorkerCommand(
+            const NativeDedicatedServerHostedGameWorkerCommand &command)
+        {
+            if (command.kind ==
+                eNativeDedicatedServerHostedGameWorkerCommand_Autosave)
+            {
+                g_nativeHostedWorkerCompletedActions.fetch_add(1);
+                g_nativeHostedWorkerProcessedAutosaveCommands.fetch_add(1);
+                g_nativeHostedWorkerPendingWorldActionTicks.store(0);
+            }
+            else if (
+                command.kind == eNativeDedicatedServerHostedGameWorkerCommand_Save)
+            {
+                g_nativeHostedWorkerProcessedSaveCommands.fetch_add(1);
+            }
+            else if (
+                command.kind == eNativeDedicatedServerHostedGameWorkerCommand_Stop)
+            {
+                g_nativeHostedWorkerProcessedStopCommands.fetch_add(1);
+            }
+
+            g_nativeHostedWorkerLastProcessedCommandId.store(command.id);
+            g_nativeHostedWorkerLastProcessedCommandKind.store(command.kind);
+            ClearNativeDedicatedServerHostedGameWorkerActiveCommand();
+        }
+
+        bool BeginNativeDedicatedServerHostedGameWorkerCommand(
+            const NativeDedicatedServerHostedGameWorkerCommand &command)
+        {
+            if (command.kind ==
+                eNativeDedicatedServerHostedGameWorkerCommand_Autosave)
+            {
+                if (!TryConsumePendingNativeDedicatedServerHostedGameWorkerCommand(
+                        &g_nativeHostedWorkerPendingAutosaveCommands))
+                {
+                    return false;
+                }
+
+                const std::uint64_t workTicks = std::max<std::uint64_t>(
+                    command.workTicks,
+                    1);
+                ApplyNativeDedicatedServerHostedGameWorkerWorldActionTicks(
+                    (unsigned int)workTicks);
+                SetNativeDedicatedServerHostedGameWorkerActiveCommand(
+                    command,
+                    workTicks);
+                return true;
+            }
+
+            if (command.kind ==
+                eNativeDedicatedServerHostedGameWorkerCommand_Save)
+            {
+                if (!TryConsumePendingNativeDedicatedServerHostedGameWorkerCommand(
+                        &g_nativeHostedWorkerPendingSaveCommands))
+                {
+                    return false;
+                }
+
+                RequestDedicatedServerWorldAutosave(0);
+                SetNativeDedicatedServerHostedGameWorkerActiveCommand(
+                    command,
+                    1);
+                return true;
+            }
+
+            if (command.kind ==
+                eNativeDedicatedServerHostedGameWorkerCommand_Stop)
+            {
+                if (!TryConsumePendingNativeDedicatedServerHostedGameWorkerCommand(
+                        &g_nativeHostedWorkerPendingStopCommands))
+                {
+                    return false;
+                }
+
+                RequestDedicatedServerShutdown();
+                SetNativeDedicatedServerHostedGameWorkerActiveCommand(
+                    command,
+                    1);
+                return true;
+            }
+
+            return false;
+        }
+    }
+
     void ResetNativeDedicatedServerHostedGameWorkerState()
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedWorkerQueueMutex);
@@ -54,6 +197,7 @@ namespace ServerRuntime
         g_nativeHostedWorkerProcessedStopCommands.store(0);
         g_nativeHostedWorkerNextCommandId.store(1);
         g_nativeHostedWorkerLastQueuedCommandId.store(0);
+        ClearNativeDedicatedServerHostedGameWorkerActiveCommand();
         g_nativeHostedWorkerLastProcessedCommandId.store(0);
         g_nativeHostedWorkerLastProcessedCommandKind.store(0);
     }
@@ -66,6 +210,7 @@ namespace ServerRuntime
         g_nativeHostedWorkerPendingAutosaveCommands.store(0);
         g_nativeHostedWorkerPendingSaveCommands.store(0);
         g_nativeHostedWorkerPendingStopCommands.store(0);
+        ClearNativeDedicatedServerHostedGameWorkerActiveCommand();
     }
 
     void RequestNativeDedicatedServerHostedGameWorkerAutosave(
@@ -83,23 +228,6 @@ namespace ServerRuntime
         }
         g_nativeHostedWorkerPendingAutosaveCommands.fetch_add(1);
         g_nativeHostedWorkerLastQueuedCommandId.store(commandId);
-    }
-
-    namespace
-    {
-        void ApplyNativeDedicatedServerHostedGameWorkerWorldActionTicks(
-            unsigned int workTicks)
-        {
-            unsigned int current =
-                g_nativeHostedWorkerPendingWorldActionTicks.load();
-            while (current < workTicks &&
-                !g_nativeHostedWorkerPendingWorldActionTicks
-                    .compare_exchange_weak(
-                        current,
-                        workTicks))
-            {
-            }
-        }
     }
 
     std::uint64_t EnqueueNativeDedicatedServerHostedGameWorkerSaveCommand()
@@ -137,93 +265,53 @@ namespace ServerRuntime
     void TickNativeDedicatedServerHostedGameWorker()
     {
         NativeDedicatedServerHostedGameWorkerCommand command = {};
+        if ((ENativeDedicatedServerHostedGameWorkerCommandKind)
+                g_nativeHostedWorkerActiveCommandKind.load() ==
+            eNativeDedicatedServerHostedGameWorkerCommand_None)
         {
-            std::lock_guard<std::mutex> lock(g_nativeHostedWorkerQueueMutex);
-            if (!g_nativeHostedWorkerCommandQueue.empty())
             {
-                command = g_nativeHostedWorkerCommandQueue.front();
-                g_nativeHostedWorkerCommandQueue.pop_front();
+                std::lock_guard<std::mutex> lock(g_nativeHostedWorkerQueueMutex);
+                if (!g_nativeHostedWorkerCommandQueue.empty())
+                {
+                    command = g_nativeHostedWorkerCommandQueue.front();
+                    g_nativeHostedWorkerCommandQueue.pop_front();
+                }
+            }
+
+            if (command.kind !=
+                eNativeDedicatedServerHostedGameWorkerCommand_None)
+            {
+                BeginNativeDedicatedServerHostedGameWorkerCommand(command);
             }
         }
 
-        if (command.kind ==
-            eNativeDedicatedServerHostedGameWorkerCommand_Autosave)
+        command.id = g_nativeHostedWorkerActiveCommandId.load();
+        command.kind =
+            (ENativeDedicatedServerHostedGameWorkerCommandKind)
+                g_nativeHostedWorkerActiveCommandKind.load();
+        std::uint64_t remaining =
+            g_nativeHostedWorkerActiveCommandTicks.load();
+        while (command.kind !=
+                eNativeDedicatedServerHostedGameWorkerCommand_None &&
+            remaining > 0)
         {
-            std::uint64_t pendingAutosaveCommands =
-                g_nativeHostedWorkerPendingAutosaveCommands.load();
-            while (pendingAutosaveCommands > 0)
-            {
-                if (g_nativeHostedWorkerPendingAutosaveCommands
-                        .compare_exchange_weak(
-                            pendingAutosaveCommands,
-                            pendingAutosaveCommands - 1))
-                {
-                    ApplyNativeDedicatedServerHostedGameWorkerWorldActionTicks(
-                        command.workTicks);
-                    g_nativeHostedWorkerProcessedAutosaveCommands.fetch_add(1);
-                    g_nativeHostedWorkerLastProcessedCommandId.store(command.id);
-                    g_nativeHostedWorkerLastProcessedCommandKind.store(
-                        eNativeDedicatedServerHostedGameWorkerCommand_Autosave);
-                    break;
-                }
-            }
-        }
-        else if (
-            command.kind == eNativeDedicatedServerHostedGameWorkerCommand_Save)
-        {
-            std::uint64_t pendingSaveCommands =
-                g_nativeHostedWorkerPendingSaveCommands.load();
-            while (pendingSaveCommands > 0)
-            {
-                if (g_nativeHostedWorkerPendingSaveCommands
-                        .compare_exchange_weak(
-                            pendingSaveCommands,
-                            pendingSaveCommands - 1))
-                {
-                    RequestDedicatedServerWorldAutosave(0);
-                    g_nativeHostedWorkerProcessedSaveCommands.fetch_add(1);
-                    g_nativeHostedWorkerLastProcessedCommandId.store(command.id);
-                    g_nativeHostedWorkerLastProcessedCommandKind.store(
-                        eNativeDedicatedServerHostedGameWorkerCommand_Save);
-                    break;
-                }
-            }
-        }
-        else if (
-            command.kind == eNativeDedicatedServerHostedGameWorkerCommand_Stop)
-        {
-            std::uint64_t pendingStopCommands =
-                g_nativeHostedWorkerPendingStopCommands.load();
-            while (pendingStopCommands > 0)
-            {
-                if (g_nativeHostedWorkerPendingStopCommands
-                        .compare_exchange_weak(
-                            pendingStopCommands,
-                            pendingStopCommands - 1))
-                {
-                    RequestDedicatedServerShutdown();
-                    g_nativeHostedWorkerProcessedStopCommands.fetch_add(1);
-                    g_nativeHostedWorkerLastProcessedCommandId.store(command.id);
-                    g_nativeHostedWorkerLastProcessedCommandKind.store(
-                        eNativeDedicatedServerHostedGameWorkerCommand_Stop);
-                    break;
-                }
-            }
-        }
-
-        unsigned int current =
-            g_nativeHostedWorkerPendingWorldActionTicks.load();
-        while (current > 0)
-        {
-            if (g_nativeHostedWorkerPendingWorldActionTicks
+            if (g_nativeHostedWorkerActiveCommandTicks
                     .compare_exchange_weak(
-                        current,
-                        current - 1))
+                        remaining,
+                        remaining - 1))
             {
                 g_nativeHostedWorkerTickCount.fetch_add(1);
-                if (current == 1)
+                if (command.kind ==
+                    eNativeDedicatedServerHostedGameWorkerCommand_Autosave)
                 {
-                    g_nativeHostedWorkerCompletedActions.fetch_add(1);
+                    g_nativeHostedWorkerPendingWorldActionTicks.store(
+                        remaining - 1);
+                }
+
+                if (remaining == 1)
+                {
+                    CompleteNativeDedicatedServerHostedGameWorkerCommand(
+                        command);
                 }
                 break;
             }
@@ -235,7 +323,10 @@ namespace ServerRuntime
         return g_nativeHostedWorkerPendingWorldActionTicks.load() == 0 &&
             g_nativeHostedWorkerPendingAutosaveCommands.load() == 0 &&
             g_nativeHostedWorkerPendingSaveCommands.load() == 0 &&
-            g_nativeHostedWorkerPendingStopCommands.load() == 0;
+            g_nativeHostedWorkerPendingStopCommands.load() == 0 &&
+            (ENativeDedicatedServerHostedGameWorkerCommandKind)
+                    g_nativeHostedWorkerActiveCommandKind.load() ==
+                eNativeDedicatedServerHostedGameWorkerCommand_None;
     }
 
     const char *GetNativeDedicatedServerHostedGameWorkerCommandKindName(
@@ -278,6 +369,13 @@ namespace ServerRuntime
             g_nativeHostedWorkerProcessedStopCommands.load();
         snapshot.lastQueuedCommandId =
             g_nativeHostedWorkerLastQueuedCommandId.load();
+        snapshot.activeCommandId =
+            g_nativeHostedWorkerActiveCommandId.load();
+        snapshot.activeCommandTicksRemaining =
+            g_nativeHostedWorkerActiveCommandTicks.load();
+        snapshot.activeCommandKind =
+            (ENativeDedicatedServerHostedGameWorkerCommandKind)
+                g_nativeHostedWorkerActiveCommandKind.load();
         snapshot.lastProcessedCommandId =
             g_nativeHostedWorkerLastProcessedCommandId.load();
         snapshot.lastProcessedCommandKind =

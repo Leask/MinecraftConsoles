@@ -48,6 +48,11 @@ namespace ServerRuntime
         std::uint64_t processedSaveCommands = 0;
         std::uint64_t processedStopCommands = 0;
         std::uint64_t lastQueuedCommandId = 0;
+        std::uint64_t activeCommandId = 0;
+        std::uint64_t activeCommandTicksRemaining = 0;
+        ENativeDedicatedServerHostedGameWorkerCommandKind
+            activeCommandKind =
+                eNativeDedicatedServerHostedGameWorkerCommand_None;
         std::uint64_t lastProcessedCommandId = 0;
         ENativeDedicatedServerHostedGameWorkerCommandKind
             lastProcessedCommandKind =
@@ -156,6 +161,10 @@ namespace ServerRuntime
         std::uint64_t processedSaveCommands,
         std::uint64_t processedStopCommands,
         std::uint64_t lastQueuedCommandId,
+        std::uint64_t activeCommandId,
+        std::uint64_t activeCommandTicksRemaining,
+        ENativeDedicatedServerHostedGameWorkerCommandKind
+            activeCommandKind,
         std::uint64_t lastProcessedCommandId,
         ENativeDedicatedServerHostedGameWorkerCommandKind
             lastProcessedCommandKind);
