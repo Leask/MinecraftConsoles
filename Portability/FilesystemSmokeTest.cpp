@@ -1674,6 +1674,9 @@ int main(int argc, char* argv[])
         2,
         3,
         false);
+    ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPlatformState(
+        4,
+        6);
     ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
         8,
         true,
@@ -1743,7 +1746,9 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.uptimeMs == 100 &&
         nativeHostedSessionObservedSnapshot.acceptedConnections == 2 &&
         nativeHostedSessionObservedSnapshot.remoteCommands == 3 &&
+        nativeHostedSessionObservedSnapshot.autosaveRequests == 4 &&
         nativeHostedSessionObservedSnapshot.gameplayLoopIterations == 8 &&
+        nativeHostedSessionObservedSnapshot.platformTickCount == 6 &&
         nativeHostedSessionObservedSnapshot.lastPersistedFileTime == 77 &&
         nativeHostedSessionObservedSnapshot
             .lastPersistedAutosaveCompletions == 5 &&

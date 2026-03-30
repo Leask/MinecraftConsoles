@@ -17,8 +17,10 @@ namespace ServerRuntime
         std::uint64_t sessionTicks = 0;
         std::uint64_t acceptedConnections = 0;
         std::uint64_t remoteCommands = 0;
+        std::uint64_t autosaveRequests = 0;
         std::uint64_t observedAutosaveCompletions = 0;
         std::uint64_t gameplayLoopIterations = 0;
+        std::uint64_t platformTickCount = 0;
         std::uint64_t saveGeneration = 0;
         std::uint64_t stateChecksum = 0;
         std::uint64_t lastPersistedFileTime = 0;
@@ -54,6 +56,10 @@ namespace ServerRuntime
         std::uint64_t acceptedConnections,
         std::uint64_t remoteCommands,
         bool worldActionIdle);
+
+    void ObserveNativeDedicatedServerHostedGameSessionPlatformState(
+        std::uint64_t autosaveRequests,
+        std::uint64_t platformTickCount);
 
     void ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
         std::uint64_t gameplayLoopIterations,

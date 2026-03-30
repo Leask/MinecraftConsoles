@@ -87,6 +87,9 @@ namespace ServerRuntime
             g_nativeRuntimeState.pendingWorldActionTicks == 0);
         ObserveNativeDedicatedServerHostedGameSessionAutosaves(
             GetDedicatedServerAutosaveCompletionCount());
+        ObserveNativeDedicatedServerHostedGameSessionPlatformState(
+            GetDedicatedServerAutosaveRequestCount(),
+            GetDedicatedServerPlatformTickCount());
         const NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot =
             GetNativeDedicatedServerHostedGameSessionSnapshot();
         RecordDedicatedServerHostedGameRuntimeCoreState(
@@ -114,6 +117,9 @@ namespace ServerRuntime
         {
             g_nativeRuntimeState.pendingWorldActionTicks = 2;
         }
+        ObserveNativeDedicatedServerHostedGameSessionPlatformState(
+            GetDedicatedServerAutosaveRequestCount(),
+            GetDedicatedServerPlatformTickCount());
     }
 
     bool WaitForDedicatedServerWorldActionIdle(

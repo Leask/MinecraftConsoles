@@ -92,7 +92,13 @@ namespace ServerRuntime
                 state->snapshot.remoteCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
+                state->snapshot.autosaveRequests);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
                 state->snapshot.gameplayLoopIterations);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.platformTickCount);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.saveGeneration);
@@ -243,6 +249,19 @@ namespace ServerRuntime
             remoteCommands;
         g_nativeHostedSessionState.snapshot.worldActionIdle =
             worldActionIdle;
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionPlatformState(
+        std::uint64_t autosaveRequests,
+        std::uint64_t platformTickCount)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.autosaveRequests =
+            autosaveRequests;
+        g_nativeHostedSessionState.snapshot.platformTickCount =
+            platformTickCount;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }
