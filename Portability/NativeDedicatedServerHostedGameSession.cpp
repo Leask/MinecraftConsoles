@@ -22,6 +22,8 @@ namespace ServerRuntime
             std::uint64_t baseStateChecksum = 0;
             std::uint64_t baseWorkerTickCount = 0;
             std::uint64_t baseCompletedWorkerActions = 0;
+            std::uint64_t baseProcessedSaveCommands = 0;
+            std::uint64_t baseProcessedStopCommands = 0;
             std::uint64_t baseGameplayLoopIterations = 0;
         };
 
@@ -300,6 +302,10 @@ namespace ServerRuntime
                     saveStub.workerTickCount;
                 g_nativeHostedSessionState.baseCompletedWorkerActions =
                     saveStub.completedWorkerActions;
+                g_nativeHostedSessionState.baseProcessedSaveCommands =
+                    saveStub.processedSaveCommands;
+                g_nativeHostedSessionState.baseProcessedStopCommands =
+                    saveStub.processedStopCommands;
                 g_nativeHostedSessionState.baseGameplayLoopIterations =
                     saveStub.gameplayLoopIterations;
                 g_nativeHostedSessionState.snapshot.sessionTicks =
@@ -308,6 +314,10 @@ namespace ServerRuntime
                     saveStub.workerTickCount;
                 g_nativeHostedSessionState.snapshot.completedWorkerActions =
                     saveStub.completedWorkerActions;
+                g_nativeHostedSessionState.snapshot.processedSaveCommands =
+                    saveStub.processedSaveCommands;
+                g_nativeHostedSessionState.snapshot.processedStopCommands =
+                    saveStub.processedStopCommands;
                 g_nativeHostedSessionState.snapshot.gameplayLoopIterations =
                     saveStub.gameplayLoopIterations;
                 g_nativeHostedSessionState.snapshot.lastPersistedFileTime =
@@ -566,8 +576,10 @@ namespace ServerRuntime
             g_nativeHostedSessionState.baseCompletedWorkerActions +
             completedWorkerActions;
         g_nativeHostedSessionState.snapshot.processedSaveCommands =
+            g_nativeHostedSessionState.baseProcessedSaveCommands +
             processedSaveCommands;
         g_nativeHostedSessionState.snapshot.processedStopCommands =
+            g_nativeHostedSessionState.baseProcessedStopCommands +
             processedStopCommands;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);

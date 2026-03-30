@@ -379,10 +379,18 @@ namespace
         saveStub.autosaveCompletions = runtimeSnapshot.autosaveCompletions;
         saveStub.workerPendingWorldActionTicks =
             runtimeSnapshot.workerPendingWorldActionTicks;
+        saveStub.workerPendingSaveCommands =
+            runtimeSnapshot.workerPendingSaveCommands;
+        saveStub.workerPendingStopCommands =
+            runtimeSnapshot.workerPendingStopCommands;
         saveStub.workerTickCount =
             runtimeSnapshot.workerTickCount;
         saveStub.completedWorkerActions =
             runtimeSnapshot.completedWorkerActions;
+        saveStub.processedSaveCommands =
+            runtimeSnapshot.processedSaveCommands;
+        saveStub.processedStopCommands =
+            runtimeSnapshot.processedStopCommands;
         saveStub.platformTickCount = runtimeSnapshot.platformTickCount;
         saveStub.uptimeMs = runtimeSnapshot.uptimeMs;
         saveStub.initialSaveRequested = runtimeSnapshot.initialSaveRequested;

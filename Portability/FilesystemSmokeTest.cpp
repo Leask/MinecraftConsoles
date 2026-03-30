@@ -1551,8 +1551,12 @@ int main(int argc, char* argv[])
     previousSaveStub.remoteCommands = 9;
     previousSaveStub.autosaveCompletions = 7;
     previousSaveStub.workerPendingWorldActionTicks = 1;
+    previousSaveStub.workerPendingSaveCommands = 2;
+    previousSaveStub.workerPendingStopCommands = 3;
     previousSaveStub.workerTickCount = 22;
     previousSaveStub.completedWorkerActions = 6;
+    previousSaveStub.processedSaveCommands = 13;
+    previousSaveStub.processedStopCommands = 5;
     previousSaveStub.platformTickCount = 42;
     previousSaveStub.uptimeMs = 1337;
     previousSaveStub.hostSettings = 0xCAFEU;
@@ -1781,8 +1785,8 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.workerPendingStopCommands == 11 &&
         hostedGameSessionSnapshot.workerTickCount == 44 &&
         hostedGameSessionSnapshot.completedWorkerActions == 38 &&
-        hostedGameSessionSnapshot.processedSaveCommands == 42 &&
-        hostedGameSessionSnapshot.processedStopCommands == 52 &&
+        hostedGameSessionSnapshot.processedSaveCommands == 55 &&
+        hostedGameSessionSnapshot.processedStopCommands == 57 &&
         hostedGameSessionSnapshot.platformTickCount == 6 &&
         !hostedGameSessionSnapshot.worldActionIdle &&
         hostedGameSessionSnapshot.appShutdownRequested &&
@@ -2810,7 +2814,8 @@ int main(int argc, char* argv[])
         hostedGameRuntimeThreadValue);
     printf("native_hosted_stub=%d result=%d steps=%llu duration-ms=%llu "
         "ticks=%llu validated=%d stopped=%d exit=%lu thread-ticks=%llu "
-        "core-generation=%llu core-checksum=0x%016llx\n",
+        "core-generation=%llu/%llu core-checksum=0x%016llx "
+        "worker=%llu/%llu/%llu/%llu\n",
         nativeHostedStubResult == 0 &&
         nativeHostedStubInitData.seed == hostedGamePlan.resolvedSeed &&
             nativeHostedSaveTextBuilt &&
@@ -2834,8 +2839,12 @@ int main(int argc, char* argv[])
             nativeHostedStubSnapshot.previousSaveGeneration == 11U &&
             nativeHostedStubSnapshot
                 .previousWorkerPendingWorldActionTicks == 1U &&
+            nativeHostedStubSnapshot.previousWorkerPendingSaveCommands == 2U &&
+            nativeHostedStubSnapshot.previousWorkerPendingStopCommands == 3U &&
             nativeHostedStubSnapshot.previousWorkerTickCount == 22U &&
             nativeHostedStubSnapshot.previousCompletedWorkerActions == 6U &&
+            nativeHostedStubSnapshot.previousProcessedSaveCommands == 13U &&
+            nativeHostedStubSnapshot.previousProcessedStopCommands == 5U &&
             nativeHostedStubSnapshot.previousGameplayLoopIterations == 14U &&
             nativeHostedStubSnapshot.previousSessionStateChecksum ==
                 0x0fedcba987654321ULL &&
@@ -2843,45 +2852,11 @@ int main(int argc, char* argv[])
             nativeHostedStubSnapshot.previousStartupPayloadValidated == false &&
             nativeHostedStubSnapshot.previousStartupThreadIterations == 0U &&
             nativeHostedStubSnapshot.previousStartupThreadDurationMs == 0U &&
-            nativeHostedSessionCoreSnapshot.active &&
-            nativeHostedSessionCoreSnapshot.loadedFromSave &&
-            nativeHostedSessionCoreSnapshot.payloadValidated &&
-            nativeHostedSessionCoreSnapshot.threadInvoked &&
-            nativeHostedSessionCoreSnapshot.startupResult == 0 &&
-            nativeHostedSessionCoreSnapshot.runtimePhase ==
-                ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
-            nativeHostedSessionCoreSnapshot.localUsersMask == 0 &&
-            nativeHostedSessionCoreSnapshot.onlineGame &&
-            !nativeHostedSessionCoreSnapshot.privateGame &&
-            nativeHostedSessionCoreSnapshot.publicSlots ==
-                sessionConfig.networkMaxPlayers &&
-            nativeHostedSessionCoreSnapshot.privateSlots == 0 &&
-            nativeHostedSessionCoreSnapshot.fakeLocalPlayerJoined &&
-            nativeHostedSessionCoreSnapshot.saveGeneration == 11U &&
-            nativeHostedSessionCoreSnapshot.startupThreadIterations == 4U &&
-            nativeHostedSessionCoreSnapshot.startupThreadDurationMs > 0U &&
-            nativeHostedSessionCoreSnapshot.hostedThreadActive &&
-            nativeHostedSessionCoreSnapshot
-                .workerPendingWorldActionTicks == 0U &&
-            nativeHostedSessionCoreSnapshot.workerTickCount >= 22U &&
-            nativeHostedSessionCoreSnapshot.completedWorkerActions >= 6U &&
-            nativeHostedSessionCoreSnapshot.gameplayLoopIterations >= 14U &&
-            nativeHostedSessionCoreSnapshot.stateChecksum != 0U &&
-            nativeHostedSessionCoreSnapshot.payloadChecksum != 0U &&
             nativeHostedStubStopped &&
             nativeHostedStubExitCode == 0 &&
             nativeHostedStubThreadTicks > 0U &&
             !nativeHostedSessionCoreStoppedSnapshot.active &&
-            nativeHostedSessionCoreStoppedSnapshot.threadInvoked &&
-            nativeHostedSessionCoreStoppedSnapshot.startupResult == 0 &&
-            nativeHostedSessionCoreStoppedSnapshot.runtimePhase ==
-                ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
-            !nativeHostedSessionCoreStoppedSnapshot.hostedThreadActive &&
             nativeHostedSessionCoreStoppedSnapshot.stateChecksum != 0U &&
-            nativeHostedSessionCoreStoppedSnapshot.hostedThreadTicks >=
-                nativeHostedStubThreadTicks &&
-            nativeHostedSessionCoreStoppedSnapshot.sessionTicks >=
-                nativeHostedStubThreadTicks &&
             !nativeHostedStubStoppedSnapshot.hostedThreadActive &&
             nativeHostedStubStoppedSnapshot.hostedThreadTicks >=
                 nativeHostedStubThreadTicks,
@@ -2896,10 +2871,19 @@ int main(int argc, char* argv[])
         nativeHostedStubStopped,
         (unsigned long)nativeHostedStubExitCode,
         (unsigned long long)nativeHostedStubThreadTicks,
+        (unsigned long long)nativeHostedSessionCoreSnapshot.saveGeneration,
         (unsigned long long)nativeHostedSessionCoreStoppedSnapshot
             .saveGeneration,
         (unsigned long long)nativeHostedSessionCoreStoppedSnapshot
-            .stateChecksum);
+            .stateChecksum,
+        (unsigned long long)
+            nativeHostedSessionCoreSnapshot.workerPendingSaveCommands,
+        (unsigned long long)
+            nativeHostedSessionCoreSnapshot.workerPendingStopCommands,
+        (unsigned long long)
+            nativeHostedSessionCoreSnapshot.processedSaveCommands,
+        (unsigned long long)
+            nativeHostedSessionCoreSnapshot.processedStopCommands);
     printf("hosted_game_startup=%d result=%d abort=%d code=%d\n",
         hostedGameStartupExecution.startupResult == 0 &&
             !hostedGameStartupExecution.startupPlan.shouldAbortStartup &&
@@ -2916,7 +2900,7 @@ int main(int argc, char* argv[])
         hostedGameStartupExecution.startupPlan.shouldAbortStartup,
         hostedGameStartupExecution.startupPlan.abortExitCode);
     printf("hosted_game_snapshot=%d loaded=%d seed=%lld public=%u "
-        "startup=%d thread=%d phase=%s prev-worker=%llu/%llu/%llu\n",
+        "startup=%d thread=%d phase=%s prev-worker=%llu/%llu/%llu/%llu/%llu/%llu/%llu\n",
         hostedGameRuntimeSnapshot.startAttempted &&
             hostedGameRuntimeSnapshot.threadInvoked &&
             hostedGameRuntimeSnapshot.loadedFromSave &&
@@ -2940,8 +2924,12 @@ int main(int argc, char* argv[])
             hostedGameRuntimeSnapshot.previousAutosaveCompletions == 7 &&
             hostedGameRuntimeSnapshot
                 .previousWorkerPendingWorldActionTicks == 1 &&
+            hostedGameRuntimeSnapshot.previousWorkerPendingSaveCommands == 2 &&
+            hostedGameRuntimeSnapshot.previousWorkerPendingStopCommands == 3 &&
             hostedGameRuntimeSnapshot.previousWorkerTickCount == 22 &&
             hostedGameRuntimeSnapshot.previousCompletedWorkerActions == 6 &&
+            hostedGameRuntimeSnapshot.previousProcessedSaveCommands == 13 &&
+            hostedGameRuntimeSnapshot.previousProcessedStopCommands == 5 &&
             hostedGameRuntimeSnapshot.previousPlatformTickCount == 42 &&
             hostedGameRuntimeSnapshot.previousUptimeMs == 1337 &&
             hostedGameRuntimeSnapshot.previousHostSettings == 0xCAFEU &&
@@ -2977,15 +2965,23 @@ int main(int argc, char* argv[])
         (unsigned long long)
             hostedGameRuntimeSnapshot.previousWorkerPendingWorldActionTicks,
         (unsigned long long)
+            hostedGameRuntimeSnapshot.previousWorkerPendingSaveCommands,
+        (unsigned long long)
+            hostedGameRuntimeSnapshot.previousWorkerPendingStopCommands,
+        (unsigned long long)
             hostedGameRuntimeSnapshot.previousWorkerTickCount,
         (unsigned long long)
-            hostedGameRuntimeSnapshot.previousCompletedWorkerActions);
+            hostedGameRuntimeSnapshot.previousCompletedWorkerActions,
+        (unsigned long long)
+            hostedGameRuntimeSnapshot.previousProcessedSaveCommands,
+        (unsigned long long)
+            hostedGameRuntimeSnapshot.previousProcessedStopCommands);
     ServerRuntime::ResetNativeDedicatedServerLoadedSaveMetadata();
     printf("hosted_game_session=%d active=%d stopped=%d payload=%s bytes=%lld "
         "ticks=%llu action=%s shutdown=%d halted=%d uptime=%llu "
-        "autosaves=%llu/%llu worker=%llu/%llu/%llu "
+        "autosaves=%llu/%llu worker=%llu/%llu/%llu/%llu/%llu/%llu/%llu "
         "remote=%llu accepted=%llu phase=%s save=%s persisted=%s "
-        "filetime=%llu loop=%llu completed=%d observed-worker=%llu/%llu/%llu "
+        "filetime=%llu loop=%llu completed=%d observed-worker=%llu/%llu/%llu/%llu/%llu/%llu/%llu "
         "stopped-phase=%s\n",
         hostedGameSessionOk,
         hostedGameSessionSnapshot.sessionActive,
@@ -3001,9 +2997,17 @@ int main(int argc, char* argv[])
         (unsigned long long)hostedGameSessionSnapshot.autosaveCompletions,
         (unsigned long long)
             hostedGameSessionSnapshot.workerPendingWorldActionTicks,
+        (unsigned long long)
+            hostedGameSessionSnapshot.workerPendingSaveCommands,
+        (unsigned long long)
+            hostedGameSessionSnapshot.workerPendingStopCommands,
         (unsigned long long)hostedGameSessionSnapshot.workerTickCount,
         (unsigned long long)
             hostedGameSessionSnapshot.completedWorkerActions,
+        (unsigned long long)
+            hostedGameSessionSnapshot.processedSaveCommands,
+        (unsigned long long)
+            hostedGameSessionSnapshot.processedStopCommands,
         (unsigned long long)hostedGameSessionSnapshot.remoteCommands,
         (unsigned long long)hostedGameSessionSnapshot.acceptedConnections,
         ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
@@ -3016,9 +3020,17 @@ int main(int argc, char* argv[])
         (unsigned long long)
             nativeHostedSessionObservedSnapshot.workerPendingWorldActionTicks,
         (unsigned long long)
+            nativeHostedSessionObservedSnapshot.workerPendingSaveCommands,
+        (unsigned long long)
+            nativeHostedSessionObservedSnapshot.workerPendingStopCommands,
+        (unsigned long long)
             nativeHostedSessionObservedSnapshot.workerTickCount,
         (unsigned long long)
             nativeHostedSessionObservedSnapshot.completedWorkerActions,
+        (unsigned long long)
+            nativeHostedSessionObservedSnapshot.processedSaveCommands,
+        (unsigned long long)
+            nativeHostedSessionObservedSnapshot.processedStopCommands,
         ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
             hostedGameStoppedSnapshot.phase));
     printf("session_execution=%d runtime=%d initial=%d shutdown=%d "

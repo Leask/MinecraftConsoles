@@ -240,8 +240,9 @@ namespace
                     sizeof(buffer),
                     "status loaded-save path=%s startup=%s phase=%s "
                     "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu "
-                    "worker-pending=%llu worker-ticks=%llu "
-                    "worker-completions=%llu completed=%s "
+                    "worker-pending=%llu saveq=%llu stopq=%llu "
+                    "worker-ticks=%llu worker-completions=%llu "
+                    "save-ops=%llu stop-ops=%llu completed=%s "
                     "app-shutdown=%s shutdown-halted=%s "
                     "gameplay-iterations=%llu hosted-thread=%s "
                     "thread-ticks=%llu",
@@ -259,9 +260,17 @@ namespace
                         runtimeSnapshot
                             .previousWorkerPendingWorldActionTicks,
                     (unsigned long long)
+                        runtimeSnapshot.previousWorkerPendingSaveCommands,
+                    (unsigned long long)
+                        runtimeSnapshot.previousWorkerPendingStopCommands,
+                    (unsigned long long)
                         runtimeSnapshot.previousWorkerTickCount,
                     (unsigned long long)
                         runtimeSnapshot.previousCompletedWorkerActions,
+                    (unsigned long long)
+                        runtimeSnapshot.previousProcessedSaveCommands,
+                    (unsigned long long)
+                        runtimeSnapshot.previousProcessedStopCommands,
                     runtimeSnapshot.previousSessionCompleted ? "true" : "false",
                     runtimeSnapshot.previousRequestedAppShutdown
                         ? "true"
@@ -664,8 +673,9 @@ namespace ServerRuntime
                         "console",
                         "status loaded-save path=%s startup=%s phase=%s "
                         "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu "
-                        "worker-pending=%llu worker-ticks=%llu "
-                        "worker-completions=%llu completed=%s "
+                        "worker-pending=%llu saveq=%llu stopq=%llu "
+                        "worker-ticks=%llu worker-completions=%llu "
+                        "save-ops=%llu stop-ops=%llu completed=%s "
                         "app-shutdown=%s shutdown-halted=%s "
                         "gameplay-iterations=%llu hosted-thread=%s "
                         "thread-ticks=%llu",
@@ -684,9 +694,17 @@ namespace ServerRuntime
                             runtimeSnapshot
                                 .previousWorkerPendingWorldActionTicks,
                         (unsigned long long)
+                            runtimeSnapshot.previousWorkerPendingSaveCommands,
+                        (unsigned long long)
+                            runtimeSnapshot.previousWorkerPendingStopCommands,
+                        (unsigned long long)
                             runtimeSnapshot.previousWorkerTickCount,
                         (unsigned long long)
                             runtimeSnapshot.previousCompletedWorkerActions,
+                        (unsigned long long)
+                            runtimeSnapshot.previousProcessedSaveCommands,
+                        (unsigned long long)
+                            runtimeSnapshot.previousProcessedStopCommands,
                         runtimeSnapshot.previousSessionCompleted
                             ? "true"
                             : "false",

@@ -183,8 +183,12 @@ namespace ServerRuntime
             "autosave-requests=%llu\n"
             "autosave-completions=%llu\n"
             "worker-pending-ticks=%llu\n"
+            "worker-pending-save-commands=%llu\n"
+            "worker-pending-stop-commands=%llu\n"
             "worker-ticks=%llu\n"
             "worker-completions=%llu\n"
+            "worker-save-commands=%llu\n"
+            "worker-stop-commands=%llu\n"
             "tick-count=%llu\n"
             "uptime-ms=%llu\n"
             "gameplay-iterations=%llu\n"
@@ -233,8 +237,12 @@ namespace ServerRuntime
             (unsigned long long)stub.autosaveRequests,
             (unsigned long long)stub.autosaveCompletions,
             (unsigned long long)stub.workerPendingWorldActionTicks,
+            (unsigned long long)stub.workerPendingSaveCommands,
+            (unsigned long long)stub.workerPendingStopCommands,
             (unsigned long long)stub.workerTickCount,
             (unsigned long long)stub.completedWorkerActions,
+            (unsigned long long)stub.processedSaveCommands,
+            (unsigned long long)stub.processedStopCommands,
             (unsigned long long)stub.platformTickCount,
             (unsigned long long)stub.uptimeMs,
             (unsigned long long)stub.gameplayLoopIterations,
@@ -513,6 +521,18 @@ namespace ServerRuntime
                                 value,
                                 &outStub->workerPendingWorldActionTicks);
                         }
+                        else if (key == "worker-pending-save-commands")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->workerPendingSaveCommands);
+                        }
+                        else if (key == "worker-pending-stop-commands")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->workerPendingStopCommands);
+                        }
                         else if (key == "worker-ticks")
                         {
                             ParseUnsignedLongLong(
@@ -524,6 +544,18 @@ namespace ServerRuntime
                             ParseUnsignedLongLong(
                                 value,
                                 &outStub->completedWorkerActions);
+                        }
+                        else if (key == "worker-save-commands")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->processedSaveCommands);
+                        }
+                        else if (key == "worker-stop-commands")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->processedStopCommands);
                         }
                         else if (key == "tick-count")
                         {

@@ -265,12 +265,28 @@ namespace ServerRuntime
                         loadedSaveMetadata.saveStub
                             .workerPendingWorldActionTicks;
                 g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousWorkerPendingSaveCommands =
+                        loadedSaveMetadata.saveStub
+                            .workerPendingSaveCommands;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousWorkerPendingStopCommands =
+                        loadedSaveMetadata.saveStub
+                            .workerPendingStopCommands;
+                g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousWorkerTickCount =
                         loadedSaveMetadata.saveStub.workerTickCount;
                 g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousCompletedWorkerActions =
                         loadedSaveMetadata.saveStub
                             .completedWorkerActions;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousProcessedSaveCommands =
+                        loadedSaveMetadata.saveStub
+                            .processedSaveCommands;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousProcessedStopCommands =
+                        loadedSaveMetadata.saveStub
+                            .processedStopCommands;
                 g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousPlatformTickCount =
                         loadedSaveMetadata.saveStub.platformTickCount;
@@ -550,8 +566,12 @@ namespace ServerRuntime
                 .previousCompletedWorkerActions +
             completedWorkerActions;
         g_dedicatedServerHostedGameRuntimeSnapshot.processedSaveCommands =
+            g_dedicatedServerHostedGameRuntimeSnapshot
+                .previousProcessedSaveCommands +
             processedSaveCommands;
         g_dedicatedServerHostedGameRuntimeSnapshot.processedStopCommands =
+            g_dedicatedServerHostedGameRuntimeSnapshot
+                .previousProcessedStopCommands +
             processedStopCommands;
         RefreshDedicatedServerHostedGameRuntimeStateChecksum(
             &g_dedicatedServerHostedGameRuntimeSnapshot);
