@@ -86,6 +86,9 @@ namespace ServerRuntime
             const NativeDedicatedServerHostedGameSessionSnapshot
                 sessionSnapshot =
                     GetNativeDedicatedServerHostedGameSessionSnapshot();
+            ObserveNativeDedicatedServerHostedGameSessionThreadState(
+                g_nativeHostedThreadRunning.load(),
+                sessionSnapshot.sessionTicks);
             RecordDedicatedServerHostedGameRuntimeThreadState(
                 g_nativeHostedThreadRunning.load(),
                 sessionSnapshot.sessionTicks);
@@ -133,6 +136,9 @@ namespace ServerRuntime
             StartNativeDedicatedServerHostedGameSession(
                 *initData,
                 startupPayloadValidated);
+            ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
+                startupIterations,
+                durationMs);
             RecordNativeDedicatedServerHostedThreadSnapshot();
             if (!startupPayloadValidated)
             {

@@ -23,10 +23,14 @@ namespace ServerRuntime
         std::uint64_t stateChecksum = 0;
         std::uint64_t lastPersistedFileTime = 0;
         std::uint64_t lastPersistedAutosaveCompletions = 0;
+        std::uint64_t startupThreadIterations = 0;
+        std::uint64_t startupThreadDurationMs = 0;
+        std::uint64_t hostedThreadTicks = 0;
         bool worldActionIdle = true;
         bool appShutdownRequested = false;
         bool gameplayHalted = false;
         bool stopSignalValid = false;
+        bool hostedThreadActive = false;
         bool initialSaveRequested = false;
         bool initialSaveCompleted = false;
         bool initialSaveTimedOut = false;
@@ -68,6 +72,14 @@ namespace ServerRuntime
         bool sessionCompleted,
         bool requestedAppShutdown,
         bool shutdownHaltedGameplay);
+
+    void ObserveNativeDedicatedServerHostedGameSessionThreadState(
+        bool hostedThreadActive,
+        std::uint64_t hostedThreadTicks);
+
+    void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
+        std::uint64_t startupThreadIterations,
+        std::uint64_t startupThreadDurationMs);
 
     void StopNativeDedicatedServerHostedGameSession();
 

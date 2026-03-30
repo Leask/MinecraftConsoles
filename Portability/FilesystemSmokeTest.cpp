@@ -2753,6 +2753,9 @@ int main(int argc, char* argv[])
             nativeHostedSessionCoreSnapshot.loadedFromSave &&
             nativeHostedSessionCoreSnapshot.payloadValidated &&
             nativeHostedSessionCoreSnapshot.saveGeneration == 11U &&
+            nativeHostedSessionCoreSnapshot.startupThreadIterations == 4U &&
+            nativeHostedSessionCoreSnapshot.startupThreadDurationMs > 0U &&
+            nativeHostedSessionCoreSnapshot.hostedThreadActive &&
             nativeHostedSessionCoreSnapshot.stateChecksum != 0U &&
             nativeHostedSessionCoreSnapshot.payloadChecksum != 0U &&
             nativeHostedStubStopped &&
@@ -2760,6 +2763,9 @@ int main(int argc, char* argv[])
             nativeHostedStubThreadTicks > 0U &&
             !nativeHostedSessionCoreStoppedSnapshot.active &&
             nativeHostedSessionCoreStoppedSnapshot.saveGeneration == 11U &&
+            !nativeHostedSessionCoreStoppedSnapshot.hostedThreadActive &&
+            nativeHostedSessionCoreStoppedSnapshot.hostedThreadTicks >=
+                nativeHostedStubThreadTicks &&
             nativeHostedSessionCoreStoppedSnapshot.sessionTicks >=
                 nativeHostedStubThreadTicks &&
             !nativeHostedStubStoppedSnapshot.hostedThreadActive &&

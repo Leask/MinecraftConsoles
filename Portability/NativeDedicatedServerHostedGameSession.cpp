@@ -104,6 +104,15 @@ namespace ServerRuntime
                 state->snapshot.lastPersistedAutosaveCompletions);
             checksum = MixNativeHostedSessionHash(
                 checksum,
+                state->snapshot.startupThreadIterations);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.startupThreadDurationMs);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.hostedThreadTicks);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
                 state->snapshot.loadedFromSave ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
@@ -123,6 +132,9 @@ namespace ServerRuntime
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.stopSignalValid ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.hostedThreadActive ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.initialSaveRequested ? 1U : 0U);
@@ -294,6 +306,32 @@ namespace ServerRuntime
             requestedAppShutdown;
         g_nativeHostedSessionState.snapshot.shutdownHaltedGameplay =
             shutdownHaltedGameplay;
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionThreadState(
+        bool hostedThreadActive,
+        std::uint64_t hostedThreadTicks)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.hostedThreadActive =
+            hostedThreadActive;
+        g_nativeHostedSessionState.snapshot.hostedThreadTicks =
+            hostedThreadTicks;
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
+        std::uint64_t startupThreadIterations,
+        std::uint64_t startupThreadDurationMs)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.startupThreadIterations =
+            startupThreadIterations;
+        g_nativeHostedSessionState.snapshot.startupThreadDurationMs =
+            startupThreadDurationMs;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }
