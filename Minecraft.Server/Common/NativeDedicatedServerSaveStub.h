@@ -35,7 +35,11 @@ namespace ServerRuntime
         bool shutdownHaltedGameplay = false;
         int configuredPort = 0;
         int listenerPort = 0;
+        bool onlineGame = true;
+        bool privateGame = false;
+        bool fakeLocalPlayerJoined = true;
         unsigned int publicSlots = 0;
+        unsigned int privateSlots = 0;
         bool startupPayloadPresent = false;
         bool startupPayloadValidated = false;
         std::uint64_t startupThreadIterations = 0;

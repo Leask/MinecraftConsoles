@@ -362,6 +362,12 @@ namespace
         saveStub.listenerPort = runtimeSnapshot.listenerPort > 0
             ? runtimeSnapshot.listenerPort
             : context->shellContext.listenerPort;
+        saveStub.onlineGame = runtimeSnapshot.onlineGame;
+        saveStub.privateGame = runtimeSnapshot.privateGame;
+        saveStub.fakeLocalPlayerJoined =
+            runtimeSnapshot.fakeLocalPlayerJoined;
+        saveStub.publicSlots = runtimeSnapshot.publicSlots;
+        saveStub.privateSlots = runtimeSnapshot.privateSlots;
         saveStub.sessionActive = runtimeSnapshot.sessionActive;
         saveStub.worldActionIdle = runtimeSnapshot.worldActionIdle;
         saveStub.appShutdownRequested =
@@ -393,7 +399,6 @@ namespace
                 ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
                     runtimeSnapshot.phase);
             saveStub.resolvedSeed = runtimeSnapshot.resolvedSeed;
-            saveStub.publicSlots = runtimeSnapshot.publicSlots;
             saveStub.payloadBytes = runtimeSnapshot.savePayloadBytes;
             saveStub.payloadChecksum = runtimeSnapshot.savePayloadChecksum;
             saveStub.saveGeneration = runtimeSnapshot.saveGeneration;
@@ -688,13 +693,15 @@ namespace
                     "startup",
                     "native loaded save metadata path=%s startup=%s "
                     "phase=%s settings=0x%08x no-local=%s world-size=%u "
-                    "hell-scale=%u payload-checksum=0x%016llx "
-                    "save-generation=%llu state-checksum=0x%016llx "
-                    "startup-payload=%s validated=%s startup-steps=%llu "
-                    "startup-ms=%llu remote=%llu autosaves=%llu ticks=%llu "
-                    "uptime=%llu completed=%s app-shutdown=%s "
-                    "shutdown-halted=%s gameplay-iterations=%llu "
-                    "hosted-thread=%s hosted-thread-ticks=%llu",
+                    "hell-scale=%u online=%s private=%s fake-local=%s "
+                    "public-slots=%u private-slots=%u "
+                    "payload-checksum=0x%016llx save-generation=%llu "
+                    "state-checksum=0x%016llx startup-payload=%s "
+                    "validated=%s startup-steps=%llu startup-ms=%llu "
+                    "remote=%llu autosaves=%llu ticks=%llu uptime=%llu "
+                    "completed=%s app-shutdown=%s shutdown-halted=%s "
+                    "gameplay-iterations=%llu hosted-thread=%s "
+                    "hosted-thread-ticks=%llu",
                     loadedSaveMetadata.savePath.c_str(),
                     loadedSaveMetadata.saveStub.startupMode.c_str(),
                     loadedSaveMetadata.saveStub.sessionPhase.c_str(),
@@ -705,6 +712,13 @@ namespace
                         : "false",
                     loadedSaveMetadata.saveStub.worldSizeChunks,
                     loadedSaveMetadata.saveStub.worldHellScale,
+                    loadedSaveMetadata.saveStub.onlineGame ? "true" : "false",
+                    loadedSaveMetadata.saveStub.privateGame ? "true" : "false",
+                    loadedSaveMetadata.saveStub.fakeLocalPlayerJoined
+                        ? "true"
+                        : "false",
+                    loadedSaveMetadata.saveStub.publicSlots,
+                    loadedSaveMetadata.saveStub.privateSlots,
                     (unsigned long long)
                         loadedSaveMetadata.saveStub.payloadChecksum,
                     (unsigned long long)

@@ -1241,6 +1241,11 @@ int main(int argc, char* argv[])
     nativeHostedSaveStub.payloadName = "world";
     nativeHostedSaveStub.sessionCompleted = true;
     nativeHostedSaveStub.worldActionIdle = true;
+    nativeHostedSaveStub.onlineGame = true;
+    nativeHostedSaveStub.privateGame = false;
+    nativeHostedSaveStub.fakeLocalPlayerJoined = true;
+    nativeHostedSaveStub.publicSlots = 16;
+    nativeHostedSaveStub.privateSlots = 1;
     nativeHostedSaveStub.startupPayloadPresent = true;
     nativeHostedSaveStub.startupPayloadValidated = true;
     nativeHostedSaveStub.startupThreadIterations = 4;
@@ -2891,6 +2896,11 @@ int main(int argc, char* argv[])
                 .previousDedicatedNoLocalHostPlayer &&
             hostedGameRuntimeSnapshot.previousWorldSizeChunks == 160U &&
             hostedGameRuntimeSnapshot.previousWorldHellScale == 3U &&
+            hostedGameRuntimeSnapshot.previousOnlineGame &&
+            !hostedGameRuntimeSnapshot.previousPrivateGame &&
+            hostedGameRuntimeSnapshot.previousFakeLocalPlayerJoined &&
+            hostedGameRuntimeSnapshot.previousPublicSlots == 16 &&
+            hostedGameRuntimeSnapshot.previousPrivateSlots == 1 &&
             hostedGameRuntimeSnapshot.previousSavePayloadChecksum ==
                 0x123456789abcdef0ULL &&
             hostedGameRuntimeSnapshot.previousSaveGeneration == 11U &&

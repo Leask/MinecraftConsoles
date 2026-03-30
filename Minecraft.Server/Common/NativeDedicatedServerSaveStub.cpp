@@ -167,7 +167,11 @@ namespace ServerRuntime
             "shutdown-halted=%s\n"
             "configured-port=%d\n"
             "listener-port=%d\n"
+            "online-game=%s\n"
+            "private-game=%s\n"
+            "fake-local-player=%s\n"
             "public-slots=%u\n"
+            "private-slots=%u\n"
             "startup-payload-present=%s\n"
             "startup-payload-validated=%s\n"
             "startup-thread-iterations=%llu\n"
@@ -210,7 +214,11 @@ namespace ServerRuntime
             stub.shutdownHaltedGameplay ? "true" : "false",
             stub.configuredPort,
             stub.listenerPort,
+            stub.onlineGame ? "true" : "false",
+            stub.privateGame ? "true" : "false",
+            stub.fakeLocalPlayerJoined ? "true" : "false",
             stub.publicSlots,
+            stub.privateSlots,
             stub.startupPayloadPresent ? "true" : "false",
             stub.startupPayloadValidated ? "true" : "false",
             (unsigned long long)stub.startupThreadIterations,
@@ -399,6 +407,20 @@ namespace ServerRuntime
                         {
                             ParseInt(value, &outStub->listenerPort);
                         }
+                        else if (key == "online-game")
+                        {
+                            ParseBool(value, &outStub->onlineGame);
+                        }
+                        else if (key == "private-game")
+                        {
+                            ParseBool(value, &outStub->privateGame);
+                        }
+                        else if (key == "fake-local-player")
+                        {
+                            ParseBool(
+                                value,
+                                &outStub->fakeLocalPlayerJoined);
+                        }
                         else if (key == "public-slots")
                         {
                             int publicSlots = 0;
@@ -407,6 +429,16 @@ namespace ServerRuntime
                             {
                                 outStub->publicSlots =
                                     (unsigned int)publicSlots;
+                            }
+                        }
+                        else if (key == "private-slots")
+                        {
+                            int privateSlots = 0;
+                            if (ParseInt(value, &privateSlots) &&
+                                privateSlots >= 0)
+                            {
+                                outStub->privateSlots =
+                                    (unsigned int)privateSlots;
                             }
                         }
                         else if (key == "startup-payload-present")

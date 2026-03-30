@@ -262,6 +262,23 @@ namespace ServerRuntime
                         (unsigned char)
                             loadedSaveMetadata.saveStub.worldHellScale;
                 g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousOnlineGame =
+                        loadedSaveMetadata.saveStub.onlineGame;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousPrivateGame =
+                        loadedSaveMetadata.saveStub.privateGame;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousFakeLocalPlayerJoined =
+                        loadedSaveMetadata.saveStub.fakeLocalPlayerJoined;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousPublicSlots =
+                        (unsigned char)
+                            loadedSaveMetadata.saveStub.publicSlots;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousPrivateSlots =
+                        (unsigned char)
+                            loadedSaveMetadata.saveStub.privateSlots;
+                g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousSavePayloadChecksum =
                         loadedSaveMetadata.saveStub.payloadChecksum;
                 g_dedicatedServerHostedGameRuntimeSnapshot

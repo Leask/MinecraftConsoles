@@ -249,16 +249,24 @@ namespace
                     buffer,
                     sizeof(buffer),
                     "status loaded-payload settings=0x%08x no-local=%s "
-                    "world-size=%u hell-scale=%u checksum=0x%016llx "
-                    "save-generation=%llu state-checksum=0x%016llx "
-                    "startup-payload=%s validated=%s startup-steps=%llu "
-                    "startup-ms=%llu",
+                    "world-size=%u hell-scale=%u online=%s private=%s "
+                    "fake-local=%s public-slots=%u private-slots=%u "
+                    "checksum=0x%016llx save-generation=%llu "
+                    "state-checksum=0x%016llx startup-payload=%s "
+                    "validated=%s startup-steps=%llu startup-ms=%llu",
                     (unsigned int)runtimeSnapshot.previousHostSettings,
                     runtimeSnapshot.previousDedicatedNoLocalHostPlayer
                         ? "true"
                         : "false",
                     runtimeSnapshot.previousWorldSizeChunks,
                     (unsigned int)runtimeSnapshot.previousWorldHellScale,
+                    runtimeSnapshot.previousOnlineGame ? "true" : "false",
+                    runtimeSnapshot.previousPrivateGame ? "true" : "false",
+                    runtimeSnapshot.previousFakeLocalPlayerJoined
+                        ? "true"
+                        : "false",
+                    (unsigned int)runtimeSnapshot.previousPublicSlots,
+                    (unsigned int)runtimeSnapshot.previousPrivateSlots,
                     (unsigned long long)
                         runtimeSnapshot.previousSavePayloadChecksum,
                     (unsigned long long)
@@ -634,10 +642,11 @@ namespace ServerRuntime
                     LogInfof(
                         "console",
                         "status loaded-payload settings=0x%08x no-local=%s "
-                        "world-size=%u hell-scale=%u checksum=0x%016llx "
-                        "save-generation=%llu state-checksum=0x%016llx "
-                        "startup-payload=%s validated=%s startup-steps=%llu "
-                        "startup-ms=%llu",
+                        "world-size=%u hell-scale=%u online=%s private=%s "
+                        "fake-local=%s public-slots=%u private-slots=%u "
+                        "checksum=0x%016llx save-generation=%llu "
+                        "state-checksum=0x%016llx startup-payload=%s "
+                        "validated=%s startup-steps=%llu startup-ms=%llu",
                         (unsigned int)runtimeSnapshot.previousHostSettings,
                         runtimeSnapshot.previousDedicatedNoLocalHostPlayer
                             ? "true"
@@ -645,6 +654,13 @@ namespace ServerRuntime
                         runtimeSnapshot.previousWorldSizeChunks,
                         (unsigned int)
                             runtimeSnapshot.previousWorldHellScale,
+                        runtimeSnapshot.previousOnlineGame ? "true" : "false",
+                        runtimeSnapshot.previousPrivateGame ? "true" : "false",
+                        runtimeSnapshot.previousFakeLocalPlayerJoined
+                            ? "true"
+                            : "false",
+                        (unsigned int)runtimeSnapshot.previousPublicSlots,
+                        (unsigned int)runtimeSnapshot.previousPrivateSlots,
                         (unsigned long long)
                             runtimeSnapshot.previousSavePayloadChecksum,
                         (unsigned long long)

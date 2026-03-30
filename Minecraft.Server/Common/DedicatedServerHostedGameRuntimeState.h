@@ -57,6 +57,11 @@ namespace ServerRuntime
         bool previousDedicatedNoLocalHostPlayer = true;
         unsigned int previousWorldSizeChunks = 0;
         unsigned char previousWorldHellScale = 0;
+        bool previousOnlineGame = false;
+        bool previousPrivateGame = false;
+        bool previousFakeLocalPlayerJoined = false;
+        unsigned char previousPublicSlots = 0;
+        unsigned char previousPrivateSlots = 0;
         bool worldActionIdle = true;
         bool appShutdownRequested = false;
         bool gameplayHalted = false;
