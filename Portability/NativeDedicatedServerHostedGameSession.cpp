@@ -424,8 +424,12 @@ namespace ServerRuntime
         bool stopSignalValid)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        g_nativeHostedSessionState.snapshot.gameplayLoopIterations =
-            gameplayLoopIterations;
+        if (gameplayLoopIterations >=
+            g_nativeHostedSessionState.snapshot.gameplayLoopIterations)
+        {
+            g_nativeHostedSessionState.snapshot.gameplayLoopIterations =
+                gameplayLoopIterations;
+        }
         g_nativeHostedSessionState.snapshot.appShutdownRequested =
             appShutdownRequested;
         g_nativeHostedSessionState.snapshot.gameplayHalted =

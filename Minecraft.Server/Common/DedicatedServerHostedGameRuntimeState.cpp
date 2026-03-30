@@ -453,10 +453,15 @@ namespace ServerRuntime
     void RecordDedicatedServerHostedGameRuntimeGameplayLoopIteration(
         std::uint64_t gameplayLoopIterations)
     {
-        g_dedicatedServerHostedGameRuntimeSnapshot.gameplayLoopIterations =
-            gameplayLoopIterations;
-        RefreshDedicatedServerHostedGameRuntimeStateChecksum(
-            &g_dedicatedServerHostedGameRuntimeSnapshot);
+        if (gameplayLoopIterations >=
+            g_dedicatedServerHostedGameRuntimeSnapshot
+                .gameplayLoopIterations)
+        {
+            g_dedicatedServerHostedGameRuntimeSnapshot
+                .gameplayLoopIterations = gameplayLoopIterations;
+            RefreshDedicatedServerHostedGameRuntimeStateChecksum(
+                &g_dedicatedServerHostedGameRuntimeSnapshot);
+        }
     }
 
     void RecordDedicatedServerHostedGameRuntimeStartupTelemetry(
@@ -512,8 +517,14 @@ namespace ServerRuntime
             summary.requestedAppShutdown;
         g_dedicatedServerHostedGameRuntimeSnapshot.shutdownHaltedGameplay =
             summary.shutdownHaltedGameplay;
-        g_dedicatedServerHostedGameRuntimeSnapshot.gameplayLoopIterations =
-            summary.gameplayLoopIterations;
+        if (summary.gameplayLoopIterations >=
+            g_dedicatedServerHostedGameRuntimeSnapshot
+                .gameplayLoopIterations)
+        {
+            g_dedicatedServerHostedGameRuntimeSnapshot
+                .gameplayLoopIterations =
+                    summary.gameplayLoopIterations;
+        }
         RefreshDedicatedServerHostedGameRuntimeStateChecksum(
             &g_dedicatedServerHostedGameRuntimeSnapshot);
     }
