@@ -108,6 +108,9 @@ namespace
             snapshot->workerPendingWorldActionTicks);
         checksum = MixDedicatedServerStateChecksum(
             checksum,
+            snapshot->workerPendingAutosaveCommands);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
             snapshot->workerPendingSaveCommands);
         checksum = MixDedicatedServerStateChecksum(
             checksum,
@@ -118,6 +121,9 @@ namespace
         checksum = MixDedicatedServerStateChecksum(
             checksum,
             snapshot->completedWorkerActions);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->processedAutosaveCommands);
         checksum = MixDedicatedServerStateChecksum(
             checksum,
             snapshot->processedSaveCommands);
@@ -274,6 +280,10 @@ namespace ServerRuntime
                         loadedSaveMetadata.saveStub
                             .workerPendingWorldActionTicks;
                 g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousWorkerPendingAutosaveCommands =
+                        loadedSaveMetadata.saveStub
+                            .workerPendingAutosaveCommands;
+                g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousWorkerPendingSaveCommands =
                         loadedSaveMetadata.saveStub
                             .workerPendingSaveCommands;
@@ -288,6 +298,10 @@ namespace ServerRuntime
                     .previousCompletedWorkerActions =
                         loadedSaveMetadata.saveStub
                             .completedWorkerActions;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousProcessedAutosaveCommands =
+                        loadedSaveMetadata.saveStub
+                            .processedAutosaveCommands;
                 g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousProcessedSaveCommands =
                         loadedSaveMetadata.saveStub
@@ -562,10 +576,12 @@ namespace ServerRuntime
 
     void RecordDedicatedServerHostedGameRuntimeWorkerState(
         std::uint64_t workerPendingWorldActionTicks,
+        std::uint64_t workerPendingAutosaveCommands,
         std::uint64_t workerPendingSaveCommands,
         std::uint64_t workerPendingStopCommands,
         std::uint64_t workerTickCount,
         std::uint64_t completedWorkerActions,
+        std::uint64_t processedAutosaveCommands,
         std::uint64_t processedSaveCommands,
         std::uint64_t processedStopCommands,
         std::uint64_t lastQueuedCommandId,
@@ -575,6 +591,9 @@ namespace ServerRuntime
         g_dedicatedServerHostedGameRuntimeSnapshot
             .workerPendingWorldActionTicks =
                 workerPendingWorldActionTicks;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .workerPendingAutosaveCommands =
+                workerPendingAutosaveCommands;
         g_dedicatedServerHostedGameRuntimeSnapshot
             .workerPendingSaveCommands =
                 workerPendingSaveCommands;
@@ -589,6 +608,10 @@ namespace ServerRuntime
             g_dedicatedServerHostedGameRuntimeSnapshot
                 .previousCompletedWorkerActions +
             completedWorkerActions;
+        g_dedicatedServerHostedGameRuntimeSnapshot.processedAutosaveCommands =
+            g_dedicatedServerHostedGameRuntimeSnapshot
+                .previousProcessedAutosaveCommands +
+            processedAutosaveCommands;
         g_dedicatedServerHostedGameRuntimeSnapshot.processedSaveCommands =
             g_dedicatedServerHostedGameRuntimeSnapshot
                 .previousProcessedSaveCommands +

@@ -78,10 +78,12 @@ namespace ServerRuntime
         std::uint64_t previousRemoteCommands = 0;
         std::uint64_t previousAutosaveCompletions = 0;
         std::uint64_t previousWorkerPendingWorldActionTicks = 0;
+        std::uint64_t previousWorkerPendingAutosaveCommands = 0;
         std::uint64_t previousWorkerPendingSaveCommands = 0;
         std::uint64_t previousWorkerPendingStopCommands = 0;
         std::uint64_t previousWorkerTickCount = 0;
         std::uint64_t previousCompletedWorkerActions = 0;
+        std::uint64_t previousProcessedAutosaveCommands = 0;
         std::uint64_t previousProcessedSaveCommands = 0;
         std::uint64_t previousProcessedStopCommands = 0;
         std::uint64_t previousLastQueuedCommandId = 0;
@@ -98,10 +100,12 @@ namespace ServerRuntime
         std::uint64_t autosaveRequests = 0;
         std::uint64_t autosaveCompletions = 0;
         std::uint64_t workerPendingWorldActionTicks = 0;
+        std::uint64_t workerPendingAutosaveCommands = 0;
         std::uint64_t workerPendingSaveCommands = 0;
         std::uint64_t workerPendingStopCommands = 0;
         std::uint64_t workerTickCount = 0;
         std::uint64_t completedWorkerActions = 0;
+        std::uint64_t processedAutosaveCommands = 0;
         std::uint64_t processedSaveCommands = 0;
         std::uint64_t processedStopCommands = 0;
         std::uint64_t lastQueuedCommandId = 0;
@@ -197,10 +201,12 @@ namespace ServerRuntime
 
     void RecordDedicatedServerHostedGameRuntimeWorkerState(
         std::uint64_t workerPendingWorldActionTicks,
+        std::uint64_t workerPendingAutosaveCommands,
         std::uint64_t workerPendingSaveCommands,
         std::uint64_t workerPendingStopCommands,
         std::uint64_t workerTickCount,
         std::uint64_t completedWorkerActions,
+        std::uint64_t processedAutosaveCommands,
         std::uint64_t processedSaveCommands,
         std::uint64_t processedStopCommands,
         std::uint64_t lastQueuedCommandId,

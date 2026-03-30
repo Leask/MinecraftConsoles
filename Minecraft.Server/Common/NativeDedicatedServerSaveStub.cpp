@@ -183,10 +183,12 @@ namespace ServerRuntime
             "autosave-requests=%llu\n"
             "autosave-completions=%llu\n"
             "worker-pending-ticks=%llu\n"
+            "worker-pending-autosave-commands=%llu\n"
             "worker-pending-save-commands=%llu\n"
             "worker-pending-stop-commands=%llu\n"
             "worker-ticks=%llu\n"
             "worker-completions=%llu\n"
+            "worker-autosave-commands=%llu\n"
             "worker-save-commands=%llu\n"
             "worker-stop-commands=%llu\n"
             "worker-last-queued-command=%llu\n"
@@ -240,10 +242,12 @@ namespace ServerRuntime
             (unsigned long long)stub.autosaveRequests,
             (unsigned long long)stub.autosaveCompletions,
             (unsigned long long)stub.workerPendingWorldActionTicks,
+            (unsigned long long)stub.workerPendingAutosaveCommands,
             (unsigned long long)stub.workerPendingSaveCommands,
             (unsigned long long)stub.workerPendingStopCommands,
             (unsigned long long)stub.workerTickCount,
             (unsigned long long)stub.completedWorkerActions,
+            (unsigned long long)stub.processedAutosaveCommands,
             (unsigned long long)stub.processedSaveCommands,
             (unsigned long long)stub.processedStopCommands,
             (unsigned long long)stub.lastQueuedCommandId,
@@ -527,6 +531,12 @@ namespace ServerRuntime
                                 value,
                                 &outStub->workerPendingWorldActionTicks);
                         }
+                        else if (key == "worker-pending-autosave-commands")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->workerPendingAutosaveCommands);
+                        }
                         else if (key == "worker-pending-save-commands")
                         {
                             ParseUnsignedLongLong(
@@ -550,6 +560,12 @@ namespace ServerRuntime
                             ParseUnsignedLongLong(
                                 value,
                                 &outStub->completedWorkerActions);
+                        }
+                        else if (key == "worker-autosave-commands")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->processedAutosaveCommands);
                         }
                         else if (key == "worker-save-commands")
                         {

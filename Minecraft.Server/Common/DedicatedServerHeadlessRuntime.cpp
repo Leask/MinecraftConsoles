@@ -379,6 +379,8 @@ namespace
         saveStub.autosaveCompletions = runtimeSnapshot.autosaveCompletions;
         saveStub.workerPendingWorldActionTicks =
             runtimeSnapshot.workerPendingWorldActionTicks;
+        saveStub.workerPendingAutosaveCommands =
+            runtimeSnapshot.workerPendingAutosaveCommands;
         saveStub.workerPendingSaveCommands =
             runtimeSnapshot.workerPendingSaveCommands;
         saveStub.workerPendingStopCommands =
@@ -387,6 +389,8 @@ namespace
             runtimeSnapshot.workerTickCount;
         saveStub.completedWorkerActions =
             runtimeSnapshot.completedWorkerActions;
+        saveStub.processedAutosaveCommands =
+            runtimeSnapshot.processedAutosaveCommands;
         saveStub.processedSaveCommands =
             runtimeSnapshot.processedSaveCommands;
         saveStub.processedStopCommands =

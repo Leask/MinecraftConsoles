@@ -7,17 +7,20 @@ namespace ServerRuntime
     enum ENativeDedicatedServerHostedGameWorkerCommandKind
     {
         eNativeDedicatedServerHostedGameWorkerCommand_None = 0,
-        eNativeDedicatedServerHostedGameWorkerCommand_Save = 1,
-        eNativeDedicatedServerHostedGameWorkerCommand_Stop = 2
+        eNativeDedicatedServerHostedGameWorkerCommand_Autosave = 1,
+        eNativeDedicatedServerHostedGameWorkerCommand_Save = 2,
+        eNativeDedicatedServerHostedGameWorkerCommand_Stop = 3
     };
 
     struct NativeDedicatedServerHostedGameWorkerSnapshot
     {
         std::uint64_t pendingWorldActionTicks = 0;
+        std::uint64_t pendingAutosaveCommands = 0;
         std::uint64_t pendingSaveCommands = 0;
         std::uint64_t pendingStopCommands = 0;
         std::uint64_t workerTickCount = 0;
         std::uint64_t completedWorldActions = 0;
+        std::uint64_t processedAutosaveCommands = 0;
         std::uint64_t processedSaveCommands = 0;
         std::uint64_t processedStopCommands = 0;
         std::uint64_t lastQueuedCommandId = 0;

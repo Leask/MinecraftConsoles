@@ -182,12 +182,15 @@ namespace
             std::snprintf(
                 buffer,
                 sizeof(buffer),
-                "status worker pending=%llu saveq=%llu stopq=%llu "
-                "ticks=%llu completed=%llu save-ops=%llu stop-ops=%llu "
+                "status worker pending=%llu autoq=%llu saveq=%llu stopq=%llu "
+                "ticks=%llu completed=%llu auto-ops=%llu save-ops=%llu "
+                "stop-ops=%llu "
                 "last-queued=%llu last-processed=%s#%llu "
                 "core-checksum=0x%016llx",
                 (unsigned long long)
                     runtimeSnapshot.workerPendingWorldActionTicks,
+                (unsigned long long)
+                    runtimeSnapshot.workerPendingAutosaveCommands,
                 (unsigned long long)
                     runtimeSnapshot.workerPendingSaveCommands,
                 (unsigned long long)
@@ -196,6 +199,8 @@ namespace
                     runtimeSnapshot.workerTickCount,
                 (unsigned long long)
                     runtimeSnapshot.completedWorkerActions,
+                (unsigned long long)
+                    runtimeSnapshot.processedAutosaveCommands,
                 (unsigned long long)
                     runtimeSnapshot.processedSaveCommands,
                 (unsigned long long)
@@ -249,9 +254,9 @@ namespace
                     sizeof(buffer),
                     "status loaded-save path=%s startup=%s phase=%s "
                     "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu "
-                    "worker-pending=%llu saveq=%llu stopq=%llu "
+                    "worker-pending=%llu autoq=%llu saveq=%llu stopq=%llu "
                     "worker-ticks=%llu worker-completions=%llu "
-                    "save-ops=%llu stop-ops=%llu "
+                    "auto-ops=%llu save-ops=%llu stop-ops=%llu "
                     "last-queued=%llu last-processed=%s#%llu completed=%s "
                     "app-shutdown=%s shutdown-halted=%s "
                     "gameplay-iterations=%llu hosted-thread=%s "
@@ -270,6 +275,8 @@ namespace
                         runtimeSnapshot
                             .previousWorkerPendingWorldActionTicks,
                     (unsigned long long)
+                        runtimeSnapshot.previousWorkerPendingAutosaveCommands,
+                    (unsigned long long)
                         runtimeSnapshot.previousWorkerPendingSaveCommands,
                     (unsigned long long)
                         runtimeSnapshot.previousWorkerPendingStopCommands,
@@ -277,6 +284,8 @@ namespace
                         runtimeSnapshot.previousWorkerTickCount,
                     (unsigned long long)
                         runtimeSnapshot.previousCompletedWorkerActions,
+                    (unsigned long long)
+                        runtimeSnapshot.previousProcessedAutosaveCommands,
                     (unsigned long long)
                         runtimeSnapshot.previousProcessedSaveCommands,
                     (unsigned long long)
@@ -631,12 +640,15 @@ namespace ServerRuntime
 
                 LogInfof(
                     "console",
-                    "status worker pending=%llu saveq=%llu stopq=%llu "
-                    "ticks=%llu completed=%llu save-ops=%llu stop-ops=%llu "
+                    "status worker pending=%llu autoq=%llu saveq=%llu stopq=%llu "
+                    "ticks=%llu completed=%llu auto-ops=%llu save-ops=%llu "
+                    "stop-ops=%llu "
                     "last-queued=%llu last-processed=%s#%llu "
                     "core-checksum=0x%016llx",
                     (unsigned long long)
                         runtimeSnapshot.workerPendingWorldActionTicks,
+                    (unsigned long long)
+                        runtimeSnapshot.workerPendingAutosaveCommands,
                     (unsigned long long)
                         runtimeSnapshot.workerPendingSaveCommands,
                     (unsigned long long)
@@ -645,6 +657,8 @@ namespace ServerRuntime
                         runtimeSnapshot.workerTickCount,
                     (unsigned long long)
                         runtimeSnapshot.completedWorkerActions,
+                    (unsigned long long)
+                        runtimeSnapshot.processedAutosaveCommands,
                     (unsigned long long)
                         runtimeSnapshot.processedSaveCommands,
                     (unsigned long long)
@@ -700,9 +714,9 @@ namespace ServerRuntime
                         "console",
                         "status loaded-save path=%s startup=%s phase=%s "
                         "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu "
-                        "worker-pending=%llu saveq=%llu stopq=%llu "
+                        "worker-pending=%llu autoq=%llu saveq=%llu stopq=%llu "
                         "worker-ticks=%llu worker-completions=%llu "
-                        "save-ops=%llu stop-ops=%llu "
+                        "auto-ops=%llu save-ops=%llu stop-ops=%llu "
                         "last-queued=%llu last-processed=%s#%llu completed=%s "
                         "app-shutdown=%s shutdown-halted=%s "
                         "gameplay-iterations=%llu hosted-thread=%s "
@@ -722,6 +736,9 @@ namespace ServerRuntime
                             runtimeSnapshot
                                 .previousWorkerPendingWorldActionTicks,
                         (unsigned long long)
+                            runtimeSnapshot
+                                .previousWorkerPendingAutosaveCommands,
+                        (unsigned long long)
                             runtimeSnapshot.previousWorkerPendingSaveCommands,
                         (unsigned long long)
                             runtimeSnapshot.previousWorkerPendingStopCommands,
@@ -729,6 +746,8 @@ namespace ServerRuntime
                             runtimeSnapshot.previousWorkerTickCount,
                         (unsigned long long)
                             runtimeSnapshot.previousCompletedWorkerActions,
+                        (unsigned long long)
+                            runtimeSnapshot.previousProcessedAutosaveCommands,
                         (unsigned long long)
                             runtimeSnapshot.previousProcessedSaveCommands,
                         (unsigned long long)

@@ -22,6 +22,7 @@ namespace ServerRuntime
             std::uint64_t baseStateChecksum = 0;
             std::uint64_t baseWorkerTickCount = 0;
             std::uint64_t baseCompletedWorkerActions = 0;
+            std::uint64_t baseProcessedAutosaveCommands = 0;
             std::uint64_t baseProcessedSaveCommands = 0;
             std::uint64_t baseProcessedStopCommands = 0;
             std::uint64_t baseGameplayLoopIterations = 0;
@@ -149,6 +150,9 @@ namespace ServerRuntime
                 state->snapshot.workerPendingWorldActionTicks);
             checksum = MixNativeHostedSessionHash(
                 checksum,
+                state->snapshot.workerPendingAutosaveCommands);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
                 state->snapshot.workerPendingSaveCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
@@ -159,6 +163,9 @@ namespace ServerRuntime
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.completedWorkerActions);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.processedAutosaveCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.processedSaveCommands);
@@ -312,6 +319,8 @@ namespace ServerRuntime
                     saveStub.workerTickCount;
                 g_nativeHostedSessionState.baseCompletedWorkerActions =
                     saveStub.completedWorkerActions;
+                g_nativeHostedSessionState.baseProcessedAutosaveCommands =
+                    saveStub.processedAutosaveCommands;
                 g_nativeHostedSessionState.baseProcessedSaveCommands =
                     saveStub.processedSaveCommands;
                 g_nativeHostedSessionState.baseProcessedStopCommands =
@@ -324,6 +333,12 @@ namespace ServerRuntime
                     saveStub.workerTickCount;
                 g_nativeHostedSessionState.snapshot.completedWorkerActions =
                     saveStub.completedWorkerActions;
+                g_nativeHostedSessionState.snapshot
+                    .workerPendingAutosaveCommands =
+                        saveStub.workerPendingAutosaveCommands;
+                g_nativeHostedSessionState.snapshot
+                    .processedAutosaveCommands =
+                        saveStub.processedAutosaveCommands;
                 g_nativeHostedSessionState.snapshot.processedSaveCommands =
                     saveStub.processedSaveCommands;
                 g_nativeHostedSessionState.snapshot.processedStopCommands =
@@ -572,10 +587,12 @@ namespace ServerRuntime
 
     void ObserveNativeDedicatedServerHostedGameSessionWorkerState(
         std::uint64_t pendingWorldActionTicks,
+        std::uint64_t pendingAutosaveCommands,
         std::uint64_t pendingSaveCommands,
         std::uint64_t pendingStopCommands,
         std::uint64_t workerTickCount,
         std::uint64_t completedWorkerActions,
+        std::uint64_t processedAutosaveCommands,
         std::uint64_t processedSaveCommands,
         std::uint64_t processedStopCommands,
         std::uint64_t lastQueuedCommandId,
@@ -586,6 +603,8 @@ namespace ServerRuntime
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState.snapshot.workerPendingWorldActionTicks =
             pendingWorldActionTicks;
+        g_nativeHostedSessionState.snapshot.workerPendingAutosaveCommands =
+            pendingAutosaveCommands;
         g_nativeHostedSessionState.snapshot.workerPendingSaveCommands =
             pendingSaveCommands;
         g_nativeHostedSessionState.snapshot.workerPendingStopCommands =
@@ -596,6 +615,9 @@ namespace ServerRuntime
         g_nativeHostedSessionState.snapshot.completedWorkerActions =
             g_nativeHostedSessionState.baseCompletedWorkerActions +
             completedWorkerActions;
+        g_nativeHostedSessionState.snapshot.processedAutosaveCommands =
+            g_nativeHostedSessionState.baseProcessedAutosaveCommands +
+            processedAutosaveCommands;
         g_nativeHostedSessionState.snapshot.processedSaveCommands =
             g_nativeHostedSessionState.baseProcessedSaveCommands +
             processedSaveCommands;

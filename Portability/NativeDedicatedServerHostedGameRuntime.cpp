@@ -95,10 +95,12 @@ namespace ServerRuntime
                     GetNativeDedicatedServerHostedGameWorkerSnapshot();
             ObserveNativeDedicatedServerHostedGameSessionWorkerState(
                 workerSnapshot.pendingWorldActionTicks,
+                workerSnapshot.pendingAutosaveCommands,
                 workerSnapshot.pendingSaveCommands,
                 workerSnapshot.pendingStopCommands,
                 workerSnapshot.workerTickCount,
                 workerSnapshot.completedWorldActions,
+                workerSnapshot.processedAutosaveCommands,
                 workerSnapshot.processedSaveCommands,
                 workerSnapshot.processedStopCommands,
                 workerSnapshot.lastQueuedCommandId,
@@ -106,10 +108,12 @@ namespace ServerRuntime
                 workerSnapshot.lastProcessedCommandKind);
             RecordDedicatedServerHostedGameRuntimeWorkerState(
                 workerSnapshot.pendingWorldActionTicks,
+                workerSnapshot.pendingAutosaveCommands,
                 workerSnapshot.pendingSaveCommands,
                 workerSnapshot.pendingStopCommands,
                 workerSnapshot.workerTickCount,
                 workerSnapshot.completedWorldActions,
+                workerSnapshot.processedAutosaveCommands,
                 workerSnapshot.processedSaveCommands,
                 workerSnapshot.processedStopCommands,
                 workerSnapshot.lastQueuedCommandId,

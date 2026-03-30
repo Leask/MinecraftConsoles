@@ -1551,10 +1551,12 @@ int main(int argc, char* argv[])
     previousSaveStub.remoteCommands = 9;
     previousSaveStub.autosaveCompletions = 7;
     previousSaveStub.workerPendingWorldActionTicks = 1;
+    previousSaveStub.workerPendingAutosaveCommands = 4;
     previousSaveStub.workerPendingSaveCommands = 2;
     previousSaveStub.workerPendingStopCommands = 3;
     previousSaveStub.workerTickCount = 22;
     previousSaveStub.completedWorkerActions = 6;
+    previousSaveStub.processedAutosaveCommands = 7;
     previousSaveStub.processedSaveCommands = 13;
     previousSaveStub.processedStopCommands = 5;
     previousSaveStub.lastQueuedCommandId = 17;
@@ -1696,10 +1698,12 @@ int main(int argc, char* argv[])
         1100);
     ServerRuntime::RecordDedicatedServerHostedGameRuntimeWorkerState(
         9,
+        8,
         10,
         11,
         22,
         32,
+        12,
         42,
         52,
         99,
@@ -1731,10 +1735,12 @@ int main(int argc, char* argv[])
         6);
     ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionWorkerState(
         9,
+        8,
         10,
         11,
         22,
         32,
+        12,
         42,
         52,
         99,
@@ -1791,10 +1797,12 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.autosaveRequests == 4 &&
         hostedGameSessionSnapshot.autosaveCompletions == 5 &&
         hostedGameSessionSnapshot.workerPendingWorldActionTicks == 9 &&
+        hostedGameSessionSnapshot.workerPendingAutosaveCommands == 8 &&
         hostedGameSessionSnapshot.workerPendingSaveCommands == 10 &&
         hostedGameSessionSnapshot.workerPendingStopCommands == 11 &&
         hostedGameSessionSnapshot.workerTickCount == 44 &&
         hostedGameSessionSnapshot.completedWorkerActions == 38 &&
+        hostedGameSessionSnapshot.processedAutosaveCommands == 19 &&
         hostedGameSessionSnapshot.processedSaveCommands == 55 &&
         hostedGameSessionSnapshot.processedStopCommands == 57 &&
         hostedGameSessionSnapshot.lastQueuedCommandId == 99 &&
@@ -1841,10 +1849,12 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.remoteCommands == 3 &&
         nativeHostedSessionObservedSnapshot.autosaveRequests == 4 &&
         nativeHostedSessionObservedSnapshot.workerPendingWorldActionTicks == 9 &&
+        nativeHostedSessionObservedSnapshot.workerPendingAutosaveCommands == 8 &&
         nativeHostedSessionObservedSnapshot.workerPendingSaveCommands == 10 &&
         nativeHostedSessionObservedSnapshot.workerPendingStopCommands == 11 &&
         nativeHostedSessionObservedSnapshot.workerTickCount == 22 &&
         nativeHostedSessionObservedSnapshot.completedWorkerActions == 32 &&
+        nativeHostedSessionObservedSnapshot.processedAutosaveCommands == 12 &&
         nativeHostedSessionObservedSnapshot.processedSaveCommands == 42 &&
         nativeHostedSessionObservedSnapshot.processedStopCommands == 52 &&
         nativeHostedSessionObservedSnapshot.lastQueuedCommandId == 99 &&
@@ -2857,10 +2867,12 @@ int main(int argc, char* argv[])
             nativeHostedStubSnapshot.previousSaveGeneration == 11U &&
             nativeHostedStubSnapshot
                 .previousWorkerPendingWorldActionTicks == 1U &&
+            nativeHostedStubSnapshot.previousWorkerPendingAutosaveCommands == 4U &&
             nativeHostedStubSnapshot.previousWorkerPendingSaveCommands == 2U &&
             nativeHostedStubSnapshot.previousWorkerPendingStopCommands == 3U &&
             nativeHostedStubSnapshot.previousWorkerTickCount == 22U &&
             nativeHostedStubSnapshot.previousCompletedWorkerActions == 6U &&
+            nativeHostedStubSnapshot.previousProcessedAutosaveCommands == 7U &&
             nativeHostedStubSnapshot.previousProcessedSaveCommands == 13U &&
             nativeHostedStubSnapshot.previousProcessedStopCommands == 5U &&
             nativeHostedStubSnapshot.previousLastQueuedCommandId == 17U &&
@@ -2922,7 +2934,7 @@ int main(int argc, char* argv[])
         hostedGameStartupExecution.startupPlan.shouldAbortStartup,
         hostedGameStartupExecution.startupPlan.abortExitCode);
     printf("hosted_game_snapshot=%d loaded=%d seed=%lld public=%u "
-        "startup=%d thread=%d phase=%s prev-worker=%llu/%llu/%llu/%llu/%llu/%llu/%llu\n",
+        "startup=%d thread=%d phase=%s prev-worker=%llu/%llu/%llu/%llu/%llu/%llu/%llu/%llu/%llu\n",
         hostedGameRuntimeSnapshot.startAttempted &&
             hostedGameRuntimeSnapshot.threadInvoked &&
             hostedGameRuntimeSnapshot.loadedFromSave &&
@@ -2946,10 +2958,12 @@ int main(int argc, char* argv[])
             hostedGameRuntimeSnapshot.previousAutosaveCompletions == 7 &&
             hostedGameRuntimeSnapshot
                 .previousWorkerPendingWorldActionTicks == 1 &&
+            hostedGameRuntimeSnapshot.previousWorkerPendingAutosaveCommands == 4 &&
             hostedGameRuntimeSnapshot.previousWorkerPendingSaveCommands == 2 &&
             hostedGameRuntimeSnapshot.previousWorkerPendingStopCommands == 3 &&
             hostedGameRuntimeSnapshot.previousWorkerTickCount == 22 &&
             hostedGameRuntimeSnapshot.previousCompletedWorkerActions == 6 &&
+            hostedGameRuntimeSnapshot.previousProcessedAutosaveCommands == 7 &&
             hostedGameRuntimeSnapshot.previousProcessedSaveCommands == 13 &&
             hostedGameRuntimeSnapshot.previousProcessedStopCommands == 5 &&
             hostedGameRuntimeSnapshot.previousLastQueuedCommandId == 17 &&
@@ -2991,6 +3005,8 @@ int main(int argc, char* argv[])
         (unsigned long long)
             hostedGameRuntimeSnapshot.previousWorkerPendingWorldActionTicks,
         (unsigned long long)
+            hostedGameRuntimeSnapshot.previousWorkerPendingAutosaveCommands,
+        (unsigned long long)
             hostedGameRuntimeSnapshot.previousWorkerPendingSaveCommands,
         (unsigned long long)
             hostedGameRuntimeSnapshot.previousWorkerPendingStopCommands,
@@ -2999,15 +3015,17 @@ int main(int argc, char* argv[])
         (unsigned long long)
             hostedGameRuntimeSnapshot.previousCompletedWorkerActions,
         (unsigned long long)
+            hostedGameRuntimeSnapshot.previousProcessedAutosaveCommands,
+        (unsigned long long)
             hostedGameRuntimeSnapshot.previousProcessedSaveCommands,
         (unsigned long long)
             hostedGameRuntimeSnapshot.previousProcessedStopCommands);
     ServerRuntime::ResetNativeDedicatedServerLoadedSaveMetadata();
     printf("hosted_game_session=%d active=%d stopped=%d payload=%s bytes=%lld "
         "ticks=%llu action=%s shutdown=%d halted=%d uptime=%llu "
-        "autosaves=%llu/%llu worker=%llu/%llu/%llu/%llu/%llu/%llu/%llu "
+        "autosaves=%llu/%llu worker=%llu/%llu/%llu/%llu/%llu/%llu/%llu/%llu/%llu "
         "remote=%llu accepted=%llu phase=%s save=%s persisted=%s "
-        "filetime=%llu loop=%llu completed=%d observed-worker=%llu/%llu/%llu/%llu/%llu/%llu/%llu "
+        "filetime=%llu loop=%llu completed=%d observed-worker=%llu/%llu/%llu/%llu/%llu/%llu/%llu/%llu/%llu "
         "stopped-phase=%s\n",
         hostedGameSessionOk,
         hostedGameSessionSnapshot.sessionActive,
@@ -3024,12 +3042,16 @@ int main(int argc, char* argv[])
         (unsigned long long)
             hostedGameSessionSnapshot.workerPendingWorldActionTicks,
         (unsigned long long)
+            hostedGameSessionSnapshot.workerPendingAutosaveCommands,
+        (unsigned long long)
             hostedGameSessionSnapshot.workerPendingSaveCommands,
         (unsigned long long)
             hostedGameSessionSnapshot.workerPendingStopCommands,
         (unsigned long long)hostedGameSessionSnapshot.workerTickCount,
         (unsigned long long)
             hostedGameSessionSnapshot.completedWorkerActions,
+        (unsigned long long)
+            hostedGameSessionSnapshot.processedAutosaveCommands,
         (unsigned long long)
             hostedGameSessionSnapshot.processedSaveCommands,
         (unsigned long long)
@@ -3046,6 +3068,8 @@ int main(int argc, char* argv[])
         (unsigned long long)
             nativeHostedSessionObservedSnapshot.workerPendingWorldActionTicks,
         (unsigned long long)
+            nativeHostedSessionObservedSnapshot.workerPendingAutosaveCommands,
+        (unsigned long long)
             nativeHostedSessionObservedSnapshot.workerPendingSaveCommands,
         (unsigned long long)
             nativeHostedSessionObservedSnapshot.workerPendingStopCommands,
@@ -3053,6 +3077,8 @@ int main(int argc, char* argv[])
             nativeHostedSessionObservedSnapshot.workerTickCount,
         (unsigned long long)
             nativeHostedSessionObservedSnapshot.completedWorkerActions,
+        (unsigned long long)
+            nativeHostedSessionObservedSnapshot.processedAutosaveCommands,
         (unsigned long long)
             nativeHostedSessionObservedSnapshot.processedSaveCommands,
         (unsigned long long)
