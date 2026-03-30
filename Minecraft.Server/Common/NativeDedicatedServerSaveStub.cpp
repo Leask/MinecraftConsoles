@@ -189,6 +189,9 @@ namespace ServerRuntime
             "worker-completions=%llu\n"
             "worker-save-commands=%llu\n"
             "worker-stop-commands=%llu\n"
+            "worker-last-queued-command=%llu\n"
+            "worker-last-processed-command=%llu\n"
+            "worker-last-processed-kind=%u\n"
             "tick-count=%llu\n"
             "uptime-ms=%llu\n"
             "gameplay-iterations=%llu\n"
@@ -243,6 +246,9 @@ namespace ServerRuntime
             (unsigned long long)stub.completedWorkerActions,
             (unsigned long long)stub.processedSaveCommands,
             (unsigned long long)stub.processedStopCommands,
+            (unsigned long long)stub.lastQueuedCommandId,
+            (unsigned long long)stub.lastProcessedCommandId,
+            stub.lastProcessedCommandKind,
             (unsigned long long)stub.platformTickCount,
             (unsigned long long)stub.uptimeMs,
             (unsigned long long)stub.gameplayLoopIterations,
@@ -556,6 +562,24 @@ namespace ServerRuntime
                             ParseUnsignedLongLong(
                                 value,
                                 &outStub->processedStopCommands);
+                        }
+                        else if (key == "worker-last-queued-command")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->lastQueuedCommandId);
+                        }
+                        else if (key == "worker-last-processed-command")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->lastProcessedCommandId);
+                        }
+                        else if (key == "worker-last-processed-kind")
+                        {
+                            ParseUnsignedInt(
+                                value,
+                                &outStub->lastProcessedCommandKind);
                         }
                         else if (key == "tick-count")
                         {

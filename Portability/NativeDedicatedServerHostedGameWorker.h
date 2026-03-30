@@ -4,6 +4,13 @@
 
 namespace ServerRuntime
 {
+    enum ENativeDedicatedServerHostedGameWorkerCommandKind
+    {
+        eNativeDedicatedServerHostedGameWorkerCommand_None = 0,
+        eNativeDedicatedServerHostedGameWorkerCommand_Save = 1,
+        eNativeDedicatedServerHostedGameWorkerCommand_Stop = 2
+    };
+
     struct NativeDedicatedServerHostedGameWorkerSnapshot
     {
         std::uint64_t pendingWorldActionTicks = 0;
@@ -13,6 +20,11 @@ namespace ServerRuntime
         std::uint64_t completedWorldActions = 0;
         std::uint64_t processedSaveCommands = 0;
         std::uint64_t processedStopCommands = 0;
+        std::uint64_t lastQueuedCommandId = 0;
+        std::uint64_t lastProcessedCommandId = 0;
+        ENativeDedicatedServerHostedGameWorkerCommandKind
+            lastProcessedCommandKind =
+                eNativeDedicatedServerHostedGameWorkerCommand_None;
     };
 
     void ResetNativeDedicatedServerHostedGameWorkerState();
@@ -22,13 +34,16 @@ namespace ServerRuntime
     void RequestNativeDedicatedServerHostedGameWorkerAutosave(
         unsigned int workTicks);
 
-    void EnqueueNativeDedicatedServerHostedGameWorkerSaveCommand();
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameWorkerSaveCommand();
 
-    void EnqueueNativeDedicatedServerHostedGameWorkerStopCommand();
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameWorkerStopCommand();
 
     void TickNativeDedicatedServerHostedGameWorker();
 
     bool IsNativeDedicatedServerHostedGameWorkerIdle();
+
+    const char *GetNativeDedicatedServerHostedGameWorkerCommandKindName(
+        ENativeDedicatedServerHostedGameWorkerCommandKind kind);
 
     NativeDedicatedServerHostedGameWorkerSnapshot
     GetNativeDedicatedServerHostedGameWorkerSnapshot();

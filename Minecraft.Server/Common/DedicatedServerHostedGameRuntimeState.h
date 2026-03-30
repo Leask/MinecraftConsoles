@@ -84,6 +84,9 @@ namespace ServerRuntime
         std::uint64_t previousCompletedWorkerActions = 0;
         std::uint64_t previousProcessedSaveCommands = 0;
         std::uint64_t previousProcessedStopCommands = 0;
+        std::uint64_t previousLastQueuedCommandId = 0;
+        std::uint64_t previousLastProcessedCommandId = 0;
+        unsigned int previousLastProcessedCommandKind = 0;
         std::uint64_t previousPlatformTickCount = 0;
         std::uint64_t previousUptimeMs = 0;
         std::uint64_t previousGameplayLoopIterations = 0;
@@ -101,6 +104,9 @@ namespace ServerRuntime
         std::uint64_t completedWorkerActions = 0;
         std::uint64_t processedSaveCommands = 0;
         std::uint64_t processedStopCommands = 0;
+        std::uint64_t lastQueuedCommandId = 0;
+        std::uint64_t lastProcessedCommandId = 0;
+        unsigned int lastProcessedCommandKind = 0;
         std::uint64_t platformTickCount = 0;
         bool initialSaveRequested = false;
         bool initialSaveCompleted = false;
@@ -196,7 +202,10 @@ namespace ServerRuntime
         std::uint64_t workerTickCount,
         std::uint64_t completedWorkerActions,
         std::uint64_t processedSaveCommands,
-        std::uint64_t processedStopCommands);
+        std::uint64_t processedStopCommands,
+        std::uint64_t lastQueuedCommandId,
+        std::uint64_t lastProcessedCommandId,
+        unsigned int lastProcessedCommandKind);
 
     void RecordDedicatedServerHostedGameRuntimeSessionSummary(
         const DedicatedServerHostedGameRuntimeSessionSummary &summary);

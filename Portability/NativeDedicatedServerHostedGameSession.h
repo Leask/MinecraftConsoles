@@ -6,6 +6,7 @@
 #include <lce_win32/lce_win32.h>
 
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
+#include "NativeDedicatedServerHostedGameWorker.h"
 
 namespace ServerRuntime
 {
@@ -44,6 +45,11 @@ namespace ServerRuntime
         std::uint64_t completedWorkerActions = 0;
         std::uint64_t processedSaveCommands = 0;
         std::uint64_t processedStopCommands = 0;
+        std::uint64_t lastQueuedCommandId = 0;
+        std::uint64_t lastProcessedCommandId = 0;
+        ENativeDedicatedServerHostedGameWorkerCommandKind
+            lastProcessedCommandKind =
+                eNativeDedicatedServerHostedGameWorkerCommand_None;
         std::uint64_t gameplayLoopIterations = 0;
         std::uint64_t platformTickCount = 0;
         std::uint64_t saveGeneration = 0;
@@ -144,7 +150,11 @@ namespace ServerRuntime
         std::uint64_t workerTickCount,
         std::uint64_t completedWorkerActions,
         std::uint64_t processedSaveCommands,
-        std::uint64_t processedStopCommands);
+        std::uint64_t processedStopCommands,
+        std::uint64_t lastQueuedCommandId,
+        std::uint64_t lastProcessedCommandId,
+        ENativeDedicatedServerHostedGameWorkerCommandKind
+            lastProcessedCommandKind);
 
     void StopNativeDedicatedServerHostedGameSession();
 

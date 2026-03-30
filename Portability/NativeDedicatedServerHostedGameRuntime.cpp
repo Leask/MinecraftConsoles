@@ -100,7 +100,10 @@ namespace ServerRuntime
                 workerSnapshot.workerTickCount,
                 workerSnapshot.completedWorldActions,
                 workerSnapshot.processedSaveCommands,
-                workerSnapshot.processedStopCommands);
+                workerSnapshot.processedStopCommands,
+                workerSnapshot.lastQueuedCommandId,
+                workerSnapshot.lastProcessedCommandId,
+                workerSnapshot.lastProcessedCommandKind);
             RecordDedicatedServerHostedGameRuntimeWorkerState(
                 workerSnapshot.pendingWorldActionTicks,
                 workerSnapshot.pendingSaveCommands,
@@ -108,7 +111,10 @@ namespace ServerRuntime
                 workerSnapshot.workerTickCount,
                 workerSnapshot.completedWorldActions,
                 workerSnapshot.processedSaveCommands,
-                workerSnapshot.processedStopCommands);
+                workerSnapshot.processedStopCommands,
+                workerSnapshot.lastQueuedCommandId,
+                workerSnapshot.lastProcessedCommandId,
+                (unsigned int)workerSnapshot.lastProcessedCommandKind);
             const NativeDedicatedServerHostedGameSessionSnapshot
                 sessionSnapshot =
                     GetNativeDedicatedServerHostedGameSessionSnapshot();

@@ -391,6 +391,12 @@ namespace
             runtimeSnapshot.processedSaveCommands;
         saveStub.processedStopCommands =
             runtimeSnapshot.processedStopCommands;
+        saveStub.lastQueuedCommandId =
+            runtimeSnapshot.lastQueuedCommandId;
+        saveStub.lastProcessedCommandId =
+            runtimeSnapshot.lastProcessedCommandId;
+        saveStub.lastProcessedCommandKind =
+            runtimeSnapshot.lastProcessedCommandKind;
         saveStub.platformTickCount = runtimeSnapshot.platformTickCount;
         saveStub.uptimeMs = runtimeSnapshot.uptimeMs;
         saveStub.initialSaveRequested = runtimeSnapshot.initialSaveRequested;

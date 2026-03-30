@@ -126,6 +126,15 @@ namespace
             snapshot->processedStopCommands);
         checksum = MixDedicatedServerStateChecksum(
             checksum,
+            snapshot->lastQueuedCommandId);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->lastProcessedCommandId);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->lastProcessedCommandKind);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
             snapshot->platformTickCount);
         checksum = MixDedicatedServerStateChecksum(
             checksum,
@@ -287,6 +296,18 @@ namespace ServerRuntime
                     .previousProcessedStopCommands =
                         loadedSaveMetadata.saveStub
                             .processedStopCommands;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousLastQueuedCommandId =
+                        loadedSaveMetadata.saveStub
+                            .lastQueuedCommandId;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousLastProcessedCommandId =
+                        loadedSaveMetadata.saveStub
+                            .lastProcessedCommandId;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousLastProcessedCommandKind =
+                        loadedSaveMetadata.saveStub
+                            .lastProcessedCommandKind;
                 g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousPlatformTickCount =
                         loadedSaveMetadata.saveStub.platformTickCount;
@@ -546,7 +567,10 @@ namespace ServerRuntime
         std::uint64_t workerTickCount,
         std::uint64_t completedWorkerActions,
         std::uint64_t processedSaveCommands,
-        std::uint64_t processedStopCommands)
+        std::uint64_t processedStopCommands,
+        std::uint64_t lastQueuedCommandId,
+        std::uint64_t lastProcessedCommandId,
+        unsigned int lastProcessedCommandKind)
     {
         g_dedicatedServerHostedGameRuntimeSnapshot
             .workerPendingWorldActionTicks =
@@ -573,6 +597,12 @@ namespace ServerRuntime
             g_dedicatedServerHostedGameRuntimeSnapshot
                 .previousProcessedStopCommands +
             processedStopCommands;
+        g_dedicatedServerHostedGameRuntimeSnapshot.lastQueuedCommandId =
+            lastQueuedCommandId;
+        g_dedicatedServerHostedGameRuntimeSnapshot.lastProcessedCommandId =
+            lastProcessedCommandId;
+        g_dedicatedServerHostedGameRuntimeSnapshot.lastProcessedCommandKind =
+            lastProcessedCommandKind;
         RefreshDedicatedServerHostedGameRuntimeStateChecksum(
             &g_dedicatedServerHostedGameRuntimeSnapshot);
     }

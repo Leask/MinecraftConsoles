@@ -57,6 +57,9 @@ namespace ServerRuntime
         std::uint64_t completedWorkerActions = 0;
         std::uint64_t processedSaveCommands = 0;
         std::uint64_t processedStopCommands = 0;
+        std::uint64_t lastQueuedCommandId = 0;
+        std::uint64_t lastProcessedCommandId = 0;
+        unsigned int lastProcessedCommandKind = 0;
         std::uint64_t platformTickCount = 0;
         std::uint64_t uptimeMs = 0;
         std::uint64_t gameplayLoopIterations = 0;

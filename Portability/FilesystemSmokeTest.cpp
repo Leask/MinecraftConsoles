@@ -1557,6 +1557,10 @@ int main(int argc, char* argv[])
     previousSaveStub.completedWorkerActions = 6;
     previousSaveStub.processedSaveCommands = 13;
     previousSaveStub.processedStopCommands = 5;
+    previousSaveStub.lastQueuedCommandId = 17;
+    previousSaveStub.lastProcessedCommandId = 16;
+    previousSaveStub.lastProcessedCommandKind =
+        ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop;
     previousSaveStub.platformTickCount = 42;
     previousSaveStub.uptimeMs = 1337;
     previousSaveStub.hostSettings = 0xCAFEU;
@@ -1697,7 +1701,10 @@ int main(int argc, char* argv[])
         22,
         32,
         42,
-        52);
+        52,
+        99,
+        98,
+        ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop);
     ServerRuntime::RecordDedicatedServerHostedGameRuntimePersistedSave(
         "NativeDesktop/GameHDD/SMOKE_SESSION.save",
         77,
@@ -1729,7 +1736,10 @@ int main(int argc, char* argv[])
         22,
         32,
         42,
-        52);
+        52,
+        99,
+        98,
+        ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop);
     ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
         8,
         true,
@@ -1787,6 +1797,10 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.completedWorkerActions == 38 &&
         hostedGameSessionSnapshot.processedSaveCommands == 55 &&
         hostedGameSessionSnapshot.processedStopCommands == 57 &&
+        hostedGameSessionSnapshot.lastQueuedCommandId == 99 &&
+        hostedGameSessionSnapshot.lastProcessedCommandId == 98 &&
+        hostedGameSessionSnapshot.lastProcessedCommandKind ==
+            ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop &&
         hostedGameSessionSnapshot.platformTickCount == 6 &&
         !hostedGameSessionSnapshot.worldActionIdle &&
         hostedGameSessionSnapshot.appShutdownRequested &&
@@ -1833,6 +1847,10 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.completedWorkerActions == 32 &&
         nativeHostedSessionObservedSnapshot.processedSaveCommands == 42 &&
         nativeHostedSessionObservedSnapshot.processedStopCommands == 52 &&
+        nativeHostedSessionObservedSnapshot.lastQueuedCommandId == 99 &&
+        nativeHostedSessionObservedSnapshot.lastProcessedCommandId == 98 &&
+        nativeHostedSessionObservedSnapshot.lastProcessedCommandKind ==
+            ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop &&
         nativeHostedSessionObservedSnapshot.gameplayLoopIterations == 8 &&
         nativeHostedSessionObservedSnapshot.platformTickCount == 6 &&
         nativeHostedSessionObservedSnapshot.lastPersistedFileTime == 77 &&
@@ -2845,6 +2863,10 @@ int main(int argc, char* argv[])
             nativeHostedStubSnapshot.previousCompletedWorkerActions == 6U &&
             nativeHostedStubSnapshot.previousProcessedSaveCommands == 13U &&
             nativeHostedStubSnapshot.previousProcessedStopCommands == 5U &&
+            nativeHostedStubSnapshot.previousLastQueuedCommandId == 17U &&
+            nativeHostedStubSnapshot.previousLastProcessedCommandId == 16U &&
+            nativeHostedStubSnapshot.previousLastProcessedCommandKind ==
+                ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop &&
             nativeHostedStubSnapshot.previousGameplayLoopIterations == 14U &&
             nativeHostedStubSnapshot.previousSessionStateChecksum ==
                 0x0fedcba987654321ULL &&
@@ -2930,6 +2952,10 @@ int main(int argc, char* argv[])
             hostedGameRuntimeSnapshot.previousCompletedWorkerActions == 6 &&
             hostedGameRuntimeSnapshot.previousProcessedSaveCommands == 13 &&
             hostedGameRuntimeSnapshot.previousProcessedStopCommands == 5 &&
+            hostedGameRuntimeSnapshot.previousLastQueuedCommandId == 17 &&
+            hostedGameRuntimeSnapshot.previousLastProcessedCommandId == 16 &&
+            hostedGameRuntimeSnapshot.previousLastProcessedCommandKind ==
+                ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop &&
             hostedGameRuntimeSnapshot.previousPlatformTickCount == 42 &&
             hostedGameRuntimeSnapshot.previousUptimeMs == 1337 &&
             hostedGameRuntimeSnapshot.previousHostSettings == 0xCAFEU &&

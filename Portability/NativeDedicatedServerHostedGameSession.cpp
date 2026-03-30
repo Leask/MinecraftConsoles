@@ -167,6 +167,16 @@ namespace ServerRuntime
                 state->snapshot.processedStopCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
+                state->snapshot.lastQueuedCommandId);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.lastProcessedCommandId);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                static_cast<std::uint64_t>(
+                    state->snapshot.lastProcessedCommandKind));
+            checksum = MixNativeHostedSessionHash(
+                checksum,
                 state->snapshot.acceptedConnections);
             checksum = MixNativeHostedSessionHash(
                 checksum,
@@ -318,6 +328,13 @@ namespace ServerRuntime
                     saveStub.processedSaveCommands;
                 g_nativeHostedSessionState.snapshot.processedStopCommands =
                     saveStub.processedStopCommands;
+                g_nativeHostedSessionState.snapshot.lastQueuedCommandId =
+                    saveStub.lastQueuedCommandId;
+                g_nativeHostedSessionState.snapshot.lastProcessedCommandId =
+                    saveStub.lastProcessedCommandId;
+                g_nativeHostedSessionState.snapshot.lastProcessedCommandKind =
+                    (ENativeDedicatedServerHostedGameWorkerCommandKind)
+                        saveStub.lastProcessedCommandKind;
                 g_nativeHostedSessionState.snapshot.gameplayLoopIterations =
                     saveStub.gameplayLoopIterations;
                 g_nativeHostedSessionState.snapshot.lastPersistedFileTime =
@@ -560,7 +577,11 @@ namespace ServerRuntime
         std::uint64_t workerTickCount,
         std::uint64_t completedWorkerActions,
         std::uint64_t processedSaveCommands,
-        std::uint64_t processedStopCommands)
+        std::uint64_t processedStopCommands,
+        std::uint64_t lastQueuedCommandId,
+        std::uint64_t lastProcessedCommandId,
+        ENativeDedicatedServerHostedGameWorkerCommandKind
+            lastProcessedCommandKind)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState.snapshot.workerPendingWorldActionTicks =
@@ -581,6 +602,12 @@ namespace ServerRuntime
         g_nativeHostedSessionState.snapshot.processedStopCommands =
             g_nativeHostedSessionState.baseProcessedStopCommands +
             processedStopCommands;
+        g_nativeHostedSessionState.snapshot.lastQueuedCommandId =
+            lastQueuedCommandId;
+        g_nativeHostedSessionState.snapshot.lastProcessedCommandId =
+            lastProcessedCommandId;
+        g_nativeHostedSessionState.snapshot.lastProcessedCommandKind =
+            lastProcessedCommandKind;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }

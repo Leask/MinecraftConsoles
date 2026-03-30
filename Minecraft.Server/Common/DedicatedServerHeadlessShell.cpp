@@ -184,6 +184,7 @@ namespace
                 sizeof(buffer),
                 "status worker pending=%llu saveq=%llu stopq=%llu "
                 "ticks=%llu completed=%llu save-ops=%llu stop-ops=%llu "
+                "last-queued=%llu last-processed=%s#%llu "
                 "core-checksum=0x%016llx",
                 (unsigned long long)
                     runtimeSnapshot.workerPendingWorldActionTicks,
@@ -199,6 +200,14 @@ namespace
                     runtimeSnapshot.processedSaveCommands,
                 (unsigned long long)
                     runtimeSnapshot.processedStopCommands,
+                (unsigned long long)
+                    runtimeSnapshot.lastQueuedCommandId,
+                GetNativeDedicatedServerHostedGameWorkerCommandKindName(
+                    (ServerRuntime::
+                        ENativeDedicatedServerHostedGameWorkerCommandKind)
+                        runtimeSnapshot.lastProcessedCommandKind),
+                (unsigned long long)
+                    runtimeSnapshot.lastProcessedCommandId,
                 (unsigned long long)runtimeSnapshot.sessionStateChecksum);
             AppendResponseLine(response, buffer);
 
@@ -242,7 +251,8 @@ namespace
                     "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu "
                     "worker-pending=%llu saveq=%llu stopq=%llu "
                     "worker-ticks=%llu worker-completions=%llu "
-                    "save-ops=%llu stop-ops=%llu completed=%s "
+                    "save-ops=%llu stop-ops=%llu "
+                    "last-queued=%llu last-processed=%s#%llu completed=%s "
                     "app-shutdown=%s shutdown-halted=%s "
                     "gameplay-iterations=%llu hosted-thread=%s "
                     "thread-ticks=%llu",
@@ -271,6 +281,14 @@ namespace
                         runtimeSnapshot.previousProcessedSaveCommands,
                     (unsigned long long)
                         runtimeSnapshot.previousProcessedStopCommands,
+                    (unsigned long long)
+                        runtimeSnapshot.previousLastQueuedCommandId,
+                    GetNativeDedicatedServerHostedGameWorkerCommandKindName(
+                        (ServerRuntime::
+                            ENativeDedicatedServerHostedGameWorkerCommandKind)
+                            runtimeSnapshot.previousLastProcessedCommandKind),
+                    (unsigned long long)
+                        runtimeSnapshot.previousLastProcessedCommandId,
                     runtimeSnapshot.previousSessionCompleted ? "true" : "false",
                     runtimeSnapshot.previousRequestedAppShutdown
                         ? "true"
@@ -615,6 +633,7 @@ namespace ServerRuntime
                     "console",
                     "status worker pending=%llu saveq=%llu stopq=%llu "
                     "ticks=%llu completed=%llu save-ops=%llu stop-ops=%llu "
+                    "last-queued=%llu last-processed=%s#%llu "
                     "core-checksum=0x%016llx",
                     (unsigned long long)
                         runtimeSnapshot.workerPendingWorldActionTicks,
@@ -630,6 +649,14 @@ namespace ServerRuntime
                         runtimeSnapshot.processedSaveCommands,
                     (unsigned long long)
                         runtimeSnapshot.processedStopCommands,
+                    (unsigned long long)
+                        runtimeSnapshot.lastQueuedCommandId,
+                    GetNativeDedicatedServerHostedGameWorkerCommandKindName(
+                        (ServerRuntime::
+                            ENativeDedicatedServerHostedGameWorkerCommandKind)
+                            runtimeSnapshot.lastProcessedCommandKind),
+                    (unsigned long long)
+                        runtimeSnapshot.lastProcessedCommandId,
                     (unsigned long long)
                         runtimeSnapshot.sessionStateChecksum);
 
@@ -675,7 +702,8 @@ namespace ServerRuntime
                         "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu "
                         "worker-pending=%llu saveq=%llu stopq=%llu "
                         "worker-ticks=%llu worker-completions=%llu "
-                        "save-ops=%llu stop-ops=%llu completed=%s "
+                        "save-ops=%llu stop-ops=%llu "
+                        "last-queued=%llu last-processed=%s#%llu completed=%s "
                         "app-shutdown=%s shutdown-halted=%s "
                         "gameplay-iterations=%llu hosted-thread=%s "
                         "thread-ticks=%llu",
@@ -705,6 +733,15 @@ namespace ServerRuntime
                             runtimeSnapshot.previousProcessedSaveCommands,
                         (unsigned long long)
                             runtimeSnapshot.previousProcessedStopCommands,
+                        (unsigned long long)
+                            runtimeSnapshot.previousLastQueuedCommandId,
+                        GetNativeDedicatedServerHostedGameWorkerCommandKindName(
+                            (ServerRuntime::
+                                ENativeDedicatedServerHostedGameWorkerCommandKind)
+                                runtimeSnapshot
+                                    .previousLastProcessedCommandKind),
+                        (unsigned long long)
+                            runtimeSnapshot.previousLastProcessedCommandId,
                         runtimeSnapshot.previousSessionCompleted
                             ? "true"
                             : "false",
@@ -767,31 +804,69 @@ namespace ServerRuntime
 
         if (command == "save")
         {
+            std::uint64_t commandId = 0;
             if (IsNativeDedicatedServerHostedGameSessionRunning())
             {
-                EnqueueNativeDedicatedServerHostedGameWorkerSaveCommand();
+                commandId =
+                    EnqueueNativeDedicatedServerHostedGameWorkerSaveCommand();
             }
             else
             {
                 RequestDedicatedServerWorldAutosave(0);
             }
-            LogInfo("console", "manual save requested");
-            AppendResponseLine(response, "ok manual save requested");
+            if (commandId != 0)
+            {
+                LogInfof(
+                    "console",
+                    "manual save requested via worker command #%llu",
+                    (unsigned long long)commandId);
+                char buffer[128] = {};
+                std::snprintf(
+                    buffer,
+                    sizeof(buffer),
+                    "ok manual save requested command=%llu",
+                    (unsigned long long)commandId);
+                AppendResponseLine(response, buffer);
+            }
+            else
+            {
+                LogInfo("console", "manual save requested");
+                AppendResponseLine(response, "ok manual save requested");
+            }
             return true;
         }
 
         if (command == "stop")
         {
+            std::uint64_t commandId = 0;
             if (IsNativeDedicatedServerHostedGameSessionRunning())
             {
-                EnqueueNativeDedicatedServerHostedGameWorkerStopCommand();
+                commandId =
+                    EnqueueNativeDedicatedServerHostedGameWorkerStopCommand();
             }
             else
             {
                 RequestDedicatedServerShutdown();
             }
-            LogInfo("console", "stop requested");
-            AppendResponseLine(response, "ok stop requested");
+            if (commandId != 0)
+            {
+                LogInfof(
+                    "console",
+                    "stop requested via worker command #%llu",
+                    (unsigned long long)commandId);
+                char buffer[128] = {};
+                std::snprintf(
+                    buffer,
+                    sizeof(buffer),
+                    "ok stop requested command=%llu",
+                    (unsigned long long)commandId);
+                AppendResponseLine(response, buffer);
+            }
+            else
+            {
+                LogInfo("console", "stop requested");
+                AppendResponseLine(response, "ok stop requested");
+            }
             return true;
         }
 
