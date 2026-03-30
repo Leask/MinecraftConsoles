@@ -3,6 +3,7 @@
 #include <mutex>
 #include <string>
 
+#include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
 
 namespace ServerRuntime
@@ -110,6 +111,12 @@ namespace ServerRuntime
                 state->snapshot.bindIp);
             checksum = MixNativeHostedSessionHash(
                 checksum,
+                static_cast<std::uint64_t>(state->snapshot.startupResult));
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                static_cast<std::uint64_t>(state->snapshot.runtimePhase));
+            checksum = MixNativeHostedSessionHash(
+                checksum,
                 static_cast<std::uint64_t>(state->snapshot.configuredPort));
             checksum = MixNativeHostedSessionHash(
                 checksum,
@@ -162,6 +169,9 @@ namespace ServerRuntime
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.payloadValidated ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.threadInvoked ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.active ? 1U : 0U);
@@ -219,6 +229,10 @@ namespace ServerRuntime
             initData.saveData != nullptr;
         g_nativeHostedSessionState.snapshot.payloadValidated =
             startupPayloadValidated;
+        g_nativeHostedSessionState.snapshot.runtimePhase =
+            startupPayloadValidated
+                ? eDedicatedServerHostedGameRuntimePhase_Startup
+                : eDedicatedServerHostedGameRuntimePhase_Failed;
         g_nativeHostedSessionState.snapshot.payloadChecksum =
             ComputeNativeHostedSessionBytesChecksum(
                 initData.saveData != nullptr ? initData.saveData->data : nullptr,
@@ -251,6 +265,21 @@ namespace ServerRuntime
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
         return startupPayloadValidated;
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionStartupResult(
+        int startupResult,
+        bool threadInvoked)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.startupResult = startupResult;
+        g_nativeHostedSessionState.snapshot.threadInvoked = threadInvoked;
+        g_nativeHostedSessionState.snapshot.runtimePhase =
+            startupResult == 0
+                ? eDedicatedServerHostedGameRuntimePhase_Startup
+                : eDedicatedServerHostedGameRuntimePhase_Failed;
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
     }
 
     void TickNativeDedicatedServerHostedGameSession()
@@ -343,6 +372,11 @@ namespace ServerRuntime
             gameplayHalted;
         g_nativeHostedSessionState.snapshot.stopSignalValid =
             stopSignalValid;
+        if (appShutdownRequested || gameplayHalted)
+        {
+            g_nativeHostedSessionState.snapshot.runtimePhase =
+                eDedicatedServerHostedGameRuntimePhase_ShutdownRequested;
+        }
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }
@@ -391,6 +425,15 @@ namespace ServerRuntime
             &g_nativeHostedSessionState);
     }
 
+    void ObserveNativeDedicatedServerHostedGameSessionPhase(
+        int runtimePhase)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.runtimePhase = runtimePhase;
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
     void ObserveNativeDedicatedServerHostedGameSessionThreadState(
         bool hostedThreadActive,
         std::uint64_t hostedThreadTicks)
@@ -421,6 +464,8 @@ namespace ServerRuntime
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState.snapshot.active = false;
+        g_nativeHostedSessionState.snapshot.runtimePhase =
+            eDedicatedServerHostedGameRuntimePhase_Stopped;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }

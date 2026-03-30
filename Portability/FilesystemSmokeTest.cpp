@@ -1651,6 +1651,9 @@ int main(int argc, char* argv[])
         hostedGameSessionContext.bindIp,
         hostedGameSessionContext.configuredPort,
         hostedGameSessionContext.listenerPort);
+    ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionStartupResult(
+        0,
+        true);
     ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
         2,
         3,
@@ -1761,6 +1764,8 @@ int main(int argc, char* argv[])
             "NativeDesktop/GameHDD" &&
         nativeHostedSessionObservedSnapshot.hostName == "SmokeHost" &&
         nativeHostedSessionObservedSnapshot.bindIp == "127.0.0.1" &&
+        nativeHostedSessionObservedSnapshot.threadInvoked &&
+        nativeHostedSessionObservedSnapshot.startupResult == 0 &&
         nativeHostedSessionObservedSnapshot.configuredPort == 25565 &&
         nativeHostedSessionObservedSnapshot.listenerPort == 19132 &&
         nativeHostedSessionObservedSnapshot.acceptedConnections == 2 &&
@@ -1781,6 +1786,8 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.sessionCompleted &&
         nativeHostedSessionObservedSnapshot.requestedAppShutdown &&
         nativeHostedSessionObservedSnapshot.shutdownHaltedGameplay &&
+        nativeHostedSessionObservedSnapshot.runtimePhase ==
+            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_ShutdownRequested &&
         nativeHostedSessionObservedSnapshot.stateChecksum != 0U &&
         !hostedGameStoppedSnapshot.sessionActive &&
         hostedGameStoppedSnapshot.phase ==
@@ -2776,6 +2783,10 @@ int main(int argc, char* argv[])
             nativeHostedSessionCoreSnapshot.active &&
             nativeHostedSessionCoreSnapshot.loadedFromSave &&
             nativeHostedSessionCoreSnapshot.payloadValidated &&
+            nativeHostedSessionCoreSnapshot.threadInvoked &&
+            nativeHostedSessionCoreSnapshot.startupResult == 0 &&
+            nativeHostedSessionCoreSnapshot.runtimePhase ==
+                ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
             nativeHostedSessionCoreSnapshot.saveGeneration == 11U &&
             nativeHostedSessionCoreSnapshot.startupThreadIterations == 4U &&
             nativeHostedSessionCoreSnapshot.startupThreadDurationMs > 0U &&
@@ -2786,7 +2797,11 @@ int main(int argc, char* argv[])
             nativeHostedStubExitCode == 0 &&
             nativeHostedStubThreadTicks > 0U &&
             !nativeHostedSessionCoreStoppedSnapshot.active &&
+            nativeHostedSessionCoreStoppedSnapshot.threadInvoked &&
+            nativeHostedSessionCoreStoppedSnapshot.startupResult == 0 &&
             nativeHostedSessionCoreStoppedSnapshot.saveGeneration == 11U &&
+            nativeHostedSessionCoreStoppedSnapshot.runtimePhase ==
+                ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
             !nativeHostedSessionCoreStoppedSnapshot.hostedThreadActive &&
             nativeHostedSessionCoreStoppedSnapshot.hostedThreadTicks >=
                 nativeHostedStubThreadTicks &&

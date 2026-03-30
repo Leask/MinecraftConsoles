@@ -14,12 +14,15 @@ namespace ServerRuntime
         bool active = false;
         bool loadedFromSave = false;
         bool payloadValidated = false;
+        bool threadInvoked = false;
         std::string worldName;
         std::string worldSaveId;
         std::string savePath;
         std::string storageRoot;
         std::string hostName;
         std::string bindIp;
+        int startupResult = 0;
+        int runtimePhase = 0;
         int configuredPort = 0;
         int listenerPort = 0;
         std::uint64_t payloadChecksum = 0;
@@ -55,6 +58,10 @@ namespace ServerRuntime
     bool StartNativeDedicatedServerHostedGameSession(
         const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
         bool startupPayloadValidated);
+
+    void ObserveNativeDedicatedServerHostedGameSessionStartupResult(
+        int startupResult,
+        bool threadInvoked);
 
     void TickNativeDedicatedServerHostedGameSession();
 
@@ -97,6 +104,9 @@ namespace ServerRuntime
         bool sessionCompleted,
         bool requestedAppShutdown,
         bool shutdownHaltedGameplay);
+
+    void ObserveNativeDedicatedServerHostedGameSessionPhase(
+        int runtimePhase);
 
     void ObserveNativeDedicatedServerHostedGameSessionThreadState(
         bool hostedThreadActive,
