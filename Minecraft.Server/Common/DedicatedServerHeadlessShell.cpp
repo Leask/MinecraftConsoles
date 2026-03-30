@@ -67,6 +67,21 @@ namespace
         ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot();
     }
 
+    bool RefreshNativeDedicatedServerActivityProjection(
+        const ServerRuntime::DedicatedServerHeadlessShellState &state,
+        std::uint64_t nowMs = 0)
+    {
+        const bool worldActionIdle =
+            ServerRuntime::IsDedicatedServerWorldActionIdle(0);
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivity(
+            state.acceptedConnections,
+            state.remoteCommands,
+            worldActionIdle);
+        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+            nowMs != 0 ? nowMs : LceGetMonotonicMilliseconds());
+        return worldActionIdle;
+    }
+
     void AppendStatusResponseLine(
         std::string *response,
         const ServerRuntime::DedicatedServerHeadlessShellContext &context,
@@ -79,13 +94,9 @@ namespace
 
         RefreshNativeDedicatedServerHostedWorkerProjection();
         const bool worldActionIdle =
-            ServerRuntime::IsDedicatedServerWorldActionIdle(0);
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivity(
-            state.acceptedConnections,
-            state.remoteCommands,
-            worldActionIdle);
-        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
-            LceGetMonotonicMilliseconds());
+            RefreshNativeDedicatedServerActivityProjection(
+                state,
+                LceGetMonotonicMilliseconds());
         char buffer[512] = {};
         std::snprintf(
             buffer,
@@ -466,6 +477,7 @@ namespace ServerRuntime
             }
 
             ++state->acceptedConnections;
+            RefreshNativeDedicatedServerActivityProjection(*state);
             LogInfof(
                 "network",
                 "native shell accepted connection #%llu from %s:%d",
@@ -513,6 +525,7 @@ namespace ServerRuntime
                 }
 
                 ++state->remoteCommands;
+                RefreshNativeDedicatedServerActivityProjection(*state);
                 LogInfof(
                     "console",
                     "remote shell command #%llu: %s",
@@ -562,7 +575,9 @@ namespace ServerRuntime
         {
             RefreshNativeDedicatedServerHostedWorkerProjection();
             const bool worldActionIdle =
-                IsDedicatedServerWorldActionIdle(0);
+                RefreshNativeDedicatedServerActivityProjection(
+                    state,
+                    LceGetMonotonicMilliseconds());
             LogInfof(
                 "console",
                 "status host=%s bind=%s configured-port=%d listener-port=%d accepted=%llu world-action=%s",
@@ -580,12 +595,6 @@ namespace ServerRuntime
                 context.storageRoot.c_str(),
                 context.whitelistEnabled ? "enabled" : "disabled",
                 context.lanAdvertise ? "enabled" : "disabled");
-            ObserveNativeDedicatedServerHostedGameSessionActivity(
-                state.acceptedConnections,
-                state.remoteCommands,
-                worldActionIdle);
-            ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
-                LceGetMonotonicMilliseconds());
             const DedicatedServerHostedGameRuntimeSnapshot runtimeSnapshot =
                 GetDedicatedServerHostedGameRuntimeSnapshot();
             if (runtimeSnapshot.startAttempted)

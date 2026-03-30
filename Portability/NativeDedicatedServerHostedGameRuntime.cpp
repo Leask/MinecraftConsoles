@@ -175,6 +175,8 @@ namespace ServerRuntime
                 TickNativeDedicatedServerHostedGameWorker();
                 UpdateDedicatedServerAutosaveTracker(
                     IsNativeDedicatedServerHostedGameWorkerIdle());
+                ObserveNativeDedicatedServerHostedGameSessionAutosaves(
+                    GetDedicatedServerAutosaveCompletionCount());
                 TickNativeDedicatedServerHostedGameSession();
                 RecordNativeDedicatedServerHostedThreadSnapshot();
                 LceSleepMilliseconds(10);

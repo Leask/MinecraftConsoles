@@ -86,15 +86,20 @@ namespace ServerRuntime
     void TickDedicatedServerPlatformRuntime()
     {
         ++g_nativeRuntimeState.tickCount;
-        if (!IsNativeDedicatedServerHostedGameSessionRunning() &&
+        const bool sessionRunning =
+            IsNativeDedicatedServerHostedGameSessionRunning();
+        if (!sessionRunning &&
             g_nativeRuntimeState.fallbackWorldActionTicks > 0)
         {
             --g_nativeRuntimeState.fallbackWorldActionTicks;
         }
-        UpdateDedicatedServerAutosaveTracker(
-            IsDedicatedServerWorldActionIdle(0));
-        ObserveNativeDedicatedServerHostedGameSessionAutosaves(
-            GetDedicatedServerAutosaveCompletionCount());
+        if (!sessionRunning)
+        {
+            UpdateDedicatedServerAutosaveTracker(
+                IsDedicatedServerWorldActionIdle(0));
+            ObserveNativeDedicatedServerHostedGameSessionAutosaves(
+                GetDedicatedServerAutosaveCompletionCount());
+        }
         ObserveNativeDedicatedServerHostedGameSessionPlatformState(
             GetDedicatedServerAutosaveRequestCount(),
             GetDedicatedServerPlatformTickCount());

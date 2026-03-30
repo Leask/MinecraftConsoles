@@ -587,12 +587,6 @@ namespace
             sessionSnapshot =
                 ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
         const std::uint64_t now = LceGetMonotonicMilliseconds();
-        const bool worldActionIdle =
-            ServerRuntime::IsDedicatedServerWorldActionIdle(0);
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivity(
-            context->shellState.acceptedConnections,
-            context->shellState.remoteCommands,
-            worldActionIdle);
         ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
             sessionSnapshot.gameplayLoopIterations,
             ServerRuntime::IsDedicatedServerAppShutdownRequested(),
@@ -634,13 +628,16 @@ namespace
         const ServerRuntime::DedicatedServerHeadlessRuntimeOptions &options,
         const DedicatedServerHeadlessRunHooksContext &context)
     {
+        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+            sessionSnapshot =
+                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
         if (context.failureExitCode != 0)
         {
             return false;
         }
 
         if (options.requiredRemoteCommands > 0 &&
-            context.shellState.remoteCommands <
+            sessionSnapshot.remoteCommands <
                 options.requiredRemoteCommands)
         {
             ServerRuntime::LogErrorf(
@@ -648,7 +645,7 @@ namespace
                 "native shell expected at least %llu remote "
                 "commands but only observed %llu",
                 (unsigned long long)options.requiredRemoteCommands,
-                (unsigned long long)context.shellState.remoteCommands);
+                (unsigned long long)sessionSnapshot.remoteCommands);
             return false;
         }
 
@@ -657,7 +654,7 @@ namespace
             return true;
         }
 
-        if (context.shellState.acceptedConnections >=
+        if (sessionSnapshot.acceptedConnections >=
             options.requiredAcceptedConnections)
         {
             return true;
@@ -668,7 +665,7 @@ namespace
             "native shell expected at least %llu accepted "
             "connections but only observed %llu",
             (unsigned long long)options.requiredAcceptedConnections,
-            (unsigned long long)context.shellState.acceptedConnections);
+            (unsigned long long)sessionSnapshot.acceptedConnections);
         return false;
     }
 
@@ -966,10 +963,6 @@ namespace ServerRuntime
             sessionSummary.requestedAppShutdown,
             sessionSummary.shutdownHaltedGameplay);
 
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivity(
-            shellHooksContext.shellState.acceptedConnections,
-            shellHooksContext.shellState.remoteCommands,
-            ServerRuntime::IsDedicatedServerWorldActionIdle(0));
         ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
             sessionSummary.gameplayLoopIterations,
             ServerRuntime::IsDedicatedServerAppShutdownRequested(),
