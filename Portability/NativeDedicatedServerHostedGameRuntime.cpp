@@ -111,7 +111,7 @@ namespace ServerRuntime
                 g_nativeHostedThreadRunning.load(),
                 sessionSnapshot.sessionTicks);
             RecordDedicatedServerHostedGameRuntimeGameplayLoopIteration(
-                sessionSnapshot.sessionTicks);
+                sessionSnapshot.gameplayLoopIterations);
             RecordDedicatedServerHostedGameRuntimeCoreState(
                 sessionSnapshot.saveGeneration,
                 sessionSnapshot.stateChecksum);

@@ -136,6 +136,16 @@ if(NOT create_worker_completions_match)
 endif()
 set(create_worker_completions "${CMAKE_MATCH_1}")
 
+string(REGEX MATCH "gameplay-iterations=([0-9]+)"
+  create_gameplay_iterations_match
+  "${saved_world_text}")
+if(NOT create_gameplay_iterations_match)
+  message(FATAL_ERROR
+    "Create-save file did not contain parsable gameplay iteration count\n"
+    "save file:\n${saved_world_text}\n")
+endif()
+set(create_gameplay_iterations "${CMAKE_MATCH_1}")
+
 file(RENAME
   "${STORAGE_ROOT}/world.save"
   "${STORAGE_ROOT}/renamed-slot.save")
@@ -324,6 +334,22 @@ if(reload_worker_completions LESS create_worker_completions)
   message(FATAL_ERROR
     "Reloaded save regressed worker completion count: "
     "${reload_worker_completions} < ${create_worker_completions}\n"
+    "save file:\n${reloaded_saved_world_text}\n")
+endif()
+
+string(REGEX MATCH "gameplay-iterations=([0-9]+)"
+  reload_gameplay_iterations_match
+  "${reloaded_saved_world_text}")
+if(NOT reload_gameplay_iterations_match)
+  message(FATAL_ERROR
+    "Reloaded save did not contain parsable gameplay iteration count\n"
+    "save file:\n${reloaded_saved_world_text}\n")
+endif()
+set(reload_gameplay_iterations "${CMAKE_MATCH_1}")
+if(reload_gameplay_iterations LESS create_gameplay_iterations)
+  message(FATAL_ERROR
+    "Reloaded save regressed gameplay iteration count: "
+    "${reload_gameplay_iterations} < ${create_gameplay_iterations}\n"
     "save file:\n${reloaded_saved_world_text}\n")
 endif()
 

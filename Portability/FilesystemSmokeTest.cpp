@@ -1562,6 +1562,7 @@ int main(int argc, char* argv[])
     previousSaveStub.payloadChecksum = 0x123456789abcdef0ULL;
     previousSaveStub.saveGeneration = 11U;
     previousSaveStub.stateChecksum = 0x0fedcba987654321ULL;
+    previousSaveStub.gameplayLoopIterations = 14U;
     ServerRuntime::RecordNativeDedicatedServerLoadedSaveMetadata(
         "NativeDesktop/GameHDD/SmokeSession.save",
         previousSaveStub);
@@ -2814,6 +2815,7 @@ int main(int argc, char* argv[])
                 .previousWorkerPendingWorldActionTicks == 1U &&
             nativeHostedStubSnapshot.previousWorkerTickCount == 22U &&
             nativeHostedStubSnapshot.previousCompletedWorkerActions == 6U &&
+            nativeHostedStubSnapshot.previousGameplayLoopIterations == 14U &&
             nativeHostedStubSnapshot.previousSessionStateChecksum ==
                 0x0fedcba987654321ULL &&
             nativeHostedStubSnapshot.previousStartupPayloadPresent == false &&
@@ -2842,6 +2844,7 @@ int main(int argc, char* argv[])
                 .workerPendingWorldActionTicks == 0U &&
             nativeHostedSessionCoreSnapshot.workerTickCount >= 22U &&
             nativeHostedSessionCoreSnapshot.completedWorkerActions >= 6U &&
+            nativeHostedSessionCoreSnapshot.gameplayLoopIterations >= 14U &&
             nativeHostedSessionCoreSnapshot.stateChecksum != 0U &&
             nativeHostedSessionCoreSnapshot.payloadChecksum != 0U &&
             nativeHostedStubStopped &&

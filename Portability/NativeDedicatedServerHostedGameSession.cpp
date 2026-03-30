@@ -22,6 +22,7 @@ namespace ServerRuntime
             std::uint64_t baseStateChecksum = 0;
             std::uint64_t baseWorkerTickCount = 0;
             std::uint64_t baseCompletedWorkerActions = 0;
+            std::uint64_t baseGameplayLoopIterations = 0;
         };
 
         std::mutex g_nativeHostedSessionMutex;
@@ -287,12 +288,16 @@ namespace ServerRuntime
                     saveStub.workerTickCount;
                 g_nativeHostedSessionState.baseCompletedWorkerActions =
                     saveStub.completedWorkerActions;
+                g_nativeHostedSessionState.baseGameplayLoopIterations =
+                    saveStub.gameplayLoopIterations;
                 g_nativeHostedSessionState.snapshot.sessionTicks =
                     saveStub.hostedThreadTicks;
                 g_nativeHostedSessionState.snapshot.workerTickCount =
                     saveStub.workerTickCount;
                 g_nativeHostedSessionState.snapshot.completedWorkerActions =
                     saveStub.completedWorkerActions;
+                g_nativeHostedSessionState.snapshot.gameplayLoopIterations =
+                    saveStub.gameplayLoopIterations;
                 g_nativeHostedSessionState.snapshot.lastPersistedFileTime =
                     saveStub.savedAtFileTime;
                 g_nativeHostedSessionState.snapshot
@@ -330,6 +335,7 @@ namespace ServerRuntime
         }
 
         ++g_nativeHostedSessionState.snapshot.sessionTicks;
+        ++g_nativeHostedSessionState.snapshot.gameplayLoopIterations;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }
@@ -428,6 +434,7 @@ namespace ServerRuntime
             g_nativeHostedSessionState.snapshot.gameplayLoopIterations)
         {
             g_nativeHostedSessionState.snapshot.gameplayLoopIterations =
+                g_nativeHostedSessionState.baseGameplayLoopIterations +
                 gameplayLoopIterations;
         }
         g_nativeHostedSessionState.snapshot.appShutdownRequested =
