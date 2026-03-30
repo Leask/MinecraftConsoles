@@ -57,6 +57,59 @@ namespace
         response->push_back('\n');
     }
 
+    void RefreshNativeDedicatedServerHostedWorkerProjection()
+    {
+        const ServerRuntime::NativeDedicatedServerHostedGameWorkerSnapshot
+            workerSnapshot =
+                ServerRuntime::GetNativeDedicatedServerHostedGameWorkerSnapshot();
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionWorkerState(
+            workerSnapshot.pendingWorldActionTicks,
+            workerSnapshot.pendingAutosaveCommands,
+            workerSnapshot.pendingSaveCommands,
+            workerSnapshot.pendingStopCommands,
+            workerSnapshot.pendingHaltCommands,
+            workerSnapshot.workerTickCount,
+            workerSnapshot.completedWorldActions,
+            workerSnapshot.processedAutosaveCommands,
+            workerSnapshot.processedSaveCommands,
+            workerSnapshot.processedStopCommands,
+            workerSnapshot.processedHaltCommands,
+            workerSnapshot.lastQueuedCommandId,
+            workerSnapshot.activeCommandId,
+            workerSnapshot.activeCommandTicksRemaining,
+            workerSnapshot.activeCommandKind,
+            workerSnapshot.lastProcessedCommandId,
+            workerSnapshot.lastProcessedCommandKind);
+        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+            sessionSnapshot =
+                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
+        ServerRuntime::RecordDedicatedServerHostedGameRuntimeWorkerState(
+            sessionSnapshot.workerPendingWorldActionTicks,
+            sessionSnapshot.workerPendingAutosaveCommands,
+            sessionSnapshot.workerPendingSaveCommands,
+            sessionSnapshot.workerPendingStopCommands,
+            sessionSnapshot.workerPendingHaltCommands,
+            sessionSnapshot.workerTickCount,
+            sessionSnapshot.completedWorkerActions,
+            sessionSnapshot.processedAutosaveCommands,
+            sessionSnapshot.processedSaveCommands,
+            sessionSnapshot.processedStopCommands,
+            sessionSnapshot.processedHaltCommands,
+            sessionSnapshot.lastQueuedCommandId,
+            sessionSnapshot.activeCommandId,
+            sessionSnapshot.activeCommandTicksRemaining,
+            (unsigned int)sessionSnapshot.activeCommandKind,
+            sessionSnapshot.lastProcessedCommandId,
+            (unsigned int)sessionSnapshot.lastProcessedCommandKind);
+        ServerRuntime::RecordDedicatedServerHostedGameRuntimeCoreState(
+            sessionSnapshot.saveGeneration,
+            sessionSnapshot.stateChecksum);
+        ServerRuntime::RecordDedicatedServerHostedGameRuntimeCoreLifecycle(
+            sessionSnapshot.active,
+            (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
+                sessionSnapshot.runtimePhase);
+    }
+
     void AppendStatusResponseLine(
         std::string *response,
         const ServerRuntime::DedicatedServerHeadlessShellContext &context,
@@ -67,6 +120,7 @@ namespace
             return;
         }
 
+        RefreshNativeDedicatedServerHostedWorkerProjection();
         const bool worldActionIdle =
             ServerRuntime::IsDedicatedServerWorldActionIdle(0);
         ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivity(
@@ -558,6 +612,7 @@ namespace ServerRuntime
 
         if (command == "status")
         {
+            RefreshNativeDedicatedServerHostedWorkerProjection();
             const bool worldActionIdle =
                 IsDedicatedServerWorldActionIdle(0);
             LogInfof(
@@ -878,6 +933,7 @@ namespace ServerRuntime
             {
                 commandId =
                     EnqueueNativeDedicatedServerHostedGameWorkerSaveCommand();
+                RefreshNativeDedicatedServerHostedWorkerProjection();
             }
             else
             {
@@ -912,6 +968,7 @@ namespace ServerRuntime
             {
                 commandId =
                     EnqueueNativeDedicatedServerHostedGameWorkerStopCommand();
+                RefreshNativeDedicatedServerHostedWorkerProjection();
             }
             else
             {

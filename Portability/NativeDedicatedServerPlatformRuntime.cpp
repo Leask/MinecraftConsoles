@@ -39,6 +39,59 @@ namespace
     {
         ServerRuntime::HandleDedicatedServerPlatformActions();
     }
+
+    void RefreshNativeDedicatedServerWorkerProjection()
+    {
+        const ServerRuntime::NativeDedicatedServerHostedGameWorkerSnapshot
+            workerSnapshot =
+                ServerRuntime::GetNativeDedicatedServerHostedGameWorkerSnapshot();
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionWorkerState(
+            workerSnapshot.pendingWorldActionTicks,
+            workerSnapshot.pendingAutosaveCommands,
+            workerSnapshot.pendingSaveCommands,
+            workerSnapshot.pendingStopCommands,
+            workerSnapshot.pendingHaltCommands,
+            workerSnapshot.workerTickCount,
+            workerSnapshot.completedWorldActions,
+            workerSnapshot.processedAutosaveCommands,
+            workerSnapshot.processedSaveCommands,
+            workerSnapshot.processedStopCommands,
+            workerSnapshot.processedHaltCommands,
+            workerSnapshot.lastQueuedCommandId,
+            workerSnapshot.activeCommandId,
+            workerSnapshot.activeCommandTicksRemaining,
+            workerSnapshot.activeCommandKind,
+            workerSnapshot.lastProcessedCommandId,
+            workerSnapshot.lastProcessedCommandKind);
+        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+            sessionSnapshot =
+                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
+        ServerRuntime::RecordDedicatedServerHostedGameRuntimeWorkerState(
+            sessionSnapshot.workerPendingWorldActionTicks,
+            sessionSnapshot.workerPendingAutosaveCommands,
+            sessionSnapshot.workerPendingSaveCommands,
+            sessionSnapshot.workerPendingStopCommands,
+            sessionSnapshot.workerPendingHaltCommands,
+            sessionSnapshot.workerTickCount,
+            sessionSnapshot.completedWorkerActions,
+            sessionSnapshot.processedAutosaveCommands,
+            sessionSnapshot.processedSaveCommands,
+            sessionSnapshot.processedStopCommands,
+            sessionSnapshot.processedHaltCommands,
+            sessionSnapshot.lastQueuedCommandId,
+            sessionSnapshot.activeCommandId,
+            sessionSnapshot.activeCommandTicksRemaining,
+            (unsigned int)sessionSnapshot.activeCommandKind,
+            sessionSnapshot.lastProcessedCommandId,
+            (unsigned int)sessionSnapshot.lastProcessedCommandKind);
+        ServerRuntime::RecordDedicatedServerHostedGameRuntimeCoreState(
+            sessionSnapshot.saveGeneration,
+            sessionSnapshot.stateChecksum);
+        ServerRuntime::RecordDedicatedServerHostedGameRuntimeCoreLifecycle(
+            sessionSnapshot.active,
+            (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
+                sessionSnapshot.runtimePhase);
+    }
 }
 
 namespace ServerRuntime
@@ -93,20 +146,20 @@ namespace ServerRuntime
         UpdateDedicatedServerHostedGameRuntimeSessionState(
             sessionSnapshot.acceptedConnections,
             sessionSnapshot.remoteCommands,
-            GetDedicatedServerAutosaveRequestCount(),
-            GetDedicatedServerAutosaveCompletionCount(),
-            GetDedicatedServerPlatformTickCount(),
-            IsDedicatedServerWorldActionIdle(0),
-            IsDedicatedServerAppShutdownRequested(),
-            IsDedicatedServerGameplayHalted(),
-            IsDedicatedServerStopSignalValid(),
+            sessionSnapshot.autosaveRequests,
+            sessionSnapshot.observedAutosaveCompletions,
+            sessionSnapshot.platformTickCount,
+            sessionSnapshot.worldActionIdle,
+            sessionSnapshot.appShutdownRequested,
+            sessionSnapshot.gameplayHalted,
+            sessionSnapshot.stopSignalValid,
             LceGetMonotonicMilliseconds());
         RecordDedicatedServerHostedGameRuntimeCoreState(
             sessionSnapshot.saveGeneration,
             sessionSnapshot.stateChecksum);
         RecordDedicatedServerHostedGameRuntimeThreadState(
-            IsNativeDedicatedServerHostedGameSessionRunning(),
-            GetNativeDedicatedServerHostedGameSessionThreadTicks());
+            sessionSnapshot.hostedThreadActive,
+            sessionSnapshot.hostedThreadTicks);
     }
 
     void HandleDedicatedServerPlatformActions()
@@ -117,7 +170,8 @@ namespace ServerRuntime
     {
         if (IsNativeDedicatedServerHostedGameSessionRunning())
         {
-            return IsNativeDedicatedServerHostedGameWorkerIdle();
+            return GetNativeDedicatedServerHostedGameSessionSnapshot()
+                .worldActionIdle;
         }
 
         return g_nativeRuntimeState.fallbackWorldActionTicks == 0;
@@ -129,6 +183,7 @@ namespace ServerRuntime
         if (IsNativeDedicatedServerHostedGameSessionRunning())
         {
             RequestNativeDedicatedServerHostedGameWorkerAutosave(2);
+            RefreshNativeDedicatedServerWorkerProjection();
         }
         else if (g_nativeRuntimeState.fallbackWorldActionTicks < 2)
         {
@@ -206,6 +261,7 @@ namespace ServerRuntime
             EnqueueNativeDedicatedServerHostedGameWorkerHaltSequence(
                 g_nativeRuntimeState.saveOnExitEnabled,
                 2);
+            RefreshNativeDedicatedServerWorkerProjection();
             g_nativeRuntimeState.gameplayHalted = true;
             ObserveNativeDedicatedServerHostedGameSessionPlatformState(
                 GetDedicatedServerAutosaveRequestCount(),

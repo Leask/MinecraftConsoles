@@ -744,6 +744,14 @@ namespace ServerRuntime
             lastProcessedCommandId;
         g_nativeHostedSessionState.snapshot.lastProcessedCommandKind =
             lastProcessedCommandKind;
+        g_nativeHostedSessionState.snapshot.worldActionIdle =
+            pendingWorldActionTicks == 0 &&
+            pendingAutosaveCommands == 0 &&
+            pendingSaveCommands == 0 &&
+            pendingStopCommands == 0 &&
+            pendingHaltCommands == 0 &&
+            activeCommandKind ==
+                eNativeDedicatedServerHostedGameWorkerCommand_None;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }

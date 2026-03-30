@@ -111,33 +111,36 @@ namespace ServerRuntime
                 workerSnapshot.activeCommandKind,
                 workerSnapshot.lastProcessedCommandId,
                 workerSnapshot.lastProcessedCommandKind);
-            RecordDedicatedServerHostedGameRuntimeWorkerState(
-                workerSnapshot.pendingWorldActionTicks,
-                workerSnapshot.pendingAutosaveCommands,
-                workerSnapshot.pendingSaveCommands,
-                workerSnapshot.pendingStopCommands,
-                workerSnapshot.pendingHaltCommands,
-                workerSnapshot.workerTickCount,
-                workerSnapshot.completedWorldActions,
-                workerSnapshot.processedAutosaveCommands,
-                workerSnapshot.processedSaveCommands,
-                workerSnapshot.processedStopCommands,
-                workerSnapshot.processedHaltCommands,
-                workerSnapshot.lastQueuedCommandId,
-                workerSnapshot.activeCommandId,
-                workerSnapshot.activeCommandTicksRemaining,
-                (unsigned int)workerSnapshot.activeCommandKind,
-                workerSnapshot.lastProcessedCommandId,
-                (unsigned int)workerSnapshot.lastProcessedCommandKind);
             const NativeDedicatedServerHostedGameSessionSnapshot
-                sessionSnapshot =
+                sessionSnapshotBeforeThread =
                     GetNativeDedicatedServerHostedGameSessionSnapshot();
             ObserveNativeDedicatedServerHostedGameSessionThreadState(
                 g_nativeHostedThreadRunning.load(),
-                sessionSnapshot.sessionTicks);
+                sessionSnapshotBeforeThread.sessionTicks);
+            const NativeDedicatedServerHostedGameSessionSnapshot
+                sessionSnapshot =
+                    GetNativeDedicatedServerHostedGameSessionSnapshot();
+            RecordDedicatedServerHostedGameRuntimeWorkerState(
+                sessionSnapshot.workerPendingWorldActionTicks,
+                sessionSnapshot.workerPendingAutosaveCommands,
+                sessionSnapshot.workerPendingSaveCommands,
+                sessionSnapshot.workerPendingStopCommands,
+                sessionSnapshot.workerPendingHaltCommands,
+                sessionSnapshot.workerTickCount,
+                sessionSnapshot.completedWorkerActions,
+                sessionSnapshot.processedAutosaveCommands,
+                sessionSnapshot.processedSaveCommands,
+                sessionSnapshot.processedStopCommands,
+                sessionSnapshot.processedHaltCommands,
+                sessionSnapshot.lastQueuedCommandId,
+                sessionSnapshot.activeCommandId,
+                sessionSnapshot.activeCommandTicksRemaining,
+                (unsigned int)sessionSnapshot.activeCommandKind,
+                sessionSnapshot.lastProcessedCommandId,
+                (unsigned int)sessionSnapshot.lastProcessedCommandKind);
             RecordDedicatedServerHostedGameRuntimeThreadState(
-                g_nativeHostedThreadRunning.load(),
-                sessionSnapshot.sessionTicks);
+                sessionSnapshot.hostedThreadActive,
+                sessionSnapshot.hostedThreadTicks);
             RecordDedicatedServerHostedGameRuntimeGameplayLoopIteration(
                 sessionSnapshot.gameplayLoopIterations);
             RecordDedicatedServerHostedGameRuntimeCoreState(
