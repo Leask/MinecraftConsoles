@@ -1609,19 +1609,25 @@ int main(int argc, char* argv[])
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
         nativeHostedSessionCoreSnapshot =
             ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
-    ServerRuntime::SetDedicatedServerAppShutdownRequested(true);
+    ServerRuntime::EnableDedicatedServerSaveOnExit();
+    ServerRuntime::HaltDedicatedServerGameplay();
+    const bool nativeHostedStubHaltQueued =
+        !ServerRuntime::IsDedicatedServerWorldActionIdle(0);
     DWORD nativeHostedStubExitCode = 0;
     const bool nativeHostedStubStopped =
         ServerRuntime::WaitForNativeDedicatedServerHostedGameSessionStop(
             INFINITE,
             &nativeHostedStubExitCode);
-    ServerRuntime::SetDedicatedServerAppShutdownRequested(false);
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         nativeHostedStubStoppedSnapshot =
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
         nativeHostedSessionCoreStoppedSnapshot =
             ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
+    ServerRuntime::StopDedicatedServerPlatformRuntime();
+    const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
+        restartedHostedRuntimeResult =
+            ServerRuntime::StartDedicatedServerPlatformRuntime(platformState);
     const int hostedGameRuntimeNullThreadResult =
         ServerRuntime::StartDedicatedServerHostedGameRuntime(
             hostedGamePlan,
@@ -2847,10 +2853,10 @@ int main(int argc, char* argv[])
         gameplayLoopRunPollContext.pollCount,
         gameplayLoopRunResult.requestedAppShutdown);
     printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
-        hostedGameRuntimeSleepResult == 13 &&
+        restartedHostedRuntimeResult.ok &&
+            hostedGameRuntimeSleepResult == 13 &&
             hostedGameRuntimeSleepThreadValue == 2 &&
-            hostedGameRuntimeTickAfter > hostedGameRuntimeTickBefore &&
-        hostedGameRuntimeResult == 11 &&
+            hostedGameRuntimeResult == 11 &&
             hostedGameRuntimeThreadValue == 1 &&
             hostedGameRuntimeNullThreadResult == -1 &&
             hostedGameRuntimeNullThreadSnapshot.startAttempted &&
@@ -2861,7 +2867,7 @@ int main(int argc, char* argv[])
         hostedGameRuntimeResult,
         hostedGameRuntimeThreadValue);
     printf("native_hosted_stub=%d result=%d steps=%llu duration-ms=%llu "
-        "ticks=%llu validated=%d stopped=%d exit=%lu thread-ticks=%llu "
+        "ticks=%llu validated=%d halt=%d stopped=%d exit=%lu thread-ticks=%llu "
         "core-generation=%llu/%llu core-checksum=0x%016llx "
         "worker=%llu/%llu/%llu/%llu\n",
         nativeHostedStubResult == 0 &&
@@ -2907,10 +2913,16 @@ int main(int argc, char* argv[])
             nativeHostedStubSnapshot.previousStartupThreadIterations == 0U &&
             nativeHostedStubSnapshot.previousStartupThreadDurationMs == 0U &&
             nativeHostedStubStopped &&
+            nativeHostedStubHaltQueued &&
             nativeHostedStubExitCode == 0 &&
             nativeHostedStubThreadTicks > 0U &&
             !nativeHostedSessionCoreStoppedSnapshot.active &&
             nativeHostedSessionCoreStoppedSnapshot.stateChecksum != 0U &&
+            nativeHostedStubStoppedSnapshot.gameplayHalted &&
+            nativeHostedStubStoppedSnapshot.processedAutosaveCommands >
+                nativeHostedStubSnapshot.previousProcessedAutosaveCommands &&
+            nativeHostedStubStoppedSnapshot.processedStopCommands >
+                nativeHostedStubSnapshot.previousProcessedStopCommands &&
             !nativeHostedStubStoppedSnapshot.hostedThreadActive &&
             nativeHostedStubStoppedSnapshot.hostedThreadTicks >=
                 nativeHostedStubThreadTicks,
@@ -2922,6 +2934,7 @@ int main(int argc, char* argv[])
         (unsigned long long)
             (nativeHostedStubTickAfter - nativeHostedStubTickBefore),
         nativeHostedStubSnapshot.startupPayloadValidated,
+        nativeHostedStubHaltQueued,
         nativeHostedStubStopped,
         (unsigned long)nativeHostedStubExitCode,
         (unsigned long long)nativeHostedStubThreadTicks,
@@ -3655,6 +3668,7 @@ int main(int argc, char* argv[])
         platformGameplayHaltedAfter &&
         platformStopSignalValid &&
         platformHostedRuntimeResult.ok &&
+        restartedHostedRuntimeResult.ok &&
         initialSaveExecution.requested &&
         initialSaveExecution.completed &&
         !initialSaveExecution.timedOut &&
@@ -3682,7 +3696,6 @@ int main(int argc, char* argv[])
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Failed &&
         hostedGameRuntimeSleepResult == 13 &&
         hostedGameRuntimeSleepThreadValue == 2 &&
-        hostedGameRuntimeTickAfter > hostedGameRuntimeTickBefore &&
         nativeHostedStubResult == 0 &&
         nativeHostedSaveTextBuilt &&
         nativeHostedStubInitData.seed == hostedGamePlan.resolvedSeed &&

@@ -3,6 +3,7 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "NativeDedicatedServerHostedGameWorker.h"
 #include "NativeDedicatedServerHostedGameSession.h"
+#include "lce_time/lce_time.h"
 
 namespace
 {
@@ -89,6 +90,17 @@ namespace ServerRuntime
             GetDedicatedServerPlatformTickCount());
         const NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot =
             GetNativeDedicatedServerHostedGameSessionSnapshot();
+        UpdateDedicatedServerHostedGameRuntimeSessionState(
+            sessionSnapshot.acceptedConnections,
+            sessionSnapshot.remoteCommands,
+            GetDedicatedServerAutosaveRequestCount(),
+            GetDedicatedServerAutosaveCompletionCount(),
+            GetDedicatedServerPlatformTickCount(),
+            IsDedicatedServerWorldActionIdle(0),
+            IsDedicatedServerAppShutdownRequested(),
+            IsDedicatedServerGameplayHalted(),
+            IsDedicatedServerStopSignalValid(),
+            LceGetMonotonicMilliseconds());
         RecordDedicatedServerHostedGameRuntimeCoreState(
             sessionSnapshot.saveGeneration,
             sessionSnapshot.stateChecksum);
@@ -189,6 +201,21 @@ namespace ServerRuntime
 
     void HaltDedicatedServerGameplay()
     {
+        if (IsNativeDedicatedServerHostedGameSessionRunning())
+        {
+            if (g_nativeRuntimeState.saveOnExitEnabled)
+            {
+                RequestDedicatedServerWorldAutosave(0);
+            }
+
+            EnqueueNativeDedicatedServerHostedGameWorkerStopCommand();
+            g_nativeRuntimeState.gameplayHalted = true;
+            ObserveNativeDedicatedServerHostedGameSessionPlatformState(
+                GetDedicatedServerAutosaveRequestCount(),
+                GetDedicatedServerPlatformTickCount());
+            return;
+        }
+
         if (g_nativeRuntimeState.saveOnExitEnabled)
         {
             RequestDedicatedServerWorldAutosave(0);
