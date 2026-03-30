@@ -18,9 +18,13 @@ namespace ServerRuntime
         std::uint64_t acceptedConnections = 0;
         std::uint64_t remoteCommands = 0;
         std::uint64_t observedAutosaveCompletions = 0;
+        std::uint64_t gameplayLoopIterations = 0;
         std::uint64_t saveGeneration = 0;
         std::uint64_t stateChecksum = 0;
         bool worldActionIdle = true;
+        bool appShutdownRequested = false;
+        bool gameplayHalted = false;
+        bool stopSignalValid = false;
     };
 
     void ResetNativeDedicatedServerHostedGameSessionState();
@@ -38,6 +42,12 @@ namespace ServerRuntime
         std::uint64_t acceptedConnections,
         std::uint64_t remoteCommands,
         bool worldActionIdle);
+
+    void ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
+        std::uint64_t gameplayLoopIterations,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid);
 
     void StopNativeDedicatedServerHostedGameSession();
 

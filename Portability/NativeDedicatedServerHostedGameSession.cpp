@@ -92,6 +92,9 @@ namespace ServerRuntime
                 state->snapshot.remoteCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
+                state->snapshot.gameplayLoopIterations);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
                 state->snapshot.saveGeneration);
             checksum = MixNativeHostedSessionHash(
                 checksum,
@@ -105,6 +108,15 @@ namespace ServerRuntime
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.worldActionIdle ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.appShutdownRequested ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.gameplayHalted ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.stopSignalValid ? 1U : 0U);
             state->snapshot.stateChecksum = checksum;
         }
     }
@@ -190,6 +202,25 @@ namespace ServerRuntime
             remoteCommands;
         g_nativeHostedSessionState.snapshot.worldActionIdle =
             worldActionIdle;
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
+        std::uint64_t gameplayLoopIterations,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.gameplayLoopIterations =
+            gameplayLoopIterations;
+        g_nativeHostedSessionState.snapshot.appShutdownRequested =
+            appShutdownRequested;
+        g_nativeHostedSessionState.snapshot.gameplayHalted =
+            gameplayHalted;
+        g_nativeHostedSessionState.snapshot.stopSignalValid =
+            stopSignalValid;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }

@@ -1674,6 +1674,11 @@ int main(int argc, char* argv[])
         2,
         3,
         false);
+    ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
+        8,
+        true,
+        true,
+        true);
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
         nativeHostedSessionObservedSnapshot =
             ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
@@ -1728,7 +1733,11 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.uptimeMs == 100 &&
         nativeHostedSessionObservedSnapshot.acceptedConnections == 2 &&
         nativeHostedSessionObservedSnapshot.remoteCommands == 3 &&
+        nativeHostedSessionObservedSnapshot.gameplayLoopIterations == 8 &&
         !nativeHostedSessionObservedSnapshot.worldActionIdle &&
+        nativeHostedSessionObservedSnapshot.appShutdownRequested &&
+        nativeHostedSessionObservedSnapshot.gameplayHalted &&
+        nativeHostedSessionObservedSnapshot.stopSignalValid &&
         nativeHostedSessionObservedSnapshot.stateChecksum != 0U &&
         !hostedGameStoppedSnapshot.sessionActive &&
         hostedGameStoppedSnapshot.phase ==

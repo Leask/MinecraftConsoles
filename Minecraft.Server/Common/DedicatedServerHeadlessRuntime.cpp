@@ -541,6 +541,11 @@ namespace
             context->shellState.acceptedConnections,
             context->shellState.remoteCommands,
             worldActionIdle);
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
+            context->gameplayLoopIterations,
+            ServerRuntime::IsDedicatedServerAppShutdownRequested(),
+            ServerRuntime::IsDedicatedServerGameplayHalted(),
+            ServerRuntime::IsDedicatedServerStopSignalValid());
         ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
             context->shellState.acceptedConnections,
             context->shellState.remoteCommands,
@@ -886,6 +891,15 @@ namespace ServerRuntime
         ServerRuntime::RecordDedicatedServerHostedGameRuntimeSessionSummary(
             sessionSummary);
 
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivity(
+            shellHooksContext.shellState.acceptedConnections,
+            shellHooksContext.shellState.remoteCommands,
+            ServerRuntime::IsDedicatedServerWorldActionIdle(0));
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
+            runExecution.session.gameplayLoop.iterations,
+            ServerRuntime::IsDedicatedServerAppShutdownRequested(),
+            ServerRuntime::IsDedicatedServerGameplayHalted(),
+            ServerRuntime::IsDedicatedServerStopSignalValid());
         ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
             shellHooksContext.shellState.acceptedConnections,
             shellHooksContext.shellState.remoteCommands,
