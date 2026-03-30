@@ -1553,6 +1553,7 @@ int main(int argc, char* argv[])
     previousSaveStub.worldHellScale = 3U;
     previousSaveStub.payloadChecksum = 0x123456789abcdef0ULL;
     previousSaveStub.saveGeneration = 11U;
+    previousSaveStub.stateChecksum = 0x0fedcba987654321ULL;
     ServerRuntime::RecordNativeDedicatedServerLoadedSaveMetadata(
         "NativeDesktop/GameHDD/SmokeSession.save",
         previousSaveStub);
@@ -1685,6 +1686,9 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.savePayloadChecksum ==
             fakeSaveChecksum &&
         hostedGameSessionSnapshot.saveGeneration == 16U &&
+        hostedGameSessionSnapshot.previousSessionStateChecksum ==
+            0x0fedcba987654321ULL &&
+        hostedGameSessionSnapshot.sessionStateChecksum != 0U &&
         hostedGameSessionSnapshot.hostSettings ==
             sessionConfig.hostSettings &&
         hostedGameSessionSnapshot.dedicatedNoLocalHostPlayer &&
@@ -2693,6 +2697,8 @@ int main(int argc, char* argv[])
             nativeHostedStubSnapshot.loadedSaveMetadataAvailable &&
             nativeHostedStubSnapshot.previousStartupMode == "loaded" &&
             nativeHostedStubSnapshot.previousSaveGeneration == 11U &&
+            nativeHostedStubSnapshot.previousSessionStateChecksum ==
+                0x0fedcba987654321ULL &&
             nativeHostedStubSnapshot.previousStartupPayloadPresent == false &&
             nativeHostedStubSnapshot.previousStartupPayloadValidated == false &&
             nativeHostedStubSnapshot.previousStartupThreadIterations == 0U &&
@@ -2762,6 +2768,9 @@ int main(int argc, char* argv[])
             hostedGameRuntimeSnapshot.previousSavePayloadChecksum ==
                 0x123456789abcdef0ULL &&
             hostedGameRuntimeSnapshot.previousSaveGeneration == 11U &&
+            hostedGameRuntimeSnapshot.previousSessionStateChecksum ==
+                0x0fedcba987654321ULL &&
+            hostedGameRuntimeSnapshot.sessionStateChecksum != 0U &&
             hostedGameRuntimeSnapshot.savePayloadChecksum ==
                 fakeSaveChecksum &&
             hostedGameRuntimeSnapshot.hostSettings ==

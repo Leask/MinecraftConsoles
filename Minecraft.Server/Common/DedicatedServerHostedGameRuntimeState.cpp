@@ -5,6 +5,11 @@
 
 namespace
 {
+    static constexpr std::uint64_t kDedicatedServerStateChecksumOffset =
+        14695981039346656037ULL;
+    static constexpr std::uint64_t kDedicatedServerStateChecksumPrime =
+        1099511628211ULL;
+
     ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         g_dedicatedServerHostedGameRuntimeSnapshot = {};
 
@@ -27,6 +32,105 @@ namespace
         }
 
         return checksum;
+    }
+
+    std::uint64_t MixDedicatedServerStateChecksum(
+        std::uint64_t checksum,
+        std::uint64_t value)
+    {
+        for (int i = 0; i < 8; ++i)
+        {
+            checksum ^= (value & 0xffU);
+            checksum *= kDedicatedServerStateChecksumPrime;
+            value >>= 8;
+        }
+
+        return checksum;
+    }
+
+    std::uint64_t HashDedicatedServerStateString(
+        const std::string &text,
+        std::uint64_t checksum)
+    {
+        for (size_t i = 0; i < text.size(); ++i)
+        {
+            checksum ^= (unsigned char)text[i];
+            checksum *= kDedicatedServerStateChecksumPrime;
+        }
+
+        return checksum;
+    }
+
+    void RefreshDedicatedServerHostedGameRuntimeStateChecksum(
+        ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot *snapshot)
+    {
+        if (snapshot == nullptr)
+        {
+            return;
+        }
+
+        std::uint64_t checksum =
+            snapshot->previousSessionStateChecksum != 0
+                ? snapshot->previousSessionStateChecksum
+                : kDedicatedServerStateChecksumOffset;
+        checksum = HashDedicatedServerStateString(
+            snapshot->worldName,
+            checksum);
+        checksum = HashDedicatedServerStateString(
+            snapshot->worldSaveId,
+            checksum);
+        checksum = HashDedicatedServerStateString(
+            snapshot->savePath,
+            checksum);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            (std::uint64_t)snapshot->resolvedSeed);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->savePayloadChecksum);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->saveGeneration);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->acceptedConnections);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->remoteCommands);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->autosaveRequests);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->autosaveCompletions);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->platformTickCount);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->gameplayLoopIterations);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->hostedThreadTicks);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->sessionActive ? 1U : 0U);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->worldActionIdle ? 1U : 0U);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->appShutdownRequested ? 1U : 0U);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->gameplayHalted ? 1U : 0U);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->stopSignalValid ? 1U : 0U);
+        checksum = MixDedicatedServerStateChecksum(
+            checksum,
+            snapshot->sessionCompleted ? 1U : 0U);
+        snapshot->sessionStateChecksum = checksum;
     }
 
     void UpdateDedicatedServerHostedGameRuntimeUptime(
@@ -163,8 +267,14 @@ namespace ServerRuntime
                 g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousSaveGeneration =
                         loadedSaveMetadata.saveStub.saveGeneration;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousSessionStateChecksum =
+                        loadedSaveMetadata.saveStub.stateChecksum;
                 g_dedicatedServerHostedGameRuntimeSnapshot.saveGeneration =
                     loadedSaveMetadata.saveStub.saveGeneration;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .sessionStateChecksum =
+                        loadedSaveMetadata.saveStub.stateChecksum;
                 g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousStartupPayloadPresent =
                         loadedSaveMetadata.saveStub.startupPayloadPresent;
@@ -248,6 +358,8 @@ namespace ServerRuntime
         UpdateDedicatedServerHostedGameRuntimeUptime(
             &g_dedicatedServerHostedGameRuntimeSnapshot,
             sessionStartMs);
+        RefreshDedicatedServerHostedGameRuntimeStateChecksum(
+            &g_dedicatedServerHostedGameRuntimeSnapshot);
     }
 
     void UpdateDedicatedServerHostedGameRuntimeSessionState(
@@ -292,6 +404,8 @@ namespace ServerRuntime
         UpdateDedicatedServerHostedGameRuntimeUptime(
             &g_dedicatedServerHostedGameRuntimeSnapshot,
             nowMs);
+        RefreshDedicatedServerHostedGameRuntimeStateChecksum(
+            &g_dedicatedServerHostedGameRuntimeSnapshot);
     }
 
     void MarkDedicatedServerHostedGameRuntimeSessionStopped(
@@ -304,6 +418,8 @@ namespace ServerRuntime
         UpdateDedicatedServerHostedGameRuntimeUptime(
             &g_dedicatedServerHostedGameRuntimeSnapshot,
             stoppedMs);
+        RefreshDedicatedServerHostedGameRuntimeStateChecksum(
+            &g_dedicatedServerHostedGameRuntimeSnapshot);
     }
 
     void RecordDedicatedServerHostedGameRuntimeGameplayLoopIteration(
@@ -311,6 +427,8 @@ namespace ServerRuntime
     {
         g_dedicatedServerHostedGameRuntimeSnapshot.gameplayLoopIterations =
             gameplayLoopIterations;
+        RefreshDedicatedServerHostedGameRuntimeStateChecksum(
+            &g_dedicatedServerHostedGameRuntimeSnapshot);
     }
 
     void RecordDedicatedServerHostedGameRuntimeStartupTelemetry(
@@ -337,6 +455,8 @@ namespace ServerRuntime
             hostedThreadActive;
         g_dedicatedServerHostedGameRuntimeSnapshot.hostedThreadTicks =
             hostedThreadTicks;
+        RefreshDedicatedServerHostedGameRuntimeStateChecksum(
+            &g_dedicatedServerHostedGameRuntimeSnapshot);
     }
 
     void RecordDedicatedServerHostedGameRuntimeSessionSummary(
@@ -356,6 +476,8 @@ namespace ServerRuntime
             summary.shutdownHaltedGameplay;
         g_dedicatedServerHostedGameRuntimeSnapshot.gameplayLoopIterations =
             summary.gameplayLoopIterations;
+        RefreshDedicatedServerHostedGameRuntimeStateChecksum(
+            &g_dedicatedServerHostedGameRuntimeSnapshot);
     }
 
     void RecordDedicatedServerHostedGameRuntimePersistedSave(

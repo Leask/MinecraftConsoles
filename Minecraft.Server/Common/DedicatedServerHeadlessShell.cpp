@@ -130,7 +130,8 @@ namespace
                 buffer,
                 sizeof(buffer),
                 "status payload settings=0x%08x no-local=%s "
-                "checksum=0x%016llx save-generation=%llu startup-payload=%s "
+                "checksum=0x%016llx save-generation=%llu "
+                "state-checksum=0x%016llx startup-payload=%s "
                 "validated=%s startup-steps=%llu startup-ms=%llu",
                 (unsigned int)runtimeSnapshot.hostSettings,
                 runtimeSnapshot.dedicatedNoLocalHostPlayer
@@ -138,6 +139,7 @@ namespace
                     : "false",
                 (unsigned long long)runtimeSnapshot.savePayloadChecksum,
                 (unsigned long long)runtimeSnapshot.saveGeneration,
+                (unsigned long long)runtimeSnapshot.sessionStateChecksum,
                 runtimeSnapshot.startupPayloadPresent ? "present" : "none",
                 runtimeSnapshot.startupPayloadValidated ? "true" : "false",
                 (unsigned long long)
@@ -243,7 +245,7 @@ namespace
                     sizeof(buffer),
                     "status loaded-payload settings=0x%08x no-local=%s "
                     "world-size=%u hell-scale=%u checksum=0x%016llx "
-                    "save-generation=%llu "
+                    "save-generation=%llu state-checksum=0x%016llx "
                     "startup-payload=%s validated=%s startup-steps=%llu "
                     "startup-ms=%llu",
                     (unsigned int)runtimeSnapshot.previousHostSettings,
@@ -256,6 +258,8 @@ namespace
                         runtimeSnapshot.previousSavePayloadChecksum,
                     (unsigned long long)
                         runtimeSnapshot.previousSaveGeneration,
+                    (unsigned long long)
+                        runtimeSnapshot.previousSessionStateChecksum,
                     runtimeSnapshot.previousStartupPayloadPresent
                         ? "present"
                         : "none",
@@ -500,6 +504,7 @@ namespace ServerRuntime
                     "console",
                     "status payload settings=0x%08x no-local=%s "
                     "checksum=0x%016llx save-generation=%llu "
+                    "state-checksum=0x%016llx "
                     "startup-payload=%s "
                     "validated=%s startup-steps=%llu startup-ms=%llu",
                     (unsigned int)runtimeSnapshot.hostSettings,
@@ -510,6 +515,8 @@ namespace ServerRuntime
                         runtimeSnapshot.savePayloadChecksum,
                     (unsigned long long)
                         runtimeSnapshot.saveGeneration,
+                    (unsigned long long)
+                        runtimeSnapshot.sessionStateChecksum,
                     runtimeSnapshot.startupPayloadPresent
                         ? "present"
                         : "none",
@@ -619,7 +626,7 @@ namespace ServerRuntime
                         "console",
                         "status loaded-payload settings=0x%08x no-local=%s "
                         "world-size=%u hell-scale=%u checksum=0x%016llx "
-                        "save-generation=%llu "
+                        "save-generation=%llu state-checksum=0x%016llx "
                         "startup-payload=%s validated=%s startup-steps=%llu "
                         "startup-ms=%llu",
                         (unsigned int)runtimeSnapshot.previousHostSettings,
@@ -633,6 +640,8 @@ namespace ServerRuntime
                             runtimeSnapshot.previousSavePayloadChecksum,
                         (unsigned long long)
                             runtimeSnapshot.previousSaveGeneration,
+                        (unsigned long long)
+                            runtimeSnapshot.previousSessionStateChecksum,
                         runtimeSnapshot.previousStartupPayloadPresent
                             ? "present"
                             : "none",

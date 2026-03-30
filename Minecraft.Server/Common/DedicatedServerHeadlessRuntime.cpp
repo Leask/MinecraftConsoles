@@ -396,6 +396,7 @@ namespace
             saveStub.payloadBytes = runtimeSnapshot.savePayloadBytes;
             saveStub.payloadChecksum = runtimeSnapshot.savePayloadChecksum;
             saveStub.saveGeneration = runtimeSnapshot.saveGeneration;
+            saveStub.stateChecksum = runtimeSnapshot.sessionStateChecksum;
             saveStub.payloadName = runtimeSnapshot.savePayloadName;
             saveStub.hostSettings = runtimeSnapshot.hostSettings;
             saveStub.dedicatedNoLocalHostPlayer =
@@ -661,7 +662,7 @@ namespace
                     "native loaded save metadata path=%s startup=%s "
                     "phase=%s settings=0x%08x no-local=%s world-size=%u "
                     "hell-scale=%u payload-checksum=0x%016llx "
-                    "save-generation=%llu "
+                    "save-generation=%llu state-checksum=0x%016llx "
                     "startup-payload=%s validated=%s startup-steps=%llu "
                     "startup-ms=%llu remote=%llu autosaves=%llu ticks=%llu "
                     "uptime=%llu completed=%s app-shutdown=%s "
@@ -681,6 +682,8 @@ namespace
                         loadedSaveMetadata.saveStub.payloadChecksum,
                     (unsigned long long)
                         loadedSaveMetadata.saveStub.saveGeneration,
+                    (unsigned long long)
+                        loadedSaveMetadata.saveStub.stateChecksum,
                     loadedSaveMetadata.saveStub.startupPayloadPresent
                         ? "present"
                         : "none",

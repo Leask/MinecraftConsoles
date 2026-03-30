@@ -33,6 +33,7 @@ namespace ServerRuntime
         std::int64_t savePayloadBytes = 0;
         std::uint64_t savePayloadChecksum = 0;
         std::uint64_t saveGeneration = 0;
+        std::uint64_t sessionStateChecksum = 0;
         std::uint32_t hostSettings = 0;
         bool dedicatedNoLocalHostPlayer = true;
         unsigned int worldSizeChunks = 0;
@@ -62,6 +63,7 @@ namespace ServerRuntime
         bool stopSignalValid = false;
         std::uint64_t previousSavePayloadChecksum = 0;
         std::uint64_t previousSaveGeneration = 0;
+        std::uint64_t previousSessionStateChecksum = 0;
         bool previousStartupPayloadPresent = false;
         bool previousStartupPayloadValidated = false;
         std::uint64_t previousStartupThreadIterations = 0;
