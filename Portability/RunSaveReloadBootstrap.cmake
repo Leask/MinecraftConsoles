@@ -121,6 +121,8 @@ foreach(expected_reload_marker IN ITEMS
     "hell-scale="
     "completed=true"
     "gameplay-iterations="
+    "hosted-thread=stopped"
+    "hosted-thread-ticks="
     "native bootstrap completed in bootstrap-only mode")
   string(FIND
     "${reload_combined_output}"

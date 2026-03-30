@@ -661,7 +661,8 @@ namespace
                     "startup-payload=%s validated=%s startup-steps=%llu "
                     "startup-ms=%llu remote=%llu autosaves=%llu ticks=%llu "
                     "uptime=%llu completed=%s app-shutdown=%s "
-                    "shutdown-halted=%s gameplay-iterations=%llu",
+                    "shutdown-halted=%s gameplay-iterations=%llu "
+                    "hosted-thread=%s hosted-thread-ticks=%llu",
                     loadedSaveMetadata.savePath.c_str(),
                     loadedSaveMetadata.saveStub.startupMode.c_str(),
                     loadedSaveMetadata.saveStub.sessionPhase.c_str(),
@@ -702,7 +703,12 @@ namespace
                         ? "true"
                         : "false",
                     (unsigned long long)
-                        loadedSaveMetadata.saveStub.gameplayLoopIterations);
+                        loadedSaveMetadata.saveStub.gameplayLoopIterations,
+                    loadedSaveMetadata.saveStub.hostedThreadActive
+                        ? "active"
+                        : "stopped",
+                    (unsigned long long)
+                        loadedSaveMetadata.saveStub.hostedThreadTicks);
             }
         }
 
