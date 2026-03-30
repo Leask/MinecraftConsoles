@@ -20,6 +20,8 @@ namespace ServerRuntime
             NativeDedicatedServerHostedGameSessionSnapshot snapshot = {};
             std::uint64_t baseSaveGeneration = 0;
             std::uint64_t baseStateChecksum = 0;
+            std::uint64_t baseWorkerTickCount = 0;
+            std::uint64_t baseCompletedWorkerActions = 0;
         };
 
         std::mutex g_nativeHostedSessionMutex;
@@ -281,6 +283,16 @@ namespace ServerRuntime
                     saveStub.saveGeneration;
                 g_nativeHostedSessionState.baseStateChecksum =
                     saveStub.stateChecksum;
+                g_nativeHostedSessionState.baseWorkerTickCount =
+                    saveStub.workerTickCount;
+                g_nativeHostedSessionState.baseCompletedWorkerActions =
+                    saveStub.completedWorkerActions;
+                g_nativeHostedSessionState.snapshot.sessionTicks =
+                    saveStub.hostedThreadTicks;
+                g_nativeHostedSessionState.snapshot.workerTickCount =
+                    saveStub.workerTickCount;
+                g_nativeHostedSessionState.snapshot.completedWorkerActions =
+                    saveStub.completedWorkerActions;
                 g_nativeHostedSessionState.snapshot.lastPersistedFileTime =
                     saveStub.savedAtFileTime;
                 g_nativeHostedSessionState.snapshot
@@ -517,8 +529,10 @@ namespace ServerRuntime
         g_nativeHostedSessionState.snapshot.workerPendingWorldActionTicks =
             pendingWorldActionTicks;
         g_nativeHostedSessionState.snapshot.workerTickCount =
+            g_nativeHostedSessionState.baseWorkerTickCount +
             workerTickCount;
         g_nativeHostedSessionState.snapshot.completedWorkerActions =
+            g_nativeHostedSessionState.baseCompletedWorkerActions +
             completedWorkerActions;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);

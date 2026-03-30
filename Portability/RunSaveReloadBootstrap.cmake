@@ -107,6 +107,35 @@ if(create_autosave_completions LESS 2)
     "save file:\n${saved_world_text}\n")
 endif()
 
+string(REGEX MATCH "worker-ticks=([0-9]+)" create_worker_ticks_match
+  "${saved_world_text}")
+if(NOT create_worker_ticks_match)
+  message(FATAL_ERROR
+    "Create-save file did not contain parsable worker tick count\n"
+    "save file:\n${saved_world_text}\n")
+endif()
+set(create_worker_ticks "${CMAKE_MATCH_1}")
+
+string(REGEX MATCH "hosted-thread-ticks=([0-9]+)"
+  create_hosted_thread_ticks_match
+  "${saved_world_text}")
+if(NOT create_hosted_thread_ticks_match)
+  message(FATAL_ERROR
+    "Create-save file did not contain parsable hosted thread tick count\n"
+    "save file:\n${saved_world_text}\n")
+endif()
+set(create_hosted_thread_ticks "${CMAKE_MATCH_1}")
+
+string(REGEX MATCH "worker-completions=([0-9]+)"
+  create_worker_completions_match
+  "${saved_world_text}")
+if(NOT create_worker_completions_match)
+  message(FATAL_ERROR
+    "Create-save file did not contain parsable worker completion count\n"
+    "save file:\n${saved_world_text}\n")
+endif()
+set(create_worker_completions "${CMAKE_MATCH_1}")
+
 file(RENAME
   "${STORAGE_ROOT}/world.save"
   "${STORAGE_ROOT}/renamed-slot.save")
@@ -250,5 +279,52 @@ foreach(expected_reloaded_save_marker IN ITEMS
       "save file:\n${reloaded_saved_world_text}\n")
   endif()
 endforeach()
+
+string(REGEX MATCH "worker-ticks=([0-9]+)" reload_worker_ticks_match
+  "${reloaded_saved_world_text}")
+if(NOT reload_worker_ticks_match)
+  message(FATAL_ERROR
+    "Reloaded save did not contain parsable worker tick count\n"
+    "save file:\n${reloaded_saved_world_text}\n")
+endif()
+set(reload_worker_ticks "${CMAKE_MATCH_1}")
+if(reload_worker_ticks LESS create_worker_ticks)
+  message(FATAL_ERROR
+    "Reloaded save regressed worker tick count: "
+    "${reload_worker_ticks} < ${create_worker_ticks}\n"
+    "save file:\n${reloaded_saved_world_text}\n")
+endif()
+
+string(REGEX MATCH "hosted-thread-ticks=([0-9]+)"
+  reload_hosted_thread_ticks_match
+  "${reloaded_saved_world_text}")
+if(NOT reload_hosted_thread_ticks_match)
+  message(FATAL_ERROR
+    "Reloaded save did not contain parsable hosted thread tick count\n"
+    "save file:\n${reloaded_saved_world_text}\n")
+endif()
+set(reload_hosted_thread_ticks "${CMAKE_MATCH_1}")
+if(reload_hosted_thread_ticks LESS create_hosted_thread_ticks)
+  message(FATAL_ERROR
+    "Reloaded save regressed hosted thread tick count: "
+    "${reload_hosted_thread_ticks} < ${create_hosted_thread_ticks}\n"
+    "save file:\n${reloaded_saved_world_text}\n")
+endif()
+
+string(REGEX MATCH "worker-completions=([0-9]+)"
+  reload_worker_completions_match
+  "${reloaded_saved_world_text}")
+if(NOT reload_worker_completions_match)
+  message(FATAL_ERROR
+    "Reloaded save did not contain parsable worker completion count\n"
+    "save file:\n${reloaded_saved_world_text}\n")
+endif()
+set(reload_worker_completions "${CMAKE_MATCH_1}")
+if(reload_worker_completions LESS create_worker_completions)
+  message(FATAL_ERROR
+    "Reloaded save regressed worker completion count: "
+    "${reload_worker_completions} < ${create_worker_completions}\n"
+    "save file:\n${reloaded_saved_world_text}\n")
+endif()
 
 file(REMOVE "${STORAGE_ROOT}/renamed-slot.save")
