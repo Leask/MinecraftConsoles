@@ -95,12 +95,6 @@ namespace ServerRuntime
                     GetNativeDedicatedServerHostedGameWorkerSnapshot();
             ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
                 workerSnapshot);
-            const NativeDedicatedServerHostedGameSessionSnapshot
-                sessionSnapshotBeforeThread =
-                    GetNativeDedicatedServerHostedGameSessionSnapshot();
-            ObserveNativeDedicatedServerHostedGameSessionThreadState(
-                g_nativeHostedThreadRunning.load(),
-                sessionSnapshotBeforeThread.sessionTicks);
             ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot();
         }
 
@@ -146,6 +140,9 @@ namespace ServerRuntime
             ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
                 startupIterations,
                 durationMs);
+            ObserveNativeDedicatedServerHostedGameSessionThreadState(
+                false,
+                GetNativeDedicatedServerHostedGameSessionThreadTicks());
             RecordNativeDedicatedServerHostedThreadSnapshot();
             if (!startupPayloadValidated)
             {
@@ -153,6 +150,9 @@ namespace ServerRuntime
             }
 
             g_nativeHostedThreadRunning.store(true);
+            ObserveNativeDedicatedServerHostedGameSessionThreadState(
+                true,
+                GetNativeDedicatedServerHostedGameSessionThreadTicks());
             RecordNativeDedicatedServerHostedThreadSnapshot();
             if (g_nativeHostedStartupReadyEvent != nullptr &&
                 g_nativeHostedStartupReadyEvent != INVALID_HANDLE_VALUE)
@@ -177,13 +177,16 @@ namespace ServerRuntime
                     IsNativeDedicatedServerHostedGameWorkerIdle());
                 ObserveNativeDedicatedServerHostedGameSessionAutosaves(
                     GetDedicatedServerAutosaveCompletionCount());
-                TickNativeDedicatedServerHostedGameSession();
+                TickNativeDedicatedServerHostedGameSession(true);
                 RecordNativeDedicatedServerHostedThreadSnapshot();
                 LceSleepMilliseconds(10);
             }
 
             g_nativeHostedThreadRunning.store(false);
             StopNativeDedicatedServerHostedGameSession();
+            ObserveNativeDedicatedServerHostedGameSessionThreadState(
+                false,
+                GetNativeDedicatedServerHostedGameSessionThreadTicks());
             RecordNativeDedicatedServerHostedThreadSnapshot();
             return 0;
         }
@@ -223,6 +226,9 @@ namespace ServerRuntime
         {
             CloseNativeDedicatedServerHostedStartupReadyEvent();
             g_nativeHostedThreadRunning.store(false);
+            ObserveNativeDedicatedServerHostedGameSessionThreadState(
+                false,
+                GetNativeDedicatedServerHostedGameSessionThreadTicks());
             RecordNativeDedicatedServerHostedThreadSnapshot();
             return true;
         }
@@ -250,6 +256,9 @@ namespace ServerRuntime
         g_nativeHostedThreadHandle = nullptr;
         CloseNativeDedicatedServerHostedStartupReadyEvent();
         g_nativeHostedThreadRunning.store(false);
+        ObserveNativeDedicatedServerHostedGameSessionThreadState(
+            false,
+            GetNativeDedicatedServerHostedGameSessionThreadTicks());
         RecordNativeDedicatedServerHostedThreadSnapshot();
         return true;
     }

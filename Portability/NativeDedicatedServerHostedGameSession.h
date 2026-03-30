@@ -91,7 +91,8 @@ namespace ServerRuntime
         int startupResult,
         bool threadInvoked);
 
-    void TickNativeDedicatedServerHostedGameSession();
+    void TickNativeDedicatedServerHostedGameSession(
+        bool hostedThreadActive = true);
 
     void ObserveNativeDedicatedServerHostedGameSessionAutosaves(
         std::uint64_t autosaveCompletions);

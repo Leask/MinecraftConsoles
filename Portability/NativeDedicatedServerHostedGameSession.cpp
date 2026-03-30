@@ -488,7 +488,8 @@ namespace ServerRuntime
             &g_nativeHostedSessionState);
     }
 
-    void TickNativeDedicatedServerHostedGameSession()
+    void TickNativeDedicatedServerHostedGameSession(
+        bool hostedThreadActive)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         if (!g_nativeHostedSessionState.snapshot.active)
@@ -498,6 +499,15 @@ namespace ServerRuntime
 
         ++g_nativeHostedSessionState.snapshot.sessionTicks;
         ++g_nativeHostedSessionState.snapshot.gameplayLoopIterations;
+        g_nativeHostedSessionState.snapshot.hostedThreadActive =
+            hostedThreadActive;
+        if (hostedThreadActive)
+        {
+            g_nativeHostedSessionState.snapshot.hostedThreadTicks =
+                g_nativeHostedSessionState.snapshot.sessionTicks;
+        }
+        RefreshNativeHostedSessionActive(&g_nativeHostedSessionState);
+        RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }
@@ -853,7 +863,7 @@ namespace ServerRuntime
     std::uint64_t GetNativeDedicatedServerHostedGameSessionThreadTicks()
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        return g_nativeHostedSessionState.snapshot.sessionTicks;
+        return g_nativeHostedSessionState.snapshot.hostedThreadTicks;
     }
 
     NativeDedicatedServerHostedGameSessionSnapshot
