@@ -1670,6 +1670,13 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         hostedGameSessionSnapshot =
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+    ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivity(
+        2,
+        3,
+        false);
+    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+        nativeHostedSessionObservedSnapshot =
+            ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
     ServerRuntime::MarkDedicatedServerHostedGameRuntimeSessionStopped(1200);
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         hostedGameStoppedSnapshot =
@@ -1719,6 +1726,10 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.lastPersistedFileTime == 77 &&
         hostedGameSessionSnapshot.lastPersistedAutosaveCompletions == 5 &&
         hostedGameSessionSnapshot.uptimeMs == 100 &&
+        nativeHostedSessionObservedSnapshot.acceptedConnections == 2 &&
+        nativeHostedSessionObservedSnapshot.remoteCommands == 3 &&
+        !nativeHostedSessionObservedSnapshot.worldActionIdle &&
+        nativeHostedSessionObservedSnapshot.stateChecksum != 0U &&
         !hostedGameStoppedSnapshot.sessionActive &&
         hostedGameStoppedSnapshot.phase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&

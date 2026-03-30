@@ -15,9 +15,12 @@ namespace ServerRuntime
         bool payloadValidated = false;
         std::uint64_t payloadChecksum = 0;
         std::uint64_t sessionTicks = 0;
+        std::uint64_t acceptedConnections = 0;
+        std::uint64_t remoteCommands = 0;
         std::uint64_t observedAutosaveCompletions = 0;
         std::uint64_t saveGeneration = 0;
         std::uint64_t stateChecksum = 0;
+        bool worldActionIdle = true;
     };
 
     void ResetNativeDedicatedServerHostedGameSessionState();
@@ -30,6 +33,11 @@ namespace ServerRuntime
 
     void ObserveNativeDedicatedServerHostedGameSessionAutosaves(
         std::uint64_t autosaveCompletions);
+
+    void ObserveNativeDedicatedServerHostedGameSessionActivity(
+        std::uint64_t acceptedConnections,
+        std::uint64_t remoteCommands,
+        bool worldActionIdle);
 
     void StopNativeDedicatedServerHostedGameSession();
 

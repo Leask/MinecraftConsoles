@@ -86,6 +86,12 @@ namespace ServerRuntime
                 state->snapshot.observedAutosaveCompletions);
             checksum = MixNativeHostedSessionHash(
                 checksum,
+                state->snapshot.acceptedConnections);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.remoteCommands);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
                 state->snapshot.saveGeneration);
             checksum = MixNativeHostedSessionHash(
                 checksum,
@@ -96,6 +102,9 @@ namespace ServerRuntime
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.active ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.worldActionIdle ? 1U : 0U);
             state->snapshot.stateChecksum = checksum;
         }
     }
@@ -165,6 +174,22 @@ namespace ServerRuntime
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState.snapshot.observedAutosaveCompletions =
             autosaveCompletions;
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionActivity(
+        std::uint64_t acceptedConnections,
+        std::uint64_t remoteCommands,
+        bool worldActionIdle)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.acceptedConnections =
+            acceptedConnections;
+        g_nativeHostedSessionState.snapshot.remoteCommands =
+            remoteCommands;
+        g_nativeHostedSessionState.snapshot.worldActionIdle =
+            worldActionIdle;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }

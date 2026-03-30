@@ -15,6 +15,7 @@
 #include "FileUtils.h"
 #include "NativeDedicatedServerLoadedSaveState.h"
 #include "NativeDedicatedServerSaveStub.h"
+#include "Portability/NativeDedicatedServerHostedGameSession.h"
 #include "../ServerLogger.h"
 #include "../WorldManager.h"
 #include "lce_net/lce_net.h"
@@ -534,13 +535,19 @@ namespace
             context->gameplayLoopIterations);
 
         const std::uint64_t now = LceGetMonotonicMilliseconds();
+        const bool worldActionIdle =
+            ServerRuntime::IsDedicatedServerWorldActionIdle(0);
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivity(
+            context->shellState.acceptedConnections,
+            context->shellState.remoteCommands,
+            worldActionIdle);
         ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
             context->shellState.acceptedConnections,
             context->shellState.remoteCommands,
             ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
             ServerRuntime::GetDedicatedServerAutosaveCompletionCount(),
             ServerRuntime::GetDedicatedServerPlatformTickCount(),
-            ServerRuntime::IsDedicatedServerWorldActionIdle(0),
+            worldActionIdle,
             ServerRuntime::IsDedicatedServerAppShutdownRequested(),
             ServerRuntime::IsDedicatedServerGameplayHalted(),
             ServerRuntime::IsDedicatedServerStopSignalValid(),

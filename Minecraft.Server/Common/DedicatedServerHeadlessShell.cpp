@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "DedicatedServerHostedGameRuntimeState.h"
+#include "Portability/NativeDedicatedServerHostedGameSession.h"
 #include "DedicatedServerPlatformRuntime.h"
 #include "../ServerLogger.h"
 #include "DedicatedServerSignalState.h"
@@ -67,6 +68,10 @@ namespace
 
         const bool worldActionIdle =
             ServerRuntime::IsDedicatedServerWorldActionIdle(0);
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivity(
+            state.acceptedConnections,
+            state.remoteCommands,
+            worldActionIdle);
         ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
             state.acceptedConnections,
             state.remoteCommands,
@@ -481,6 +486,10 @@ namespace ServerRuntime
                 IsDedicatedServerGameplayHalted(),
                 IsDedicatedServerStopSignalValid(),
                 LceGetMonotonicMilliseconds());
+            ObserveNativeDedicatedServerHostedGameSessionActivity(
+                state.acceptedConnections,
+                state.remoteCommands,
+                worldActionIdle);
             const DedicatedServerHostedGameRuntimeSnapshot runtimeSnapshot =
                 GetDedicatedServerHostedGameRuntimeSnapshot();
             if (runtimeSnapshot.startAttempted)
