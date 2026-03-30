@@ -12,6 +12,21 @@
 
 namespace ServerRuntime
 {
+    void ActivateDedicatedServerHostedGamePlan(
+        const DedicatedServerHostedGamePlan &hostedGamePlan)
+    {
+        g_NetworkManager.HostGame(
+            hostedGamePlan.localUsersMask,
+            hostedGamePlan.onlineGame,
+            hostedGamePlan.privateGame,
+            hostedGamePlan.publicSlots,
+            hostedGamePlan.privateSlots);
+        if (hostedGamePlan.fakeLocalPlayerJoined)
+        {
+            g_NetworkManager.FakeLocalPlayerJoined();
+        }
+    }
+
     DedicatedServerHostedGameThreadProc
         *GetDedicatedServerHostedGameRuntimeThreadProc()
     {
@@ -32,16 +47,7 @@ namespace ServerRuntime
             return startupResult;
         }
 
-        g_NetworkManager.HostGame(
-            hostedGamePlan.localUsersMask,
-            hostedGamePlan.onlineGame,
-            hostedGamePlan.privateGame,
-            hostedGamePlan.publicSlots,
-            hostedGamePlan.privateSlots);
-        if (hostedGamePlan.fakeLocalPlayerJoined)
-        {
-            g_NetworkManager.FakeLocalPlayerJoined();
-        }
+        ActivateDedicatedServerHostedGamePlan(hostedGamePlan);
 
         C4JThread startThread(threadProc, threadParam, "RunNetworkGame");
         startThread.Run();

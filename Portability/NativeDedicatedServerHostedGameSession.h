@@ -15,6 +15,9 @@ namespace ServerRuntime
         bool loadedFromSave = false;
         bool payloadValidated = false;
         bool threadInvoked = false;
+        bool onlineGame = false;
+        bool privateGame = false;
+        bool fakeLocalPlayerJoined = false;
         std::string worldName;
         std::string worldSaveId;
         std::string savePath;
@@ -23,8 +26,11 @@ namespace ServerRuntime
         std::string bindIp;
         int startupResult = 0;
         int runtimePhase = 0;
+        int localUsersMask = 0;
         int configuredPort = 0;
         int listenerPort = 0;
+        unsigned int publicSlots = 0;
+        unsigned int privateSlots = 0;
         std::uint64_t payloadChecksum = 0;
         std::uint64_t sessionTicks = 0;
         std::uint64_t acceptedConnections = 0;
@@ -82,6 +88,14 @@ namespace ServerRuntime
         const std::string &bindIp,
         int configuredPort,
         int listenerPort);
+
+    void ObserveNativeDedicatedServerHostedGameSessionActivation(
+        int localUsersMask,
+        bool onlineGame,
+        bool privateGame,
+        unsigned int publicSlots,
+        unsigned int privateSlots,
+        bool fakeLocalPlayerJoined);
 
     void ObserveNativeDedicatedServerHostedGameSessionPlatformState(
         std::uint64_t autosaveRequests,

@@ -117,10 +117,19 @@ namespace ServerRuntime
                 static_cast<std::uint64_t>(state->snapshot.runtimePhase));
             checksum = MixNativeHostedSessionHash(
                 checksum,
+                static_cast<std::uint64_t>(state->snapshot.localUsersMask));
+            checksum = MixNativeHostedSessionHash(
+                checksum,
                 static_cast<std::uint64_t>(state->snapshot.configuredPort));
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 static_cast<std::uint64_t>(state->snapshot.listenerPort));
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.publicSlots);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.privateSlots);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.payloadChecksum);
@@ -172,6 +181,15 @@ namespace ServerRuntime
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.threadInvoked ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.onlineGame ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.privateGame ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.fakeLocalPlayerJoined ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.active ? 1U : 0U);
@@ -340,6 +358,27 @@ namespace ServerRuntime
         g_nativeHostedSessionState.snapshot.bindIp = bindIp;
         g_nativeHostedSessionState.snapshot.configuredPort = configuredPort;
         g_nativeHostedSessionState.snapshot.listenerPort = listenerPort;
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionActivation(
+        int localUsersMask,
+        bool onlineGame,
+        bool privateGame,
+        unsigned int publicSlots,
+        unsigned int privateSlots,
+        bool fakeLocalPlayerJoined)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.localUsersMask =
+            localUsersMask;
+        g_nativeHostedSessionState.snapshot.onlineGame = onlineGame;
+        g_nativeHostedSessionState.snapshot.privateGame = privateGame;
+        g_nativeHostedSessionState.snapshot.publicSlots = publicSlots;
+        g_nativeHostedSessionState.snapshot.privateSlots = privateSlots;
+        g_nativeHostedSessionState.snapshot.fakeLocalPlayerJoined =
+            fakeLocalPlayerJoined;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }

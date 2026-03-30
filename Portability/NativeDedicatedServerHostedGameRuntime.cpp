@@ -16,6 +16,11 @@ namespace ServerRuntime
 {
     void ResetNativeDedicatedServerHostedGameSessionCoreState();
 
+    void ActivateDedicatedServerHostedGamePlan(
+        const DedicatedServerHostedGamePlan &)
+    {
+    }
+
     namespace
     {
         constexpr std::uint64_t kNativeHostedStartupStepDelayMs = 5;
@@ -266,6 +271,13 @@ namespace ServerRuntime
         if (usePersistentNativeSession)
         {
             ResetNativeDedicatedServerHostedGameSessionState();
+            ObserveNativeDedicatedServerHostedGameSessionActivation(
+                hostedGamePlan.localUsersMask,
+                hostedGamePlan.onlineGame,
+                hostedGamePlan.privateGame,
+                hostedGamePlan.publicSlots,
+                hostedGamePlan.privateSlots,
+                hostedGamePlan.fakeLocalPlayerJoined);
             g_nativeHostedStartupReadyEvent = CreateEvent(
                 nullptr,
                 TRUE,
@@ -280,6 +292,8 @@ namespace ServerRuntime
                     false);
             }
         }
+
+        ActivateDedicatedServerHostedGamePlan(hostedGamePlan);
 
         NativeDedicatedServerHostedGameThreadContext threadContext = {};
         threadContext.threadProc = threadProc;

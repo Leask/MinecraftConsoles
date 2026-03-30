@@ -1651,6 +1651,13 @@ int main(int argc, char* argv[])
         hostedGameSessionContext.bindIp,
         hostedGameSessionContext.configuredPort,
         hostedGameSessionContext.listenerPort);
+    ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivation(
+        0,
+        true,
+        false,
+        sessionConfig.networkMaxPlayers,
+        0,
+        true);
     ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionStartupResult(
         0,
         true);
@@ -1766,6 +1773,13 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.bindIp == "127.0.0.1" &&
         nativeHostedSessionObservedSnapshot.threadInvoked &&
         nativeHostedSessionObservedSnapshot.startupResult == 0 &&
+        nativeHostedSessionObservedSnapshot.localUsersMask == 0 &&
+        nativeHostedSessionObservedSnapshot.onlineGame &&
+        !nativeHostedSessionObservedSnapshot.privateGame &&
+        nativeHostedSessionObservedSnapshot.publicSlots ==
+            sessionConfig.networkMaxPlayers &&
+        nativeHostedSessionObservedSnapshot.privateSlots == 0 &&
+        nativeHostedSessionObservedSnapshot.fakeLocalPlayerJoined &&
         nativeHostedSessionObservedSnapshot.configuredPort == 25565 &&
         nativeHostedSessionObservedSnapshot.listenerPort == 19132 &&
         nativeHostedSessionObservedSnapshot.acceptedConnections == 2 &&
@@ -2787,6 +2801,13 @@ int main(int argc, char* argv[])
             nativeHostedSessionCoreSnapshot.startupResult == 0 &&
             nativeHostedSessionCoreSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
+            nativeHostedSessionCoreSnapshot.localUsersMask == 0 &&
+            nativeHostedSessionCoreSnapshot.onlineGame &&
+            !nativeHostedSessionCoreSnapshot.privateGame &&
+            nativeHostedSessionCoreSnapshot.publicSlots ==
+                sessionConfig.networkMaxPlayers &&
+            nativeHostedSessionCoreSnapshot.privateSlots == 0 &&
+            nativeHostedSessionCoreSnapshot.fakeLocalPlayerJoined &&
             nativeHostedSessionCoreSnapshot.saveGeneration == 11U &&
             nativeHostedSessionCoreSnapshot.startupThreadIterations == 4U &&
             nativeHostedSessionCoreSnapshot.startupThreadDurationMs > 0U &&
