@@ -19,6 +19,7 @@ namespace
         std::wstring title;
         std::wstring filename;
         bool hasStubMetadata = false;
+        bool isCorrupt = false;
         ServerRuntime::NativeDedicatedServerSaveStub saveStub = {};
     };
 
@@ -142,6 +143,14 @@ namespace
                                 stub.levelId);
                     }
                 }
+                else
+                {
+                    saveEntry.isCorrupt = true;
+                }
+            }
+            else
+            {
+                saveEntry.isCorrupt = true;
             }
 
             context->entries.push_back(saveEntry);
@@ -255,13 +264,14 @@ namespace
             return false;
         }
 
+        const NativeDedicatedServerWorldLoadStorageEntry &matchedEntry =
+            storageContext->entries[(size_t)storageContext->matchedIndex];
         if (outIsCorrupt != nullptr)
         {
-            *outIsCorrupt = false;
+            *outIsCorrupt = matchedEntry.isCorrupt;
         }
 
-        return std::filesystem::is_regular_file(
-            storageContext->entries[storageContext->matchedIndex].path);
+        return std::filesystem::is_regular_file(matchedEntry.path);
     }
 
     static bool ReadNativeDedicatedServerWorldSaveBytes(

@@ -38,9 +38,8 @@ endif()
 
 set(combined_output "${corrupt_output}\n${corrupt_error}")
 foreach(expected_marker IN ITEMS
-    "native world bootstrap=loaded level-id=world"
-    "native stub runtime prepared loaded save payload"
-    "Failed to start native dedicated server (code -2).")
+    "failed to load matched world save"
+    "native world bootstrap failed")
   string(FIND "${combined_output}" "${expected_marker}" marker_index)
   if(marker_index LESS 0)
     message(FATAL_ERROR

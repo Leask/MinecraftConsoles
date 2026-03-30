@@ -23,6 +23,8 @@
 
 namespace
 {
+    static constexpr int kDedicatedServerStartupFailureExitCode = 4;
+
     struct DedicatedServerHeadlessRunHooksContext
     {
         ServerRuntime::DedicatedServerBootstrapContext *bootstrapContext =
@@ -629,7 +631,7 @@ namespace
             ServerRuntime::LogError(
                 "startup",
                 "native world bootstrap failed");
-            result.exitCode = 11;
+            result.exitCode = kDedicatedServerStartupFailureExitCode;
             return result;
         }
 

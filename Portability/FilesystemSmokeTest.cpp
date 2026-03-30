@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
@@ -1097,6 +1098,10 @@ int main(int argc, char* argv[])
     bool nativeLoadedWorldManagerDirectoryReady = false;
     bool nativeLoadedWorldManagerStorageRootReady = false;
     bool nativeLoadedWorldManagerPayloadCopied = false;
+    ServerRuntime::WorldBootstrapResult
+        nativeCorruptWorldManagerBootstrap = {};
+    bool nativeCorruptWorldManagerDirectoryReady = false;
+    bool nativeCorruptWorldManagerStorageRootReady = false;
     {
         ScopedCurrentDirectory directoryGuard(
             "build/portability-world-manager-loaded-smoke");
@@ -1104,17 +1109,38 @@ int main(int argc, char* argv[])
         if (nativeLoadedWorldManagerDirectoryReady)
         {
             std::filesystem::create_directories("NativeDesktop/GameHDD");
-            const unsigned char loadedWorldBytes[] = {5, 4, 3, 2};
+            ServerRuntime::NativeDedicatedServerSaveStub
+                loadedWorldSaveStub = {};
+            loadedWorldSaveStub.worldName = "Native Loaded World";
+            loadedWorldSaveStub.levelId = "NATIVE_LOADED_WORLD";
+            loadedWorldSaveStub.startupMode = "loaded";
+            loadedWorldSaveStub.sessionPhase = "running";
+            loadedWorldSaveStub.payloadName = "NATIVE_LOADED_WORLD";
+            loadedWorldSaveStub.payloadBytes = 128;
+            loadedWorldSaveStub.payloadChecksum = 0x1020304050607080ULL;
+            loadedWorldSaveStub.sessionActive = true;
+            loadedWorldSaveStub.worldActionIdle = true;
+            loadedWorldSaveStub.startupPayloadPresent = true;
+            loadedWorldSaveStub.startupPayloadValidated = true;
+            std::string loadedWorldSaveText;
+            const bool loadedWorldSaveTextBuilt =
+                ServerRuntime::BuildNativeDedicatedServerSaveStubText(
+                    loadedWorldSaveStub,
+                    &loadedWorldSaveText);
             std::FILE *loadedWorldFile = std::fopen(
                 "NativeDesktop/GameHDD/NATIVE_LOADED_WORLD.save",
                 "wb");
-            if (loadedWorldFile != nullptr)
+            if (loadedWorldFile != nullptr && loadedWorldSaveTextBuilt)
             {
                 std::fwrite(
-                    loadedWorldBytes,
-                    sizeof(loadedWorldBytes[0]),
-                    sizeof(loadedWorldBytes),
+                    loadedWorldSaveText.data(),
+                    sizeof(loadedWorldSaveText[0]),
+                    loadedWorldSaveText.size(),
                     loadedWorldFile);
+                std::fclose(loadedWorldFile);
+            }
+            else if (loadedWorldFile != nullptr)
+            {
                 std::fclose(loadedWorldFile);
             }
 
@@ -1136,16 +1162,59 @@ int main(int argc, char* argv[])
                 const unsigned char *payloadBytes =
                     static_cast<const unsigned char *>(
                         nativeLoadedWorldManagerBootstrap.saveData->data);
+                const std::vector<unsigned char> loadedPayloadBytes(
+                    loadedWorldSaveText.begin(),
+                    loadedWorldSaveText.end());
                 nativeLoadedWorldManagerPayloadCopied =
-                    nativeLoadedWorldManagerBootstrap.saveData->fileSize == 4 &&
+                    nativeLoadedWorldManagerBootstrap.saveData->fileSize ==
+                        (int)loadedPayloadBytes.size() &&
                     payloadBytes != nullptr &&
-                    payloadBytes[0] == 5 &&
+                    std::equal(
+                        loadedPayloadBytes.begin(),
+                        loadedPayloadBytes.end(),
+                        payloadBytes) &&
                     nativeLoadedWorldManagerBootstrap.saveData->saveName ==
-                        L"NATIVE_LOADED_WORLD";
+                        L"Native Loaded World";
                 ServerRuntime::DestroyLoadSaveDataThreadParam(
                     nativeLoadedWorldManagerBootstrap.saveData);
                 nativeLoadedWorldManagerBootstrap.saveData = nullptr;
             }
+        }
+    }
+    {
+        ScopedCurrentDirectory directoryGuard(
+            "build/portability-world-manager-corrupt-smoke");
+        nativeCorruptWorldManagerDirectoryReady = directoryGuard.IsActive();
+        if (nativeCorruptWorldManagerDirectoryReady)
+        {
+            std::filesystem::create_directories("NativeDesktop/GameHDD");
+            std::FILE *corruptWorldFile = std::fopen(
+                "NativeDesktop/GameHDD/NATIVE_CORRUPT_WORLD.save",
+                "wb");
+            if (corruptWorldFile != nullptr)
+            {
+                const char corruptWorldBytes[] = "not-a-native-save-stub";
+                std::fwrite(
+                    corruptWorldBytes,
+                    sizeof(corruptWorldBytes[0]),
+                    sizeof(corruptWorldBytes) - 1,
+                    corruptWorldFile);
+                std::fclose(corruptWorldFile);
+            }
+
+            ServerRuntime::ServerPropertiesConfig
+                nativeCorruptWorldManagerConfig = defaultWorldTargetProperties;
+            nativeCorruptWorldManagerConfig.worldName =
+                L"Native Corrupt World";
+            nativeCorruptWorldManagerConfig.worldSaveId =
+                "NATIVE_CORRUPT_WORLD";
+            nativeCorruptWorldManagerBootstrap =
+                ServerRuntime::BootstrapWorldForServer(
+                    nativeCorruptWorldManagerConfig,
+                    0,
+                    nullptr);
+            nativeCorruptWorldManagerStorageRootReady =
+                std::filesystem::exists("NativeDesktop/GameHDD");
         }
     }
     const bool shouldRunInitialSave =
@@ -2365,6 +2434,20 @@ int main(int argc, char* argv[])
         nativeLoadedWorldManagerPayloadCopied,
         nativeLoadedWorldManagerBootstrap.resolvedSaveId.c_str(),
         nativeLoadedWorldManagerStorageRootReady);
+    printf("world_manager_native_corrupt=%d dir=%d failed=%d save_data=%d "
+        "save_id=%s storage_root=%d\n",
+        nativeCorruptWorldManagerDirectoryReady &&
+            nativeCorruptWorldManagerBootstrap.status ==
+                ServerRuntime::eWorldBootstrap_Failed &&
+            nativeCorruptWorldManagerBootstrap.saveData == nullptr &&
+            nativeCorruptWorldManagerBootstrap.resolvedSaveId.empty() &&
+            nativeCorruptWorldManagerStorageRootReady,
+        nativeCorruptWorldManagerDirectoryReady,
+        nativeCorruptWorldManagerBootstrap.status ==
+            ServerRuntime::eWorldBootstrap_Failed,
+        nativeCorruptWorldManagerBootstrap.saveData == nullptr,
+        nativeCorruptWorldManagerBootstrap.resolvedSaveId.c_str(),
+        nativeCorruptWorldManagerStorageRootReady);
     printf("startup_execution=%d dir=%d aborted=%d failed_abort=%d "
         "failed_code=%d\n",
         startupExecutionDirectoryReady &&
@@ -3162,6 +3245,12 @@ int main(int argc, char* argv[])
         nativeLoadedWorldManagerBootstrap.resolvedSaveId ==
             "NATIVE_LOADED_WORLD" &&
         nativeLoadedWorldManagerStorageRootReady &&
+        nativeCorruptWorldManagerDirectoryReady &&
+        nativeCorruptWorldManagerBootstrap.status ==
+            ServerRuntime::eWorldBootstrap_Failed &&
+        nativeCorruptWorldManagerBootstrap.saveData == nullptr &&
+        nativeCorruptWorldManagerBootstrap.resolvedSaveId.empty() &&
+        nativeCorruptWorldManagerStorageRootReady &&
         startupExecutionDirectoryReady &&
         !startupExecutionResult.abortedStartup &&
         startupExecutionResult.appSession.applied &&
