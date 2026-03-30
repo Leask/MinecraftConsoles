@@ -598,16 +598,7 @@ namespace
             ServerRuntime::IsDedicatedServerAppShutdownRequested(),
             ServerRuntime::IsDedicatedServerGameplayHalted(),
             ServerRuntime::IsDedicatedServerStopSignalValid());
-        ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
-            context->shellState.acceptedConnections,
-            context->shellState.remoteCommands,
-            ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
-            ServerRuntime::GetDedicatedServerAutosaveCompletionCount(),
-            ServerRuntime::GetDedicatedServerPlatformTickCount(),
-            worldActionIdle,
-            ServerRuntime::IsDedicatedServerAppShutdownRequested(),
-            ServerRuntime::IsDedicatedServerGameplayHalted(),
-            ServerRuntime::IsDedicatedServerStopSignalValid(),
+        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
             now);
 
         if (context->options->shutdownAfterMs > 0)
@@ -984,16 +975,7 @@ namespace ServerRuntime
             ServerRuntime::IsDedicatedServerAppShutdownRequested(),
             ServerRuntime::IsDedicatedServerGameplayHalted(),
             ServerRuntime::IsDedicatedServerStopSignalValid());
-        ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
-            shellHooksContext.shellState.acceptedConnections,
-            shellHooksContext.shellState.remoteCommands,
-            ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
-            ServerRuntime::GetDedicatedServerAutosaveCompletionCount(),
-            ServerRuntime::GetDedicatedServerPlatformTickCount(),
-            ServerRuntime::IsDedicatedServerWorldActionIdle(0),
-            ServerRuntime::IsDedicatedServerAppShutdownRequested(),
-            ServerRuntime::IsDedicatedServerGameplayHalted(),
-            ServerRuntime::IsDedicatedServerStopSignalValid(),
+        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
             LceGetMonotonicMilliseconds());
 
         ServerRuntime::MarkDedicatedServerHostedGameRuntimeSessionStopped(

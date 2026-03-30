@@ -170,6 +170,12 @@ namespace ServerRuntime
         ENativeDedicatedServerHostedGameWorkerCommandKind
             lastProcessedCommandKind);
 
+    void ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
+        const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot);
+
+    void ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+        std::uint64_t nowMs = 0);
+
     void StopNativeDedicatedServerHostedGameSession();
 
     bool IsNativeDedicatedServerHostedGameSessionRunning();

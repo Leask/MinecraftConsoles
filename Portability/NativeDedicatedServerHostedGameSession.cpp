@@ -756,6 +756,83 @@ namespace ServerRuntime
             &g_nativeHostedSessionState);
     }
 
+    void ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
+        const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionWorkerState(
+            workerSnapshot.pendingWorldActionTicks,
+            workerSnapshot.pendingAutosaveCommands,
+            workerSnapshot.pendingSaveCommands,
+            workerSnapshot.pendingStopCommands,
+            workerSnapshot.pendingHaltCommands,
+            workerSnapshot.workerTickCount,
+            workerSnapshot.completedWorldActions,
+            workerSnapshot.processedAutosaveCommands,
+            workerSnapshot.processedSaveCommands,
+            workerSnapshot.processedStopCommands,
+            workerSnapshot.processedHaltCommands,
+            workerSnapshot.lastQueuedCommandId,
+            workerSnapshot.activeCommandId,
+            workerSnapshot.activeCommandTicksRemaining,
+            workerSnapshot.activeCommandKind,
+            workerSnapshot.lastProcessedCommandId,
+            workerSnapshot.lastProcessedCommandKind);
+    }
+
+    void ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+        std::uint64_t nowMs)
+    {
+        NativeDedicatedServerHostedGameSessionSnapshot snapshot = {};
+        {
+            std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+            snapshot = g_nativeHostedSessionState.snapshot;
+        }
+
+        if (nowMs != 0)
+        {
+            UpdateDedicatedServerHostedGameRuntimeSessionState(
+                snapshot.acceptedConnections,
+                snapshot.remoteCommands,
+                snapshot.autosaveRequests,
+                snapshot.observedAutosaveCompletions,
+                snapshot.platformTickCount,
+                snapshot.worldActionIdle,
+                snapshot.appShutdownRequested,
+                snapshot.gameplayHalted,
+                snapshot.stopSignalValid,
+                nowMs);
+        }
+        RecordDedicatedServerHostedGameRuntimeWorkerState(
+            snapshot.workerPendingWorldActionTicks,
+            snapshot.workerPendingAutosaveCommands,
+            snapshot.workerPendingSaveCommands,
+            snapshot.workerPendingStopCommands,
+            snapshot.workerPendingHaltCommands,
+            snapshot.workerTickCount,
+            snapshot.completedWorkerActions,
+            snapshot.processedAutosaveCommands,
+            snapshot.processedSaveCommands,
+            snapshot.processedStopCommands,
+            snapshot.processedHaltCommands,
+            snapshot.lastQueuedCommandId,
+            snapshot.activeCommandId,
+            snapshot.activeCommandTicksRemaining,
+            (unsigned int)snapshot.activeCommandKind,
+            snapshot.lastProcessedCommandId,
+            (unsigned int)snapshot.lastProcessedCommandKind);
+        RecordDedicatedServerHostedGameRuntimeThreadState(
+            snapshot.hostedThreadActive,
+            snapshot.hostedThreadTicks);
+        RecordDedicatedServerHostedGameRuntimeGameplayLoopIteration(
+            snapshot.gameplayLoopIterations);
+        RecordDedicatedServerHostedGameRuntimeCoreState(
+            snapshot.saveGeneration,
+            snapshot.stateChecksum);
+        RecordDedicatedServerHostedGameRuntimeCoreLifecycle(
+            snapshot.active,
+            (EDedicatedServerHostedGameRuntimePhase)snapshot.runtimePhase);
+    }
+
     void StopNativeDedicatedServerHostedGameSession()
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);

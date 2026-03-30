@@ -45,52 +45,9 @@ namespace
         const ServerRuntime::NativeDedicatedServerHostedGameWorkerSnapshot
             workerSnapshot =
                 ServerRuntime::GetNativeDedicatedServerHostedGameWorkerSnapshot();
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionWorkerState(
-            workerSnapshot.pendingWorldActionTicks,
-            workerSnapshot.pendingAutosaveCommands,
-            workerSnapshot.pendingSaveCommands,
-            workerSnapshot.pendingStopCommands,
-            workerSnapshot.pendingHaltCommands,
-            workerSnapshot.workerTickCount,
-            workerSnapshot.completedWorldActions,
-            workerSnapshot.processedAutosaveCommands,
-            workerSnapshot.processedSaveCommands,
-            workerSnapshot.processedStopCommands,
-            workerSnapshot.processedHaltCommands,
-            workerSnapshot.lastQueuedCommandId,
-            workerSnapshot.activeCommandId,
-            workerSnapshot.activeCommandTicksRemaining,
-            workerSnapshot.activeCommandKind,
-            workerSnapshot.lastProcessedCommandId,
-            workerSnapshot.lastProcessedCommandKind);
-        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
-            sessionSnapshot =
-                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
-        ServerRuntime::RecordDedicatedServerHostedGameRuntimeWorkerState(
-            sessionSnapshot.workerPendingWorldActionTicks,
-            sessionSnapshot.workerPendingAutosaveCommands,
-            sessionSnapshot.workerPendingSaveCommands,
-            sessionSnapshot.workerPendingStopCommands,
-            sessionSnapshot.workerPendingHaltCommands,
-            sessionSnapshot.workerTickCount,
-            sessionSnapshot.completedWorkerActions,
-            sessionSnapshot.processedAutosaveCommands,
-            sessionSnapshot.processedSaveCommands,
-            sessionSnapshot.processedStopCommands,
-            sessionSnapshot.processedHaltCommands,
-            sessionSnapshot.lastQueuedCommandId,
-            sessionSnapshot.activeCommandId,
-            sessionSnapshot.activeCommandTicksRemaining,
-            (unsigned int)sessionSnapshot.activeCommandKind,
-            sessionSnapshot.lastProcessedCommandId,
-            (unsigned int)sessionSnapshot.lastProcessedCommandKind);
-        ServerRuntime::RecordDedicatedServerHostedGameRuntimeCoreState(
-            sessionSnapshot.saveGeneration,
-            sessionSnapshot.stateChecksum);
-        ServerRuntime::RecordDedicatedServerHostedGameRuntimeCoreLifecycle(
-            sessionSnapshot.active,
-            (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
-                sessionSnapshot.runtimePhase);
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
+            workerSnapshot);
+        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot();
     }
 }
 
@@ -141,25 +98,8 @@ namespace ServerRuntime
         ObserveNativeDedicatedServerHostedGameSessionPlatformState(
             GetDedicatedServerAutosaveRequestCount(),
             GetDedicatedServerPlatformTickCount());
-        const NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot =
-            GetNativeDedicatedServerHostedGameSessionSnapshot();
-        UpdateDedicatedServerHostedGameRuntimeSessionState(
-            sessionSnapshot.acceptedConnections,
-            sessionSnapshot.remoteCommands,
-            sessionSnapshot.autosaveRequests,
-            sessionSnapshot.observedAutosaveCompletions,
-            sessionSnapshot.platformTickCount,
-            sessionSnapshot.worldActionIdle,
-            sessionSnapshot.appShutdownRequested,
-            sessionSnapshot.gameplayHalted,
-            sessionSnapshot.stopSignalValid,
+        ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
             LceGetMonotonicMilliseconds());
-        RecordDedicatedServerHostedGameRuntimeCoreState(
-            sessionSnapshot.saveGeneration,
-            sessionSnapshot.stateChecksum);
-        RecordDedicatedServerHostedGameRuntimeThreadState(
-            sessionSnapshot.hostedThreadActive,
-            sessionSnapshot.hostedThreadTicks);
     }
 
     void HandleDedicatedServerPlatformActions()
