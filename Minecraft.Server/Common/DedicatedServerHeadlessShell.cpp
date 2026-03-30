@@ -111,6 +111,9 @@ namespace
         const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
             runtimeSnapshot =
                 ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+            sessionCoreSnapshot =
+                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
         if (runtimeSnapshot.startAttempted)
         {
             std::snprintf(
@@ -181,6 +184,20 @@ namespace
             std::snprintf(
                 buffer,
                 sizeof(buffer),
+                "status worker pending=%llu ticks=%llu completed=%llu "
+                "core-checksum=0x%016llx",
+                (unsigned long long)
+                    sessionCoreSnapshot.workerPendingWorldActionTicks,
+                (unsigned long long)
+                    sessionCoreSnapshot.workerTickCount,
+                (unsigned long long)
+                    sessionCoreSnapshot.completedWorkerActions,
+                (unsigned long long)sessionCoreSnapshot.stateChecksum);
+            AppendResponseLine(response, buffer);
+
+            std::snprintf(
+                buffer,
+                sizeof(buffer),
                 "status run initial-save=%s/%s/%s session-completed=%s "
                 "app-shutdown=%s shutdown-halted=%s gameplay-iterations=%llu",
                 runtimeSnapshot.initialSaveRequested ? "requested" : "skipped",
@@ -216,7 +233,9 @@ namespace
                     sizeof(buffer),
                     "status loaded-save path=%s startup=%s phase=%s "
                     "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu "
-                    "completed=%s app-shutdown=%s shutdown-halted=%s "
+                    "worker-pending=%llu worker-ticks=%llu "
+                    "worker-completions=%llu completed=%s "
+                    "app-shutdown=%s shutdown-halted=%s "
                     "gameplay-iterations=%llu hosted-thread=%s "
                     "thread-ticks=%llu",
                     runtimeSnapshot.loadedSavePath.c_str(),
@@ -229,6 +248,13 @@ namespace
                     (unsigned long long)
                         runtimeSnapshot.previousPlatformTickCount,
                     (unsigned long long)runtimeSnapshot.previousUptimeMs,
+                    (unsigned long long)
+                        runtimeSnapshot
+                            .previousWorkerPendingWorldActionTicks,
+                    (unsigned long long)
+                        runtimeSnapshot.previousWorkerTickCount,
+                    (unsigned long long)
+                        runtimeSnapshot.previousCompletedWorkerActions,
                     runtimeSnapshot.previousSessionCompleted ? "true" : "false",
                     runtimeSnapshot.previousRequestedAppShutdown
                         ? "true"
@@ -500,6 +526,9 @@ namespace ServerRuntime
                 worldActionIdle);
             const DedicatedServerHostedGameRuntimeSnapshot runtimeSnapshot =
                 GetDedicatedServerHostedGameRuntimeSnapshot();
+            const NativeDedicatedServerHostedGameSessionSnapshot
+                sessionCoreSnapshot =
+                    GetNativeDedicatedServerHostedGameSessionSnapshot();
             if (runtimeSnapshot.startAttempted)
             {
                 LogInfof(
@@ -571,6 +600,19 @@ namespace ServerRuntime
 
                 LogInfof(
                     "console",
+                    "status worker pending=%llu ticks=%llu completed=%llu "
+                    "core-checksum=0x%016llx",
+                    (unsigned long long)
+                        sessionCoreSnapshot.workerPendingWorldActionTicks,
+                    (unsigned long long)
+                        sessionCoreSnapshot.workerTickCount,
+                    (unsigned long long)
+                        sessionCoreSnapshot.completedWorkerActions,
+                    (unsigned long long)
+                        sessionCoreSnapshot.stateChecksum);
+
+                LogInfof(
+                    "console",
                     "status run initial-save=%s/%s/%s session-completed=%s "
                     "app-shutdown=%s shutdown-halted=%s gameplay-iterations=%llu",
                     runtimeSnapshot.initialSaveRequested
@@ -609,7 +651,9 @@ namespace ServerRuntime
                         "console",
                         "status loaded-save path=%s startup=%s phase=%s "
                         "remote=%llu autosaves=%llu ticks=%llu uptime-ms=%llu "
-                        "completed=%s app-shutdown=%s shutdown-halted=%s "
+                        "worker-pending=%llu worker-ticks=%llu "
+                        "worker-completions=%llu completed=%s "
+                        "app-shutdown=%s shutdown-halted=%s "
                         "gameplay-iterations=%llu hosted-thread=%s "
                         "thread-ticks=%llu",
                         runtimeSnapshot.loadedSavePath.c_str(),
@@ -623,6 +667,13 @@ namespace ServerRuntime
                             runtimeSnapshot.previousPlatformTickCount,
                         (unsigned long long)
                             runtimeSnapshot.previousUptimeMs,
+                        (unsigned long long)
+                            runtimeSnapshot
+                                .previousWorkerPendingWorldActionTicks,
+                        (unsigned long long)
+                            runtimeSnapshot.previousWorkerTickCount,
+                        (unsigned long long)
+                            runtimeSnapshot.previousCompletedWorkerActions,
                         runtimeSnapshot.previousSessionCompleted
                             ? "true"
                             : "false",

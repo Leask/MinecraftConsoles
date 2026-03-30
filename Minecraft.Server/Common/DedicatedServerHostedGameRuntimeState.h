@@ -77,6 +77,9 @@ namespace ServerRuntime
         std::uint64_t previousHostedThreadTicks = 0;
         std::uint64_t previousRemoteCommands = 0;
         std::uint64_t previousAutosaveCompletions = 0;
+        std::uint64_t previousWorkerPendingWorldActionTicks = 0;
+        std::uint64_t previousWorkerTickCount = 0;
+        std::uint64_t previousCompletedWorkerActions = 0;
         std::uint64_t previousPlatformTickCount = 0;
         std::uint64_t previousUptimeMs = 0;
         std::uint64_t previousGameplayLoopIterations = 0;

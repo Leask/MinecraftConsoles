@@ -37,6 +37,9 @@ namespace ServerRuntime
         std::uint64_t remoteCommands = 0;
         std::uint64_t autosaveRequests = 0;
         std::uint64_t observedAutosaveCompletions = 0;
+        std::uint64_t workerPendingWorldActionTicks = 0;
+        std::uint64_t workerTickCount = 0;
+        std::uint64_t completedWorkerActions = 0;
         std::uint64_t gameplayLoopIterations = 0;
         std::uint64_t platformTickCount = 0;
         std::uint64_t saveGeneration = 0;
@@ -129,6 +132,11 @@ namespace ServerRuntime
     void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
         std::uint64_t startupThreadIterations,
         std::uint64_t startupThreadDurationMs);
+
+    void ObserveNativeDedicatedServerHostedGameSessionWorkerState(
+        std::uint64_t pendingWorldActionTicks,
+        std::uint64_t workerTickCount,
+        std::uint64_t completedWorkerActions);
 
     void StopNativeDedicatedServerHostedGameSession();
 

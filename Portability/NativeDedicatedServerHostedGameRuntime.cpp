@@ -90,6 +90,13 @@ namespace ServerRuntime
 
         void RecordNativeDedicatedServerHostedThreadSnapshot()
         {
+            const NativeDedicatedServerHostedGameWorkerSnapshot
+                workerSnapshot =
+                    GetNativeDedicatedServerHostedGameWorkerSnapshot();
+            ObserveNativeDedicatedServerHostedGameSessionWorkerState(
+                workerSnapshot.pendingWorldActionTicks,
+                workerSnapshot.workerTickCount,
+                workerSnapshot.completedWorldActions);
             const NativeDedicatedServerHostedGameSessionSnapshot
                 sessionSnapshot =
                     GetNativeDedicatedServerHostedGameSessionSnapshot();

@@ -77,6 +77,9 @@ foreach(expected_save_marker IN ITEMS
     "session-active=false"
     "session-completed=true"
     "world-action=idle"
+    "worker-pending-ticks="
+    "worker-ticks="
+    "worker-completions="
     "tick-count="
     "gameplay-iterations="
     "autosave-completions=")
@@ -232,6 +235,9 @@ foreach(expected_reloaded_save_marker IN ITEMS
     "startup-thread-duration-ms="
     "hosted-thread-active=false"
     "hosted-thread-ticks="
+    "worker-pending-ticks="
+    "worker-ticks="
+    "worker-completions="
     "session-completed=true")
   string(FIND
     "${reloaded_saved_world_text}"

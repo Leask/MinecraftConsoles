@@ -344,6 +344,9 @@ namespace
         const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
             runtimeSnapshot =
                 ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+            sessionCoreSnapshot =
+                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
         saveStub.worldName = runtimeSnapshot.worldName.empty()
             ? context->shellContext.worldName
             : runtimeSnapshot.worldName;
@@ -377,6 +380,12 @@ namespace
         saveStub.remoteCommands = runtimeSnapshot.remoteCommands;
         saveStub.autosaveRequests = runtimeSnapshot.autosaveRequests;
         saveStub.autosaveCompletions = runtimeSnapshot.autosaveCompletions;
+        saveStub.workerPendingWorldActionTicks =
+            sessionCoreSnapshot.workerPendingWorldActionTicks;
+        saveStub.workerTickCount =
+            sessionCoreSnapshot.workerTickCount;
+        saveStub.completedWorkerActions =
+            sessionCoreSnapshot.completedWorkerActions;
         saveStub.platformTickCount = runtimeSnapshot.platformTickCount;
         saveStub.uptimeMs = runtimeSnapshot.uptimeMs;
         saveStub.initialSaveRequested = runtimeSnapshot.initialSaveRequested;
@@ -698,8 +707,10 @@ namespace
                     "payload-checksum=0x%016llx save-generation=%llu "
                     "state-checksum=0x%016llx startup-payload=%s "
                     "validated=%s startup-steps=%llu startup-ms=%llu "
-                    "remote=%llu autosaves=%llu ticks=%llu uptime=%llu "
-                    "completed=%s app-shutdown=%s shutdown-halted=%s "
+                    "remote=%llu autosaves=%llu worker-pending=%llu "
+                    "worker-ticks=%llu worker-completions=%llu "
+                    "ticks=%llu uptime=%llu completed=%s "
+                    "app-shutdown=%s shutdown-halted=%s "
                     "gameplay-iterations=%llu hosted-thread=%s "
                     "hosted-thread-ticks=%llu",
                     loadedSaveMetadata.savePath.c_str(),
@@ -739,6 +750,14 @@ namespace
                         loadedSaveMetadata.saveStub.remoteCommands,
                     (unsigned long long)
                         loadedSaveMetadata.saveStub.autosaveCompletions,
+                    (unsigned long long)
+                        loadedSaveMetadata.saveStub
+                            .workerPendingWorldActionTicks,
+                    (unsigned long long)
+                        loadedSaveMetadata.saveStub.workerTickCount,
+                    (unsigned long long)
+                        loadedSaveMetadata.saveStub
+                            .completedWorkerActions,
                     (unsigned long long)
                         loadedSaveMetadata.saveStub.platformTickCount,
                     (unsigned long long)

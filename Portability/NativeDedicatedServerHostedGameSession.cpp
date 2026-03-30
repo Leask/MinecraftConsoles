@@ -141,6 +141,15 @@ namespace ServerRuntime
                 state->snapshot.observedAutosaveCompletions);
             checksum = MixNativeHostedSessionHash(
                 checksum,
+                state->snapshot.workerPendingWorldActionTicks);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.workerTickCount);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.completedWorkerActions);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
                 state->snapshot.acceptedConnections);
             checksum = MixNativeHostedSessionHash(
                 checksum,
@@ -495,6 +504,22 @@ namespace ServerRuntime
             startupThreadIterations;
         g_nativeHostedSessionState.snapshot.startupThreadDurationMs =
             startupThreadDurationMs;
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionWorkerState(
+        std::uint64_t pendingWorldActionTicks,
+        std::uint64_t workerTickCount,
+        std::uint64_t completedWorkerActions)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.workerPendingWorldActionTicks =
+            pendingWorldActionTicks;
+        g_nativeHostedSessionState.snapshot.workerTickCount =
+            workerTickCount;
+        g_nativeHostedSessionState.snapshot.completedWorkerActions =
+            completedWorkerActions;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }

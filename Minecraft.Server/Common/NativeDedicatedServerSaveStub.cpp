@@ -182,6 +182,9 @@ namespace ServerRuntime
             "remote-commands=%llu\n"
             "autosave-requests=%llu\n"
             "autosave-completions=%llu\n"
+            "worker-pending-ticks=%llu\n"
+            "worker-ticks=%llu\n"
+            "worker-completions=%llu\n"
             "tick-count=%llu\n"
             "uptime-ms=%llu\n"
             "gameplay-iterations=%llu\n"
@@ -229,6 +232,9 @@ namespace ServerRuntime
             (unsigned long long)stub.remoteCommands,
             (unsigned long long)stub.autosaveRequests,
             (unsigned long long)stub.autosaveCompletions,
+            (unsigned long long)stub.workerPendingWorldActionTicks,
+            (unsigned long long)stub.workerTickCount,
+            (unsigned long long)stub.completedWorkerActions,
             (unsigned long long)stub.platformTickCount,
             (unsigned long long)stub.uptimeMs,
             (unsigned long long)stub.gameplayLoopIterations,
@@ -500,6 +506,24 @@ namespace ServerRuntime
                             ParseUnsignedLongLong(
                                 value,
                                 &outStub->autosaveCompletions);
+                        }
+                        else if (key == "worker-pending-ticks")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->workerPendingWorldActionTicks);
+                        }
+                        else if (key == "worker-ticks")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->workerTickCount);
+                        }
+                        else if (key == "worker-completions")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->completedWorkerActions);
                         }
                         else if (key == "tick-count")
                         {

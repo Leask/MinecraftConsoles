@@ -240,6 +240,17 @@ namespace ServerRuntime
                     .previousAutosaveCompletions =
                         loadedSaveMetadata.saveStub.autosaveCompletions;
                 g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousWorkerPendingWorldActionTicks =
+                        loadedSaveMetadata.saveStub
+                            .workerPendingWorldActionTicks;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousWorkerTickCount =
+                        loadedSaveMetadata.saveStub.workerTickCount;
+                g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousCompletedWorkerActions =
+                        loadedSaveMetadata.saveStub
+                            .completedWorkerActions;
+                g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousPlatformTickCount =
                         loadedSaveMetadata.saveStub.platformTickCount;
                 g_dedicatedServerHostedGameRuntimeSnapshot.previousUptimeMs =
