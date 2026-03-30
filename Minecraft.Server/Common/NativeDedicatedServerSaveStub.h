@@ -17,6 +17,7 @@ namespace ServerRuntime
         std::int64_t resolvedSeed = 0;
         std::int64_t payloadBytes = 0;
         std::uint64_t payloadChecksum = 0;
+        std::uint64_t saveGeneration = 0;
         std::uint32_t hostSettings = 0;
         bool dedicatedNoLocalHostPlayer = true;
         unsigned int worldSizeChunks = 0;

@@ -161,6 +161,11 @@ namespace ServerRuntime
                     .previousSavePayloadChecksum =
                         loadedSaveMetadata.saveStub.payloadChecksum;
                 g_dedicatedServerHostedGameRuntimeSnapshot
+                    .previousSaveGeneration =
+                        loadedSaveMetadata.saveStub.saveGeneration;
+                g_dedicatedServerHostedGameRuntimeSnapshot.saveGeneration =
+                    loadedSaveMetadata.saveStub.saveGeneration;
+                g_dedicatedServerHostedGameRuntimeSnapshot
                     .previousStartupPayloadPresent =
                         loadedSaveMetadata.saveStub.startupPayloadPresent;
                 g_dedicatedServerHostedGameRuntimeSnapshot
@@ -264,6 +269,10 @@ namespace ServerRuntime
         g_dedicatedServerHostedGameRuntimeSnapshot.autosaveRequests =
             autosaveRequests;
         g_dedicatedServerHostedGameRuntimeSnapshot.autosaveCompletions =
+            autosaveCompletions;
+        g_dedicatedServerHostedGameRuntimeSnapshot.saveGeneration =
+            g_dedicatedServerHostedGameRuntimeSnapshot
+                .previousSaveGeneration +
             autosaveCompletions;
         g_dedicatedServerHostedGameRuntimeSnapshot.platformTickCount =
             platformTickCount;

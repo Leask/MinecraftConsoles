@@ -1552,6 +1552,7 @@ int main(int argc, char* argv[])
     previousSaveStub.worldSizeChunks = 160U;
     previousSaveStub.worldHellScale = 3U;
     previousSaveStub.payloadChecksum = 0x123456789abcdef0ULL;
+    previousSaveStub.saveGeneration = 11U;
     ServerRuntime::RecordNativeDedicatedServerLoadedSaveMetadata(
         "NativeDesktop/GameHDD/SmokeSession.save",
         previousSaveStub);
@@ -1683,6 +1684,7 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.savePayloadBytes == 4 &&
         hostedGameSessionSnapshot.savePayloadChecksum ==
             fakeSaveChecksum &&
+        hostedGameSessionSnapshot.saveGeneration == 16U &&
         hostedGameSessionSnapshot.hostSettings ==
             sessionConfig.hostSettings &&
         hostedGameSessionSnapshot.dedicatedNoLocalHostPlayer &&
@@ -2690,6 +2692,7 @@ int main(int argc, char* argv[])
             nativeHostedStubSnapshot.hostedThreadActive &&
             nativeHostedStubSnapshot.loadedSaveMetadataAvailable &&
             nativeHostedStubSnapshot.previousStartupMode == "loaded" &&
+            nativeHostedStubSnapshot.previousSaveGeneration == 11U &&
             nativeHostedStubSnapshot.previousStartupPayloadPresent == false &&
             nativeHostedStubSnapshot.previousStartupPayloadValidated == false &&
             nativeHostedStubSnapshot.previousStartupThreadIterations == 0U &&
@@ -2758,6 +2761,7 @@ int main(int argc, char* argv[])
             hostedGameRuntimeSnapshot.previousWorldHellScale == 3U &&
             hostedGameRuntimeSnapshot.previousSavePayloadChecksum ==
                 0x123456789abcdef0ULL &&
+            hostedGameRuntimeSnapshot.previousSaveGeneration == 11U &&
             hostedGameRuntimeSnapshot.savePayloadChecksum ==
                 fakeSaveChecksum &&
             hostedGameRuntimeSnapshot.hostSettings ==

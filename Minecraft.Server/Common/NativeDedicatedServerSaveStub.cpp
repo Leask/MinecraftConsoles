@@ -149,6 +149,7 @@ namespace ServerRuntime
             "seed=%lld\n"
             "payload-bytes=%lld\n"
             "payload-checksum=%llu\n"
+            "save-generation=%llu\n"
             "host-settings=%u\n"
             "dedicated-no-local-player=%s\n"
             "world-size-chunks=%u\n"
@@ -190,6 +191,7 @@ namespace ServerRuntime
             (long long)stub.resolvedSeed,
             (long long)stub.payloadBytes,
             (unsigned long long)stub.payloadChecksum,
+            (unsigned long long)stub.saveGeneration,
             stub.hostSettings,
             stub.dedicatedNoLocalHostPlayer ? "true" : "false",
             stub.worldSizeChunks,
@@ -312,6 +314,12 @@ namespace ServerRuntime
                             ParseUnsignedLongLong(
                                 value,
                                 &outStub->payloadChecksum);
+                        }
+                        else if (key == "save-generation")
+                        {
+                            ParseUnsignedLongLong(
+                                value,
+                                &outStub->saveGeneration);
                         }
                         else if (key == "host-settings")
                         {
