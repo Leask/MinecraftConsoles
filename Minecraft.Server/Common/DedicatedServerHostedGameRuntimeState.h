@@ -166,6 +166,10 @@ namespace ServerRuntime
         bool hostedThreadActive,
         std::uint64_t hostedThreadTicks);
 
+    void RecordDedicatedServerHostedGameRuntimeCoreState(
+        std::uint64_t saveGeneration,
+        std::uint64_t sessionStateChecksum);
+
     void RecordDedicatedServerHostedGameRuntimeSessionSummary(
         const DedicatedServerHostedGameRuntimeSessionSummary &summary);
 

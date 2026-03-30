@@ -14,6 +14,8 @@
 
 namespace ServerRuntime
 {
+    void ResetNativeDedicatedServerHostedGameSessionCoreState();
+
     namespace
     {
         constexpr std::uint64_t kNativeHostedStartupStepDelayMs = 5;
@@ -22,7 +24,6 @@ namespace ServerRuntime
         HANDLE g_nativeHostedStartupReadyEvent = nullptr;
         HANDLE g_nativeHostedThreadHandle = nullptr;
         std::atomic<bool> g_nativeHostedThreadRunning(false);
-        std::atomic<std::uint64_t> g_nativeHostedThreadTicks(0);
 
         struct NativeDedicatedServerHostedGameThreadContext
         {
@@ -82,16 +83,21 @@ namespace ServerRuntime
 
         void RecordNativeDedicatedServerHostedThreadSnapshot()
         {
+            const NativeDedicatedServerHostedGameSessionSnapshot
+                sessionSnapshot =
+                    GetNativeDedicatedServerHostedGameSessionSnapshot();
             RecordDedicatedServerHostedGameRuntimeThreadState(
                 g_nativeHostedThreadRunning.load(),
-                g_nativeHostedThreadTicks.load());
+                sessionSnapshot.sessionTicks);
+            RecordDedicatedServerHostedGameRuntimeCoreState(
+                sessionSnapshot.saveGeneration,
+                sessionSnapshot.stateChecksum);
         }
 
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)
         {
             const std::uint64_t startMs = LceGetMonotonicMilliseconds();
             g_nativeHostedThreadRunning.store(false);
-            g_nativeHostedThreadTicks.store(0);
             NativeDedicatedServerHostedGameRuntimeStubInitData *initData =
                 static_cast<
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
@@ -124,6 +130,9 @@ namespace ServerRuntime
                 startupPayloadValidated,
                 startupIterations,
                 durationMs);
+            StartNativeDedicatedServerHostedGameSession(
+                *initData,
+                startupPayloadValidated);
             RecordNativeDedicatedServerHostedThreadSnapshot();
             if (!startupPayloadValidated)
             {
@@ -142,12 +151,13 @@ namespace ServerRuntime
                 !IsDedicatedServerAppShutdownRequested() &&
                 !IsDedicatedServerGameplayHalted())
             {
-                g_nativeHostedThreadTicks.fetch_add(1);
+                TickNativeDedicatedServerHostedGameSession();
                 RecordNativeDedicatedServerHostedThreadSnapshot();
                 LceSleepMilliseconds(10);
             }
 
             g_nativeHostedThreadRunning.store(false);
+            StopNativeDedicatedServerHostedGameSession();
             RecordNativeDedicatedServerHostedThreadSnapshot();
             return 0;
         }
@@ -168,17 +178,8 @@ namespace ServerRuntime
 
         CloseNativeDedicatedServerHostedStartupReadyEvent();
         g_nativeHostedThreadRunning.store(false);
-        g_nativeHostedThreadTicks.store(0);
-    }
-
-    bool IsNativeDedicatedServerHostedGameSessionRunning()
-    {
-        return g_nativeHostedThreadRunning.load();
-    }
-
-    std::uint64_t GetNativeDedicatedServerHostedGameSessionThreadTicks()
-    {
-        return g_nativeHostedThreadTicks.load();
+        ResetNativeDedicatedServerHostedGameSessionCoreState();
+        RecordNativeDedicatedServerHostedThreadSnapshot();
     }
 
     bool WaitForNativeDedicatedServerHostedGameSessionStop(

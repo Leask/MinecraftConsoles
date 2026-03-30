@@ -85,6 +85,13 @@ namespace ServerRuntime
         }
         UpdateDedicatedServerAutosaveTracker(
             g_nativeRuntimeState.pendingWorldActionTicks == 0);
+        ObserveNativeDedicatedServerHostedGameSessionAutosaves(
+            GetDedicatedServerAutosaveCompletionCount());
+        const NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot =
+            GetNativeDedicatedServerHostedGameSessionSnapshot();
+        RecordDedicatedServerHostedGameRuntimeCoreState(
+            sessionSnapshot.saveGeneration,
+            sessionSnapshot.stateChecksum);
         RecordDedicatedServerHostedGameRuntimeThreadState(
             IsNativeDedicatedServerHostedGameSessionRunning(),
             GetNativeDedicatedServerHostedGameSessionThreadTicks());

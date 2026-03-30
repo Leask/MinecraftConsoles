@@ -1575,6 +1575,9 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         nativeHostedStubSnapshot =
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+        nativeHostedSessionCoreSnapshot =
+            ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
     LceSleepMilliseconds(25);
     const std::uint64_t nativeHostedStubThreadTicks =
         ServerRuntime::GetNativeDedicatedServerHostedGameSessionThreadTicks();
@@ -1588,6 +1591,9 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         nativeHostedStubStoppedSnapshot =
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+        nativeHostedSessionCoreStoppedSnapshot =
+            ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
     const int hostedGameRuntimeNullThreadResult =
         ServerRuntime::StartDedicatedServerHostedGameRuntime(
             hostedGamePlan,
@@ -2675,7 +2681,8 @@ int main(int argc, char* argv[])
         hostedGameRuntimeResult,
         hostedGameRuntimeThreadValue);
     printf("native_hosted_stub=%d result=%d steps=%llu duration-ms=%llu "
-        "ticks=%llu validated=%d stopped=%d exit=%lu thread-ticks=%llu\n",
+        "ticks=%llu validated=%d stopped=%d exit=%lu thread-ticks=%llu "
+        "core-generation=%llu core-checksum=0x%016llx\n",
         nativeHostedStubResult == 0 &&
         nativeHostedStubInitData.seed == hostedGamePlan.resolvedSeed &&
             nativeHostedSaveTextBuilt &&
@@ -2703,9 +2710,19 @@ int main(int argc, char* argv[])
             nativeHostedStubSnapshot.previousStartupPayloadValidated == false &&
             nativeHostedStubSnapshot.previousStartupThreadIterations == 0U &&
             nativeHostedStubSnapshot.previousStartupThreadDurationMs == 0U &&
+            nativeHostedSessionCoreSnapshot.active &&
+            nativeHostedSessionCoreSnapshot.loadedFromSave &&
+            nativeHostedSessionCoreSnapshot.payloadValidated &&
+            nativeHostedSessionCoreSnapshot.saveGeneration == 11U &&
+            nativeHostedSessionCoreSnapshot.stateChecksum != 0U &&
+            nativeHostedSessionCoreSnapshot.payloadChecksum != 0U &&
             nativeHostedStubStopped &&
             nativeHostedStubExitCode == 0 &&
             nativeHostedStubThreadTicks > 0U &&
+            !nativeHostedSessionCoreStoppedSnapshot.active &&
+            nativeHostedSessionCoreStoppedSnapshot.saveGeneration == 11U &&
+            nativeHostedSessionCoreStoppedSnapshot.sessionTicks >=
+                nativeHostedStubThreadTicks &&
             !nativeHostedStubStoppedSnapshot.hostedThreadActive &&
             nativeHostedStubStoppedSnapshot.hostedThreadTicks >=
                 nativeHostedStubThreadTicks,
@@ -2719,7 +2736,11 @@ int main(int argc, char* argv[])
         nativeHostedStubSnapshot.startupPayloadValidated,
         nativeHostedStubStopped,
         (unsigned long)nativeHostedStubExitCode,
-        (unsigned long long)nativeHostedStubThreadTicks);
+        (unsigned long long)nativeHostedStubThreadTicks,
+        (unsigned long long)nativeHostedSessionCoreStoppedSnapshot
+            .saveGeneration,
+        (unsigned long long)nativeHostedSessionCoreStoppedSnapshot
+            .stateChecksum);
     printf("hosted_game_startup=%d result=%d abort=%d code=%d\n",
         hostedGameStartupExecution.startupResult == 0 &&
             !hostedGameStartupExecution.startupPlan.shouldAbortStartup &&

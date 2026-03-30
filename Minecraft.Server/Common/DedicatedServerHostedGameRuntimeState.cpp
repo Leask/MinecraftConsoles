@@ -459,6 +459,16 @@ namespace ServerRuntime
             &g_dedicatedServerHostedGameRuntimeSnapshot);
     }
 
+    void RecordDedicatedServerHostedGameRuntimeCoreState(
+        std::uint64_t saveGeneration,
+        std::uint64_t sessionStateChecksum)
+    {
+        g_dedicatedServerHostedGameRuntimeSnapshot.saveGeneration =
+            saveGeneration;
+        g_dedicatedServerHostedGameRuntimeSnapshot.sessionStateChecksum =
+            sessionStateChecksum;
+    }
+
     void RecordDedicatedServerHostedGameRuntimeSessionSummary(
         const DedicatedServerHostedGameRuntimeSessionSummary &summary)
     {

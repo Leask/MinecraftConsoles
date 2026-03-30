@@ -1,0 +1,198 @@
+#include "NativeDedicatedServerHostedGameSession.h"
+
+#include <mutex>
+#include <string>
+
+#include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
+
+namespace ServerRuntime
+{
+    namespace
+    {
+        static constexpr std::uint64_t kNativeHostedSessionHashOffset =
+            14695981039346656037ULL;
+        static constexpr std::uint64_t kNativeHostedSessionHashPrime =
+            1099511628211ULL;
+
+        struct NativeDedicatedServerHostedGameSessionState
+        {
+            NativeDedicatedServerHostedGameSessionSnapshot snapshot = {};
+            std::uint64_t baseSaveGeneration = 0;
+            std::uint64_t baseStateChecksum = 0;
+        };
+
+        std::mutex g_nativeHostedSessionMutex;
+        NativeDedicatedServerHostedGameSessionState
+            g_nativeHostedSessionState = {};
+
+        std::uint64_t ComputeNativeHostedSessionBytesChecksum(
+            const void *data,
+            std::int64_t fileSize)
+        {
+            if (data == nullptr || fileSize <= 0)
+            {
+                return 0;
+            }
+
+            const unsigned char *bytes =
+                static_cast<const unsigned char *>(data);
+            std::uint64_t checksum = kNativeHostedSessionHashOffset;
+            for (std::int64_t i = 0; i < fileSize; ++i)
+            {
+                checksum ^= bytes[i];
+                checksum *= kNativeHostedSessionHashPrime;
+            }
+
+            return checksum;
+        }
+
+        std::uint64_t MixNativeHostedSessionHash(
+            std::uint64_t checksum,
+            std::uint64_t value)
+        {
+            for (int i = 0; i < 8; ++i)
+            {
+                checksum ^= (value & 0xffU);
+                checksum *= kNativeHostedSessionHashPrime;
+                value >>= 8;
+            }
+
+            return checksum;
+        }
+
+        void RefreshNativeHostedSessionStateChecksum(
+            NativeDedicatedServerHostedGameSessionState *state)
+        {
+            if (state == nullptr)
+            {
+                return;
+            }
+
+            state->snapshot.saveGeneration =
+                state->baseSaveGeneration +
+                state->snapshot.observedAutosaveCompletions;
+            std::uint64_t checksum =
+                state->baseStateChecksum != 0
+                    ? state->baseStateChecksum
+                    : kNativeHostedSessionHashOffset;
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.payloadChecksum);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.sessionTicks);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.observedAutosaveCompletions);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.saveGeneration);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.loadedFromSave ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.payloadValidated ? 1U : 0U);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.active ? 1U : 0U);
+            state->snapshot.stateChecksum = checksum;
+        }
+    }
+
+    void ResetNativeDedicatedServerHostedGameSessionCoreState()
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState = NativeDedicatedServerHostedGameSessionState{};
+    }
+
+    bool StartNativeDedicatedServerHostedGameSession(
+        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
+        bool startupPayloadValidated)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState = NativeDedicatedServerHostedGameSessionState{};
+        g_nativeHostedSessionState.snapshot.active = startupPayloadValidated;
+        g_nativeHostedSessionState.snapshot.loadedFromSave =
+            initData.saveData != nullptr;
+        g_nativeHostedSessionState.snapshot.payloadValidated =
+            startupPayloadValidated;
+        g_nativeHostedSessionState.snapshot.payloadChecksum =
+            ComputeNativeHostedSessionBytesChecksum(
+                initData.saveData != nullptr ? initData.saveData->data : nullptr,
+                initData.saveData != nullptr ? initData.saveData->fileSize : 0);
+
+        if (initData.saveData != nullptr &&
+            initData.saveData->data != nullptr &&
+            initData.saveData->fileSize > 0)
+        {
+            const char *payloadBytes =
+                static_cast<const char *>(initData.saveData->data);
+            const std::string payloadText(
+                payloadBytes,
+                payloadBytes + initData.saveData->fileSize);
+            NativeDedicatedServerSaveStub saveStub = {};
+            if (ParseNativeDedicatedServerSaveStubText(payloadText, &saveStub))
+            {
+                g_nativeHostedSessionState.baseSaveGeneration =
+                    saveStub.saveGeneration;
+                g_nativeHostedSessionState.baseStateChecksum =
+                    saveStub.stateChecksum;
+            }
+        }
+
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+        return startupPayloadValidated;
+    }
+
+    void TickNativeDedicatedServerHostedGameSession()
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        if (!g_nativeHostedSessionState.snapshot.active)
+        {
+            return;
+        }
+
+        ++g_nativeHostedSessionState.snapshot.sessionTicks;
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionAutosaves(
+        std::uint64_t autosaveCompletions)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.observedAutosaveCompletions =
+            autosaveCompletions;
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
+    void StopNativeDedicatedServerHostedGameSession()
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.active = false;
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
+    bool IsNativeDedicatedServerHostedGameSessionRunning()
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        return g_nativeHostedSessionState.snapshot.active;
+    }
+
+    std::uint64_t GetNativeDedicatedServerHostedGameSessionThreadTicks()
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        return g_nativeHostedSessionState.snapshot.sessionTicks;
+    }
+
+    NativeDedicatedServerHostedGameSessionSnapshot
+    GetNativeDedicatedServerHostedGameSessionSnapshot()
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        return g_nativeHostedSessionState.snapshot;
+    }
+}
