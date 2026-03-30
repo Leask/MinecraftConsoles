@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 
 #include <lce_win32/lce_win32.h>
 
@@ -13,6 +14,14 @@ namespace ServerRuntime
         bool active = false;
         bool loadedFromSave = false;
         bool payloadValidated = false;
+        std::string worldName;
+        std::string worldSaveId;
+        std::string savePath;
+        std::string storageRoot;
+        std::string hostName;
+        std::string bindIp;
+        int configuredPort = 0;
+        int listenerPort = 0;
         std::uint64_t payloadChecksum = 0;
         std::uint64_t sessionTicks = 0;
         std::uint64_t acceptedConnections = 0;
@@ -56,6 +65,16 @@ namespace ServerRuntime
         std::uint64_t acceptedConnections,
         std::uint64_t remoteCommands,
         bool worldActionIdle);
+
+    void ObserveNativeDedicatedServerHostedGameSessionContext(
+        const std::string &worldName,
+        const std::string &worldSaveId,
+        const std::string &savePath,
+        const std::string &storageRoot,
+        const std::string &hostName,
+        const std::string &bindIp,
+        int configuredPort,
+        int listenerPort);
 
     void ObserveNativeDedicatedServerHostedGameSessionPlatformState(
         std::uint64_t autosaveRequests,

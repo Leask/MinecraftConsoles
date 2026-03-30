@@ -1642,6 +1642,15 @@ int main(int argc, char* argv[])
     ServerRuntime::RecordDedicatedServerHostedGameRuntimeSessionContext(
         hostedGameSessionContext,
         1000);
+    ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionContext(
+        hostedGameSessionContext.worldName,
+        hostedGameSessionContext.worldSaveId,
+        hostedGameSessionContext.savePath,
+        hostedGameSessionContext.storageRoot,
+        hostedGameSessionContext.hostName,
+        hostedGameSessionContext.bindIp,
+        hostedGameSessionContext.configuredPort,
+        hostedGameSessionContext.listenerPort);
     ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
         2,
         3,
@@ -1744,6 +1753,16 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.lastPersistedFileTime == 77 &&
         hostedGameSessionSnapshot.lastPersistedAutosaveCompletions == 5 &&
         hostedGameSessionSnapshot.uptimeMs == 100 &&
+        nativeHostedSessionObservedSnapshot.worldName == "Smoke Session" &&
+        nativeHostedSessionObservedSnapshot.worldSaveId == "SMOKE_SESSION" &&
+        nativeHostedSessionObservedSnapshot.savePath ==
+            "NativeDesktop/GameHDD/SMOKE_SESSION.save" &&
+        nativeHostedSessionObservedSnapshot.storageRoot ==
+            "NativeDesktop/GameHDD" &&
+        nativeHostedSessionObservedSnapshot.hostName == "SmokeHost" &&
+        nativeHostedSessionObservedSnapshot.bindIp == "127.0.0.1" &&
+        nativeHostedSessionObservedSnapshot.configuredPort == 25565 &&
+        nativeHostedSessionObservedSnapshot.listenerPort == 19132 &&
         nativeHostedSessionObservedSnapshot.acceptedConnections == 2 &&
         nativeHostedSessionObservedSnapshot.remoteCommands == 3 &&
         nativeHostedSessionObservedSnapshot.autosaveRequests == 4 &&

@@ -60,6 +60,21 @@ namespace ServerRuntime
             return checksum;
         }
 
+        std::uint64_t MixNativeHostedSessionStringHash(
+            std::uint64_t checksum,
+            const std::string &value)
+        {
+            for (size_t i = 0; i < value.size(); ++i)
+            {
+                checksum ^= static_cast<unsigned char>(value[i]);
+                checksum *= kNativeHostedSessionHashPrime;
+            }
+
+            return MixNativeHostedSessionHash(
+                checksum,
+                static_cast<std::uint64_t>(value.size()));
+        }
+
         void RefreshNativeHostedSessionStateChecksum(
             NativeDedicatedServerHostedGameSessionState *state)
         {
@@ -75,6 +90,30 @@ namespace ServerRuntime
                 state->baseStateChecksum != 0
                     ? state->baseStateChecksum
                     : kNativeHostedSessionHashOffset;
+            checksum = MixNativeHostedSessionStringHash(
+                checksum,
+                state->snapshot.worldName);
+            checksum = MixNativeHostedSessionStringHash(
+                checksum,
+                state->snapshot.worldSaveId);
+            checksum = MixNativeHostedSessionStringHash(
+                checksum,
+                state->snapshot.savePath);
+            checksum = MixNativeHostedSessionStringHash(
+                checksum,
+                state->snapshot.storageRoot);
+            checksum = MixNativeHostedSessionStringHash(
+                checksum,
+                state->snapshot.hostName);
+            checksum = MixNativeHostedSessionStringHash(
+                checksum,
+                state->snapshot.bindIp);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                static_cast<std::uint64_t>(state->snapshot.configuredPort));
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                static_cast<std::uint64_t>(state->snapshot.listenerPort));
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.payloadChecksum);
@@ -249,6 +288,29 @@ namespace ServerRuntime
             remoteCommands;
         g_nativeHostedSessionState.snapshot.worldActionIdle =
             worldActionIdle;
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionContext(
+        const std::string &worldName,
+        const std::string &worldSaveId,
+        const std::string &savePath,
+        const std::string &storageRoot,
+        const std::string &hostName,
+        const std::string &bindIp,
+        int configuredPort,
+        int listenerPort)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.worldName = worldName;
+        g_nativeHostedSessionState.snapshot.worldSaveId = worldSaveId;
+        g_nativeHostedSessionState.snapshot.savePath = savePath;
+        g_nativeHostedSessionState.snapshot.storageRoot = storageRoot;
+        g_nativeHostedSessionState.snapshot.hostName = hostName;
+        g_nativeHostedSessionState.snapshot.bindIp = bindIp;
+        g_nativeHostedSessionState.snapshot.configuredPort = configuredPort;
+        g_nativeHostedSessionState.snapshot.listenerPort = listenerPort;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }

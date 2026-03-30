@@ -477,9 +477,21 @@ namespace
 
         RefreshDedicatedServerHeadlessShellContext(context);
         context->shellStartMs = LceGetMonotonicMilliseconds();
+        const ServerRuntime::DedicatedServerHostedGameRuntimeSessionContext
+            sessionContext =
+                BuildDedicatedServerHostedGameRuntimeSessionContext(*context);
         ServerRuntime::RecordDedicatedServerHostedGameRuntimeSessionContext(
-            BuildDedicatedServerHostedGameRuntimeSessionContext(*context),
+            sessionContext,
             context->shellStartMs);
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionContext(
+            sessionContext.worldName,
+            sessionContext.worldSaveId,
+            sessionContext.savePath,
+            sessionContext.storageRoot,
+            sessionContext.hostName,
+            sessionContext.bindIp,
+            sessionContext.configuredPort,
+            sessionContext.listenerPort);
         ServerRuntime::LogInfo(
             "startup",
             "native bootstrap shell running; "
