@@ -143,6 +143,10 @@ namespace ServerRuntime
             RecordDedicatedServerHostedGameRuntimeCoreState(
                 sessionSnapshot.saveGeneration,
                 sessionSnapshot.stateChecksum);
+            RecordDedicatedServerHostedGameRuntimeCoreLifecycle(
+                sessionSnapshot.active,
+                static_cast<EDedicatedServerHostedGameRuntimePhase>(
+                    sessionSnapshot.runtimePhase));
         }
 
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)

@@ -209,6 +209,10 @@ namespace ServerRuntime
         std::uint64_t saveGeneration,
         std::uint64_t sessionStateChecksum);
 
+    void RecordDedicatedServerHostedGameRuntimeCoreLifecycle(
+        bool sessionActive,
+        EDedicatedServerHostedGameRuntimePhase phase);
+
     void RecordDedicatedServerHostedGameRuntimeWorkerState(
         std::uint64_t workerPendingWorldActionTicks,
         std::uint64_t workerPendingAutosaveCommands,

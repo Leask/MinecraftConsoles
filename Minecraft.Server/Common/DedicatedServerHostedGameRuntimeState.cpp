@@ -609,6 +609,17 @@ namespace ServerRuntime
             sessionStateChecksum;
     }
 
+    void RecordDedicatedServerHostedGameRuntimeCoreLifecycle(
+        bool sessionActive,
+        EDedicatedServerHostedGameRuntimePhase phase)
+    {
+        g_dedicatedServerHostedGameRuntimeSnapshot.sessionActive =
+            sessionActive;
+        g_dedicatedServerHostedGameRuntimeSnapshot.phase = phase;
+        RefreshDedicatedServerHostedGameRuntimeStateChecksum(
+            &g_dedicatedServerHostedGameRuntimeSnapshot);
+    }
+
     void RecordDedicatedServerHostedGameRuntimeWorkerState(
         std::uint64_t workerPendingWorldActionTicks,
         std::uint64_t workerPendingAutosaveCommands,
