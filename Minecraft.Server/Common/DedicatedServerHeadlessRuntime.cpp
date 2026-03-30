@@ -38,7 +38,6 @@ namespace
         ServerRuntime::DedicatedServerHeadlessShellState shellState = {};
         LceSocketHandle listener = LCE_INVALID_SOCKET;
         int listenerPort = 0;
-        std::uint64_t gameplayLoopIterations = 0;
         std::uint64_t shellStartMs = 0;
         std::uint64_t persistedAutosaveCompletions = 0;
         int failureExitCode = 0;
@@ -584,10 +583,9 @@ namespace
             context->listener,
             context->shellContext,
             &context->shellState);
-        ++context->gameplayLoopIterations;
-        ServerRuntime::RecordDedicatedServerHostedGameRuntimeGameplayLoopIteration(
-            context->gameplayLoopIterations);
-
+        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+            sessionSnapshot =
+                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
         const std::uint64_t now = LceGetMonotonicMilliseconds();
         const bool worldActionIdle =
             ServerRuntime::IsDedicatedServerWorldActionIdle(0);
@@ -596,7 +594,7 @@ namespace
             context->shellState.remoteCommands,
             worldActionIdle);
         ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
-            context->gameplayLoopIterations,
+            sessionSnapshot.gameplayLoopIterations,
             ServerRuntime::IsDedicatedServerAppShutdownRequested(),
             ServerRuntime::IsDedicatedServerGameplayHalted(),
             ServerRuntime::IsDedicatedServerStopSignalValid());
@@ -948,6 +946,9 @@ namespace ServerRuntime
 
         ServerRuntime::DedicatedServerHostedGameRuntimeSessionSummary
             sessionSummary = {};
+        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+            finalSessionSnapshot =
+                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
         sessionSummary.initialSaveRequested =
             runExecution.session.initialSave.requested;
         sessionSummary.initialSaveCompleted =
@@ -960,7 +961,10 @@ namespace ServerRuntime
         sessionSummary.shutdownHaltedGameplay =
             runExecution.session.shutdown.haltedGameplay;
         sessionSummary.gameplayLoopIterations =
-            runExecution.session.gameplayLoop.iterations;
+            finalSessionSnapshot.gameplayLoopIterations >
+                    runExecution.session.gameplayLoop.iterations
+                ? finalSessionSnapshot.gameplayLoopIterations
+                : runExecution.session.gameplayLoop.iterations;
         ServerRuntime::RecordDedicatedServerHostedGameRuntimeSessionSummary(
             sessionSummary);
         ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionSummary(
@@ -976,7 +980,7 @@ namespace ServerRuntime
             shellHooksContext.shellState.remoteCommands,
             ServerRuntime::IsDedicatedServerWorldActionIdle(0));
         ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
-            runExecution.session.gameplayLoop.iterations,
+            sessionSummary.gameplayLoopIterations,
             ServerRuntime::IsDedicatedServerAppShutdownRequested(),
             ServerRuntime::IsDedicatedServerGameplayHalted(),
             ServerRuntime::IsDedicatedServerStopSignalValid());
