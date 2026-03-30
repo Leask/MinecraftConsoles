@@ -288,6 +288,83 @@ namespace ServerRuntime
                 state->snapshot.shutdownHaltedGameplay ? 1U : 0U);
             state->snapshot.stateChecksum = checksum;
         }
+
+        void RefreshNativeHostedSessionPhase(
+            NativeDedicatedServerHostedGameSessionState *state)
+        {
+            if (state == nullptr)
+            {
+                return;
+            }
+
+            if (!state->snapshot.active &&
+                state->snapshot.runtimePhase ==
+                    eDedicatedServerHostedGameRuntimePhase_Stopped)
+            {
+                return;
+            }
+
+            if (state->snapshot.startupResult != 0)
+            {
+                state->snapshot.runtimePhase =
+                    eDedicatedServerHostedGameRuntimePhase_Failed;
+                return;
+            }
+
+            if (state->snapshot.appShutdownRequested ||
+                state->snapshot.gameplayHalted)
+            {
+                state->snapshot.runtimePhase =
+                    eDedicatedServerHostedGameRuntimePhase_ShutdownRequested;
+                return;
+            }
+
+            if (state->snapshot.hostedThreadActive ||
+                state->snapshot.threadInvoked)
+            {
+                state->snapshot.runtimePhase =
+                    eDedicatedServerHostedGameRuntimePhase_Running;
+                return;
+            }
+
+            if (state->snapshot.active ||
+                state->snapshot.payloadValidated ||
+                state->snapshot.startupResult == 0)
+            {
+                state->snapshot.runtimePhase =
+                    eDedicatedServerHostedGameRuntimePhase_Startup;
+            }
+        }
+
+        void RefreshNativeHostedSessionActive(
+            NativeDedicatedServerHostedGameSessionState *state)
+        {
+            if (state == nullptr)
+            {
+                return;
+            }
+
+            if (state->snapshot.runtimePhase ==
+                eDedicatedServerHostedGameRuntimePhase_Stopped)
+            {
+                state->snapshot.active = false;
+                return;
+            }
+
+            if (state->snapshot.startupResult != 0)
+            {
+                state->snapshot.active = false;
+                return;
+            }
+
+            if (state->snapshot.hostedThreadActive ||
+                state->snapshot.threadInvoked ||
+                state->snapshot.payloadValidated ||
+                state->snapshot.startupResult == 0)
+            {
+                state->snapshot.active = true;
+            }
+        }
     }
 
     void ResetNativeDedicatedServerHostedGameSessionCoreState()
@@ -391,6 +468,8 @@ namespace ServerRuntime
             }
         }
 
+        RefreshNativeHostedSessionActive(&g_nativeHostedSessionState);
+        RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
         return startupPayloadValidated;
@@ -403,10 +482,8 @@ namespace ServerRuntime
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState.snapshot.startupResult = startupResult;
         g_nativeHostedSessionState.snapshot.threadInvoked = threadInvoked;
-        g_nativeHostedSessionState.snapshot.runtimePhase =
-            startupResult == 0
-                ? eDedicatedServerHostedGameRuntimePhase_Startup
-                : eDedicatedServerHostedGameRuntimePhase_Failed;
+        RefreshNativeHostedSessionActive(&g_nativeHostedSessionState);
+        RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }
@@ -528,11 +605,7 @@ namespace ServerRuntime
             gameplayHalted;
         g_nativeHostedSessionState.snapshot.stopSignalValid =
             stopSignalValid;
-        if (appShutdownRequested || gameplayHalted)
-        {
-            g_nativeHostedSessionState.snapshot.runtimePhase =
-                eDedicatedServerHostedGameRuntimePhase_ShutdownRequested;
-        }
+        RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }
@@ -581,15 +654,6 @@ namespace ServerRuntime
             &g_nativeHostedSessionState);
     }
 
-    void ObserveNativeDedicatedServerHostedGameSessionPhase(
-        int runtimePhase)
-    {
-        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        g_nativeHostedSessionState.snapshot.runtimePhase = runtimePhase;
-        RefreshNativeHostedSessionStateChecksum(
-            &g_nativeHostedSessionState);
-    }
-
     void ObserveNativeDedicatedServerHostedGameSessionThreadState(
         bool hostedThreadActive,
         std::uint64_t hostedThreadTicks)
@@ -599,6 +663,8 @@ namespace ServerRuntime
             hostedThreadActive;
         g_nativeHostedSessionState.snapshot.hostedThreadTicks =
             hostedThreadTicks;
+        RefreshNativeHostedSessionActive(&g_nativeHostedSessionState);
+        RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }
@@ -695,7 +761,8 @@ namespace ServerRuntime
     bool IsNativeDedicatedServerHostedGameSessionRunning()
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        return g_nativeHostedSessionState.snapshot.active;
+        return g_nativeHostedSessionState.snapshot.active &&
+            g_nativeHostedSessionState.snapshot.hostedThreadActive;
     }
 
     std::uint64_t GetNativeDedicatedServerHostedGameSessionThreadTicks()

@@ -141,9 +141,6 @@ namespace ServerRuntime
         bool requestedAppShutdown,
         bool shutdownHaltedGameplay);
 
-    void ObserveNativeDedicatedServerHostedGameSessionPhase(
-        int runtimePhase);
-
     void ObserveNativeDedicatedServerHostedGameSessionThreadState(
         bool hostedThreadActive,
         std::uint64_t hostedThreadTicks);

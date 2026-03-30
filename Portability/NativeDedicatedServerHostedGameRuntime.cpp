@@ -378,8 +378,6 @@ namespace ServerRuntime
                         g_nativeHostedStartupReadyEvent,
                         0) == WAIT_OBJECT_0)
                 {
-                    ObserveNativeDedicatedServerHostedGameSessionPhase(
-                        eDedicatedServerHostedGameRuntimePhase_Running);
                     RecordNativeDedicatedServerHostedThreadSnapshot();
                     return completeNativeHostedStartup(
                         0,
