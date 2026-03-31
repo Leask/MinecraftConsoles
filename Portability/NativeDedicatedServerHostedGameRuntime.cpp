@@ -2,11 +2,9 @@
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
-#include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
-#include "NativeDedicatedServerHostedGameCore.h"
 #include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameStartup.h"
-#include "NativeDedicatedServerHostedGameThread.h"
+#include "NativeDedicatedServerHostedGameThreadBridge.h"
 #include "NativeDedicatedServerHostedGameWorker.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 
@@ -22,63 +20,12 @@ namespace ServerRuntime
     {
     }
 
-    namespace
-    {
-        void RecordNativeDedicatedServerHostedThreadSnapshot()
-        {
-            ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot();
-        }
-
-        void SyncNativeDedicatedServerHostedThreadState(bool running)
-        {
-            ObserveNativeDedicatedServerHostedGameSessionThreadStateAndWorkerProject(
-                running,
-                GetNativeDedicatedServerHostedGameSessionThreadTicks(),
-                LceGetMonotonicMilliseconds());
-        }
-
-        void SignalNativeDedicatedServerHostedThreadReady()
-        {
-            SyncNativeDedicatedServerHostedThreadState(true);
-            (void)SignalNativeDedicatedServerHostedGameHostReady();
-        }
-
-        void FinalizeNativeDedicatedServerHostedThreadStop()
-        {
-            SyncNativeDedicatedServerHostedThreadState(false);
-        }
-
-        void TickNativeDedicatedServerHostedGameThreadPlatformRuntime()
-        {
-            TickDedicatedServerPlatformRuntime();
-        }
-
-        void HandleNativeDedicatedServerHostedGameThreadPlatformActions()
-        {
-            HandleDedicatedServerPlatformActions();
-        }
-
-        int RunNativeDedicatedServerHostedGameThread(void *threadParam)
-        {
-            NativeDedicatedServerHostedGameCoreHooks hooks = {};
-            hooks.onThreadReady =
-                &SignalNativeDedicatedServerHostedThreadReady;
-            hooks.onThreadStopped =
-                &FinalizeNativeDedicatedServerHostedThreadStop;
-            return RunNativeDedicatedServerHostedGameCore(
-                static_cast<
-                    NativeDedicatedServerHostedGameRuntimeStubInitData *>(
-                        threadParam),
-                hooks);
-        }
-    }
-
     void ResetNativeDedicatedServerHostedGameSessionState()
     {
         ResetNativeDedicatedServerHostedGameHostState();
         ResetNativeDedicatedServerHostedGameWorkerState();
         ResetNativeDedicatedServerHostedGameSessionCoreState();
-        RecordNativeDedicatedServerHostedThreadSnapshot();
+        ProjectNativeDedicatedServerHostedGameThreadSnapshot();
     }
 
     bool WaitForNativeDedicatedServerHostedGameSessionStop(
@@ -95,7 +42,7 @@ namespace ServerRuntime
             outExitCode);
         if (stopped)
         {
-            FinalizeNativeDedicatedServerHostedThreadStop();
+            FinalizeNativeDedicatedServerHostedGameThreadStop();
         }
         return stopped;
     }
@@ -107,7 +54,7 @@ namespace ServerRuntime
     {
         int startupResult = 0;
         const bool usePersistentNativeSession =
-            threadProc == &RunNativeDedicatedServerHostedGameThread;
+            threadProc == GetNativeDedicatedServerHostedGameThreadProc();
         if (!usePersistentNativeSession &&
             !BeginDedicatedServerHostedGameRuntimeStartup(
                 hostedGamePlan,
@@ -119,11 +66,8 @@ namespace ServerRuntime
 
         ActivateDedicatedServerHostedGamePlan(hostedGamePlan);
 
-        NativeDedicatedServerHostedGameThreadCallbacks callbacks = {};
-        callbacks.tickPlatformRuntime =
-            &TickNativeDedicatedServerHostedGameThreadPlatformRuntime;
-        callbacks.handlePlatformActions =
-            &HandleNativeDedicatedServerHostedGameThreadPlatformActions;
+        const NativeDedicatedServerHostedGameThreadCallbacks callbacks =
+            BuildNativeDedicatedServerHostedGameThreadCallbacks();
 
         const NativeDedicatedServerHostedGameRuntimeStartResult result =
             StartNativeDedicatedServerHostedGameRuntimePath(
@@ -134,7 +78,7 @@ namespace ServerRuntime
                 callbacks);
         if (usePersistentNativeSession && result.startupReady)
         {
-            RecordNativeDedicatedServerHostedThreadSnapshot();
+            ProjectNativeDedicatedServerHostedGameThreadSnapshot();
         }
 
         return CompleteNativeDedicatedServerHostedGameStartup(
@@ -147,6 +91,6 @@ namespace ServerRuntime
     DedicatedServerHostedGameThreadProc
         *GetDedicatedServerHostedGameRuntimeThreadProc()
     {
-        return &RunNativeDedicatedServerHostedGameThread;
+        return GetNativeDedicatedServerHostedGameThreadProc();
     }
 }
