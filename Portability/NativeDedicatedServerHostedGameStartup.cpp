@@ -101,40 +101,14 @@ namespace ServerRuntime
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
                         threadParam),
                 hostedGamePlan);
-            HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
-                threadProc,
-                threadParam);
-            if (threadHandle == nullptr || threadHandle == INVALID_HANDLE_VALUE)
-            {
-                ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
-                return result;
-            }
-
-            SetNativeDedicatedServerHostedGameHostThreadHandle(threadHandle);
-            result.threadInvoked = true;
-            if (WaitForNativeDedicatedServerHostedGameThreadReady(
-                    GetNativeDedicatedServerHostedGameHostStartupReadyEvent(),
-                    threadHandle,
-                    callbacks))
-            {
-                result.startupReady = true;
-                result.startupResult = 0;
-                return result;
-            }
-
-            WaitForSingleObject(threadHandle, INFINITE);
-            DWORD threadExitCode = static_cast<DWORD>(-1);
-            if (!TryReadNativeDedicatedServerHostedGameThreadExitCode(
-                    threadHandle,
-                    &threadExitCode))
-            {
-                threadExitCode = static_cast<DWORD>(-1);
-            }
-
-            CloseHandle(threadHandle);
-            ReleaseNativeDedicatedServerHostedGameHostThreadHandle(false);
-            ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
-            result.startupResult = static_cast<int>(threadExitCode);
+            const NativeDedicatedServerHostedGameHostStartResult hostResult =
+                StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
+                    threadProc,
+                    threadParam,
+                    callbacks);
+            result.threadInvoked = hostResult.threadInvoked;
+            result.startupReady = hostResult.startupReady;
+            result.startupResult = hostResult.startupResult;
             return result;
         }
     }
