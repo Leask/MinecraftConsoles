@@ -330,121 +330,132 @@ namespace
             LceGetMonotonicMilliseconds());
         const std::string savePath =
             BuildDedicatedServerHeadlessSavePath(*context);
+        const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
+        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+            sessionSnapshot =
+                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
         ServerRuntime::NativeDedicatedServerSaveStub saveStub = {};
-        const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
-            runtimeSnapshot =
-                ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
-        saveStub.worldName = runtimeSnapshot.worldName.empty()
+        saveStub.worldName = sessionSnapshot.worldName.empty()
             ? context->shellContext.worldName
-            : runtimeSnapshot.worldName;
-        saveStub.levelId = runtimeSnapshot.worldSaveId.empty()
+            : sessionSnapshot.worldName;
+        saveStub.levelId = sessionSnapshot.worldSaveId.empty()
             ? GetDedicatedServerHeadlessSaveId(*context)
-            : runtimeSnapshot.worldSaveId;
-        saveStub.hostName = runtimeSnapshot.hostName.empty()
+            : sessionSnapshot.worldSaveId;
+        saveStub.hostName = sessionSnapshot.hostName.empty()
             ? context->shellContext.hostName
-            : runtimeSnapshot.hostName;
-        saveStub.bindIp = runtimeSnapshot.bindIp.empty()
+            : sessionSnapshot.hostName;
+        saveStub.bindIp = sessionSnapshot.bindIp.empty()
             ? context->shellContext.bindIp
-            : runtimeSnapshot.bindIp;
-        saveStub.configuredPort = runtimeSnapshot.configuredPort > 0
-            ? runtimeSnapshot.configuredPort
+            : sessionSnapshot.bindIp;
+        saveStub.configuredPort = sessionSnapshot.configuredPort > 0
+            ? sessionSnapshot.configuredPort
             : context->shellContext.multiplayerPort;
-        saveStub.listenerPort = runtimeSnapshot.listenerPort > 0
-            ? runtimeSnapshot.listenerPort
+        saveStub.listenerPort = sessionSnapshot.listenerPort > 0
+            ? sessionSnapshot.listenerPort
             : context->shellContext.listenerPort;
-        saveStub.onlineGame = runtimeSnapshot.onlineGame;
-        saveStub.privateGame = runtimeSnapshot.privateGame;
+        saveStub.onlineGame = sessionSnapshot.onlineGame;
+        saveStub.privateGame = sessionSnapshot.privateGame;
         saveStub.fakeLocalPlayerJoined =
-            runtimeSnapshot.fakeLocalPlayerJoined;
-        saveStub.publicSlots = runtimeSnapshot.publicSlots;
-        saveStub.privateSlots = runtimeSnapshot.privateSlots;
-        saveStub.sessionActive = runtimeSnapshot.sessionActive;
-        saveStub.worldActionIdle = runtimeSnapshot.worldActionIdle;
+            sessionSnapshot.fakeLocalPlayerJoined;
+        saveStub.publicSlots = sessionSnapshot.publicSlots;
+        saveStub.privateSlots = sessionSnapshot.privateSlots;
+        saveStub.sessionActive = sessionSnapshot.active;
+        saveStub.worldActionIdle = sessionSnapshot.worldActionIdle;
         saveStub.appShutdownRequested =
-            runtimeSnapshot.appShutdownRequested;
-        saveStub.gameplayHalted = runtimeSnapshot.gameplayHalted;
-        saveStub.acceptedConnections = runtimeSnapshot.acceptedConnections;
-        saveStub.remoteCommands = runtimeSnapshot.remoteCommands;
-        saveStub.autosaveRequests = runtimeSnapshot.autosaveRequests;
-        saveStub.autosaveCompletions = runtimeSnapshot.autosaveCompletions;
+            sessionSnapshot.appShutdownRequested;
+        saveStub.gameplayHalted = sessionSnapshot.gameplayHalted;
+        saveStub.acceptedConnections = sessionSnapshot.acceptedConnections;
+        saveStub.remoteCommands = sessionSnapshot.remoteCommands;
+        saveStub.autosaveRequests = sessionSnapshot.autosaveRequests;
+        saveStub.autosaveCompletions =
+            sessionSnapshot.observedAutosaveCompletions;
         saveStub.workerPendingWorldActionTicks =
-            runtimeSnapshot.workerPendingWorldActionTicks;
+            sessionSnapshot.workerPendingWorldActionTicks;
         saveStub.workerPendingAutosaveCommands =
-            runtimeSnapshot.workerPendingAutosaveCommands;
+            sessionSnapshot.workerPendingAutosaveCommands;
         saveStub.workerPendingSaveCommands =
-            runtimeSnapshot.workerPendingSaveCommands;
+            sessionSnapshot.workerPendingSaveCommands;
         saveStub.workerPendingStopCommands =
-            runtimeSnapshot.workerPendingStopCommands;
+            sessionSnapshot.workerPendingStopCommands;
         saveStub.workerPendingHaltCommands =
-            runtimeSnapshot.workerPendingHaltCommands;
-        saveStub.workerTickCount =
-            runtimeSnapshot.workerTickCount;
+            sessionSnapshot.workerPendingHaltCommands;
+        saveStub.workerTickCount = sessionSnapshot.workerTickCount;
         saveStub.completedWorkerActions =
-            runtimeSnapshot.completedWorkerActions;
+            sessionSnapshot.completedWorkerActions;
         saveStub.processedAutosaveCommands =
-            runtimeSnapshot.processedAutosaveCommands;
+            sessionSnapshot.processedAutosaveCommands;
         saveStub.processedSaveCommands =
-            runtimeSnapshot.processedSaveCommands;
+            sessionSnapshot.processedSaveCommands;
         saveStub.processedStopCommands =
-            runtimeSnapshot.processedStopCommands;
+            sessionSnapshot.processedStopCommands;
         saveStub.processedHaltCommands =
-            runtimeSnapshot.processedHaltCommands;
+            sessionSnapshot.processedHaltCommands;
         saveStub.lastQueuedCommandId =
-            runtimeSnapshot.lastQueuedCommandId;
-        saveStub.activeCommandId =
-            runtimeSnapshot.activeCommandId;
+            sessionSnapshot.lastQueuedCommandId;
+        saveStub.activeCommandId = sessionSnapshot.activeCommandId;
         saveStub.activeCommandTicksRemaining =
-            runtimeSnapshot.activeCommandTicksRemaining;
-        saveStub.activeCommandKind =
-            runtimeSnapshot.activeCommandKind;
+            sessionSnapshot.activeCommandTicksRemaining;
+        saveStub.activeCommandKind = sessionSnapshot.activeCommandKind;
         saveStub.lastProcessedCommandId =
-            runtimeSnapshot.lastProcessedCommandId;
+            sessionSnapshot.lastProcessedCommandId;
         saveStub.lastProcessedCommandKind =
-            runtimeSnapshot.lastProcessedCommandKind;
-        saveStub.platformTickCount = runtimeSnapshot.platformTickCount;
-        saveStub.uptimeMs = runtimeSnapshot.uptimeMs;
-        saveStub.initialSaveRequested = runtimeSnapshot.initialSaveRequested;
-        saveStub.initialSaveCompleted = runtimeSnapshot.initialSaveCompleted;
-        saveStub.initialSaveTimedOut = runtimeSnapshot.initialSaveTimedOut;
-        saveStub.sessionCompleted = runtimeSnapshot.sessionCompleted;
+            sessionSnapshot.lastProcessedCommandKind;
+        saveStub.platformTickCount = sessionSnapshot.platformTickCount;
+        if (sessionSnapshot.sessionStartMs != 0)
+        {
+            const std::uint64_t stoppedMs =
+                sessionSnapshot.stoppedMs != 0
+                    ? sessionSnapshot.stoppedMs
+                    : nowMs;
+            if (stoppedMs >= sessionSnapshot.sessionStartMs)
+            {
+                saveStub.uptimeMs =
+                    stoppedMs - sessionSnapshot.sessionStartMs;
+            }
+        }
+        saveStub.initialSaveRequested = sessionSnapshot.initialSaveRequested;
+        saveStub.initialSaveCompleted = sessionSnapshot.initialSaveCompleted;
+        saveStub.initialSaveTimedOut = sessionSnapshot.initialSaveTimedOut;
+        saveStub.sessionCompleted = sessionSnapshot.sessionCompleted;
         saveStub.requestedAppShutdown =
-            runtimeSnapshot.requestedAppShutdown;
+            sessionSnapshot.requestedAppShutdown;
         saveStub.shutdownHaltedGameplay =
-            runtimeSnapshot.shutdownHaltedGameplay;
+            sessionSnapshot.shutdownHaltedGameplay;
         saveStub.gameplayLoopIterations =
-            runtimeSnapshot.gameplayLoopIterations;
+            sessionSnapshot.gameplayLoopIterations;
         saveStub.savedAtFileTime =
             ServerRuntime::FileUtils::GetCurrentUtcFileTime();
-        if (runtimeSnapshot.startAttempted)
+        if (sessionSnapshot.startAttempted)
         {
             saveStub.startupMode =
-                runtimeSnapshot.loadedFromSave ? "loaded" : "created-new";
+                sessionSnapshot.loadedFromSave ? "loaded" : "created-new";
             saveStub.sessionPhase =
                 ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
-                    runtimeSnapshot.phase);
-            saveStub.resolvedSeed = runtimeSnapshot.resolvedSeed;
-            saveStub.payloadBytes = runtimeSnapshot.savePayloadBytes;
-            saveStub.payloadChecksum = runtimeSnapshot.savePayloadChecksum;
-            saveStub.saveGeneration = runtimeSnapshot.saveGeneration;
-            saveStub.stateChecksum = runtimeSnapshot.sessionStateChecksum;
-            saveStub.payloadName = runtimeSnapshot.savePayloadName;
-            saveStub.hostSettings = runtimeSnapshot.hostSettings;
+                    (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
+                        sessionSnapshot.runtimePhase);
+            saveStub.resolvedSeed = sessionSnapshot.resolvedSeed;
+            saveStub.payloadBytes = sessionSnapshot.savePayloadBytes;
+            saveStub.payloadChecksum = sessionSnapshot.payloadChecksum;
+            saveStub.saveGeneration = sessionSnapshot.saveGeneration;
+            saveStub.stateChecksum = sessionSnapshot.stateChecksum;
+            saveStub.payloadName = sessionSnapshot.savePayloadName;
+            saveStub.hostSettings = sessionSnapshot.hostSettings;
             saveStub.dedicatedNoLocalHostPlayer =
-                runtimeSnapshot.dedicatedNoLocalHostPlayer;
-            saveStub.worldSizeChunks = runtimeSnapshot.worldSizeChunks;
-            saveStub.worldHellScale = runtimeSnapshot.worldHellScale;
+                sessionSnapshot.dedicatedNoLocalHostPlayer;
+            saveStub.worldSizeChunks = sessionSnapshot.worldSizeChunks;
+            saveStub.worldHellScale = sessionSnapshot.worldHellScale;
             saveStub.startupPayloadPresent =
-                runtimeSnapshot.startupPayloadPresent;
+                sessionSnapshot.savePayloadBytes > 0;
             saveStub.startupPayloadValidated =
-                runtimeSnapshot.startupPayloadValidated;
+                sessionSnapshot.payloadValidated;
             saveStub.startupThreadIterations =
-                runtimeSnapshot.startupThreadIterations;
+                sessionSnapshot.startupThreadIterations;
             saveStub.startupThreadDurationMs =
-                runtimeSnapshot.startupThreadDurationMs;
+                sessionSnapshot.startupThreadDurationMs;
             saveStub.hostedThreadActive =
-                runtimeSnapshot.hostedThreadActive;
+                sessionSnapshot.hostedThreadActive;
             saveStub.hostedThreadTicks =
-                runtimeSnapshot.hostedThreadTicks;
+                sessionSnapshot.hostedThreadTicks;
         }
 
         std::string saveText;
