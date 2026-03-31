@@ -373,6 +373,16 @@ namespace ServerRuntime
         }
     }
 
+    NativeDedicatedServerHostedGameWorkerFrameResult
+    TickNativeDedicatedServerHostedGameWorkerFrame()
+    {
+        TickNativeDedicatedServerHostedGameWorker();
+        NativeDedicatedServerHostedGameWorkerFrameResult result = {};
+        result.snapshot = GetNativeDedicatedServerHostedGameWorkerSnapshot();
+        result.idle = IsNativeDedicatedServerHostedGameWorkerIdle();
+        return result;
+    }
+
     bool IsNativeDedicatedServerHostedGameWorkerIdle()
     {
         return g_nativeHostedWorkerPendingWorldActionTicks.load() == 0 &&

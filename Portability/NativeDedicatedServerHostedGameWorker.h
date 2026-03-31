@@ -38,6 +38,12 @@ namespace ServerRuntime
                 eNativeDedicatedServerHostedGameWorkerCommand_None;
     };
 
+    struct NativeDedicatedServerHostedGameWorkerFrameResult
+    {
+        NativeDedicatedServerHostedGameWorkerSnapshot snapshot = {};
+        bool idle = true;
+    };
+
     void ResetNativeDedicatedServerHostedGameWorkerState();
 
     void ClearNativeDedicatedServerHostedGameWorkerState();
@@ -56,6 +62,9 @@ namespace ServerRuntime
         unsigned int autosaveWorkTicks);
 
     void TickNativeDedicatedServerHostedGameWorker();
+
+    NativeDedicatedServerHostedGameWorkerFrameResult
+    TickNativeDedicatedServerHostedGameWorkerFrame();
 
     bool IsNativeDedicatedServerHostedGameWorkerIdle();
 

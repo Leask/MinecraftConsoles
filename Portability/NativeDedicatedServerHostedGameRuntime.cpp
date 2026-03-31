@@ -98,6 +98,19 @@ namespace ServerRuntime
             ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot();
         }
 
+        void TickNativeDedicatedServerHostedRuntimeFrame()
+        {
+            const NativeDedicatedServerHostedGameWorkerFrameResult
+                workerFrame =
+                    TickNativeDedicatedServerHostedGameWorkerFrame();
+            UpdateDedicatedServerAutosaveTracker(workerFrame.idle);
+            TickNativeDedicatedServerHostedGameSessionFrame(
+                workerFrame.snapshot,
+                GetDedicatedServerAutosaveCompletionCount(),
+                true);
+            ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot();
+        }
+
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)
         {
             const std::uint64_t startMs = LceGetMonotonicMilliseconds();
@@ -172,17 +185,7 @@ namespace ServerRuntime
                     break;
                 }
 
-                TickNativeDedicatedServerHostedGameWorker();
-                const NativeDedicatedServerHostedGameWorkerSnapshot
-                    workerSnapshot =
-                        GetNativeDedicatedServerHostedGameWorkerSnapshot();
-                UpdateDedicatedServerAutosaveTracker(
-                    IsNativeDedicatedServerHostedGameWorkerIdle());
-                TickNativeDedicatedServerHostedGameSessionFrame(
-                    workerSnapshot,
-                    GetDedicatedServerAutosaveCompletionCount(),
-                    true);
-                ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot();
+                TickNativeDedicatedServerHostedRuntimeFrame();
                 LceSleepMilliseconds(10);
             }
 
