@@ -49,12 +49,11 @@ namespace
         ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPlatformState(
             ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
             ServerRuntime::GetDedicatedServerPlatformTickCount());
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeStateAndProject(
             sessionSnapshot.gameplayLoopIterations,
             g_nativeRuntimeState.appShutdownRequested,
             g_nativeRuntimeState.gameplayHalted,
-            g_nativeRuntimeState.stopSignalValid);
-        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+            g_nativeRuntimeState.stopSignalValid,
             nowMs);
     }
 }
@@ -105,8 +104,9 @@ namespace ServerRuntime
         {
             UpdateDedicatedServerAutosaveTracker(
                 IsDedicatedServerWorldActionIdle(0));
-            ObserveNativeDedicatedServerHostedGameSessionAutosaves(
-                GetDedicatedServerAutosaveCompletionCount());
+            ObserveNativeDedicatedServerHostedGameSessionAutosavesAndProject(
+                GetDedicatedServerAutosaveCompletionCount(),
+                LceGetMonotonicMilliseconds());
         }
         RefreshNativeDedicatedServerRuntimeProjection(
             LceGetMonotonicMilliseconds());

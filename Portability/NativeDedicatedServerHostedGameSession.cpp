@@ -736,6 +736,17 @@ namespace ServerRuntime
             &g_nativeHostedSessionState);
     }
 
+    void ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+        int startupResult,
+        bool threadInvoked,
+        std::uint64_t nowMs)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionStartupResult(
+            startupResult,
+            threadInvoked);
+        ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
+    }
+
     void TickNativeDedicatedServerHostedGameSession(
         bool hostedThreadActive)
     {
@@ -799,6 +810,15 @@ namespace ServerRuntime
             autosaveCompletions;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionAutosavesAndProject(
+        std::uint64_t autosaveCompletions,
+        std::uint64_t nowMs)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionAutosaves(
+            autosaveCompletions);
+        ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
     }
 
     void ObserveNativeDedicatedServerHostedGameSessionActivity(
@@ -919,6 +939,17 @@ namespace ServerRuntime
             &g_nativeHostedSessionState);
     }
 
+    void ObserveNativeDedicatedServerHostedGameSessionPlatformStateAndProject(
+        std::uint64_t autosaveRequests,
+        std::uint64_t platformTickCount,
+        std::uint64_t nowMs)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionPlatformState(
+            autosaveRequests,
+            platformTickCount);
+        ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
+    }
+
     void ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
         std::uint64_t gameplayLoopIterations,
         bool appShutdownRequested,
@@ -942,6 +973,21 @@ namespace ServerRuntime
         RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionRuntimeStateAndProject(
+        std::uint64_t gameplayLoopIterations,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid,
+        std::uint64_t nowMs)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
+            gameplayLoopIterations,
+            appShutdownRequested,
+            gameplayHalted,
+            stopSignalValid);
+        ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
     }
 
     void ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
@@ -1068,6 +1114,17 @@ namespace ServerRuntime
             &g_nativeHostedSessionState);
     }
 
+    void ObserveNativeDedicatedServerHostedGameSessionThreadStateAndProject(
+        bool hostedThreadActive,
+        std::uint64_t hostedThreadTicks,
+        std::uint64_t nowMs)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionThreadState(
+            hostedThreadActive,
+            hostedThreadTicks);
+        ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
+    }
+
     void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
         std::uint64_t startupThreadIterations,
         std::uint64_t startupThreadDurationMs)
@@ -1079,6 +1136,17 @@ namespace ServerRuntime
             startupThreadDurationMs;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
+        std::uint64_t startupThreadIterations,
+        std::uint64_t startupThreadDurationMs,
+        std::uint64_t nowMs)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
+            startupThreadIterations,
+            startupThreadDurationMs);
+        ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
     }
 
     void ObserveNativeDedicatedServerHostedGameSessionWorkerState(

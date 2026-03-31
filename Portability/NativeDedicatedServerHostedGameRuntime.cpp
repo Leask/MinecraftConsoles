@@ -189,10 +189,9 @@ namespace ServerRuntime
                         threadParam);
             if (initData == nullptr)
             {
-                ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
+                ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
                     0,
-                    0);
-                ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+                    0,
                     LceGetMonotonicMilliseconds());
                 return -2;
             }
@@ -213,10 +212,9 @@ namespace ServerRuntime
             StartNativeDedicatedServerHostedGameSession(
                 *initData,
                 startupPayloadValidated);
-            ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
+            ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
                 startupIterations,
-                durationMs);
-            ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+                durationMs,
                 LceGetMonotonicMilliseconds());
             FinalizeNativeDedicatedServerHostedThreadStop();
             if (!startupPayloadValidated)
@@ -333,10 +331,9 @@ namespace ServerRuntime
             {
                 if (usePersistentNativeSession)
                 {
-                    ObserveNativeDedicatedServerHostedGameSessionStartupResult(
+                    ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
                         result,
-                        threadInvoked);
-                    ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+                        threadInvoked,
                         LceGetMonotonicMilliseconds());
                     return result;
                 }

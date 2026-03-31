@@ -164,6 +164,11 @@ namespace ServerRuntime
         int startupResult,
         bool threadInvoked);
 
+    void ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+        int startupResult,
+        bool threadInvoked,
+        std::uint64_t nowMs = 0);
+
     void TickNativeDedicatedServerHostedGameSession(
         bool hostedThreadActive = true);
 
@@ -174,6 +179,10 @@ namespace ServerRuntime
 
     void ObserveNativeDedicatedServerHostedGameSessionAutosaves(
         std::uint64_t autosaveCompletions);
+
+    void ObserveNativeDedicatedServerHostedGameSessionAutosavesAndProject(
+        std::uint64_t autosaveCompletions,
+        std::uint64_t nowMs = 0);
 
     void ObserveNativeDedicatedServerHostedGameSessionActivity(
         std::uint64_t acceptedConnections,
@@ -221,11 +230,23 @@ namespace ServerRuntime
         std::uint64_t autosaveRequests,
         std::uint64_t platformTickCount);
 
+    void ObserveNativeDedicatedServerHostedGameSessionPlatformStateAndProject(
+        std::uint64_t autosaveRequests,
+        std::uint64_t platformTickCount,
+        std::uint64_t nowMs = 0);
+
     void ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
         std::uint64_t gameplayLoopIterations,
         bool appShutdownRequested,
         bool gameplayHalted,
         bool stopSignalValid);
+
+    void ObserveNativeDedicatedServerHostedGameSessionRuntimeStateAndProject(
+        std::uint64_t gameplayLoopIterations,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid,
+        std::uint64_t nowMs = 0);
 
     void ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
         const std::string &savePath,
@@ -263,9 +284,19 @@ namespace ServerRuntime
         bool hostedThreadActive,
         std::uint64_t hostedThreadTicks);
 
+    void ObserveNativeDedicatedServerHostedGameSessionThreadStateAndProject(
+        bool hostedThreadActive,
+        std::uint64_t hostedThreadTicks,
+        std::uint64_t nowMs = 0);
+
     void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
         std::uint64_t startupThreadIterations,
         std::uint64_t startupThreadDurationMs);
+
+    void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
+        std::uint64_t startupThreadIterations,
+        std::uint64_t startupThreadDurationMs,
+        std::uint64_t nowMs = 0);
 
     void ObserveNativeDedicatedServerHostedGameSessionWorkerState(
         std::uint64_t pendingWorldActionTicks,
