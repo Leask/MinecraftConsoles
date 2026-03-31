@@ -211,6 +211,19 @@ namespace ServerRuntime
         bool requestedAppShutdown,
         bool shutdownHaltedGameplay);
 
+    void FinalizeNativeDedicatedServerHostedGameSession(
+        bool initialSaveRequested,
+        bool initialSaveCompleted,
+        bool initialSaveTimedOut,
+        bool sessionCompleted,
+        bool requestedAppShutdown,
+        bool shutdownHaltedGameplay,
+        std::uint64_t gameplayLoopIterations,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid,
+        std::uint64_t stoppedMs = 0);
+
     void ObserveNativeDedicatedServerHostedGameSessionThreadState(
         bool hostedThreadActive,
         std::uint64_t hostedThreadTicks);

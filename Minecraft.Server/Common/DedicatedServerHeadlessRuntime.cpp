@@ -933,20 +933,17 @@ namespace ServerRuntime
                     runExecution.session.gameplayLoop.iterations
                 ? finalSessionSnapshot.gameplayLoopIterations
                 : runExecution.session.gameplayLoop.iterations;
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionSummary(
+        ServerRuntime::FinalizeNativeDedicatedServerHostedGameSession(
             sessionSummary.initialSaveRequested,
             sessionSummary.initialSaveCompleted,
             sessionSummary.initialSaveTimedOut,
             sessionSummary.sessionCompleted,
             sessionSummary.requestedAppShutdown,
-            sessionSummary.shutdownHaltedGameplay);
-
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
+            sessionSummary.shutdownHaltedGameplay,
             sessionSummary.gameplayLoopIterations,
             ServerRuntime::IsDedicatedServerAppShutdownRequested(),
             ServerRuntime::IsDedicatedServerGameplayHalted(),
-            ServerRuntime::IsDedicatedServerStopSignalValid());
-        ServerRuntime::StopNativeDedicatedServerHostedGameSession(
+            ServerRuntime::IsDedicatedServerStopSignalValid(),
             LceGetMonotonicMilliseconds());
         ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
             LceGetMonotonicMilliseconds());

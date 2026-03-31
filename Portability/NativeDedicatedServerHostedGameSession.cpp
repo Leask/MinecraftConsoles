@@ -956,6 +956,52 @@ namespace ServerRuntime
             &g_nativeHostedSessionState);
     }
 
+    void FinalizeNativeDedicatedServerHostedGameSession(
+        bool initialSaveRequested,
+        bool initialSaveCompleted,
+        bool initialSaveTimedOut,
+        bool sessionCompleted,
+        bool requestedAppShutdown,
+        bool shutdownHaltedGameplay,
+        std::uint64_t gameplayLoopIterations,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid,
+        std::uint64_t stoppedMs)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        g_nativeHostedSessionState.snapshot.initialSaveRequested =
+            initialSaveRequested;
+        g_nativeHostedSessionState.snapshot.initialSaveCompleted =
+            initialSaveCompleted;
+        g_nativeHostedSessionState.snapshot.initialSaveTimedOut =
+            initialSaveTimedOut;
+        g_nativeHostedSessionState.snapshot.sessionCompleted =
+            sessionCompleted;
+        g_nativeHostedSessionState.snapshot.requestedAppShutdown =
+            requestedAppShutdown;
+        g_nativeHostedSessionState.snapshot.shutdownHaltedGameplay =
+            shutdownHaltedGameplay;
+        g_nativeHostedSessionState.snapshot.gameplayLoopIterations =
+            gameplayLoopIterations;
+        g_nativeHostedSessionState.snapshot.appShutdownRequested =
+            appShutdownRequested;
+        g_nativeHostedSessionState.snapshot.gameplayHalted =
+            gameplayHalted;
+        g_nativeHostedSessionState.snapshot.stopSignalValid =
+            stopSignalValid;
+        g_nativeHostedSessionState.snapshot.active = false;
+        g_nativeHostedSessionState.snapshot.runtimePhase =
+            eDedicatedServerHostedGameRuntimePhase_Stopped;
+        if (stoppedMs != 0)
+        {
+            g_nativeHostedSessionState.snapshot.stoppedMs = stoppedMs;
+        }
+        RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
     void ObserveNativeDedicatedServerHostedGameSessionThreadState(
         bool hostedThreadActive,
         std::uint64_t hostedThreadTicks)
