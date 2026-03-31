@@ -449,10 +449,173 @@ namespace ServerRuntime
             hostedGamePlan.privateSlots;
     }
 
+    void RecordDedicatedServerHostedGameRuntimePlanMetadata(
+        const DedicatedServerHostedGameRuntimePlanMetadata &metadata)
+    {
+        g_dedicatedServerHostedGameRuntimeSnapshot.startAttempted =
+            metadata.startAttempted;
+        g_dedicatedServerHostedGameRuntimeSnapshot.loadedFromSave =
+            metadata.loadedFromSave;
+        g_dedicatedServerHostedGameRuntimeSnapshot.onlineGame =
+            metadata.onlineGame;
+        g_dedicatedServerHostedGameRuntimeSnapshot.privateGame =
+            metadata.privateGame;
+        g_dedicatedServerHostedGameRuntimeSnapshot.fakeLocalPlayerJoined =
+            metadata.fakeLocalPlayerJoined;
+        g_dedicatedServerHostedGameRuntimeSnapshot.resolvedSeed =
+            metadata.resolvedSeed;
+        g_dedicatedServerHostedGameRuntimeSnapshot.savePayloadBytes =
+            metadata.savePayloadBytes;
+        g_dedicatedServerHostedGameRuntimeSnapshot.savePayloadChecksum =
+            metadata.savePayloadChecksum;
+        g_dedicatedServerHostedGameRuntimeSnapshot.hostSettings =
+            metadata.hostSettings;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .dedicatedNoLocalHostPlayer =
+                metadata.dedicatedNoLocalHostPlayer;
+        g_dedicatedServerHostedGameRuntimeSnapshot.worldSizeChunks =
+            metadata.worldSizeChunks;
+        g_dedicatedServerHostedGameRuntimeSnapshot.worldHellScale =
+            metadata.worldHellScale;
+        g_dedicatedServerHostedGameRuntimeSnapshot.publicSlots =
+            metadata.publicSlots;
+        g_dedicatedServerHostedGameRuntimeSnapshot.privateSlots =
+            metadata.privateSlots;
+        g_dedicatedServerHostedGameRuntimeSnapshot.savePayloadName =
+            metadata.savePayloadName;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .loadedSaveMetadataAvailable =
+                metadata.loadedSaveMetadataAvailable;
+        g_dedicatedServerHostedGameRuntimeSnapshot.loadedSavePath =
+            metadata.loadedSavePath;
+        g_dedicatedServerHostedGameRuntimeSnapshot.previousStartupMode =
+            metadata.previousStartupMode;
+        g_dedicatedServerHostedGameRuntimeSnapshot.previousSessionPhase =
+            metadata.previousSessionPhase;
+        g_dedicatedServerHostedGameRuntimeSnapshot.previousRemoteCommands =
+            metadata.previousRemoteCommands;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousAutosaveCompletions =
+                metadata.previousAutosaveCompletions;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousWorkerPendingWorldActionTicks =
+                metadata.previousWorkerPendingWorldActionTicks;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousWorkerPendingAutosaveCommands =
+                metadata.previousWorkerPendingAutosaveCommands;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousWorkerPendingSaveCommands =
+                metadata.previousWorkerPendingSaveCommands;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousWorkerPendingStopCommands =
+                metadata.previousWorkerPendingStopCommands;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousWorkerPendingHaltCommands =
+                metadata.previousWorkerPendingHaltCommands;
+        g_dedicatedServerHostedGameRuntimeSnapshot.previousWorkerTickCount =
+            metadata.previousWorkerTickCount;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousCompletedWorkerActions =
+                metadata.previousCompletedWorkerActions;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousProcessedAutosaveCommands =
+                metadata.previousProcessedAutosaveCommands;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousProcessedSaveCommands =
+                metadata.previousProcessedSaveCommands;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousProcessedStopCommands =
+                metadata.previousProcessedStopCommands;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousProcessedHaltCommands =
+                metadata.previousProcessedHaltCommands;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousLastQueuedCommandId =
+                metadata.previousLastQueuedCommandId;
+        g_dedicatedServerHostedGameRuntimeSnapshot.previousActiveCommandId =
+            metadata.previousActiveCommandId;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousActiveCommandTicksRemaining =
+                metadata.previousActiveCommandTicksRemaining;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousActiveCommandKind =
+                metadata.previousActiveCommandKind;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousLastProcessedCommandId =
+                metadata.previousLastProcessedCommandId;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousLastProcessedCommandKind =
+                metadata.previousLastProcessedCommandKind;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousPlatformTickCount =
+                metadata.previousPlatformTickCount;
+        g_dedicatedServerHostedGameRuntimeSnapshot.previousUptimeMs =
+            metadata.previousUptimeMs;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousGameplayLoopIterations =
+                metadata.previousGameplayLoopIterations;
+        g_dedicatedServerHostedGameRuntimeSnapshot.previousHostSettings =
+            metadata.previousHostSettings;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousDedicatedNoLocalHostPlayer =
+                metadata.previousDedicatedNoLocalHostPlayer;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousWorldSizeChunks =
+                metadata.previousWorldSizeChunks;
+        g_dedicatedServerHostedGameRuntimeSnapshot.previousWorldHellScale =
+            metadata.previousWorldHellScale;
+        g_dedicatedServerHostedGameRuntimeSnapshot.previousOnlineGame =
+            metadata.previousOnlineGame;
+        g_dedicatedServerHostedGameRuntimeSnapshot.previousPrivateGame =
+            metadata.previousPrivateGame;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousFakeLocalPlayerJoined =
+                metadata.previousFakeLocalPlayerJoined;
+        g_dedicatedServerHostedGameRuntimeSnapshot.previousPublicSlots =
+            metadata.previousPublicSlots;
+        g_dedicatedServerHostedGameRuntimeSnapshot.previousPrivateSlots =
+            metadata.previousPrivateSlots;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousSavePayloadChecksum =
+                metadata.previousSavePayloadChecksum;
+        g_dedicatedServerHostedGameRuntimeSnapshot.previousSaveGeneration =
+            metadata.previousSaveGeneration;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousSessionStateChecksum =
+                metadata.previousSessionStateChecksum;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousStartupPayloadPresent =
+                metadata.previousStartupPayloadPresent;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousStartupPayloadValidated =
+                metadata.previousStartupPayloadValidated;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousStartupThreadIterations =
+                metadata.previousStartupThreadIterations;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousStartupThreadDurationMs =
+                metadata.previousStartupThreadDurationMs;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousHostedThreadActive =
+                metadata.previousHostedThreadActive;
+        g_dedicatedServerHostedGameRuntimeSnapshot.previousHostedThreadTicks =
+            metadata.previousHostedThreadTicks;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousSessionCompleted =
+                metadata.previousSessionCompleted;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousRequestedAppShutdown =
+                metadata.previousRequestedAppShutdown;
+        g_dedicatedServerHostedGameRuntimeSnapshot
+            .previousShutdownHaltedGameplay =
+                metadata.previousShutdownHaltedGameplay;
+    }
+
     void RecordDedicatedServerHostedGameRuntimeStartupResult(
         int startupResult,
         bool threadInvoked)
     {
+        g_dedicatedServerHostedGameRuntimeSnapshot.startAttempted = true;
         g_dedicatedServerHostedGameRuntimeSnapshot.startupResult =
             startupResult;
         g_dedicatedServerHostedGameRuntimeSnapshot.threadInvoked =

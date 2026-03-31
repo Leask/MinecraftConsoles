@@ -167,10 +167,79 @@ namespace ServerRuntime
         std::uint64_t gameplayLoopIterations = 0;
     };
 
+    struct DedicatedServerHostedGameRuntimePlanMetadata
+    {
+        bool startAttempted = false;
+        bool loadedFromSave = false;
+        bool onlineGame = false;
+        bool privateGame = false;
+        bool fakeLocalPlayerJoined = false;
+        std::int64_t resolvedSeed = 0;
+        std::int64_t savePayloadBytes = 0;
+        std::uint64_t savePayloadChecksum = 0;
+        std::uint32_t hostSettings = 0;
+        bool dedicatedNoLocalHostPlayer = true;
+        unsigned int worldSizeChunks = 0;
+        unsigned char worldHellScale = 0;
+        unsigned char publicSlots = 0;
+        unsigned char privateSlots = 0;
+        std::string savePayloadName;
+        bool loadedSaveMetadataAvailable = false;
+        std::string loadedSavePath;
+        std::string previousStartupMode;
+        std::string previousSessionPhase;
+        std::uint64_t previousRemoteCommands = 0;
+        std::uint64_t previousAutosaveCompletions = 0;
+        std::uint64_t previousWorkerPendingWorldActionTicks = 0;
+        std::uint64_t previousWorkerPendingAutosaveCommands = 0;
+        std::uint64_t previousWorkerPendingSaveCommands = 0;
+        std::uint64_t previousWorkerPendingStopCommands = 0;
+        std::uint64_t previousWorkerPendingHaltCommands = 0;
+        std::uint64_t previousWorkerTickCount = 0;
+        std::uint64_t previousCompletedWorkerActions = 0;
+        std::uint64_t previousProcessedAutosaveCommands = 0;
+        std::uint64_t previousProcessedSaveCommands = 0;
+        std::uint64_t previousProcessedStopCommands = 0;
+        std::uint64_t previousProcessedHaltCommands = 0;
+        std::uint64_t previousLastQueuedCommandId = 0;
+        std::uint64_t previousActiveCommandId = 0;
+        std::uint64_t previousActiveCommandTicksRemaining = 0;
+        unsigned int previousActiveCommandKind = 0;
+        std::uint64_t previousLastProcessedCommandId = 0;
+        unsigned int previousLastProcessedCommandKind = 0;
+        std::uint64_t previousPlatformTickCount = 0;
+        std::uint64_t previousUptimeMs = 0;
+        std::uint64_t previousGameplayLoopIterations = 0;
+        std::uint32_t previousHostSettings = 0;
+        bool previousDedicatedNoLocalHostPlayer = true;
+        unsigned int previousWorldSizeChunks = 0;
+        unsigned char previousWorldHellScale = 0;
+        bool previousOnlineGame = false;
+        bool previousPrivateGame = false;
+        bool previousFakeLocalPlayerJoined = false;
+        unsigned char previousPublicSlots = 0;
+        unsigned char previousPrivateSlots = 0;
+        std::uint64_t previousSavePayloadChecksum = 0;
+        std::uint64_t previousSaveGeneration = 0;
+        std::uint64_t previousSessionStateChecksum = 0;
+        bool previousStartupPayloadPresent = false;
+        bool previousStartupPayloadValidated = false;
+        std::uint64_t previousStartupThreadIterations = 0;
+        std::uint64_t previousStartupThreadDurationMs = 0;
+        bool previousHostedThreadActive = false;
+        std::uint64_t previousHostedThreadTicks = 0;
+        bool previousSessionCompleted = false;
+        bool previousRequestedAppShutdown = false;
+        bool previousShutdownHaltedGameplay = false;
+    };
+
     void ResetDedicatedServerHostedGameRuntimeSnapshot();
 
     void RecordDedicatedServerHostedGameRuntimePlan(
         const DedicatedServerHostedGamePlan &hostedGamePlan);
+
+    void RecordDedicatedServerHostedGameRuntimePlanMetadata(
+        const DedicatedServerHostedGameRuntimePlanMetadata &metadata);
 
     void RecordDedicatedServerHostedGameRuntimeStartupResult(
         int startupResult,

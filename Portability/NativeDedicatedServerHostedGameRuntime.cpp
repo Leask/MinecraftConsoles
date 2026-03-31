@@ -322,7 +322,10 @@ namespace ServerRuntime
         void *threadParam)
     {
         int startupResult = 0;
-        if (!BeginDedicatedServerHostedGameRuntimeStartup(
+        const bool usePersistentNativeSession =
+            threadProc == &RunNativeDedicatedServerHostedGameThread;
+        if (!usePersistentNativeSession &&
+            !BeginDedicatedServerHostedGameRuntimeStartup(
                 hostedGamePlan,
                 threadProc,
                 &startupResult))
@@ -330,8 +333,10 @@ namespace ServerRuntime
             return startupResult;
         }
 
-        const bool usePersistentNativeSession =
-            threadProc == &RunNativeDedicatedServerHostedGameThread;
+        if (usePersistentNativeSession)
+        {
+            ResetDedicatedServerHostedGameRuntimeSnapshot();
+        }
         auto completeNativeHostedStartup =
             [usePersistentNativeSession](int result, bool threadInvoked)
             {
@@ -400,6 +405,15 @@ namespace ServerRuntime
             g_nativeHostedThreadHandle = threadHandle;
             if (WaitForNativeDedicatedServerHostedThreadReady(threadHandle))
             {
+                ObserveNativeDedicatedServerHostedGameSessionActivation(
+                    hostedGamePlan.localUsersMask,
+                    hostedGamePlan.onlineGame,
+                    hostedGamePlan.privateGame,
+                    hostedGamePlan.publicSlots,
+                    hostedGamePlan.privateSlots,
+                    hostedGamePlan.fakeLocalPlayerJoined);
+                ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+                    LceGetMonotonicMilliseconds());
                 return completeNativeHostedStartup(
                     0,
                     true);

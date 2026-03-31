@@ -4,7 +4,9 @@
 #include <string>
 
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
+#include "Minecraft.Server/Common/NativeDedicatedServerLoadedSaveState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
+#include "Minecraft.Server/Common/StringUtils.h"
 
 namespace ServerRuntime
 {
@@ -447,11 +449,21 @@ namespace ServerRuntime
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState = NativeDedicatedServerHostedGameSessionState{};
+        g_nativeHostedSessionState.snapshot.startAttempted = true;
         g_nativeHostedSessionState.snapshot.active = startupPayloadValidated;
         g_nativeHostedSessionState.snapshot.loadedFromSave =
             initData.saveData != nullptr;
         g_nativeHostedSessionState.snapshot.payloadValidated =
             startupPayloadValidated;
+        g_nativeHostedSessionState.snapshot.resolvedSeed = initData.seed;
+        g_nativeHostedSessionState.snapshot.hostSettings =
+            initData.settings;
+        g_nativeHostedSessionState.snapshot.dedicatedNoLocalHostPlayer =
+            initData.dedicatedNoLocalHostPlayer;
+        g_nativeHostedSessionState.snapshot.worldSizeChunks =
+            initData.xzSize;
+        g_nativeHostedSessionState.snapshot.worldHellScale =
+            initData.hellScale;
         g_nativeHostedSessionState.snapshot.runtimePhase =
             startupPayloadValidated
                 ? eDedicatedServerHostedGameRuntimePhase_Startup
@@ -465,6 +477,11 @@ namespace ServerRuntime
             initData.saveData->data != nullptr &&
             initData.saveData->fileSize > 0)
         {
+            g_nativeHostedSessionState.snapshot.savePayloadBytes =
+                initData.saveData->fileSize;
+            g_nativeHostedSessionState.snapshot.savePayloadName =
+                StringUtils::WideToUtf8(
+                    initData.saveData->saveName);
             const char *payloadBytes =
                 static_cast<const char *>(initData.saveData->data);
             const std::string payloadText(
@@ -534,6 +551,157 @@ namespace ServerRuntime
                     .lastPersistedAutosaveCompletions =
                     saveStub.autosaveCompletions;
             }
+        }
+
+        const NativeDedicatedServerLoadedSaveMetadata loadedSaveMetadata =
+            GetNativeDedicatedServerLoadedSaveMetadata();
+        if (loadedSaveMetadata.available)
+        {
+            g_nativeHostedSessionState.snapshot.loadedSavePath =
+                loadedSaveMetadata.savePath;
+        }
+        if (loadedSaveMetadata.hasSaveStub)
+        {
+            g_nativeHostedSessionState.snapshot
+                .loadedSaveMetadataAvailable = true;
+            g_nativeHostedSessionState.snapshot.previousStartupMode =
+                loadedSaveMetadata.saveStub.startupMode;
+            g_nativeHostedSessionState.snapshot.previousSessionPhase =
+                loadedSaveMetadata.saveStub.sessionPhase;
+            g_nativeHostedSessionState.snapshot.previousRemoteCommands =
+                loadedSaveMetadata.saveStub.remoteCommands;
+            g_nativeHostedSessionState.snapshot
+                .previousAutosaveCompletions =
+                    loadedSaveMetadata.saveStub.autosaveCompletions;
+            g_nativeHostedSessionState.snapshot
+                .previousWorkerPendingWorldActionTicks =
+                    loadedSaveMetadata.saveStub
+                        .workerPendingWorldActionTicks;
+            g_nativeHostedSessionState.snapshot
+                .previousWorkerPendingAutosaveCommands =
+                    loadedSaveMetadata.saveStub
+                        .workerPendingAutosaveCommands;
+            g_nativeHostedSessionState.snapshot
+                .previousWorkerPendingSaveCommands =
+                    loadedSaveMetadata.saveStub
+                        .workerPendingSaveCommands;
+            g_nativeHostedSessionState.snapshot
+                .previousWorkerPendingStopCommands =
+                    loadedSaveMetadata.saveStub
+                        .workerPendingStopCommands;
+            g_nativeHostedSessionState.snapshot
+                .previousWorkerPendingHaltCommands =
+                    loadedSaveMetadata.saveStub
+                        .workerPendingHaltCommands;
+            g_nativeHostedSessionState.snapshot.previousWorkerTickCount =
+                loadedSaveMetadata.saveStub.workerTickCount;
+            g_nativeHostedSessionState.snapshot
+                .previousCompletedWorkerActions =
+                    loadedSaveMetadata.saveStub.completedWorkerActions;
+            g_nativeHostedSessionState.snapshot
+                .previousProcessedAutosaveCommands =
+                    loadedSaveMetadata.saveStub
+                        .processedAutosaveCommands;
+            g_nativeHostedSessionState.snapshot
+                .previousProcessedSaveCommands =
+                    loadedSaveMetadata.saveStub.processedSaveCommands;
+            g_nativeHostedSessionState.snapshot
+                .previousProcessedStopCommands =
+                    loadedSaveMetadata.saveStub.processedStopCommands;
+            g_nativeHostedSessionState.snapshot
+                .previousProcessedHaltCommands =
+                    loadedSaveMetadata.saveStub.processedHaltCommands;
+            g_nativeHostedSessionState.snapshot
+                .previousLastQueuedCommandId =
+                    loadedSaveMetadata.saveStub.lastQueuedCommandId;
+            g_nativeHostedSessionState.snapshot.previousActiveCommandId =
+                loadedSaveMetadata.saveStub.activeCommandId;
+            g_nativeHostedSessionState.snapshot
+                .previousActiveCommandTicksRemaining =
+                    loadedSaveMetadata.saveStub
+                        .activeCommandTicksRemaining;
+            g_nativeHostedSessionState.snapshot.previousActiveCommandKind =
+                (ENativeDedicatedServerHostedGameWorkerCommandKind)
+                    loadedSaveMetadata.saveStub.activeCommandKind;
+            g_nativeHostedSessionState.snapshot
+                .previousLastProcessedCommandId =
+                    loadedSaveMetadata.saveStub.lastProcessedCommandId;
+            g_nativeHostedSessionState.snapshot
+                .previousLastProcessedCommandKind =
+                    (ENativeDedicatedServerHostedGameWorkerCommandKind)
+                        loadedSaveMetadata.saveStub
+                            .lastProcessedCommandKind;
+            g_nativeHostedSessionState.snapshot
+                .previousPlatformTickCount =
+                    loadedSaveMetadata.saveStub.platformTickCount;
+            g_nativeHostedSessionState.snapshot.previousUptimeMs =
+                loadedSaveMetadata.saveStub.uptimeMs;
+            g_nativeHostedSessionState.snapshot
+                .previousGameplayLoopIterations =
+                    loadedSaveMetadata.saveStub
+                        .gameplayLoopIterations;
+            g_nativeHostedSessionState.snapshot.previousHostSettings =
+                loadedSaveMetadata.saveStub.hostSettings;
+            g_nativeHostedSessionState.snapshot
+                .previousDedicatedNoLocalHostPlayer =
+                    loadedSaveMetadata.saveStub
+                        .dedicatedNoLocalHostPlayer;
+            g_nativeHostedSessionState.snapshot
+                .previousWorldSizeChunks =
+                    loadedSaveMetadata.saveStub.worldSizeChunks;
+            g_nativeHostedSessionState.snapshot.previousWorldHellScale =
+                (unsigned char)
+                    loadedSaveMetadata.saveStub.worldHellScale;
+            g_nativeHostedSessionState.snapshot.previousOnlineGame =
+                loadedSaveMetadata.saveStub.onlineGame;
+            g_nativeHostedSessionState.snapshot.previousPrivateGame =
+                loadedSaveMetadata.saveStub.privateGame;
+            g_nativeHostedSessionState.snapshot
+                .previousFakeLocalPlayerJoined =
+                    loadedSaveMetadata.saveStub.fakeLocalPlayerJoined;
+            g_nativeHostedSessionState.snapshot.previousPublicSlots =
+                (unsigned char)loadedSaveMetadata.saveStub.publicSlots;
+            g_nativeHostedSessionState.snapshot.previousPrivateSlots =
+                (unsigned char)loadedSaveMetadata.saveStub.privateSlots;
+            g_nativeHostedSessionState.snapshot
+                .previousSavePayloadChecksum =
+                    loadedSaveMetadata.saveStub.payloadChecksum;
+            g_nativeHostedSessionState.snapshot.previousSaveGeneration =
+                loadedSaveMetadata.saveStub.saveGeneration;
+            g_nativeHostedSessionState.snapshot
+                .previousSessionStateChecksum =
+                    loadedSaveMetadata.saveStub.stateChecksum;
+            g_nativeHostedSessionState.snapshot
+                .previousStartupPayloadPresent =
+                    loadedSaveMetadata.saveStub
+                        .startupPayloadPresent;
+            g_nativeHostedSessionState.snapshot
+                .previousStartupPayloadValidated =
+                    loadedSaveMetadata.saveStub
+                        .startupPayloadValidated;
+            g_nativeHostedSessionState.snapshot
+                .previousStartupThreadIterations =
+                    loadedSaveMetadata.saveStub
+                        .startupThreadIterations;
+            g_nativeHostedSessionState.snapshot
+                .previousStartupThreadDurationMs =
+                    loadedSaveMetadata.saveStub
+                        .startupThreadDurationMs;
+            g_nativeHostedSessionState.snapshot
+                .previousHostedThreadActive =
+                    loadedSaveMetadata.saveStub.hostedThreadActive;
+            g_nativeHostedSessionState.snapshot.previousHostedThreadTicks =
+                loadedSaveMetadata.saveStub.hostedThreadTicks;
+            g_nativeHostedSessionState.snapshot
+                .previousSessionCompleted =
+                    loadedSaveMetadata.saveStub.sessionCompleted;
+            g_nativeHostedSessionState.snapshot
+                .previousRequestedAppShutdown =
+                    loadedSaveMetadata.saveStub.requestedAppShutdown;
+            g_nativeHostedSessionState.snapshot
+                .previousShutdownHaltedGameplay =
+                    loadedSaveMetadata.saveStub
+                        .shutdownHaltedGameplay;
         }
 
         RefreshNativeHostedSessionActive(&g_nativeHostedSessionState);
@@ -880,6 +1048,122 @@ namespace ServerRuntime
         {
             std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
             snapshot = g_nativeHostedSessionState.snapshot;
+        }
+
+        DedicatedServerHostedGameRuntimePlanMetadata planMetadata = {};
+        planMetadata.startAttempted = snapshot.startAttempted;
+        planMetadata.loadedFromSave = snapshot.loadedFromSave;
+        planMetadata.onlineGame = snapshot.onlineGame;
+        planMetadata.privateGame = snapshot.privateGame;
+        planMetadata.fakeLocalPlayerJoined =
+            snapshot.fakeLocalPlayerJoined;
+        planMetadata.resolvedSeed = snapshot.resolvedSeed;
+        planMetadata.savePayloadBytes = snapshot.savePayloadBytes;
+        planMetadata.savePayloadChecksum = snapshot.payloadChecksum;
+        planMetadata.hostSettings = snapshot.hostSettings;
+        planMetadata.dedicatedNoLocalHostPlayer =
+            snapshot.dedicatedNoLocalHostPlayer;
+        planMetadata.worldSizeChunks = snapshot.worldSizeChunks;
+        planMetadata.worldHellScale = snapshot.worldHellScale;
+        planMetadata.publicSlots = (unsigned char)snapshot.publicSlots;
+        planMetadata.privateSlots = (unsigned char)snapshot.privateSlots;
+        planMetadata.savePayloadName = snapshot.savePayloadName;
+        planMetadata.loadedSaveMetadataAvailable =
+            snapshot.loadedSaveMetadataAvailable;
+        planMetadata.loadedSavePath = snapshot.loadedSavePath;
+        planMetadata.previousStartupMode = snapshot.previousStartupMode;
+        planMetadata.previousSessionPhase = snapshot.previousSessionPhase;
+        planMetadata.previousRemoteCommands =
+            snapshot.previousRemoteCommands;
+        planMetadata.previousAutosaveCompletions =
+            snapshot.previousAutosaveCompletions;
+        planMetadata.previousWorkerPendingWorldActionTicks =
+            snapshot.previousWorkerPendingWorldActionTicks;
+        planMetadata.previousWorkerPendingAutosaveCommands =
+            snapshot.previousWorkerPendingAutosaveCommands;
+        planMetadata.previousWorkerPendingSaveCommands =
+            snapshot.previousWorkerPendingSaveCommands;
+        planMetadata.previousWorkerPendingStopCommands =
+            snapshot.previousWorkerPendingStopCommands;
+        planMetadata.previousWorkerPendingHaltCommands =
+            snapshot.previousWorkerPendingHaltCommands;
+        planMetadata.previousWorkerTickCount =
+            snapshot.previousWorkerTickCount;
+        planMetadata.previousCompletedWorkerActions =
+            snapshot.previousCompletedWorkerActions;
+        planMetadata.previousProcessedAutosaveCommands =
+            snapshot.previousProcessedAutosaveCommands;
+        planMetadata.previousProcessedSaveCommands =
+            snapshot.previousProcessedSaveCommands;
+        planMetadata.previousProcessedStopCommands =
+            snapshot.previousProcessedStopCommands;
+        planMetadata.previousProcessedHaltCommands =
+            snapshot.previousProcessedHaltCommands;
+        planMetadata.previousLastQueuedCommandId =
+            snapshot.previousLastQueuedCommandId;
+        planMetadata.previousActiveCommandId =
+            snapshot.previousActiveCommandId;
+        planMetadata.previousActiveCommandTicksRemaining =
+            snapshot.previousActiveCommandTicksRemaining;
+        planMetadata.previousActiveCommandKind =
+            (unsigned int)snapshot.previousActiveCommandKind;
+        planMetadata.previousLastProcessedCommandId =
+            snapshot.previousLastProcessedCommandId;
+        planMetadata.previousLastProcessedCommandKind =
+            (unsigned int)snapshot.previousLastProcessedCommandKind;
+        planMetadata.previousPlatformTickCount =
+            snapshot.previousPlatformTickCount;
+        planMetadata.previousUptimeMs = snapshot.previousUptimeMs;
+        planMetadata.previousGameplayLoopIterations =
+            snapshot.previousGameplayLoopIterations;
+        planMetadata.previousHostSettings = snapshot.previousHostSettings;
+        planMetadata.previousDedicatedNoLocalHostPlayer =
+            snapshot.previousDedicatedNoLocalHostPlayer;
+        planMetadata.previousWorldSizeChunks =
+            snapshot.previousWorldSizeChunks;
+        planMetadata.previousWorldHellScale =
+            snapshot.previousWorldHellScale;
+        planMetadata.previousOnlineGame = snapshot.previousOnlineGame;
+        planMetadata.previousPrivateGame = snapshot.previousPrivateGame;
+        planMetadata.previousFakeLocalPlayerJoined =
+            snapshot.previousFakeLocalPlayerJoined;
+        planMetadata.previousPublicSlots =
+            snapshot.previousPublicSlots;
+        planMetadata.previousPrivateSlots =
+            snapshot.previousPrivateSlots;
+        planMetadata.previousSavePayloadChecksum =
+            snapshot.previousSavePayloadChecksum;
+        planMetadata.previousSaveGeneration =
+            snapshot.previousSaveGeneration;
+        planMetadata.previousSessionStateChecksum =
+            snapshot.previousSessionStateChecksum;
+        planMetadata.previousStartupPayloadPresent =
+            snapshot.previousStartupPayloadPresent;
+        planMetadata.previousStartupPayloadValidated =
+            snapshot.previousStartupPayloadValidated;
+        planMetadata.previousStartupThreadIterations =
+            snapshot.previousStartupThreadIterations;
+        planMetadata.previousStartupThreadDurationMs =
+            snapshot.previousStartupThreadDurationMs;
+        planMetadata.previousHostedThreadActive =
+            snapshot.previousHostedThreadActive;
+        planMetadata.previousHostedThreadTicks =
+            snapshot.previousHostedThreadTicks;
+        planMetadata.previousSessionCompleted =
+            snapshot.previousSessionCompleted;
+        planMetadata.previousRequestedAppShutdown =
+            snapshot.previousRequestedAppShutdown;
+        planMetadata.previousShutdownHaltedGameplay =
+            snapshot.previousShutdownHaltedGameplay;
+        if (snapshot.startAttempted ||
+            snapshot.loadedFromSave ||
+            !snapshot.savePayloadName.empty() ||
+            snapshot.hostSettings != 0 ||
+            snapshot.loadedSaveMetadataAvailable ||
+            !snapshot.loadedSavePath.empty())
+        {
+            RecordDedicatedServerHostedGameRuntimePlanMetadata(
+                planMetadata);
         }
 
         if (nowMs != 0 &&

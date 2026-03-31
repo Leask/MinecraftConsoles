@@ -2925,6 +2925,26 @@ int main(int argc, char* argv[])
             nativeHostedStubInitData.hellScale ==
                 sessionConfig.worldHellScale &&
             nativeHostedStubTickAfter > nativeHostedStubTickBefore &&
+            nativeHostedSessionCoreSnapshot.startAttempted &&
+            nativeHostedSessionCoreSnapshot.loadedFromSave &&
+            nativeHostedSessionCoreSnapshot.resolvedSeed ==
+                hostedGamePlan.resolvedSeed &&
+            nativeHostedSessionCoreSnapshot.hostSettings ==
+                sessionConfig.hostSettings &&
+            nativeHostedSessionCoreSnapshot
+                .dedicatedNoLocalHostPlayer &&
+            nativeHostedSessionCoreSnapshot.worldSizeChunks ==
+                sessionConfig.worldSizeChunks &&
+            nativeHostedSessionCoreSnapshot.worldHellScale ==
+                sessionConfig.worldHellScale &&
+            nativeHostedSessionCoreSnapshot.savePayloadBytes == 4 &&
+            nativeHostedSessionCoreSnapshot.savePayloadName ==
+                "Smoke World" &&
+            nativeHostedSessionCoreSnapshot.loadedSaveMetadataAvailable &&
+            nativeHostedSessionCoreSnapshot.loadedSavePath ==
+                "NativeDesktop/GameHDD/SmokeSession.save" &&
+            nativeHostedSessionCoreSnapshot.previousStartupMode ==
+                "loaded" &&
             nativeHostedStubSnapshot.startAttempted &&
             nativeHostedStubSnapshot.threadInvoked &&
             nativeHostedStubSnapshot.startupResult == 0 &&
