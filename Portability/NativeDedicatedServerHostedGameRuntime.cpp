@@ -4,6 +4,7 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "NativeDedicatedServerHostedGameCore.h"
+#include "NativeDedicatedServerHostedGameThread.h"
 #include "NativeDedicatedServerHostedGameWorker.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 
@@ -26,27 +27,6 @@ namespace ServerRuntime
         HANDLE g_nativeHostedStartupReadyEvent = nullptr;
         HANDLE g_nativeHostedThreadHandle = nullptr;
         std::atomic<bool> g_nativeHostedThreadRunning(false);
-
-        struct NativeDedicatedServerHostedGameThreadContext
-        {
-            DedicatedServerHostedGameThreadProc *threadProc = nullptr;
-            void *threadParam = nullptr;
-        };
-
-        DWORD WINAPI RunNativeDedicatedServerHostedThreadThunk(
-            LPVOID threadParameter)
-        {
-            NativeDedicatedServerHostedGameThreadContext *context =
-                static_cast<NativeDedicatedServerHostedGameThreadContext *>(
-                    threadParameter);
-            if (context == nullptr || context->threadProc == nullptr)
-            {
-                return static_cast<DWORD>(-1);
-            }
-
-            return static_cast<DWORD>(
-                context->threadProc(context->threadParam));
-        }
 
         void CloseNativeDedicatedServerHostedStartupReadyEvent()
         {
@@ -87,53 +67,14 @@ namespace ServerRuntime
             SyncNativeDedicatedServerHostedThreadState(false);
         }
 
-        bool WaitForNativeDedicatedServerHostedThreadReady(
-            HANDLE threadHandle)
+        void TickNativeDedicatedServerHostedGameThreadPlatformRuntime()
         {
-            while (!IsDedicatedServerShutdownRequested())
-            {
-                if (WaitForSingleObject(
-                        g_nativeHostedStartupReadyEvent,
-                        0) == WAIT_OBJECT_0)
-                {
-                    RecordNativeDedicatedServerHostedThreadSnapshot();
-                    return true;
-                }
-
-                const DWORD threadWait = WaitForSingleObject(threadHandle, 10);
-                if (threadWait == WAIT_OBJECT_0)
-                {
-                    return false;
-                }
-
-                TickDedicatedServerPlatformRuntime();
-                HandleDedicatedServerPlatformActions();
-            }
-
-            return false;
+            TickDedicatedServerPlatformRuntime();
         }
 
-        void PumpNativeDedicatedServerHostedThreadUntilExit(HANDLE threadHandle)
+        void HandleNativeDedicatedServerHostedGameThreadPlatformActions()
         {
-            while (WaitForSingleObject(threadHandle, 10) == WAIT_TIMEOUT &&
-                !IsDedicatedServerShutdownRequested())
-            {
-                TickDedicatedServerPlatformRuntime();
-                HandleDedicatedServerPlatformActions();
-            }
-        }
-
-        bool TryReadNativeDedicatedServerHostedThreadExitCode(
-            HANDLE threadHandle,
-            DWORD *outExitCode)
-        {
-            if (outExitCode == nullptr)
-            {
-                return false;
-            }
-
-            *outExitCode = static_cast<DWORD>(-1);
-            return GetExitCodeThread(threadHandle, outExitCode);
+            HandleDedicatedServerPlatformActions();
         }
 
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)
@@ -288,16 +229,14 @@ namespace ServerRuntime
             }
         }
 
-        NativeDedicatedServerHostedGameThreadContext threadContext = {};
-        threadContext.threadProc = threadProc;
-        threadContext.threadParam = threadParam;
-        HANDLE threadHandle = CreateThread(
-            nullptr,
-            0,
-            &RunNativeDedicatedServerHostedThreadThunk,
-            &threadContext,
-            0,
-            nullptr);
+        NativeDedicatedServerHostedGameThreadCallbacks callbacks = {};
+        callbacks.tickPlatformRuntime =
+            &TickNativeDedicatedServerHostedGameThreadPlatformRuntime;
+        callbacks.handlePlatformActions =
+            &HandleNativeDedicatedServerHostedGameThreadPlatformActions;
+        HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
+            threadProc,
+            threadParam);
         if (threadHandle == nullptr || threadHandle == INVALID_HANDLE_VALUE)
         {
             if (usePersistentNativeSession)
@@ -310,8 +249,12 @@ namespace ServerRuntime
         if (usePersistentNativeSession)
         {
             g_nativeHostedThreadHandle = threadHandle;
-            if (WaitForNativeDedicatedServerHostedThreadReady(threadHandle))
+            if (WaitForNativeDedicatedServerHostedGameThreadReady(
+                    g_nativeHostedStartupReadyEvent,
+                    threadHandle,
+                    callbacks))
             {
+                RecordNativeDedicatedServerHostedThreadSnapshot();
                 return completeNativeHostedStartup(
                     0,
                     true);
@@ -319,12 +262,14 @@ namespace ServerRuntime
         }
         else
         {
-            PumpNativeDedicatedServerHostedThreadUntilExit(threadHandle);
+            PumpNativeDedicatedServerHostedGameThreadUntilExit(
+                threadHandle,
+                callbacks);
         }
 
         WaitForSingleObject(threadHandle, INFINITE);
         DWORD threadExitCode = static_cast<DWORD>(-1);
-        if (!TryReadNativeDedicatedServerHostedThreadExitCode(
+        if (!TryReadNativeDedicatedServerHostedGameThreadExitCode(
                 threadHandle,
                 &threadExitCode))
         {
