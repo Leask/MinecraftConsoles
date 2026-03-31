@@ -5,6 +5,8 @@
 #include "NativeDedicatedServerHostedGameSession.h"
 #include "lce_time/lce_time.h"
 
+#include <algorithm>
+
 namespace
 {
     struct NativeDedicatedServerPlatformRuntimeState
@@ -202,7 +204,17 @@ namespace ServerRuntime
 
     std::uint64_t GetDedicatedServerAutosaveCompletionCount()
     {
-        return GetDedicatedServerAutosaveTrackerCompletionCount();
+        const std::uint64_t trackerCompletions =
+            GetDedicatedServerAutosaveTrackerCompletionCount();
+        if (!IsNativeDedicatedServerHostedGameSessionRunning())
+        {
+            return trackerCompletions;
+        }
+
+        return std::max(
+            trackerCompletions,
+            GetNativeDedicatedServerHostedGameSessionSnapshot()
+                .processedAutosaveCommands);
     }
 
     void HaltDedicatedServerGameplay()

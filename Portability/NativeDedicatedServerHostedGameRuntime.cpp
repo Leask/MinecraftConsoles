@@ -1,15 +1,13 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
-#include "Minecraft.Server/Common/DedicatedServerAutosaveTracker.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
-#include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
+#include "NativeDedicatedServerHostedGameCore.h"
 #include "NativeDedicatedServerHostedGameWorker.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 
 #include <atomic>
-#include <string>
 
 #include "lce_win32/lce_win32.h"
 #include "lce_time/lce_time.h"
@@ -25,9 +23,6 @@ namespace ServerRuntime
 
     namespace
     {
-        constexpr std::uint64_t kNativeHostedStartupStepDelayMs = 5;
-        constexpr std::uint64_t kNativeHostedStartupBaseIterations = 2;
-
         HANDLE g_nativeHostedStartupReadyEvent = nullptr;
         HANDLE g_nativeHostedThreadHandle = nullptr;
         std::atomic<bool> g_nativeHostedThreadRunning(false);
@@ -51,31 +46,6 @@ namespace ServerRuntime
 
             return static_cast<DWORD>(
                 context->threadProc(context->threadParam));
-        }
-
-        bool ValidateNativeDedicatedServerHostedGamePayload(
-            const NativeDedicatedServerHostedGameRuntimeStubInitData &initData)
-        {
-            if (initData.saveData == nullptr)
-            {
-                return true;
-            }
-
-            if (initData.saveData->data == nullptr ||
-                initData.saveData->fileSize <= 0)
-            {
-                return false;
-            }
-
-            const char *payloadBytes =
-                static_cast<const char *>(initData.saveData->data);
-            const std::string payloadText(
-                payloadBytes,
-                payloadBytes + initData.saveData->fileSize);
-            NativeDedicatedServerSaveStub saveStub = {};
-            return ParseNativeDedicatedServerSaveStubText(
-                payloadText,
-                &saveStub);
         }
 
         void CloseNativeDedicatedServerHostedStartupReadyEvent()
@@ -115,19 +85,6 @@ namespace ServerRuntime
         void FinalizeNativeDedicatedServerHostedThreadStop()
         {
             SyncNativeDedicatedServerHostedThreadState(false);
-        }
-
-        void TickNativeDedicatedServerHostedRuntimeFrame()
-        {
-            const NativeDedicatedServerHostedGameWorkerFrameResult
-                workerFrame =
-                    TickNativeDedicatedServerHostedGameWorkerFrame();
-            UpdateDedicatedServerAutosaveTracker(workerFrame.idle);
-            TickNativeDedicatedServerHostedGameSessionFrameAndProject(
-                workerFrame.snapshot,
-                GetDedicatedServerAutosaveCompletionCount(),
-                true,
-                LceGetMonotonicMilliseconds());
         }
 
         bool WaitForNativeDedicatedServerHostedThreadReady(
@@ -181,68 +138,17 @@ namespace ServerRuntime
 
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)
         {
-            const std::uint64_t startMs = LceGetMonotonicMilliseconds();
             g_nativeHostedThreadRunning.store(false);
-            NativeDedicatedServerHostedGameRuntimeStubInitData *initData =
+            NativeDedicatedServerHostedGameCoreHooks hooks = {};
+            hooks.onThreadReady =
+                &SignalNativeDedicatedServerHostedThreadReady;
+            hooks.onThreadStopped =
+                &FinalizeNativeDedicatedServerHostedThreadStop;
+            return RunNativeDedicatedServerHostedGameCore(
                 static_cast<
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
-                        threadParam);
-            if (initData == nullptr)
-            {
-                ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
-                    0,
-                    0,
-                    LceGetMonotonicMilliseconds());
-                return -2;
-            }
-
-            const bool startupPayloadPresent = initData->saveData != nullptr;
-            const bool startupPayloadValidated =
-                ValidateNativeDedicatedServerHostedGamePayload(*initData);
-            const std::uint64_t startupIterations =
-                kNativeHostedStartupBaseIterations +
-                (startupPayloadPresent ? 2ULL : 0ULL);
-            for (std::uint64_t i = 0; i < startupIterations; ++i)
-            {
-                LceSleepMilliseconds(kNativeHostedStartupStepDelayMs);
-            }
-
-            const std::uint64_t durationMs =
-                LceGetMonotonicMilliseconds() - startMs;
-            StartNativeDedicatedServerHostedGameSession(
-                *initData,
-                startupPayloadValidated);
-            ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
-                startupIterations,
-                durationMs,
-                LceGetMonotonicMilliseconds());
-            FinalizeNativeDedicatedServerHostedThreadStop();
-            if (!startupPayloadValidated)
-            {
-                return -2;
-            }
-
-            SignalNativeDedicatedServerHostedThreadReady();
-
-            while (true)
-            {
-                const bool shutdownRequested =
-                    IsDedicatedServerShutdownRequested() ||
-                    IsDedicatedServerAppShutdownRequested() ||
-                    IsDedicatedServerGameplayHalted();
-                if (shutdownRequested &&
-                    IsNativeDedicatedServerHostedGameWorkerIdle())
-                {
-                    break;
-                }
-
-                TickNativeDedicatedServerHostedRuntimeFrame();
-                LceSleepMilliseconds(10);
-            }
-
-            StopNativeDedicatedServerHostedGameSession();
-            FinalizeNativeDedicatedServerHostedThreadStop();
-            return 0;
+                        threadParam),
+                hooks);
         }
     }
 
