@@ -1132,6 +1132,35 @@ namespace ServerRuntime
             &g_nativeHostedSessionState);
     }
 
+    void FinalizeNativeDedicatedServerHostedGameSessionAndProject(
+        bool initialSaveRequested,
+        bool initialSaveCompleted,
+        bool initialSaveTimedOut,
+        bool sessionCompleted,
+        bool requestedAppShutdown,
+        bool shutdownHaltedGameplay,
+        std::uint64_t gameplayLoopIterations,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid,
+        std::uint64_t stoppedMs,
+        std::uint64_t nowMs)
+    {
+        FinalizeNativeDedicatedServerHostedGameSession(
+            initialSaveRequested,
+            initialSaveCompleted,
+            initialSaveTimedOut,
+            sessionCompleted,
+            requestedAppShutdown,
+            shutdownHaltedGameplay,
+            gameplayLoopIterations,
+            appShutdownRequested,
+            gameplayHalted,
+            stopSignalValid,
+            stoppedMs);
+        ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
+    }
+
     void ObserveNativeDedicatedServerHostedGameSessionThreadState(
         bool hostedThreadActive,
         std::uint64_t hostedThreadTicks)

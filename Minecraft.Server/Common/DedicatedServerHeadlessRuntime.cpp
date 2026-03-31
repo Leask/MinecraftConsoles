@@ -326,8 +326,6 @@ namespace
         }
 
         RefreshDedicatedServerHeadlessShellContext(context);
-        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
-            LceGetMonotonicMilliseconds());
         const std::string savePath =
             BuildDedicatedServerHeadlessSavePath(*context);
         const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
@@ -838,7 +836,7 @@ namespace ServerRuntime
                     runExecution.session.gameplayLoop.iterations
                 ? finalSessionSnapshot.gameplayLoopIterations
                 : runExecution.session.gameplayLoop.iterations;
-        ServerRuntime::FinalizeNativeDedicatedServerHostedGameSession(
+        ServerRuntime::FinalizeNativeDedicatedServerHostedGameSessionAndProject(
             sessionSummary.initialSaveRequested,
             sessionSummary.initialSaveCompleted,
             sessionSummary.initialSaveTimedOut,
@@ -849,8 +847,7 @@ namespace ServerRuntime
             ServerRuntime::IsDedicatedServerAppShutdownRequested(),
             ServerRuntime::IsDedicatedServerGameplayHalted(),
             ServerRuntime::IsDedicatedServerStopSignalValid(),
-            LceGetMonotonicMilliseconds());
-        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+            LceGetMonotonicMilliseconds(),
             LceGetMonotonicMilliseconds());
         PersistDedicatedServerHeadlessSaveStub(&shellHooksContext, true);
 
