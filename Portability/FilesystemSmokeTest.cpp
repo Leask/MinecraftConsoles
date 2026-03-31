@@ -1700,7 +1700,8 @@ int main(int argc, char* argv[])
         hostedGameSessionContext.hostName,
         hostedGameSessionContext.bindIp,
         hostedGameSessionContext.configuredPort,
-        hostedGameSessionContext.listenerPort);
+        hostedGameSessionContext.listenerPort,
+        1000);
     ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivation(
         0,
         true,
@@ -1795,12 +1796,20 @@ int main(int argc, char* argv[])
         true,
         true);
     ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
+        "NativeDesktop/GameHDD/SMOKE_SESSION.save",
         77,
         5);
+    ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+        1100);
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
         nativeHostedSessionObservedSnapshot =
             ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
-    ServerRuntime::MarkDedicatedServerHostedGameRuntimeSessionStopped(1200);
+    ServerRuntime::StopNativeDedicatedServerHostedGameSession(1200);
+    ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+        1200);
+    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+        nativeHostedSessionStoppedSnapshot =
+            ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         hostedGameStoppedSnapshot =
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
@@ -1888,6 +1897,7 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.fakeLocalPlayerJoined &&
         nativeHostedSessionObservedSnapshot.configuredPort == 25565 &&
         nativeHostedSessionObservedSnapshot.listenerPort == 19132 &&
+        nativeHostedSessionObservedSnapshot.sessionStartMs == 1000 &&
         nativeHostedSessionObservedSnapshot.acceptedConnections == 2 &&
         nativeHostedSessionObservedSnapshot.remoteCommands == 3 &&
         nativeHostedSessionObservedSnapshot.autosaveRequests == 4 &&
@@ -1913,6 +1923,8 @@ int main(int argc, char* argv[])
             ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop &&
         nativeHostedSessionObservedSnapshot.gameplayLoopIterations == 8 &&
         nativeHostedSessionObservedSnapshot.platformTickCount == 6 &&
+        nativeHostedSessionObservedSnapshot.lastPersistedSavePath ==
+            "NativeDesktop/GameHDD/SMOKE_SESSION.save" &&
         nativeHostedSessionObservedSnapshot.lastPersistedFileTime == 77 &&
         nativeHostedSessionObservedSnapshot
             .lastPersistedAutosaveCompletions == 5 &&
@@ -1928,12 +1940,19 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.shutdownHaltedGameplay &&
         nativeHostedSessionObservedSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_ShutdownRequested &&
+        nativeHostedSessionObservedSnapshot.stoppedMs == 0 &&
         nativeHostedSessionObservedSnapshot.stateChecksum != 0U &&
         !hostedGameStoppedSnapshot.sessionActive &&
         hostedGameStoppedSnapshot.phase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
         hostedGameStoppedSnapshot.stoppedMs == 1200 &&
-        hostedGameStoppedSnapshot.uptimeMs == 200;
+        hostedGameStoppedSnapshot.uptimeMs == 200 &&
+        !nativeHostedSessionStoppedSnapshot.active &&
+        nativeHostedSessionStoppedSnapshot.runtimePhase ==
+            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
+        nativeHostedSessionStoppedSnapshot.stoppedMs == 1200 &&
+        nativeHostedSessionStoppedSnapshot.lastPersistedSavePath ==
+            "NativeDesktop/GameHDD/SMOKE_SESSION.save";
     ServerRuntime::StopDedicatedServerPlatformRuntime();
     ServerRuntime::ResetDedicatedServerShutdownRequest();
     const ServerRuntime::DedicatedServerPlatformRuntimeStartResult

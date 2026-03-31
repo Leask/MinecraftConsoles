@@ -326,16 +326,7 @@ namespace
         }
 
         RefreshDedicatedServerHeadlessShellContext(context);
-        ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
-            context->shellState.acceptedConnections,
-            context->shellState.remoteCommands,
-            ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
-            completedAutosaves,
-            ServerRuntime::GetDedicatedServerPlatformTickCount(),
-            ServerRuntime::IsDedicatedServerWorldActionIdle(0),
-            ServerRuntime::IsDedicatedServerAppShutdownRequested(),
-            ServerRuntime::IsDedicatedServerGameplayHalted(),
-            ServerRuntime::IsDedicatedServerStopSignalValid(),
+        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
             LceGetMonotonicMilliseconds());
         const std::string savePath =
             BuildDedicatedServerHeadlessSavePath(*context);
@@ -473,12 +464,11 @@ namespace
 
         context->persistedAutosaveCompletions = completedAutosaves;
         ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
-            saveStub.savedAtFileTime,
-            completedAutosaves);
-        ServerRuntime::RecordDedicatedServerHostedGameRuntimePersistedSave(
             savePath,
             saveStub.savedAtFileTime,
             completedAutosaves);
+        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+            LceGetMonotonicMilliseconds());
         ServerRuntime::LogInfof(
             "world-io",
             "persisted native save stub #%llu to %s",
@@ -518,9 +508,6 @@ namespace
         const ServerRuntime::DedicatedServerHostedGameRuntimeSessionContext
             sessionContext =
                 BuildDedicatedServerHostedGameRuntimeSessionContext(*context);
-        ServerRuntime::RecordDedicatedServerHostedGameRuntimeSessionContext(
-            sessionContext,
-            context->shellStartMs);
         ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionContext(
             sessionContext.worldName,
             sessionContext.worldSaveId,
@@ -529,7 +516,10 @@ namespace
             sessionContext.hostName,
             sessionContext.bindIp,
             sessionContext.configuredPort,
-            sessionContext.listenerPort);
+            sessionContext.listenerPort,
+            context->shellStartMs);
+        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+            context->shellStartMs);
         ServerRuntime::LogInfo(
             "startup",
             "native bootstrap shell running; "
@@ -943,8 +933,6 @@ namespace ServerRuntime
                     runExecution.session.gameplayLoop.iterations
                 ? finalSessionSnapshot.gameplayLoopIterations
                 : runExecution.session.gameplayLoop.iterations;
-        ServerRuntime::RecordDedicatedServerHostedGameRuntimeSessionSummary(
-            sessionSummary);
         ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionSummary(
             sessionSummary.initialSaveRequested,
             sessionSummary.initialSaveCompleted,
@@ -958,10 +946,9 @@ namespace ServerRuntime
             ServerRuntime::IsDedicatedServerAppShutdownRequested(),
             ServerRuntime::IsDedicatedServerGameplayHalted(),
             ServerRuntime::IsDedicatedServerStopSignalValid());
-        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+        ServerRuntime::StopNativeDedicatedServerHostedGameSession(
             LceGetMonotonicMilliseconds());
-
-        ServerRuntime::MarkDedicatedServerHostedGameRuntimeSessionStopped(
+        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
             LceGetMonotonicMilliseconds());
         PersistDedicatedServerHeadlessSaveStub(&shellHooksContext, true);
 

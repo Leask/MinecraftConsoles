@@ -63,11 +63,14 @@ namespace ServerRuntime
         std::uint64_t platformTickCount = 0;
         std::uint64_t saveGeneration = 0;
         std::uint64_t stateChecksum = 0;
+        std::uint64_t sessionStartMs = 0;
         std::uint64_t lastPersistedFileTime = 0;
         std::uint64_t lastPersistedAutosaveCompletions = 0;
+        std::string lastPersistedSavePath;
         std::uint64_t startupThreadIterations = 0;
         std::uint64_t startupThreadDurationMs = 0;
         std::uint64_t hostedThreadTicks = 0;
+        std::uint64_t stoppedMs = 0;
         bool worldActionIdle = true;
         bool appShutdownRequested = false;
         bool gameplayHalted = false;
@@ -115,7 +118,8 @@ namespace ServerRuntime
         const std::string &hostName,
         const std::string &bindIp,
         int configuredPort,
-        int listenerPort);
+        int listenerPort,
+        std::uint64_t sessionStartMs = 0);
 
     void ObserveNativeDedicatedServerHostedGameSessionActivation(
         int localUsersMask,
@@ -136,6 +140,7 @@ namespace ServerRuntime
         bool stopSignalValid);
 
     void ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
+        const std::string &savePath,
         std::uint64_t savedAtFileTime,
         std::uint64_t autosaveCompletions);
 
@@ -182,7 +187,8 @@ namespace ServerRuntime
     void ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
         std::uint64_t nowMs = 0);
 
-    void StopNativeDedicatedServerHostedGameSession();
+    void StopNativeDedicatedServerHostedGameSession(
+        std::uint64_t stoppedMs = 0);
 
     bool IsNativeDedicatedServerHostedGameSessionRunning();
 

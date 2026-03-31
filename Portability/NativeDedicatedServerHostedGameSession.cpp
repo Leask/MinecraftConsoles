@@ -219,10 +219,16 @@ namespace ServerRuntime
                 state->snapshot.saveGeneration);
             checksum = MixNativeHostedSessionHash(
                 checksum,
+                state->snapshot.sessionStartMs);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
                 state->snapshot.lastPersistedFileTime);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.lastPersistedAutosaveCompletions);
+            checksum = MixNativeHostedSessionStringHash(
+                checksum,
+                state->snapshot.lastPersistedSavePath);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.startupThreadIterations);
@@ -232,6 +238,9 @@ namespace ServerRuntime
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.hostedThreadTicks);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.stoppedMs);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.loadedFromSave ? 1U : 0U);
@@ -636,7 +645,8 @@ namespace ServerRuntime
         const std::string &hostName,
         const std::string &bindIp,
         int configuredPort,
-        int listenerPort)
+        int listenerPort,
+        std::uint64_t sessionStartMs)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState.snapshot.worldName = worldName;
@@ -647,6 +657,12 @@ namespace ServerRuntime
         g_nativeHostedSessionState.snapshot.bindIp = bindIp;
         g_nativeHostedSessionState.snapshot.configuredPort = configuredPort;
         g_nativeHostedSessionState.snapshot.listenerPort = listenerPort;
+        if (sessionStartMs != 0)
+        {
+            g_nativeHostedSessionState.snapshot.sessionStartMs =
+                sessionStartMs;
+            g_nativeHostedSessionState.snapshot.stoppedMs = 0;
+        }
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }
@@ -711,10 +727,16 @@ namespace ServerRuntime
     }
 
     void ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
+        const std::string &savePath,
         std::uint64_t savedAtFileTime,
         std::uint64_t autosaveCompletions)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        if (!savePath.empty())
+        {
+            g_nativeHostedSessionState.snapshot.lastPersistedSavePath =
+                savePath;
+        }
         g_nativeHostedSessionState.snapshot.lastPersistedFileTime =
             savedAtFileTime;
         g_nativeHostedSessionState.snapshot
@@ -860,6 +882,30 @@ namespace ServerRuntime
             snapshot = g_nativeHostedSessionState.snapshot;
         }
 
+        if (nowMs != 0 &&
+            (!snapshot.worldName.empty() ||
+            !snapshot.worldSaveId.empty() ||
+            !snapshot.savePath.empty() ||
+            !snapshot.storageRoot.empty() ||
+            !snapshot.hostName.empty() ||
+            !snapshot.bindIp.empty() ||
+            snapshot.configuredPort != 0 ||
+            snapshot.listenerPort != 0))
+        {
+            DedicatedServerHostedGameRuntimeSessionContext sessionContext = {};
+            sessionContext.worldName = snapshot.worldName;
+            sessionContext.worldSaveId = snapshot.worldSaveId;
+            sessionContext.savePath = snapshot.savePath;
+            sessionContext.storageRoot = snapshot.storageRoot;
+            sessionContext.hostName = snapshot.hostName;
+            sessionContext.bindIp = snapshot.bindIp;
+            sessionContext.configuredPort = snapshot.configuredPort;
+            sessionContext.listenerPort = snapshot.listenerPort;
+            RecordDedicatedServerHostedGameRuntimeSessionContext(
+                sessionContext,
+                snapshot.sessionStartMs);
+        }
+
         if (nowMs != 0)
         {
             UpdateDedicatedServerHostedGameRuntimeSessionState(
@@ -903,14 +949,54 @@ namespace ServerRuntime
         RecordDedicatedServerHostedGameRuntimeCoreLifecycle(
             snapshot.active,
             (EDedicatedServerHostedGameRuntimePhase)snapshot.runtimePhase);
+        DedicatedServerHostedGameRuntimeSessionSummary sessionSummary = {};
+        sessionSummary.initialSaveRequested =
+            snapshot.initialSaveRequested;
+        sessionSummary.initialSaveCompleted =
+            snapshot.initialSaveCompleted;
+        sessionSummary.initialSaveTimedOut =
+            snapshot.initialSaveTimedOut;
+        sessionSummary.sessionCompleted =
+            snapshot.sessionCompleted;
+        sessionSummary.requestedAppShutdown =
+            snapshot.requestedAppShutdown;
+        sessionSummary.shutdownHaltedGameplay =
+            snapshot.shutdownHaltedGameplay;
+        sessionSummary.gameplayLoopIterations =
+            snapshot.gameplayLoopIterations;
+        RecordDedicatedServerHostedGameRuntimeSessionSummary(
+            sessionSummary);
+        if (!snapshot.lastPersistedSavePath.empty() ||
+            snapshot.lastPersistedFileTime != 0 ||
+            snapshot.lastPersistedAutosaveCompletions != 0)
+        {
+            RecordDedicatedServerHostedGameRuntimePersistedSave(
+                !snapshot.lastPersistedSavePath.empty()
+                    ? snapshot.lastPersistedSavePath
+                    : snapshot.savePath,
+                snapshot.lastPersistedFileTime,
+                snapshot.lastPersistedAutosaveCompletions);
+        }
+        if (snapshot.stoppedMs != 0 ||
+            snapshot.runtimePhase ==
+                eDedicatedServerHostedGameRuntimePhase_Stopped)
+        {
+            MarkDedicatedServerHostedGameRuntimeSessionStopped(
+                snapshot.stoppedMs);
+        }
     }
 
-    void StopNativeDedicatedServerHostedGameSession()
+    void StopNativeDedicatedServerHostedGameSession(
+        std::uint64_t stoppedMs)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState.snapshot.active = false;
         g_nativeHostedSessionState.snapshot.runtimePhase =
             eDedicatedServerHostedGameRuntimePhase_Stopped;
+        if (stoppedMs != 0)
+        {
+            g_nativeHostedSessionState.snapshot.stoppedMs = stoppedMs;
+        }
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }
