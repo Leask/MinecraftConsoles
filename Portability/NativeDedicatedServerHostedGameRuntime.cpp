@@ -4,11 +4,10 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "NativeDedicatedServerHostedGameCore.h"
+#include "NativeDedicatedServerHostedGameStartup.h"
 #include "NativeDedicatedServerHostedGameThread.h"
 #include "NativeDedicatedServerHostedGameWorker.h"
 #include "NativeDedicatedServerHostedGameSession.h"
-
-#include <atomic>
 
 #include "lce_win32/lce_win32.h"
 #include "lce_time/lce_time.h"
@@ -26,7 +25,6 @@ namespace ServerRuntime
     {
         HANDLE g_nativeHostedStartupReadyEvent = nullptr;
         HANDLE g_nativeHostedThreadHandle = nullptr;
-        std::atomic<bool> g_nativeHostedThreadRunning(false);
 
         void CloseNativeDedicatedServerHostedStartupReadyEvent()
         {
@@ -45,7 +43,6 @@ namespace ServerRuntime
 
         void SyncNativeDedicatedServerHostedThreadState(bool running)
         {
-            g_nativeHostedThreadRunning.store(running);
             ObserveNativeDedicatedServerHostedGameSessionThreadStateAndWorkerProject(
                 running,
                 GetNativeDedicatedServerHostedGameSessionThreadTicks(),
@@ -79,7 +76,6 @@ namespace ServerRuntime
 
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)
         {
-            g_nativeHostedThreadRunning.store(false);
             NativeDedicatedServerHostedGameCoreHooks hooks = {};
             hooks.onThreadReady =
                 &SignalNativeDedicatedServerHostedThreadReady;
@@ -107,7 +103,6 @@ namespace ServerRuntime
         }
 
         CloseNativeDedicatedServerHostedStartupReadyEvent();
-        g_nativeHostedThreadRunning.store(false);
         ResetNativeDedicatedServerHostedGameWorkerState();
         ResetNativeDedicatedServerHostedGameSessionCoreState();
         RecordNativeDedicatedServerHostedThreadSnapshot();
@@ -173,60 +168,27 @@ namespace ServerRuntime
             return startupResult;
         }
 
-        auto completeNativeHostedStartup =
-            [usePersistentNativeSession](int result, bool threadInvoked)
-            {
-                if (usePersistentNativeSession)
-                {
-                    ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
-                        result,
-                        threadInvoked,
-                        LceGetMonotonicMilliseconds());
-                    return result;
-                }
-
-                return CompleteDedicatedServerHostedGameRuntimeStartup(
-                    result,
-                    threadInvoked);
-            };
-
-        if (usePersistentNativeSession)
+        if (!PrepareNativeDedicatedServerHostedGameStartup(
+                usePersistentNativeSession,
+                &g_nativeHostedStartupReadyEvent))
         {
-            ResetDedicatedServerHostedGameRuntimeSnapshot();
-            ResetNativeDedicatedServerHostedGameSessionState();
-            g_nativeHostedStartupReadyEvent = CreateEvent(
-                nullptr,
-                TRUE,
-                FALSE,
-                nullptr);
-            if (g_nativeHostedStartupReadyEvent == nullptr ||
-                g_nativeHostedStartupReadyEvent == INVALID_HANDLE_VALUE)
-            {
-                CloseNativeDedicatedServerHostedStartupReadyEvent();
-                return completeNativeHostedStartup(
-                    -1,
-                    false);
-            }
+            CloseNativeDedicatedServerHostedStartupReadyEvent();
+            return CompleteNativeDedicatedServerHostedGameStartup(
+                usePersistentNativeSession,
+                -1,
+                false,
+                LceGetMonotonicMilliseconds());
         }
 
         ActivateDedicatedServerHostedGamePlan(hostedGamePlan);
 
         if (usePersistentNativeSession)
         {
-            NativeDedicatedServerHostedGameRuntimeStubInitData *initData =
+            PopulateNativeDedicatedServerHostedGameRuntimeStubInitData(
                 static_cast<
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
-                        threadParam);
-            if (initData != nullptr)
-            {
-                initData->localUsersMask = hostedGamePlan.localUsersMask;
-                initData->onlineGame = hostedGamePlan.onlineGame;
-                initData->privateGame = hostedGamePlan.privateGame;
-                initData->publicSlots = hostedGamePlan.publicSlots;
-                initData->privateSlots = hostedGamePlan.privateSlots;
-                initData->fakeLocalPlayerJoined =
-                    hostedGamePlan.fakeLocalPlayerJoined;
-            }
+                        threadParam),
+                hostedGamePlan);
         }
 
         NativeDedicatedServerHostedGameThreadCallbacks callbacks = {};
@@ -243,7 +205,11 @@ namespace ServerRuntime
             {
                 CloseNativeDedicatedServerHostedStartupReadyEvent();
             }
-            return completeNativeHostedStartup(-1, false);
+            return CompleteNativeDedicatedServerHostedGameStartup(
+                usePersistentNativeSession,
+                -1,
+                false,
+                LceGetMonotonicMilliseconds());
         }
 
         if (usePersistentNativeSession)
@@ -255,9 +221,11 @@ namespace ServerRuntime
                     callbacks))
             {
                 RecordNativeDedicatedServerHostedThreadSnapshot();
-                return completeNativeHostedStartup(
+                return CompleteNativeDedicatedServerHostedGameStartup(
+                    usePersistentNativeSession,
                     0,
-                    true);
+                    true,
+                    LceGetMonotonicMilliseconds());
             }
         }
         else
@@ -279,7 +247,11 @@ namespace ServerRuntime
                 g_nativeHostedThreadHandle = nullptr;
                 CloseNativeDedicatedServerHostedStartupReadyEvent();
             }
-            return completeNativeHostedStartup(-1, true);
+            return CompleteNativeDedicatedServerHostedGameStartup(
+                usePersistentNativeSession,
+                -1,
+                true,
+                LceGetMonotonicMilliseconds());
         }
 
         CloseHandle(threadHandle);
@@ -289,9 +261,11 @@ namespace ServerRuntime
             CloseNativeDedicatedServerHostedStartupReadyEvent();
         }
         startupResult = static_cast<int>(threadExitCode);
-        return completeNativeHostedStartup(
+        return CompleteNativeDedicatedServerHostedGameStartup(
+            usePersistentNativeSession,
             startupResult,
-            true);
+            true,
+            LceGetMonotonicMilliseconds());
     }
 
     DedicatedServerHostedGameThreadProc
