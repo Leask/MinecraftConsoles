@@ -4,9 +4,17 @@
 
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
+#include "NativeDedicatedServerHostedGameThread.h"
 
 namespace ServerRuntime
 {
+    struct NativeDedicatedServerHostedGamePersistentStartResult
+    {
+        bool ready = false;
+        bool threadInvoked = false;
+        int startupResult = -1;
+    };
+
     bool PrepareNativeDedicatedServerHostedGameStartup(
         bool persistentSession,
         HANDLE *outStartupReadyEvent);
@@ -20,4 +28,11 @@ namespace ServerRuntime
     void PopulateNativeDedicatedServerHostedGameRuntimeStubInitData(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
         const DedicatedServerHostedGamePlan &hostedGamePlan);
+
+    NativeDedicatedServerHostedGamePersistentStartResult
+    StartPersistentNativeDedicatedServerHostedGameRuntime(
+        const DedicatedServerHostedGamePlan &hostedGamePlan,
+        DedicatedServerHostedGameThreadProc *threadProc,
+        void *threadParam,
+        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks);
 }
