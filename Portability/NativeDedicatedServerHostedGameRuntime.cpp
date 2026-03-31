@@ -90,12 +90,7 @@ namespace ServerRuntime
 
         void RecordNativeDedicatedServerHostedThreadSnapshot()
         {
-            const NativeDedicatedServerHostedGameWorkerSnapshot
-                workerSnapshot =
-                    GetNativeDedicatedServerHostedGameWorkerSnapshot();
-            ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
-                workerSnapshot);
-            ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot();
+            ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot();
         }
 
         void SyncNativeDedicatedServerHostedThreadState(bool running)

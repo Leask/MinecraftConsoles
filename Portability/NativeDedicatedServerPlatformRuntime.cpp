@@ -40,16 +40,6 @@ namespace
         ServerRuntime::HandleDedicatedServerPlatformActions();
     }
 
-    void RefreshNativeDedicatedServerWorkerProjection()
-    {
-        const ServerRuntime::NativeDedicatedServerHostedGameWorkerSnapshot
-            workerSnapshot =
-                ServerRuntime::GetNativeDedicatedServerHostedGameWorkerSnapshot();
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
-            workerSnapshot);
-        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot();
-    }
-
     void RefreshNativeDedicatedServerRuntimeProjection(
         std::uint64_t nowMs = 0)
     {
@@ -142,8 +132,9 @@ namespace ServerRuntime
         MarkDedicatedServerAutosaveTrackerRequested();
         if (IsNativeDedicatedServerHostedGameSessionRunning())
         {
-            RequestNativeDedicatedServerHostedGameWorkerAutosave(2);
-            RefreshNativeDedicatedServerWorkerProjection();
+            RequestNativeDedicatedServerHostedGameSessionAutosave(
+                2,
+                LceGetMonotonicMilliseconds());
         }
         else if (g_nativeRuntimeState.fallbackWorldActionTicks < 2)
         {
@@ -219,10 +210,10 @@ namespace ServerRuntime
     {
         if (IsNativeDedicatedServerHostedGameSessionRunning())
         {
-            EnqueueNativeDedicatedServerHostedGameWorkerHaltSequence(
+            EnqueueNativeDedicatedServerHostedGameSessionHaltSequence(
                 g_nativeRuntimeState.saveOnExitEnabled,
-                2);
-            RefreshNativeDedicatedServerWorkerProjection();
+                2,
+                LceGetMonotonicMilliseconds());
             g_nativeRuntimeState.gameplayHalted = true;
             RefreshNativeDedicatedServerRuntimeProjection(
                 LceGetMonotonicMilliseconds());
@@ -245,7 +236,8 @@ namespace ServerRuntime
         g_nativeRuntimeState.stopSignalValid = false;
         g_nativeRuntimeState.fallbackWorldActionTicks = 0;
         ClearNativeDedicatedServerHostedGameWorkerState();
-        RefreshNativeDedicatedServerWorkerProjection();
+        ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
+            LceGetMonotonicMilliseconds());
         RefreshNativeDedicatedServerRuntimeProjection(
             LceGetMonotonicMilliseconds());
     }
@@ -260,7 +252,8 @@ namespace ServerRuntime
             WaitForNativeDedicatedServerHostedGameSessionStop(INFINITE);
         }
         ClearNativeDedicatedServerHostedGameWorkerState();
-        RefreshNativeDedicatedServerWorkerProjection();
+        ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
+            LceGetMonotonicMilliseconds());
         ResetDedicatedServerAutosaveTracker();
         g_nativeRuntimeState = {};
     }

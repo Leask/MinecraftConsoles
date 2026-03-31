@@ -267,6 +267,24 @@ namespace ServerRuntime
     void ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
         const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot);
 
+    void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
+        std::uint64_t nowMs = 0);
+
+    void RequestNativeDedicatedServerHostedGameSessionAutosave(
+        unsigned int workTicks,
+        std::uint64_t nowMs = 0);
+
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameSessionSaveCommand(
+        std::uint64_t nowMs = 0);
+
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameSessionStopCommand(
+        std::uint64_t nowMs = 0);
+
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameSessionHaltSequence(
+        bool requestAutosaveFirst,
+        unsigned int autosaveWorkTicks,
+        std::uint64_t nowMs = 0);
+
     void ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
         std::uint64_t nowMs = 0);
 

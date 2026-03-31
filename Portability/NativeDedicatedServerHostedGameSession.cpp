@@ -1099,6 +1099,53 @@ namespace ServerRuntime
             workerSnapshot.lastProcessedCommandKind);
     }
 
+    void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
+        std::uint64_t nowMs)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
+            GetNativeDedicatedServerHostedGameWorkerSnapshot());
+        ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
+    }
+
+    void RequestNativeDedicatedServerHostedGameSessionAutosave(
+        unsigned int workTicks,
+        std::uint64_t nowMs)
+    {
+        RequestNativeDedicatedServerHostedGameWorkerAutosave(workTicks);
+        ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(nowMs);
+    }
+
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameSessionSaveCommand(
+        std::uint64_t nowMs)
+    {
+        const std::uint64_t commandId =
+            EnqueueNativeDedicatedServerHostedGameWorkerSaveCommand();
+        ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(nowMs);
+        return commandId;
+    }
+
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameSessionStopCommand(
+        std::uint64_t nowMs)
+    {
+        const std::uint64_t commandId =
+            EnqueueNativeDedicatedServerHostedGameWorkerStopCommand();
+        ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(nowMs);
+        return commandId;
+    }
+
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameSessionHaltSequence(
+        bool requestAutosaveFirst,
+        unsigned int autosaveWorkTicks,
+        std::uint64_t nowMs)
+    {
+        const std::uint64_t commandId =
+            EnqueueNativeDedicatedServerHostedGameWorkerHaltSequence(
+                requestAutosaveFirst,
+                autosaveWorkTicks);
+        ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(nowMs);
+        return commandId;
+    }
+
     void ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
         std::uint64_t nowMs)
     {

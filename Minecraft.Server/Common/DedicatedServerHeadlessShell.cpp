@@ -57,16 +57,6 @@ namespace
         response->push_back('\n');
     }
 
-    void RefreshNativeDedicatedServerHostedWorkerProjection()
-    {
-        const ServerRuntime::NativeDedicatedServerHostedGameWorkerSnapshot
-            workerSnapshot =
-                ServerRuntime::GetNativeDedicatedServerHostedGameWorkerSnapshot();
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
-            workerSnapshot);
-        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot();
-    }
-
     bool RefreshNativeDedicatedServerActivityProjection(
         const ServerRuntime::DedicatedServerHeadlessShellState &state,
         std::uint64_t nowMs = 0)
@@ -92,7 +82,7 @@ namespace
             return;
         }
 
-        RefreshNativeDedicatedServerHostedWorkerProjection();
+        ServerRuntime::ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot();
         const bool worldActionIdle =
             RefreshNativeDedicatedServerActivityProjection(
                 state,
@@ -602,7 +592,8 @@ namespace ServerRuntime
 
         if (command == "status")
         {
-            RefreshNativeDedicatedServerHostedWorkerProjection();
+            ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
+                LceGetMonotonicMilliseconds());
             const bool worldActionIdle =
                 RefreshNativeDedicatedServerActivityProjection(
                     state,
@@ -909,8 +900,8 @@ namespace ServerRuntime
             if (IsNativeDedicatedServerHostedGameSessionRunning())
             {
                 commandId =
-                    EnqueueNativeDedicatedServerHostedGameWorkerSaveCommand();
-                RefreshNativeDedicatedServerHostedWorkerProjection();
+                    EnqueueNativeDedicatedServerHostedGameSessionSaveCommand(
+                        LceGetMonotonicMilliseconds());
             }
             else
             {
@@ -944,8 +935,8 @@ namespace ServerRuntime
             if (IsNativeDedicatedServerHostedGameSessionRunning())
             {
                 commandId =
-                    EnqueueNativeDedicatedServerHostedGameWorkerStopCommand();
-                RefreshNativeDedicatedServerHostedWorkerProjection();
+                    EnqueueNativeDedicatedServerHostedGameSessionStopCommand(
+                        LceGetMonotonicMilliseconds());
             }
             else
             {
