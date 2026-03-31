@@ -2,6 +2,7 @@
 
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
+#include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 
 namespace ServerRuntime
@@ -22,19 +23,10 @@ namespace ServerRuntime
 
         ResetDedicatedServerHostedGameRuntimeSnapshot();
         ResetNativeDedicatedServerHostedGameSessionState();
-        HANDLE startupReadyEvent = CreateEvent(
-            nullptr,
-            TRUE,
-            FALSE,
-            nullptr);
-        if (startupReadyEvent == nullptr ||
-            startupReadyEvent == INVALID_HANDLE_VALUE)
+        HANDLE startupReadyEvent = nullptr;
+        if (!PrepareNativeDedicatedServerHostedGameHostStartup(
+                &startupReadyEvent))
         {
-            if (startupReadyEvent != nullptr &&
-                startupReadyEvent != INVALID_HANDLE_VALUE)
-            {
-                CloseHandle(startupReadyEvent);
-            }
             return false;
         }
 
