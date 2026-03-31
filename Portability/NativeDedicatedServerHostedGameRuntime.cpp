@@ -98,6 +98,30 @@ namespace ServerRuntime
             ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot();
         }
 
+        void SyncNativeDedicatedServerHostedThreadState(bool running)
+        {
+            g_nativeHostedThreadRunning.store(running);
+            ObserveNativeDedicatedServerHostedGameSessionThreadState(
+                running,
+                GetNativeDedicatedServerHostedGameSessionThreadTicks());
+            RecordNativeDedicatedServerHostedThreadSnapshot();
+        }
+
+        void SignalNativeDedicatedServerHostedThreadReady()
+        {
+            SyncNativeDedicatedServerHostedThreadState(true);
+            if (g_nativeHostedStartupReadyEvent != nullptr &&
+                g_nativeHostedStartupReadyEvent != INVALID_HANDLE_VALUE)
+            {
+                SetEvent(g_nativeHostedStartupReadyEvent);
+            }
+        }
+
+        void FinalizeNativeDedicatedServerHostedThreadStop()
+        {
+            SyncNativeDedicatedServerHostedThreadState(false);
+        }
+
         void TickNativeDedicatedServerHostedRuntimeFrame()
         {
             const NativeDedicatedServerHostedGameWorkerFrameResult
@@ -153,25 +177,13 @@ namespace ServerRuntime
             ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
                 startupIterations,
                 durationMs);
-            ObserveNativeDedicatedServerHostedGameSessionThreadState(
-                false,
-                GetNativeDedicatedServerHostedGameSessionThreadTicks());
-            RecordNativeDedicatedServerHostedThreadSnapshot();
+            FinalizeNativeDedicatedServerHostedThreadStop();
             if (!startupPayloadValidated)
             {
                 return -2;
             }
 
-            g_nativeHostedThreadRunning.store(true);
-            ObserveNativeDedicatedServerHostedGameSessionThreadState(
-                true,
-                GetNativeDedicatedServerHostedGameSessionThreadTicks());
-            RecordNativeDedicatedServerHostedThreadSnapshot();
-            if (g_nativeHostedStartupReadyEvent != nullptr &&
-                g_nativeHostedStartupReadyEvent != INVALID_HANDLE_VALUE)
-            {
-                SetEvent(g_nativeHostedStartupReadyEvent);
-            }
+            SignalNativeDedicatedServerHostedThreadReady();
 
             while (true)
             {
@@ -189,12 +201,8 @@ namespace ServerRuntime
                 LceSleepMilliseconds(10);
             }
 
-            g_nativeHostedThreadRunning.store(false);
             StopNativeDedicatedServerHostedGameSession();
-            ObserveNativeDedicatedServerHostedGameSessionThreadState(
-                false,
-                GetNativeDedicatedServerHostedGameSessionThreadTicks());
-            RecordNativeDedicatedServerHostedThreadSnapshot();
+            FinalizeNativeDedicatedServerHostedThreadStop();
             return 0;
         }
     }
@@ -232,11 +240,7 @@ namespace ServerRuntime
             g_nativeHostedThreadHandle == INVALID_HANDLE_VALUE)
         {
             CloseNativeDedicatedServerHostedStartupReadyEvent();
-            g_nativeHostedThreadRunning.store(false);
-            ObserveNativeDedicatedServerHostedGameSessionThreadState(
-                false,
-                GetNativeDedicatedServerHostedGameSessionThreadTicks());
-            RecordNativeDedicatedServerHostedThreadSnapshot();
+            FinalizeNativeDedicatedServerHostedThreadStop();
             return true;
         }
 
@@ -262,11 +266,7 @@ namespace ServerRuntime
         CloseHandle(g_nativeHostedThreadHandle);
         g_nativeHostedThreadHandle = nullptr;
         CloseNativeDedicatedServerHostedStartupReadyEvent();
-        g_nativeHostedThreadRunning.store(false);
-        ObserveNativeDedicatedServerHostedGameSessionThreadState(
-            false,
-            GetNativeDedicatedServerHostedGameSessionThreadTicks());
-        RecordNativeDedicatedServerHostedThreadSnapshot();
+        FinalizeNativeDedicatedServerHostedThreadStop();
         return true;
     }
 
