@@ -817,6 +817,19 @@ namespace ServerRuntime
             &g_nativeHostedSessionState);
     }
 
+    void ObserveNativeDedicatedServerHostedGameSessionActivityAndProject(
+        std::uint64_t acceptedConnections,
+        std::uint64_t remoteCommands,
+        bool worldActionIdle,
+        std::uint64_t nowMs)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionActivity(
+            acceptedConnections,
+            remoteCommands,
+            worldActionIdle);
+        ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
+    }
+
     void ObserveNativeDedicatedServerHostedGameSessionContext(
         const std::string &worldName,
         const std::string &worldSaveId,
@@ -845,6 +858,31 @@ namespace ServerRuntime
         }
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionContextAndProject(
+        const std::string &worldName,
+        const std::string &worldSaveId,
+        const std::string &savePath,
+        const std::string &storageRoot,
+        const std::string &hostName,
+        const std::string &bindIp,
+        int configuredPort,
+        int listenerPort,
+        std::uint64_t sessionStartMs,
+        std::uint64_t nowMs)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionContext(
+            worldName,
+            worldSaveId,
+            savePath,
+            storageRoot,
+            hostName,
+            bindIp,
+            configuredPort,
+            listenerPort,
+            sessionStartMs);
+        ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
     }
 
     void ObserveNativeDedicatedServerHostedGameSessionActivation(
@@ -929,6 +967,19 @@ namespace ServerRuntime
         }
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionPersistedSaveAndProject(
+        const std::string &savePath,
+        std::uint64_t savedAtFileTime,
+        std::uint64_t autosaveCompletions,
+        std::uint64_t nowMs)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
+            savePath,
+            savedAtFileTime,
+            autosaveCompletions);
+        ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
     }
 
     void ObserveNativeDedicatedServerHostedGameSessionSummary(

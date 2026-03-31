@@ -370,11 +370,10 @@ namespace
         }
 
         context->persistedAutosaveCompletions = completedAutosaves;
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPersistedSaveAndProject(
             savePath,
             saveStub.savedAtFileTime,
-            completedAutosaves);
-        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+            completedAutosaves,
             LceGetMonotonicMilliseconds());
         ServerRuntime::LogInfof(
             "world-io",
@@ -415,7 +414,7 @@ namespace
         const ServerRuntime::DedicatedServerHostedGameRuntimeSessionContext
             sessionContext =
                 BuildDedicatedServerHostedGameRuntimeSessionContext(*context);
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionContext(
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionContextAndProject(
             sessionContext.worldName,
             sessionContext.worldSaveId,
             sessionContext.savePath,
@@ -424,8 +423,7 @@ namespace
             sessionContext.bindIp,
             sessionContext.configuredPort,
             sessionContext.listenerPort,
-            context->shellStartMs);
-        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+            context->shellStartMs,
             context->shellStartMs);
         ServerRuntime::LogInfo(
             "startup",

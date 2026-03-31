@@ -63,11 +63,10 @@ namespace
     {
         const bool worldActionIdle =
             ServerRuntime::IsDedicatedServerWorldActionIdle(0);
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivity(
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivityAndProject(
             state.acceptedConnections,
             state.remoteCommands,
-            worldActionIdle);
-        ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+            worldActionIdle,
             nowMs != 0 ? nowMs : LceGetMonotonicMilliseconds());
         return worldActionIdle;
     }
