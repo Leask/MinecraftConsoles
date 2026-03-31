@@ -5,6 +5,7 @@
 
 #include <lce_win32/lce_win32.h>
 
+#include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "NativeDedicatedServerHostedGameWorker.h"
 
@@ -143,6 +144,16 @@ namespace ServerRuntime
                 eNativeDedicatedServerHostedGameWorkerCommand_None;
     };
 
+    struct NativeDedicatedServerHostedGameSessionPersistContext
+    {
+        std::string worldName;
+        std::string worldSaveId;
+        std::string hostName;
+        std::string bindIp;
+        int configuredPort = 0;
+        int listenerPort = 0;
+    };
+
     void ResetNativeDedicatedServerHostedGameSessionState();
 
     bool StartNativeDedicatedServerHostedGameSession(
@@ -268,6 +279,13 @@ namespace ServerRuntime
 
     NativeDedicatedServerHostedGameSessionSnapshot
     GetNativeDedicatedServerHostedGameSessionSnapshot();
+
+    bool BuildNativeDedicatedServerSaveStubFromSessionSnapshot(
+        const NativeDedicatedServerHostedGameSessionPersistContext
+            &persistContext,
+        std::uint64_t nowMs,
+        std::uint64_t savedAtFileTime,
+        NativeDedicatedServerSaveStub *outSaveStub);
 
     bool WaitForNativeDedicatedServerHostedGameSessionStop(
         DWORD timeoutMs,

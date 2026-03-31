@@ -1370,4 +1370,145 @@ namespace ServerRuntime
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         return g_nativeHostedSessionState.snapshot;
     }
+
+    bool BuildNativeDedicatedServerSaveStubFromSessionSnapshot(
+        const NativeDedicatedServerHostedGameSessionPersistContext
+            &persistContext,
+        std::uint64_t nowMs,
+        std::uint64_t savedAtFileTime,
+        NativeDedicatedServerSaveStub *outSaveStub)
+    {
+        if (outSaveStub == nullptr)
+        {
+            return false;
+        }
+
+        const NativeDedicatedServerHostedGameSessionSnapshot snapshot =
+            GetNativeDedicatedServerHostedGameSessionSnapshot();
+        NativeDedicatedServerSaveStub saveStub = {};
+        saveStub.worldName = snapshot.worldName.empty()
+            ? persistContext.worldName
+            : snapshot.worldName;
+        saveStub.levelId = snapshot.worldSaveId.empty()
+            ? persistContext.worldSaveId
+            : snapshot.worldSaveId;
+        saveStub.hostName = snapshot.hostName.empty()
+            ? persistContext.hostName
+            : snapshot.hostName;
+        saveStub.bindIp = snapshot.bindIp.empty()
+            ? persistContext.bindIp
+            : snapshot.bindIp;
+        saveStub.configuredPort = snapshot.configuredPort > 0
+            ? snapshot.configuredPort
+            : persistContext.configuredPort;
+        saveStub.listenerPort = snapshot.listenerPort > 0
+            ? snapshot.listenerPort
+            : persistContext.listenerPort;
+        saveStub.onlineGame = snapshot.onlineGame;
+        saveStub.privateGame = snapshot.privateGame;
+        saveStub.fakeLocalPlayerJoined =
+            snapshot.fakeLocalPlayerJoined;
+        saveStub.publicSlots = snapshot.publicSlots;
+        saveStub.privateSlots = snapshot.privateSlots;
+        saveStub.sessionActive = snapshot.active;
+        saveStub.worldActionIdle = snapshot.worldActionIdle;
+        saveStub.appShutdownRequested =
+            snapshot.appShutdownRequested;
+        saveStub.gameplayHalted = snapshot.gameplayHalted;
+        saveStub.acceptedConnections = snapshot.acceptedConnections;
+        saveStub.remoteCommands = snapshot.remoteCommands;
+        saveStub.autosaveRequests = snapshot.autosaveRequests;
+        saveStub.autosaveCompletions =
+            snapshot.observedAutosaveCompletions;
+        saveStub.workerPendingWorldActionTicks =
+            snapshot.workerPendingWorldActionTicks;
+        saveStub.workerPendingAutosaveCommands =
+            snapshot.workerPendingAutosaveCommands;
+        saveStub.workerPendingSaveCommands =
+            snapshot.workerPendingSaveCommands;
+        saveStub.workerPendingStopCommands =
+            snapshot.workerPendingStopCommands;
+        saveStub.workerPendingHaltCommands =
+            snapshot.workerPendingHaltCommands;
+        saveStub.workerTickCount = snapshot.workerTickCount;
+        saveStub.completedWorkerActions =
+            snapshot.completedWorkerActions;
+        saveStub.processedAutosaveCommands =
+            snapshot.processedAutosaveCommands;
+        saveStub.processedSaveCommands =
+            snapshot.processedSaveCommands;
+        saveStub.processedStopCommands =
+            snapshot.processedStopCommands;
+        saveStub.processedHaltCommands =
+            snapshot.processedHaltCommands;
+        saveStub.lastQueuedCommandId =
+            snapshot.lastQueuedCommandId;
+        saveStub.activeCommandId = snapshot.activeCommandId;
+        saveStub.activeCommandTicksRemaining =
+            snapshot.activeCommandTicksRemaining;
+        saveStub.activeCommandKind = snapshot.activeCommandKind;
+        saveStub.lastProcessedCommandId =
+            snapshot.lastProcessedCommandId;
+        saveStub.lastProcessedCommandKind =
+            snapshot.lastProcessedCommandKind;
+        saveStub.platformTickCount = snapshot.platformTickCount;
+        if (snapshot.sessionStartMs != 0)
+        {
+            const std::uint64_t stoppedMs =
+                snapshot.stoppedMs != 0
+                    ? snapshot.stoppedMs
+                    : nowMs;
+            if (stoppedMs >= snapshot.sessionStartMs)
+            {
+                saveStub.uptimeMs =
+                    stoppedMs - snapshot.sessionStartMs;
+            }
+        }
+        saveStub.initialSaveRequested = snapshot.initialSaveRequested;
+        saveStub.initialSaveCompleted = snapshot.initialSaveCompleted;
+        saveStub.initialSaveTimedOut = snapshot.initialSaveTimedOut;
+        saveStub.sessionCompleted = snapshot.sessionCompleted;
+        saveStub.requestedAppShutdown =
+            snapshot.requestedAppShutdown;
+        saveStub.shutdownHaltedGameplay =
+            snapshot.shutdownHaltedGameplay;
+        saveStub.gameplayLoopIterations =
+            snapshot.gameplayLoopIterations;
+        saveStub.savedAtFileTime = savedAtFileTime;
+        if (snapshot.startAttempted)
+        {
+            saveStub.startupMode =
+                snapshot.loadedFromSave ? "loaded" : "created-new";
+            saveStub.sessionPhase =
+                GetDedicatedServerHostedGameRuntimePhaseName(
+                    (EDedicatedServerHostedGameRuntimePhase)
+                        snapshot.runtimePhase);
+            saveStub.resolvedSeed = snapshot.resolvedSeed;
+            saveStub.payloadBytes = snapshot.savePayloadBytes;
+            saveStub.payloadChecksum = snapshot.payloadChecksum;
+            saveStub.saveGeneration = snapshot.saveGeneration;
+            saveStub.stateChecksum = snapshot.stateChecksum;
+            saveStub.payloadName = snapshot.savePayloadName;
+            saveStub.hostSettings = snapshot.hostSettings;
+            saveStub.dedicatedNoLocalHostPlayer =
+                snapshot.dedicatedNoLocalHostPlayer;
+            saveStub.worldSizeChunks = snapshot.worldSizeChunks;
+            saveStub.worldHellScale = snapshot.worldHellScale;
+            saveStub.startupPayloadPresent =
+                snapshot.savePayloadBytes > 0;
+            saveStub.startupPayloadValidated =
+                snapshot.payloadValidated;
+            saveStub.startupThreadIterations =
+                snapshot.startupThreadIterations;
+            saveStub.startupThreadDurationMs =
+                snapshot.startupThreadDurationMs;
+            saveStub.hostedThreadActive =
+                snapshot.hostedThreadActive;
+            saveStub.hostedThreadTicks =
+                snapshot.hostedThreadTicks;
+        }
+
+        *outSaveStub = saveStub;
+        return true;
+    }
 }
