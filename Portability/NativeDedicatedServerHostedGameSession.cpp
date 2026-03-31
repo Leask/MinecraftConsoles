@@ -458,6 +458,18 @@ namespace ServerRuntime
         g_nativeHostedSessionState.snapshot.resolvedSeed = initData.seed;
         g_nativeHostedSessionState.snapshot.hostSettings =
             initData.settings;
+        g_nativeHostedSessionState.snapshot.localUsersMask =
+            initData.localUsersMask;
+        g_nativeHostedSessionState.snapshot.onlineGame =
+            initData.onlineGame;
+        g_nativeHostedSessionState.snapshot.privateGame =
+            initData.privateGame;
+        g_nativeHostedSessionState.snapshot.publicSlots =
+            initData.publicSlots;
+        g_nativeHostedSessionState.snapshot.privateSlots =
+            initData.privateSlots;
+        g_nativeHostedSessionState.snapshot.fakeLocalPlayerJoined =
+            initData.fakeLocalPlayerJoined;
         g_nativeHostedSessionState.snapshot.dedicatedNoLocalHostPlayer =
             initData.dedicatedNoLocalHostPlayer;
         g_nativeHostedSessionState.snapshot.worldSizeChunks =

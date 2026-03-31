@@ -2920,6 +2920,18 @@ int main(int argc, char* argv[])
             nativeHostedSaveTextBuilt &&
             nativeHostedStubInitData.saveData == nativeHostedSaveData &&
             nativeHostedStubInitData.settings == sessionConfig.hostSettings &&
+            nativeHostedStubInitData.localUsersMask ==
+                hostedGamePlan.localUsersMask &&
+            nativeHostedStubInitData.onlineGame ==
+                hostedGamePlan.onlineGame &&
+            nativeHostedStubInitData.privateGame ==
+                hostedGamePlan.privateGame &&
+            nativeHostedStubInitData.publicSlots ==
+                hostedGamePlan.publicSlots &&
+            nativeHostedStubInitData.privateSlots ==
+                hostedGamePlan.privateSlots &&
+            nativeHostedStubInitData.fakeLocalPlayerJoined ==
+                hostedGamePlan.fakeLocalPlayerJoined &&
             nativeHostedStubInitData.dedicatedNoLocalHostPlayer &&
             nativeHostedStubInitData.xzSize == sessionConfig.worldSizeChunks &&
             nativeHostedStubInitData.hellScale ==

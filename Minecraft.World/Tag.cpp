@@ -11,6 +11,23 @@
 #include "StringTag.h"
 #include "ListTag.h"
 #include "CompoundTag.h"
+#include <codecvt>
+#include <locale>
+
+namespace
+{
+    std::string WideToUtf8(const std::wstring &value)
+    {
+        if (value.empty())
+        {
+            return std::string();
+        }
+
+        std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>
+            converter;
+        return converter.to_bytes(value);
+    }
+}
 
 Tag::Tag(const wstring &name)
 {
@@ -47,12 +64,26 @@ bool Tag::equals(Tag *obj)
 	return true;
 }
 
-void Tag::print(ostream out)
+void Tag::print(ostream &out)
 {
 	out << "";
 }
 
-void Tag::print(char *prefix, wostream out)
+void Tag::print(char *prefix, ostream &out)
+{
+	wstring name = getName();
+
+	out << prefix;
+	out << WideToUtf8(getTagName(getId()));
+	if ( name.length() > 0)
+	{
+		out << "(\"" << WideToUtf8(name) << "\")";
+	}
+	out << ": ";
+	out << WideToUtf8(toString()) << endl;
+}
+
+void Tag::print(char *prefix, wostream &out)
 {
 	wstring name = getName();
 

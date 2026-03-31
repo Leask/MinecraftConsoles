@@ -333,10 +333,6 @@ namespace ServerRuntime
             return startupResult;
         }
 
-        if (usePersistentNativeSession)
-        {
-            ResetDedicatedServerHostedGameRuntimeSnapshot();
-        }
         auto completeNativeHostedStartup =
             [usePersistentNativeSession](int result, bool threadInvoked)
             {
@@ -354,16 +350,11 @@ namespace ServerRuntime
                     result,
                     threadInvoked);
             };
+
         if (usePersistentNativeSession)
         {
+            ResetDedicatedServerHostedGameRuntimeSnapshot();
             ResetNativeDedicatedServerHostedGameSessionState();
-            ObserveNativeDedicatedServerHostedGameSessionActivation(
-                hostedGamePlan.localUsersMask,
-                hostedGamePlan.onlineGame,
-                hostedGamePlan.privateGame,
-                hostedGamePlan.publicSlots,
-                hostedGamePlan.privateSlots,
-                hostedGamePlan.fakeLocalPlayerJoined);
             g_nativeHostedStartupReadyEvent = CreateEvent(
                 nullptr,
                 TRUE,
@@ -380,6 +371,24 @@ namespace ServerRuntime
         }
 
         ActivateDedicatedServerHostedGamePlan(hostedGamePlan);
+
+        if (usePersistentNativeSession)
+        {
+            NativeDedicatedServerHostedGameRuntimeStubInitData *initData =
+                static_cast<
+                    NativeDedicatedServerHostedGameRuntimeStubInitData *>(
+                        threadParam);
+            if (initData != nullptr)
+            {
+                initData->localUsersMask = hostedGamePlan.localUsersMask;
+                initData->onlineGame = hostedGamePlan.onlineGame;
+                initData->privateGame = hostedGamePlan.privateGame;
+                initData->publicSlots = hostedGamePlan.publicSlots;
+                initData->privateSlots = hostedGamePlan.privateSlots;
+                initData->fakeLocalPlayerJoined =
+                    hostedGamePlan.fakeLocalPlayerJoined;
+            }
+        }
 
         NativeDedicatedServerHostedGameThreadContext threadContext = {};
         threadContext.threadProc = threadProc;
@@ -405,13 +414,6 @@ namespace ServerRuntime
             g_nativeHostedThreadHandle = threadHandle;
             if (WaitForNativeDedicatedServerHostedThreadReady(threadHandle))
             {
-                ObserveNativeDedicatedServerHostedGameSessionActivation(
-                    hostedGamePlan.localUsersMask,
-                    hostedGamePlan.onlineGame,
-                    hostedGamePlan.privateGame,
-                    hostedGamePlan.publicSlots,
-                    hostedGamePlan.privateSlots,
-                    hostedGamePlan.fakeLocalPlayerJoined);
                 ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
                     LceGetMonotonicMilliseconds());
                 return completeNativeHostedStartup(

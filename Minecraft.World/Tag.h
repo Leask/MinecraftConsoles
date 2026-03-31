@@ -1,5 +1,6 @@
 #pragma once
 #include <ostream>
+#include <string>
 #include "InputOutputStream.h"
 using namespace std;
 
@@ -31,8 +32,9 @@ public:
     virtual void load(DataInput *dis, int tagDepth)  = 0;
     virtual wstring toString() = 0;
     virtual byte getId() = 0;
-    void print(ostream out);
-    void print(char *prefix, wostream out);
+    void print(ostream &out);
+    void print(char *prefix, ostream &out);
+    void print(char *prefix, wostream &out);
     wstring getName();
     Tag *setName(const wstring& name);
     static Tag *readNamedTag(DataInput *dis);
