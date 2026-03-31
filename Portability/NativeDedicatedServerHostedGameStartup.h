@@ -36,4 +36,9 @@ namespace ServerRuntime
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam,
         const NativeDedicatedServerHostedGameThreadCallbacks &callbacks);
+
+    int StartNativeDedicatedServerHostedGameRuntimeAndComplete(
+        const DedicatedServerHostedGamePlan &hostedGamePlan,
+        DedicatedServerHostedGameThreadProc *threadProc,
+        void *threadParam);
 }

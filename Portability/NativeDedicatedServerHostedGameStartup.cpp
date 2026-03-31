@@ -4,6 +4,9 @@
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameSession.h"
+#include "NativeDedicatedServerHostedGameThreadBridge.h"
+
+#include "lce_time/lce_time.h"
 
 namespace ServerRuntime
 {
@@ -179,5 +182,44 @@ namespace ServerRuntime
         CloseHandle(threadHandle);
         result.startupResult = static_cast<int>(threadExitCode);
         return result;
+    }
+
+    int StartNativeDedicatedServerHostedGameRuntimeAndComplete(
+        const DedicatedServerHostedGamePlan &hostedGamePlan,
+        DedicatedServerHostedGameThreadProc *threadProc,
+        void *threadParam)
+    {
+        int startupResult = 0;
+        const bool persistentSession =
+            threadProc == GetNativeDedicatedServerHostedGameThreadProc();
+        if (!persistentSession &&
+            !BeginDedicatedServerHostedGameRuntimeStartup(
+                hostedGamePlan,
+                threadProc,
+                &startupResult))
+        {
+            return startupResult;
+        }
+
+        ActivateDedicatedServerHostedGamePlan(hostedGamePlan);
+        const NativeDedicatedServerHostedGameThreadCallbacks callbacks =
+            BuildNativeDedicatedServerHostedGameThreadCallbacks();
+        const NativeDedicatedServerHostedGameRuntimeStartResult result =
+            StartNativeDedicatedServerHostedGameRuntimePath(
+                persistentSession,
+                hostedGamePlan,
+                threadProc,
+                threadParam,
+                callbacks);
+        if (persistentSession && result.startupReady)
+        {
+            ProjectNativeDedicatedServerHostedGameThreadSnapshot();
+        }
+
+        return CompleteNativeDedicatedServerHostedGameStartup(
+            persistentSession,
+            result.startupResult,
+            result.threadInvoked,
+            LceGetMonotonicMilliseconds());
     }
 }
