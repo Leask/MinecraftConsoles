@@ -173,12 +173,16 @@ namespace ServerRuntime
                 }
 
                 TickNativeDedicatedServerHostedGameWorker();
+                const NativeDedicatedServerHostedGameWorkerSnapshot
+                    workerSnapshot =
+                        GetNativeDedicatedServerHostedGameWorkerSnapshot();
                 UpdateDedicatedServerAutosaveTracker(
                     IsNativeDedicatedServerHostedGameWorkerIdle());
-                ObserveNativeDedicatedServerHostedGameSessionAutosaves(
-                    GetDedicatedServerAutosaveCompletionCount());
-                TickNativeDedicatedServerHostedGameSession(true);
-                RecordNativeDedicatedServerHostedThreadSnapshot();
+                TickNativeDedicatedServerHostedGameSessionFrame(
+                    workerSnapshot,
+                    GetDedicatedServerAutosaveCompletionCount(),
+                    true);
+                ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot();
                 LceSleepMilliseconds(10);
             }
 

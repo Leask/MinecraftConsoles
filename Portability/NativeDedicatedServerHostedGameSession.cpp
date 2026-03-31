@@ -289,6 +289,65 @@ namespace ServerRuntime
             state->snapshot.stateChecksum = checksum;
         }
 
+        void ApplyNativeHostedSessionWorkerSnapshot(
+            NativeDedicatedServerHostedGameSessionState *state,
+            const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot)
+        {
+            if (state == nullptr)
+            {
+                return;
+            }
+
+            state->snapshot.workerPendingWorldActionTicks =
+                workerSnapshot.pendingWorldActionTicks;
+            state->snapshot.workerPendingAutosaveCommands =
+                workerSnapshot.pendingAutosaveCommands;
+            state->snapshot.workerPendingSaveCommands =
+                workerSnapshot.pendingSaveCommands;
+            state->snapshot.workerPendingStopCommands =
+                workerSnapshot.pendingStopCommands;
+            state->snapshot.workerPendingHaltCommands =
+                workerSnapshot.pendingHaltCommands;
+            state->snapshot.workerTickCount =
+                state->baseWorkerTickCount +
+                workerSnapshot.workerTickCount;
+            state->snapshot.completedWorkerActions =
+                state->baseCompletedWorkerActions +
+                workerSnapshot.completedWorldActions;
+            state->snapshot.processedAutosaveCommands =
+                state->baseProcessedAutosaveCommands +
+                workerSnapshot.processedAutosaveCommands;
+            state->snapshot.processedSaveCommands =
+                state->baseProcessedSaveCommands +
+                workerSnapshot.processedSaveCommands;
+            state->snapshot.processedStopCommands =
+                state->baseProcessedStopCommands +
+                workerSnapshot.processedStopCommands;
+            state->snapshot.processedHaltCommands =
+                state->baseProcessedHaltCommands +
+                workerSnapshot.processedHaltCommands;
+            state->snapshot.lastQueuedCommandId =
+                workerSnapshot.lastQueuedCommandId;
+            state->snapshot.activeCommandId =
+                workerSnapshot.activeCommandId;
+            state->snapshot.activeCommandTicksRemaining =
+                workerSnapshot.activeCommandTicksRemaining;
+            state->snapshot.activeCommandKind =
+                workerSnapshot.activeCommandKind;
+            state->snapshot.lastProcessedCommandId =
+                workerSnapshot.lastProcessedCommandId;
+            state->snapshot.lastProcessedCommandKind =
+                workerSnapshot.lastProcessedCommandKind;
+            state->snapshot.worldActionIdle =
+                workerSnapshot.pendingWorldActionTicks == 0 &&
+                workerSnapshot.pendingAutosaveCommands == 0 &&
+                workerSnapshot.pendingSaveCommands == 0 &&
+                workerSnapshot.pendingStopCommands == 0 &&
+                workerSnapshot.pendingHaltCommands == 0 &&
+                workerSnapshot.activeCommandKind ==
+                    eNativeDedicatedServerHostedGameWorkerCommand_None;
+        }
+
         void RefreshNativeHostedSessionPhase(
             NativeDedicatedServerHostedGameSessionState *state)
         {
@@ -512,6 +571,37 @@ namespace ServerRuntime
             &g_nativeHostedSessionState);
     }
 
+    void TickNativeDedicatedServerHostedGameSessionFrame(
+        const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot,
+        std::uint64_t autosaveCompletions,
+        bool hostedThreadActive)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+        if (!g_nativeHostedSessionState.snapshot.active)
+        {
+            return;
+        }
+
+        ApplyNativeHostedSessionWorkerSnapshot(
+            &g_nativeHostedSessionState,
+            workerSnapshot);
+        g_nativeHostedSessionState.snapshot.observedAutosaveCompletions =
+            autosaveCompletions;
+        ++g_nativeHostedSessionState.snapshot.sessionTicks;
+        ++g_nativeHostedSessionState.snapshot.gameplayLoopIterations;
+        g_nativeHostedSessionState.snapshot.hostedThreadActive =
+            hostedThreadActive;
+        if (hostedThreadActive)
+        {
+            g_nativeHostedSessionState.snapshot.hostedThreadTicks =
+                g_nativeHostedSessionState.snapshot.sessionTicks;
+        }
+        RefreshNativeHostedSessionActive(&g_nativeHostedSessionState);
+        RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
+        RefreshNativeHostedSessionStateChecksum(
+            &g_nativeHostedSessionState);
+    }
+
     void ObserveNativeDedicatedServerHostedGameSessionAutosaves(
         std::uint64_t autosaveCompletions)
     {
@@ -714,54 +804,26 @@ namespace ServerRuntime
             lastProcessedCommandKind)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        g_nativeHostedSessionState.snapshot.workerPendingWorldActionTicks =
-            pendingWorldActionTicks;
-        g_nativeHostedSessionState.snapshot.workerPendingAutosaveCommands =
-            pendingAutosaveCommands;
-        g_nativeHostedSessionState.snapshot.workerPendingSaveCommands =
-            pendingSaveCommands;
-        g_nativeHostedSessionState.snapshot.workerPendingStopCommands =
-            pendingStopCommands;
-        g_nativeHostedSessionState.snapshot.workerPendingHaltCommands =
-            pendingHaltCommands;
-        g_nativeHostedSessionState.snapshot.workerTickCount =
-            g_nativeHostedSessionState.baseWorkerTickCount +
-            workerTickCount;
-        g_nativeHostedSessionState.snapshot.completedWorkerActions =
-            g_nativeHostedSessionState.baseCompletedWorkerActions +
-            completedWorkerActions;
-        g_nativeHostedSessionState.snapshot.processedAutosaveCommands =
-            g_nativeHostedSessionState.baseProcessedAutosaveCommands +
-            processedAutosaveCommands;
-        g_nativeHostedSessionState.snapshot.processedSaveCommands =
-            g_nativeHostedSessionState.baseProcessedSaveCommands +
-            processedSaveCommands;
-        g_nativeHostedSessionState.snapshot.processedStopCommands =
-            g_nativeHostedSessionState.baseProcessedStopCommands +
-            processedStopCommands;
-        g_nativeHostedSessionState.snapshot.processedHaltCommands =
-            g_nativeHostedSessionState.baseProcessedHaltCommands +
-            processedHaltCommands;
-        g_nativeHostedSessionState.snapshot.lastQueuedCommandId =
-            lastQueuedCommandId;
-        g_nativeHostedSessionState.snapshot.activeCommandId =
-            activeCommandId;
-        g_nativeHostedSessionState.snapshot.activeCommandTicksRemaining =
-            activeCommandTicksRemaining;
-        g_nativeHostedSessionState.snapshot.activeCommandKind =
-            activeCommandKind;
-        g_nativeHostedSessionState.snapshot.lastProcessedCommandId =
-            lastProcessedCommandId;
-        g_nativeHostedSessionState.snapshot.lastProcessedCommandKind =
-            lastProcessedCommandKind;
-        g_nativeHostedSessionState.snapshot.worldActionIdle =
-            pendingWorldActionTicks == 0 &&
-            pendingAutosaveCommands == 0 &&
-            pendingSaveCommands == 0 &&
-            pendingStopCommands == 0 &&
-            pendingHaltCommands == 0 &&
-            activeCommandKind ==
-                eNativeDedicatedServerHostedGameWorkerCommand_None;
+        ApplyNativeHostedSessionWorkerSnapshot(
+            &g_nativeHostedSessionState,
+            NativeDedicatedServerHostedGameWorkerSnapshot{
+                pendingWorldActionTicks,
+                pendingAutosaveCommands,
+                pendingSaveCommands,
+                pendingStopCommands,
+                pendingHaltCommands,
+                workerTickCount,
+                completedWorkerActions,
+                processedAutosaveCommands,
+                processedSaveCommands,
+                processedStopCommands,
+                processedHaltCommands,
+                lastQueuedCommandId,
+                activeCommandId,
+                activeCommandTicksRemaining,
+                activeCommandKind,
+                lastProcessedCommandId,
+                lastProcessedCommandKind});
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
     }
