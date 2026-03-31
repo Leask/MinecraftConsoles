@@ -245,9 +245,7 @@ namespace ServerRuntime
         g_nativeRuntimeState.stopSignalValid = false;
         g_nativeRuntimeState.fallbackWorldActionTicks = 0;
         ClearNativeDedicatedServerHostedGameWorkerState();
-        RecordDedicatedServerHostedGameRuntimeThreadState(
-            IsNativeDedicatedServerHostedGameSessionRunning(),
-            GetNativeDedicatedServerHostedGameSessionThreadTicks());
+        RefreshNativeDedicatedServerWorkerProjection();
         RefreshNativeDedicatedServerRuntimeProjection(
             LceGetMonotonicMilliseconds());
     }
@@ -262,6 +260,7 @@ namespace ServerRuntime
             WaitForNativeDedicatedServerHostedGameSessionStop(INFINITE);
         }
         ClearNativeDedicatedServerHostedGameWorkerState();
+        RefreshNativeDedicatedServerWorkerProjection();
         ResetDedicatedServerAutosaveTracker();
         g_nativeRuntimeState = {};
     }

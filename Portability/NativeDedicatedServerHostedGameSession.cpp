@@ -943,6 +943,11 @@ namespace ServerRuntime
             snapshot.hostedThreadTicks);
         RecordDedicatedServerHostedGameRuntimeGameplayLoopIteration(
             snapshot.gameplayLoopIterations);
+        RecordDedicatedServerHostedGameRuntimeStartupTelemetry(
+            snapshot.loadedFromSave,
+            snapshot.payloadValidated,
+            snapshot.startupThreadIterations,
+            snapshot.startupThreadDurationMs);
         RecordDedicatedServerHostedGameRuntimeCoreState(
             snapshot.saveGeneration,
             snapshot.stateChecksum);

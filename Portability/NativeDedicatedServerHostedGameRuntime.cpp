@@ -194,11 +194,11 @@ namespace ServerRuntime
                         threadParam);
             if (initData == nullptr)
             {
-                RecordDedicatedServerHostedGameRuntimeStartupTelemetry(
-                    false,
-                    false,
+                ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
                     0,
                     0);
+                ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+                    LceGetMonotonicMilliseconds());
                 return -2;
             }
 
@@ -215,17 +215,14 @@ namespace ServerRuntime
 
             const std::uint64_t durationMs =
                 LceGetMonotonicMilliseconds() - startMs;
-            RecordDedicatedServerHostedGameRuntimeStartupTelemetry(
-                startupPayloadPresent,
-                startupPayloadValidated,
-                startupIterations,
-                durationMs);
             StartNativeDedicatedServerHostedGameSession(
                 *initData,
                 startupPayloadValidated);
             ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
                 startupIterations,
                 durationMs);
+            ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+                LceGetMonotonicMilliseconds());
             FinalizeNativeDedicatedServerHostedThreadStop();
             if (!startupPayloadValidated)
             {
