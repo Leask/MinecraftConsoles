@@ -97,17 +97,38 @@ namespace
             RefreshNativeDedicatedServerActivityProjection(
                 state,
                 LceGetMonotonicMilliseconds());
+        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+            sessionSnapshot =
+                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
+        const char *hostName = sessionSnapshot.hostName.empty()
+            ? context.hostName.c_str()
+            : sessionSnapshot.hostName.c_str();
+        const char *bindIp = sessionSnapshot.bindIp.empty()
+            ? context.bindIp.c_str()
+            : sessionSnapshot.bindIp.c_str();
+        const int configuredPort = sessionSnapshot.configuredPort > 0
+            ? sessionSnapshot.configuredPort
+            : context.multiplayerPort;
+        const int listenerPort = sessionSnapshot.listenerPort > 0
+            ? sessionSnapshot.listenerPort
+            : context.listenerPort;
+        const char *worldName = sessionSnapshot.worldName.empty()
+            ? context.worldName.c_str()
+            : sessionSnapshot.worldName.c_str();
+        const char *worldSaveId = sessionSnapshot.worldSaveId.empty()
+            ? context.worldSaveId.c_str()
+            : sessionSnapshot.worldSaveId.c_str();
         char buffer[512] = {};
         std::snprintf(
             buffer,
             sizeof(buffer),
             "status host=%s bind=%s configured-port=%d listener-port=%d "
             "accepted=%llu world-action=%s",
-            context.hostName.c_str(),
-            context.bindIp.c_str(),
-            context.multiplayerPort,
-            context.listenerPort,
-            (unsigned long long)state.acceptedConnections,
+            hostName,
+            bindIp,
+            configuredPort,
+            listenerPort,
+            (unsigned long long)sessionSnapshot.acceptedConnections,
             worldActionIdle ? "idle" : "busy");
         AppendResponseLine(response, buffer);
 
@@ -115,17 +136,14 @@ namespace
             buffer,
             sizeof(buffer),
             "status world=%s level-id=%s storage=%s whitelist=%s lan=%s",
-            context.worldName.c_str(),
-            context.worldSaveId.c_str(),
+            worldName,
+            worldSaveId,
             context.storageRoot.c_str(),
             context.whitelistEnabled ? "enabled" : "disabled",
             context.lanAdvertise ? "enabled" : "disabled");
         AppendResponseLine(response, buffer);
 
-        const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
-            runtimeSnapshot =
-                ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
-        if (runtimeSnapshot.startAttempted)
+        if (sessionSnapshot.startAttempted)
         {
             std::snprintf(
                 buffer,
@@ -133,16 +151,17 @@ namespace
                 "status runtime=%s seed=%lld world-size=%u hell-scale=%u "
                 "public-slots=%u private-slots=%u startup=%d thread=%s "
                 "phase=%s",
-                runtimeSnapshot.loadedFromSave ? "loaded" : "created-new",
-                (long long)runtimeSnapshot.resolvedSeed,
-                runtimeSnapshot.worldSizeChunks,
-                (unsigned int)runtimeSnapshot.worldHellScale,
-                (unsigned int)runtimeSnapshot.publicSlots,
-                (unsigned int)runtimeSnapshot.privateSlots,
-                runtimeSnapshot.startupResult,
-                runtimeSnapshot.threadInvoked ? "invoked" : "skipped",
+                sessionSnapshot.loadedFromSave ? "loaded" : "created-new",
+                (long long)sessionSnapshot.resolvedSeed,
+                sessionSnapshot.worldSizeChunks,
+                (unsigned int)sessionSnapshot.worldHellScale,
+                (unsigned int)sessionSnapshot.publicSlots,
+                (unsigned int)sessionSnapshot.privateSlots,
+                sessionSnapshot.startupResult,
+                sessionSnapshot.threadInvoked ? "invoked" : "skipped",
                 ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
-                    runtimeSnapshot.phase));
+                    (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
+                        sessionSnapshot.runtimePhase));
             AppendResponseLine(response, buffer);
 
             std::snprintf(
@@ -152,19 +171,19 @@ namespace
                 "checksum=0x%016llx save-generation=%llu "
                 "state-checksum=0x%016llx startup-payload=%s "
                 "validated=%s startup-steps=%llu startup-ms=%llu",
-                (unsigned int)runtimeSnapshot.hostSettings,
-                runtimeSnapshot.dedicatedNoLocalHostPlayer
+                (unsigned int)sessionSnapshot.hostSettings,
+                sessionSnapshot.dedicatedNoLocalHostPlayer
                     ? "true"
                     : "false",
-                (unsigned long long)runtimeSnapshot.savePayloadChecksum,
-                (unsigned long long)runtimeSnapshot.saveGeneration,
-                (unsigned long long)runtimeSnapshot.sessionStateChecksum,
-                runtimeSnapshot.startupPayloadPresent ? "present" : "none",
-                runtimeSnapshot.startupPayloadValidated ? "true" : "false",
+                (unsigned long long)sessionSnapshot.payloadChecksum,
+                (unsigned long long)sessionSnapshot.saveGeneration,
+                (unsigned long long)sessionSnapshot.stateChecksum,
+                sessionSnapshot.savePayloadBytes > 0 ? "present" : "none",
+                sessionSnapshot.payloadValidated ? "true" : "false",
                 (unsigned long long)
-                    runtimeSnapshot.startupThreadIterations,
+                    sessionSnapshot.startupThreadIterations,
                 (unsigned long long)
-                    runtimeSnapshot.startupThreadDurationMs);
+                    sessionSnapshot.startupThreadDurationMs);
             AppendResponseLine(response, buffer);
 
             std::snprintf(
@@ -174,22 +193,28 @@ namespace
                 "payload-bytes=%lld autosaves=%llu/%llu ticks=%llu "
                 "uptime-ms=%llu action=%s shutdown=%s halted=%s "
                 "hosted-thread=%s thread-ticks=%llu",
-                runtimeSnapshot.sessionActive ? "true" : "false",
-                runtimeSnapshot.worldName.c_str(),
-                runtimeSnapshot.worldSaveId.c_str(),
-                runtimeSnapshot.savePayloadName.empty()
+                sessionSnapshot.active ? "true" : "false",
+                worldName,
+                worldSaveId,
+                sessionSnapshot.savePayloadName.empty()
                     ? "none"
-                    : runtimeSnapshot.savePayloadName.c_str(),
-                (long long)runtimeSnapshot.savePayloadBytes,
-                (unsigned long long)runtimeSnapshot.autosaveRequests,
-                (unsigned long long)runtimeSnapshot.autosaveCompletions,
-                (unsigned long long)runtimeSnapshot.platformTickCount,
-                (unsigned long long)runtimeSnapshot.uptimeMs,
-                runtimeSnapshot.worldActionIdle ? "idle" : "busy",
-                runtimeSnapshot.appShutdownRequested ? "true" : "false",
-                runtimeSnapshot.gameplayHalted ? "true" : "false",
-                runtimeSnapshot.hostedThreadActive ? "active" : "stopped",
-                (unsigned long long)runtimeSnapshot.hostedThreadTicks);
+                    : sessionSnapshot.savePayloadName.c_str(),
+                (long long)sessionSnapshot.savePayloadBytes,
+                (unsigned long long)sessionSnapshot.autosaveRequests,
+                (unsigned long long)sessionSnapshot.observedAutosaveCompletions,
+                (unsigned long long)sessionSnapshot.platformTickCount,
+                (unsigned long long)
+                    (sessionSnapshot.sessionStartMs == 0
+                        ? 0
+                        : ((sessionSnapshot.stoppedMs != 0
+                                ? sessionSnapshot.stoppedMs
+                                : LceGetMonotonicMilliseconds()) -
+                            sessionSnapshot.sessionStartMs)),
+                sessionSnapshot.worldActionIdle ? "idle" : "busy",
+                sessionSnapshot.appShutdownRequested ? "true" : "false",
+                sessionSnapshot.gameplayHalted ? "true" : "false",
+                sessionSnapshot.hostedThreadActive ? "active" : "stopped",
+                (unsigned long long)sessionSnapshot.hostedThreadTicks);
             AppendResponseLine(response, buffer);
 
             std::snprintf(
@@ -201,44 +226,44 @@ namespace
                 "last-queued=%llu last-processed=%s#%llu "
                 "core-checksum=0x%016llx",
                 (unsigned long long)
-                    runtimeSnapshot.workerPendingWorldActionTicks,
+                    sessionSnapshot.workerPendingWorldActionTicks,
                 (unsigned long long)
-                    runtimeSnapshot.workerPendingAutosaveCommands,
+                    sessionSnapshot.workerPendingAutosaveCommands,
                 (unsigned long long)
-                    runtimeSnapshot.workerPendingSaveCommands,
+                    sessionSnapshot.workerPendingSaveCommands,
                 (unsigned long long)
-                    runtimeSnapshot.workerPendingStopCommands,
+                    sessionSnapshot.workerPendingStopCommands,
                 (unsigned long long)
-                    runtimeSnapshot.workerPendingHaltCommands,
+                    sessionSnapshot.workerPendingHaltCommands,
                 (unsigned long long)
-                    runtimeSnapshot.workerTickCount,
+                    sessionSnapshot.workerTickCount,
                 (unsigned long long)
-                    runtimeSnapshot.completedWorkerActions,
+                    sessionSnapshot.completedWorkerActions,
                 (unsigned long long)
-                    runtimeSnapshot.processedAutosaveCommands,
+                    sessionSnapshot.processedAutosaveCommands,
                 (unsigned long long)
-                    runtimeSnapshot.processedSaveCommands,
+                    sessionSnapshot.processedSaveCommands,
                 (unsigned long long)
-                    runtimeSnapshot.processedStopCommands,
+                    sessionSnapshot.processedStopCommands,
                 (unsigned long long)
-                    runtimeSnapshot.processedHaltCommands,
+                    sessionSnapshot.processedHaltCommands,
                 GetNativeDedicatedServerHostedGameWorkerCommandKindName(
                     (ServerRuntime::
                         ENativeDedicatedServerHostedGameWorkerCommandKind)
-                        runtimeSnapshot.activeCommandKind),
+                        sessionSnapshot.activeCommandKind),
                 (unsigned long long)
-                    runtimeSnapshot.activeCommandId,
+                    sessionSnapshot.activeCommandId,
                 (unsigned long long)
-                    runtimeSnapshot.activeCommandTicksRemaining,
+                    sessionSnapshot.activeCommandTicksRemaining,
                 (unsigned long long)
-                    runtimeSnapshot.lastQueuedCommandId,
+                    sessionSnapshot.lastQueuedCommandId,
                 GetNativeDedicatedServerHostedGameWorkerCommandKindName(
                     (ServerRuntime::
                         ENativeDedicatedServerHostedGameWorkerCommandKind)
-                        runtimeSnapshot.lastProcessedCommandKind),
+                        sessionSnapshot.lastProcessedCommandKind),
                 (unsigned long long)
-                    runtimeSnapshot.lastProcessedCommandId,
-                (unsigned long long)runtimeSnapshot.sessionStateChecksum);
+                    sessionSnapshot.lastProcessedCommandId,
+                (unsigned long long)sessionSnapshot.stateChecksum);
             AppendResponseLine(response, buffer);
 
             std::snprintf(
@@ -246,31 +271,35 @@ namespace
                 sizeof(buffer),
                 "status run initial-save=%s/%s/%s session-completed=%s "
                 "app-shutdown=%s shutdown-halted=%s gameplay-iterations=%llu",
-                runtimeSnapshot.initialSaveRequested ? "requested" : "skipped",
-                runtimeSnapshot.initialSaveCompleted ? "completed" : "pending",
-                runtimeSnapshot.initialSaveTimedOut ? "timed-out" : "ok",
-                runtimeSnapshot.sessionCompleted ? "true" : "false",
-                runtimeSnapshot.requestedAppShutdown ? "true" : "false",
-                runtimeSnapshot.shutdownHaltedGameplay ? "true" : "false",
-                (unsigned long long)runtimeSnapshot.gameplayLoopIterations);
+                sessionSnapshot.initialSaveRequested ? "requested" : "skipped",
+                sessionSnapshot.initialSaveCompleted ? "completed" : "pending",
+                sessionSnapshot.initialSaveTimedOut ? "timed-out" : "ok",
+                sessionSnapshot.sessionCompleted ? "true" : "false",
+                sessionSnapshot.requestedAppShutdown ? "true" : "false",
+                sessionSnapshot.shutdownHaltedGameplay ? "true" : "false",
+                (unsigned long long)sessionSnapshot.gameplayLoopIterations);
             AppendResponseLine(response, buffer);
 
-            if (!runtimeSnapshot.savePath.empty() ||
-                !runtimeSnapshot.lastPersistedSavePath.empty())
+            if (!sessionSnapshot.savePath.empty() ||
+                !sessionSnapshot.lastPersistedSavePath.empty())
             {
                 std::snprintf(
                     buffer,
                     sizeof(buffer),
                     "status save path=%s last-persisted=%s "
                     "saved-at-filetime=%llu persisted-autosaves=%llu",
-                    runtimeSnapshot.savePath.c_str(),
-                    runtimeSnapshot.lastPersistedSavePath.c_str(),
+                    sessionSnapshot.savePath.c_str(),
+                    sessionSnapshot.lastPersistedSavePath.c_str(),
                     (unsigned long long)
-                        runtimeSnapshot.lastPersistedFileTime,
+                        sessionSnapshot.lastPersistedFileTime,
                     (unsigned long long)
-                        runtimeSnapshot.lastPersistedAutosaveCompletions);
+                        sessionSnapshot.lastPersistedAutosaveCompletions);
                 AppendResponseLine(response, buffer);
             }
+
+            const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
+                runtimeSnapshot =
+                    ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
 
             if (runtimeSnapshot.loadedSaveMetadataAvailable)
             {
