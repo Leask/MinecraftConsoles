@@ -78,6 +78,13 @@ namespace ServerRuntime
                 hook();
             }
         }
+
+        int CompleteFailedNativeDedicatedServerHostedGameCoreStartup(
+            const NativeDedicatedServerHostedGameCoreHooks &hooks)
+        {
+            InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadStopped);
+            return -2;
+        }
     }
 
     int RunNativeDedicatedServerHostedGameCore(
@@ -114,10 +121,10 @@ namespace ServerRuntime
             startupIterations,
             durationMs,
             LceGetMonotonicMilliseconds());
-        InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadStopped);
         if (!startupPayloadValidated)
         {
-            return -2;
+            return CompleteFailedNativeDedicatedServerHostedGameCoreStartup(
+                hooks);
         }
 
         InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadReady);

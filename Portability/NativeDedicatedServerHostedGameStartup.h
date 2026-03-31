@@ -8,9 +8,9 @@
 
 namespace ServerRuntime
 {
-    struct NativeDedicatedServerHostedGamePersistentStartResult
+    struct NativeDedicatedServerHostedGameRuntimeStartResult
     {
-        bool ready = false;
+        bool startupReady = false;
         bool threadInvoked = false;
         int startupResult = -1;
     };
@@ -29,8 +29,9 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
         const DedicatedServerHostedGamePlan &hostedGamePlan);
 
-    NativeDedicatedServerHostedGamePersistentStartResult
-    StartPersistentNativeDedicatedServerHostedGameRuntime(
+    NativeDedicatedServerHostedGameRuntimeStartResult
+    StartNativeDedicatedServerHostedGameRuntimePath(
+        bool persistentSession,
         const DedicatedServerHostedGamePlan &hostedGamePlan,
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam,

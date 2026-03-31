@@ -125,61 +125,22 @@ namespace ServerRuntime
         callbacks.handlePlatformActions =
             &HandleNativeDedicatedServerHostedGameThreadPlatformActions;
 
-        if (usePersistentNativeSession)
+        const NativeDedicatedServerHostedGameRuntimeStartResult result =
+            StartNativeDedicatedServerHostedGameRuntimePath(
+                usePersistentNativeSession,
+                hostedGamePlan,
+                threadProc,
+                threadParam,
+                callbacks);
+        if (usePersistentNativeSession && result.startupReady)
         {
-            const NativeDedicatedServerHostedGamePersistentStartResult
-                result =
-                    StartPersistentNativeDedicatedServerHostedGameRuntime(
-                        hostedGamePlan,
-                        threadProc,
-                        threadParam,
-                        callbacks);
-            if (result.ready)
-            {
-                RecordNativeDedicatedServerHostedThreadSnapshot();
-            }
-            return CompleteNativeDedicatedServerHostedGameStartup(
-                true,
-                result.startupResult,
-                result.threadInvoked,
-                LceGetMonotonicMilliseconds());
+            RecordNativeDedicatedServerHostedThreadSnapshot();
         }
 
-        HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
-            threadProc,
-            threadParam);
-        if (threadHandle == nullptr || threadHandle == INVALID_HANDLE_VALUE)
-        {
-            return CompleteNativeDedicatedServerHostedGameStartup(
-                false,
-                -1,
-                false,
-                LceGetMonotonicMilliseconds());
-        }
-
-        PumpNativeDedicatedServerHostedGameThreadUntilExit(
-            threadHandle,
-            callbacks);
-        WaitForSingleObject(threadHandle, INFINITE);
-        DWORD threadExitCode = static_cast<DWORD>(-1);
-        if (!TryReadNativeDedicatedServerHostedGameThreadExitCode(
-                threadHandle,
-                &threadExitCode))
-        {
-            CloseHandle(threadHandle);
-            return CompleteNativeDedicatedServerHostedGameStartup(
-                false,
-                -1,
-                true,
-                LceGetMonotonicMilliseconds());
-        }
-
-        CloseHandle(threadHandle);
-        startupResult = static_cast<int>(threadExitCode);
         return CompleteNativeDedicatedServerHostedGameStartup(
-            false,
-            startupResult,
-            true,
+            usePersistentNativeSession,
+            result.startupResult,
+            result.threadInvoked,
             LceGetMonotonicMilliseconds());
     }
 
