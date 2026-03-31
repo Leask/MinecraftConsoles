@@ -135,6 +135,55 @@ namespace ServerRuntime
             ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot();
         }
 
+        bool WaitForNativeDedicatedServerHostedThreadReady(
+            HANDLE threadHandle)
+        {
+            while (!IsDedicatedServerShutdownRequested())
+            {
+                if (WaitForSingleObject(
+                        g_nativeHostedStartupReadyEvent,
+                        0) == WAIT_OBJECT_0)
+                {
+                    RecordNativeDedicatedServerHostedThreadSnapshot();
+                    return true;
+                }
+
+                const DWORD threadWait = WaitForSingleObject(threadHandle, 10);
+                if (threadWait == WAIT_OBJECT_0)
+                {
+                    return false;
+                }
+
+                TickDedicatedServerPlatformRuntime();
+                HandleDedicatedServerPlatformActions();
+            }
+
+            return false;
+        }
+
+        void PumpNativeDedicatedServerHostedThreadUntilExit(HANDLE threadHandle)
+        {
+            while (WaitForSingleObject(threadHandle, 10) == WAIT_TIMEOUT &&
+                !IsDedicatedServerShutdownRequested())
+            {
+                TickDedicatedServerPlatformRuntime();
+                HandleDedicatedServerPlatformActions();
+            }
+        }
+
+        bool TryReadNativeDedicatedServerHostedThreadExitCode(
+            HANDLE threadHandle,
+            DWORD *outExitCode)
+        {
+            if (outExitCode == nullptr)
+            {
+                return false;
+            }
+
+            *outExitCode = static_cast<DWORD>(-1);
+            return GetExitCodeThread(threadHandle, outExitCode);
+        }
+
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)
         {
             const std::uint64_t startMs = LceGetMonotonicMilliseconds();
@@ -349,41 +398,23 @@ namespace ServerRuntime
         if (usePersistentNativeSession)
         {
             g_nativeHostedThreadHandle = threadHandle;
-            while (!IsDedicatedServerShutdownRequested())
+            if (WaitForNativeDedicatedServerHostedThreadReady(threadHandle))
             {
-                if (WaitForSingleObject(
-                        g_nativeHostedStartupReadyEvent,
-                        0) == WAIT_OBJECT_0)
-                {
-                    RecordNativeDedicatedServerHostedThreadSnapshot();
-                    return completeNativeHostedStartup(
-                        0,
-                        true);
-                }
-
-                const DWORD threadWait = WaitForSingleObject(threadHandle, 10);
-                if (threadWait == WAIT_OBJECT_0)
-                {
-                    break;
-                }
-
-                TickDedicatedServerPlatformRuntime();
-                HandleDedicatedServerPlatformActions();
+                return completeNativeHostedStartup(
+                    0,
+                    true);
             }
         }
         else
         {
-            while (WaitForSingleObject(threadHandle, 10) == WAIT_TIMEOUT &&
-                !IsDedicatedServerShutdownRequested())
-            {
-                TickDedicatedServerPlatformRuntime();
-                HandleDedicatedServerPlatformActions();
-            }
+            PumpNativeDedicatedServerHostedThreadUntilExit(threadHandle);
         }
 
         WaitForSingleObject(threadHandle, INFINITE);
         DWORD threadExitCode = static_cast<DWORD>(-1);
-        if (!GetExitCodeThread(threadHandle, &threadExitCode))
+        if (!TryReadNativeDedicatedServerHostedThreadExitCode(
+                threadHandle,
+                &threadExitCode))
         {
             CloseHandle(threadHandle);
             if (usePersistentNativeSession)
