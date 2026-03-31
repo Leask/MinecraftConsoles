@@ -46,10 +46,9 @@ namespace
         const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
             sessionSnapshot =
                 ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPlatformState(
+        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPlatformRuntimeStateAndProject(
             ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
-            ServerRuntime::GetDedicatedServerPlatformTickCount());
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeStateAndProject(
+            ServerRuntime::GetDedicatedServerPlatformTickCount(),
             sessionSnapshot.gameplayLoopIterations,
             g_nativeRuntimeState.appShutdownRequested,
             g_nativeRuntimeState.gameplayHalted,

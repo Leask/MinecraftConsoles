@@ -177,6 +177,12 @@ namespace ServerRuntime
         std::uint64_t autosaveCompletions,
         bool hostedThreadActive = true);
 
+    void TickNativeDedicatedServerHostedGameSessionFrameAndProject(
+        const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot,
+        std::uint64_t autosaveCompletions,
+        bool hostedThreadActive = true,
+        std::uint64_t nowMs = 0);
+
     void ObserveNativeDedicatedServerHostedGameSessionAutosaves(
         std::uint64_t autosaveCompletions);
 
@@ -235,6 +241,15 @@ namespace ServerRuntime
         std::uint64_t platformTickCount,
         std::uint64_t nowMs = 0);
 
+    void ObserveNativeDedicatedServerHostedGameSessionPlatformRuntimeStateAndProject(
+        std::uint64_t autosaveRequests,
+        std::uint64_t platformTickCount,
+        std::uint64_t gameplayLoopIterations,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid,
+        std::uint64_t nowMs = 0);
+
     void ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
         std::uint64_t gameplayLoopIterations,
         bool appShutdownRequested,
@@ -285,6 +300,11 @@ namespace ServerRuntime
         std::uint64_t hostedThreadTicks);
 
     void ObserveNativeDedicatedServerHostedGameSessionThreadStateAndProject(
+        bool hostedThreadActive,
+        std::uint64_t hostedThreadTicks,
+        std::uint64_t nowMs = 0);
+
+    void ObserveNativeDedicatedServerHostedGameSessionThreadStateAndWorkerProject(
         bool hostedThreadActive,
         std::uint64_t hostedThreadTicks,
         std::uint64_t nowMs = 0);

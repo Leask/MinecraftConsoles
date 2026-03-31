@@ -96,10 +96,10 @@ namespace ServerRuntime
         void SyncNativeDedicatedServerHostedThreadState(bool running)
         {
             g_nativeHostedThreadRunning.store(running);
-            ObserveNativeDedicatedServerHostedGameSessionThreadState(
+            ObserveNativeDedicatedServerHostedGameSessionThreadStateAndWorkerProject(
                 running,
-                GetNativeDedicatedServerHostedGameSessionThreadTicks());
-            RecordNativeDedicatedServerHostedThreadSnapshot();
+                GetNativeDedicatedServerHostedGameSessionThreadTicks(),
+                LceGetMonotonicMilliseconds());
         }
 
         void SignalNativeDedicatedServerHostedThreadReady()
@@ -123,11 +123,11 @@ namespace ServerRuntime
                 workerFrame =
                     TickNativeDedicatedServerHostedGameWorkerFrame();
             UpdateDedicatedServerAutosaveTracker(workerFrame.idle);
-            TickNativeDedicatedServerHostedGameSessionFrame(
+            TickNativeDedicatedServerHostedGameSessionFrameAndProject(
                 workerFrame.snapshot,
                 GetDedicatedServerAutosaveCompletionCount(),
-                true);
-            ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot();
+                true,
+                LceGetMonotonicMilliseconds());
         }
 
         bool WaitForNativeDedicatedServerHostedThreadReady(
@@ -406,8 +406,6 @@ namespace ServerRuntime
             g_nativeHostedThreadHandle = threadHandle;
             if (WaitForNativeDedicatedServerHostedThreadReady(threadHandle))
             {
-                ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
-                    LceGetMonotonicMilliseconds());
                 return completeNativeHostedStartup(
                     0,
                     true);
