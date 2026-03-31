@@ -340,6 +340,9 @@ namespace ServerRuntime
                     ObserveNativeDedicatedServerHostedGameSessionStartupResult(
                         result,
                         threadInvoked);
+                    ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+                        LceGetMonotonicMilliseconds());
+                    return result;
                 }
 
                 return CompleteDedicatedServerHostedGameRuntimeStartup(
