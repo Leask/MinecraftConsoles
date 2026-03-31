@@ -7,6 +7,9 @@
 #include "Minecraft.Server/Common/NativeDedicatedServerLoadedSaveState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
 #include "Minecraft.Server/Common/StringUtils.h"
+#include "NativeDedicatedServerHostedGameHost.h"
+#include "NativeDedicatedServerHostedGameThreadBridge.h"
+#include "NativeDedicatedServerHostedGameWorker.h"
 
 namespace ServerRuntime
 {
@@ -441,6 +444,14 @@ namespace ServerRuntime
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState = NativeDedicatedServerHostedGameSessionState{};
+    }
+
+    void ResetNativeDedicatedServerHostedGameSessionState()
+    {
+        ResetNativeDedicatedServerHostedGameHostState();
+        ResetNativeDedicatedServerHostedGameWorkerState();
+        ResetNativeDedicatedServerHostedGameSessionCoreState();
+        ProjectNativeDedicatedServerHostedGameThreadSnapshot();
     }
 
     bool StartNativeDedicatedServerHostedGameSession(
@@ -1749,5 +1760,24 @@ namespace ServerRuntime
 
         *outSaveStub = saveStub;
         return true;
+    }
+
+    bool WaitForNativeDedicatedServerHostedGameSessionStop(
+        DWORD timeoutMs,
+        DWORD *outExitCode)
+    {
+        if (outExitCode != nullptr)
+        {
+            *outExitCode = 0;
+        }
+
+        const bool stopped = WaitForNativeDedicatedServerHostedGameHostStop(
+            timeoutMs,
+            outExitCode);
+        if (stopped)
+        {
+            FinalizeNativeDedicatedServerHostedGameThreadStop();
+        }
+        return stopped;
     }
 }
