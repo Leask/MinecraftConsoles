@@ -17,9 +17,6 @@ namespace ServerRuntime
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam);
 
-    void ActivateDedicatedServerHostedGamePlan(
-        const DedicatedServerHostedGamePlan &hostedGamePlan);
-
     bool BeginDedicatedServerHostedGameRuntimeStartup(
         const DedicatedServerHostedGamePlan &hostedGamePlan,
         DedicatedServerHostedGameThreadProc *threadProc,

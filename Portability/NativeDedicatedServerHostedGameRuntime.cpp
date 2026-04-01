@@ -32,11 +32,6 @@ namespace ServerRuntime
         }
     }
 
-    void ActivateDedicatedServerHostedGamePlan(
-        const DedicatedServerHostedGamePlan &)
-    {
-    }
-
     int StartDedicatedServerHostedGameRuntime(
         const DedicatedServerHostedGamePlan &hostedGamePlan,
         DedicatedServerHostedGameThreadProc *threadProc,

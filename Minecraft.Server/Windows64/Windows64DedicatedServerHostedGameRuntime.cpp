@@ -12,18 +12,21 @@
 
 namespace ServerRuntime
 {
-    void ActivateDedicatedServerHostedGamePlan(
-        const DedicatedServerHostedGamePlan &hostedGamePlan)
+    namespace
     {
-        g_NetworkManager.HostGame(
-            hostedGamePlan.localUsersMask,
-            hostedGamePlan.onlineGame,
-            hostedGamePlan.privateGame,
-            hostedGamePlan.publicSlots,
-            hostedGamePlan.privateSlots);
-        if (hostedGamePlan.fakeLocalPlayerJoined)
+        void ActivateDedicatedServerHostedGamePlan(
+            const DedicatedServerHostedGamePlan &hostedGamePlan)
         {
-            g_NetworkManager.FakeLocalPlayerJoined();
+            g_NetworkManager.HostGame(
+                hostedGamePlan.localUsersMask,
+                hostedGamePlan.onlineGame,
+                hostedGamePlan.privateGame,
+                hostedGamePlan.publicSlots,
+                hostedGamePlan.privateSlots);
+            if (hostedGamePlan.fakeLocalPlayerJoined)
+            {
+                g_NetworkManager.FakeLocalPlayerJoined();
+            }
         }
     }
 
