@@ -1673,6 +1673,21 @@ int main(int argc, char* argv[])
     ServerRuntime::ResetDedicatedServerShutdownRequest();
     ServerRuntime::SetDedicatedServerAppShutdownRequested(false);
     ServerRuntime::NativeDedicatedServerHostedGameRuntimeStubInitData
+        nativeHostedCoreStartupInitData = {};
+    ServerRuntime::PopulateDedicatedServerNetworkGameInitData(
+        &nativeHostedCoreStartupInitData,
+        hostedGamePlan.networkInitPlan);
+    nativeHostedCoreStartupInitData.saveData = nullptr;
+    const ServerRuntime::NativeDedicatedServerHostedGameCoreStartupResult
+        nativeHostedCoreStartupResult =
+            ServerRuntime::StartNativeDedicatedServerHostedGameCoreWithResult(
+                &nativeHostedCoreStartupInitData);
+    ServerRuntime::StopNativeDedicatedServerHostedGameSession();
+    ServerRuntime::ResetNativeDedicatedServerHostedGameSessionState();
+    ServerRuntime::ResetDedicatedServerAutosaveTracker();
+    ServerRuntime::ResetDedicatedServerShutdownRequest();
+    ServerRuntime::SetDedicatedServerAppShutdownRequested(false);
+    ServerRuntime::NativeDedicatedServerHostedGameRuntimeStubInitData
         nativeHostedCoreFrameInitData = {};
     ServerRuntime::PopulateDedicatedServerNetworkGameInitData(
         &nativeHostedCoreFrameInitData,
@@ -2988,6 +3003,27 @@ int main(int argc, char* argv[])
         gameplayLoopRunResult.iterations,
         gameplayLoopRunPollContext.pollCount,
         gameplayLoopRunResult.requestedAppShutdown);
+    printf("hosted_game_core_startup=%d exit=%d present=%d validated=%d "
+        "startup=%llu/%llu phase=%s active=%d\n",
+        nativeHostedCoreStartupResult.exitCode == 0 &&
+            !nativeHostedCoreStartupResult.payloadPresent &&
+            nativeHostedCoreStartupResult.payloadValidated &&
+            nativeHostedCoreStartupResult.startupIterations == 2U &&
+            nativeHostedCoreStartupResult.startupDurationMs > 0U &&
+            nativeHostedCoreStartupResult.sessionSnapshot.active &&
+            nativeHostedCoreStartupResult.sessionSnapshot.hostedThreadActive ==
+                false &&
+            nativeHostedCoreStartupResult.sessionSnapshot.runtimePhase ==
+                ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Startup,
+        nativeHostedCoreStartupResult.exitCode,
+        nativeHostedCoreStartupResult.payloadPresent,
+        nativeHostedCoreStartupResult.payloadValidated,
+        (unsigned long long)nativeHostedCoreStartupResult.startupIterations,
+        (unsigned long long)nativeHostedCoreStartupResult.startupDurationMs,
+        ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
+            (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
+                nativeHostedCoreStartupResult.sessionSnapshot.runtimePhase),
+        nativeHostedCoreStartupResult.sessionSnapshot.active);
     printf("hosted_game_core_frame=%d start=%d first=%llu/%llu/%d second=%llu/%llu/%d stopped=%d\n",
         nativeHostedCoreFrameStarted &&
             nativeHostedCoreFrameFirst.frameTimestampMs > 0U &&
@@ -4015,6 +4051,15 @@ int main(int argc, char* argv[])
         gameplayLoopRunPollContext.pollCount == 3 &&
         gameplayLoopRunResult.requestedAppShutdown &&
         gameplayLoopRunResult.lastIteration.shouldExit &&
+        nativeHostedCoreStartupResult.exitCode == 0 &&
+        !nativeHostedCoreStartupResult.payloadPresent &&
+        nativeHostedCoreStartupResult.payloadValidated &&
+        nativeHostedCoreStartupResult.startupIterations == 2U &&
+        nativeHostedCoreStartupResult.startupDurationMs > 0U &&
+        nativeHostedCoreStartupResult.sessionSnapshot.active &&
+        !nativeHostedCoreStartupResult.sessionSnapshot.hostedThreadActive &&
+        nativeHostedCoreStartupResult.sessionSnapshot.runtimePhase ==
+            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Startup &&
         nativeHostedCoreFrameStarted &&
         nativeHostedCoreFrameFirst.frameTimestampMs > 0U &&
         nativeHostedCoreFrameFirst.autosaveCompletions == 0U &&

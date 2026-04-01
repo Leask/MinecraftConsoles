@@ -96,12 +96,11 @@ namespace ServerRuntime
         return result;
     }
 
-    NativeDedicatedServerHostedGameCoreRunResult
-    RunNativeDedicatedServerHostedGameCoreWithResult(
-        NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
-        const NativeDedicatedServerHostedGameCoreHooks &hooks)
+    NativeDedicatedServerHostedGameCoreStartupResult
+    StartNativeDedicatedServerHostedGameCoreWithResult(
+        NativeDedicatedServerHostedGameRuntimeStubInitData *initData)
     {
-        NativeDedicatedServerHostedGameCoreRunResult result = {};
+        NativeDedicatedServerHostedGameCoreStartupResult result = {};
         const std::uint64_t startMs = LceGetMonotonicMilliseconds();
         if (initData == nullptr)
         {
@@ -109,20 +108,18 @@ namespace ServerRuntime
                 0,
                 0,
                 LceGetMonotonicMilliseconds());
-            result.finalWorkerSnapshot =
-                GetNativeDedicatedServerHostedGameWorkerSnapshot();
-            result.finalSessionSnapshot =
-                GetNativeDedicatedServerHostedGameSessionSnapshot();
             result.exitCode = -2;
+            result.sessionSnapshot =
+                GetNativeDedicatedServerHostedGameSessionSnapshot();
             return result;
         }
 
-        const bool startupPayloadPresent = initData->saveData != nullptr;
-        result.startupPayloadValidated =
+        result.payloadPresent = initData->saveData != nullptr;
+        result.payloadValidated =
             ValidateNativeDedicatedServerHostedGamePayload(*initData);
         result.startupIterations =
             kNativeHostedStartupBaseIterations +
-            (startupPayloadPresent ? 2ULL : 0ULL);
+            (result.payloadPresent ? 2ULL : 0ULL);
         for (std::uint64_t i = 0; i < result.startupIterations; ++i)
         {
             LceSleepMilliseconds(kNativeHostedStartupStepDelayMs);
@@ -132,20 +129,36 @@ namespace ServerRuntime
             LceGetMonotonicMilliseconds() - startMs;
         StartNativeDedicatedServerHostedGameSession(
             *initData,
-            result.startupPayloadValidated);
+            result.payloadValidated);
         ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
             result.startupIterations,
             result.startupDurationMs,
             LceGetMonotonicMilliseconds());
-        if (!result.startupPayloadValidated)
+        result.sessionSnapshot =
+            GetNativeDedicatedServerHostedGameSessionSnapshot();
+        result.exitCode = result.payloadValidated ? 0 : -2;
+        return result;
+    }
+
+    NativeDedicatedServerHostedGameCoreRunResult
+    RunNativeDedicatedServerHostedGameCoreWithResult(
+        NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
+        const NativeDedicatedServerHostedGameCoreHooks &hooks)
+    {
+        NativeDedicatedServerHostedGameCoreRunResult result = {};
+        const NativeDedicatedServerHostedGameCoreStartupResult startup =
+            StartNativeDedicatedServerHostedGameCoreWithResult(initData);
+        result.startupPayloadValidated = startup.payloadValidated;
+        result.startupIterations = startup.startupIterations;
+        result.startupDurationMs = startup.startupDurationMs;
+        if (startup.exitCode != 0)
         {
             result.exitCode =
                 CompleteFailedNativeDedicatedServerHostedGameCoreStartup(
                     hooks);
             result.finalWorkerSnapshot =
                 GetNativeDedicatedServerHostedGameWorkerSnapshot();
-            result.finalSessionSnapshot =
-                GetNativeDedicatedServerHostedGameSessionSnapshot();
+            result.finalSessionSnapshot = startup.sessionSnapshot;
             return result;
         }
 

@@ -6,6 +6,17 @@
 
 namespace ServerRuntime
 {
+    struct NativeDedicatedServerHostedGameCoreStartupResult
+    {
+        int exitCode = -1;
+        bool payloadPresent = false;
+        bool payloadValidated = false;
+        std::uint64_t startupIterations = 0;
+        std::uint64_t startupDurationMs = 0;
+        NativeDedicatedServerHostedGameSessionSnapshot
+            sessionSnapshot = {};
+    };
+
     struct NativeDedicatedServerHostedGameCoreFrameResult
     {
         NativeDedicatedServerHostedGameWorkerFrameResult workerFrame = {};
@@ -37,6 +48,10 @@ namespace ServerRuntime
         void (*onThreadReady)() = nullptr;
         void (*onThreadStopped)() = nullptr;
     };
+
+    NativeDedicatedServerHostedGameCoreStartupResult
+    StartNativeDedicatedServerHostedGameCoreWithResult(
+        NativeDedicatedServerHostedGameRuntimeStubInitData *initData);
 
     NativeDedicatedServerHostedGameCoreFrameResult
     TickNativeDedicatedServerHostedGameCoreFrameWithResult(
