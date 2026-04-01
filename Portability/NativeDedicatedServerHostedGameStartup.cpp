@@ -11,14 +11,8 @@
 namespace ServerRuntime
 {
     bool PrepareNativeDedicatedServerHostedGameStartup(
-        bool persistentSession,
-        HANDLE *outStartupReadyEvent)
+        bool persistentSession)
     {
-        if (outStartupReadyEvent != nullptr)
-        {
-            *outStartupReadyEvent = nullptr;
-        }
-
         if (!persistentSession)
         {
             return true;
@@ -26,16 +20,9 @@ namespace ServerRuntime
 
         ResetDedicatedServerHostedGameRuntimeSnapshot();
         ResetNativeDedicatedServerHostedGameSessionState();
-        HANDLE startupReadyEvent = nullptr;
-        if (!PrepareNativeDedicatedServerHostedGameHostStartup(
-                &startupReadyEvent))
+        if (!PrepareNativeDedicatedServerHostedGameHostStartup())
         {
             return false;
-        }
-
-        if (outStartupReadyEvent != nullptr)
-        {
-            *outStartupReadyEvent = startupReadyEvent;
         }
         return true;
     }
@@ -99,8 +86,7 @@ namespace ServerRuntime
         {
             NativeDedicatedServerHostedGameRuntimeStartResult result = {};
             if (!PrepareNativeDedicatedServerHostedGameStartup(
-                    true,
-                    nullptr))
+                    true))
             {
                 ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
                 return result;

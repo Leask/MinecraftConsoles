@@ -17,8 +17,7 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot = {};
     };
 
-    bool PrepareNativeDedicatedServerHostedGameHostStartup(
-        HANDLE *outStartupReadyEvent);
+    bool PrepareNativeDedicatedServerHostedGameHostStartup();
 
     HANDLE GetNativeDedicatedServerHostedGameHostStartupReadyEvent();
 

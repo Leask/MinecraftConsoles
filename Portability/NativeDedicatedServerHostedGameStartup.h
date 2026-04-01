@@ -19,8 +19,7 @@ namespace ServerRuntime
     };
 
     bool PrepareNativeDedicatedServerHostedGameStartup(
-        bool persistentSession,
-        HANDLE *outStartupReadyEvent);
+        bool persistentSession);
 
     int CompleteNativeDedicatedServerHostedGameStartup(
         bool persistentSession,

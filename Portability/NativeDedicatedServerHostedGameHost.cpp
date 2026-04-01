@@ -8,8 +8,7 @@ namespace
 
 namespace ServerRuntime
 {
-    bool PrepareNativeDedicatedServerHostedGameHostStartup(
-        HANDLE *outStartupReadyEvent)
+    bool PrepareNativeDedicatedServerHostedGameHostStartup()
     {
         ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
         g_nativeHostedStartupReadyEvent = CreateEvent(
@@ -17,11 +16,6 @@ namespace ServerRuntime
             TRUE,
             FALSE,
             nullptr);
-        if (outStartupReadyEvent != nullptr)
-        {
-            *outStartupReadyEvent = g_nativeHostedStartupReadyEvent;
-        }
-
         return g_nativeHostedStartupReadyEvent != nullptr &&
             g_nativeHostedStartupReadyEvent != INVALID_HANDLE_VALUE;
     }
