@@ -53,10 +53,12 @@ namespace ServerRuntime
             const std::uint64_t autosaveCompletions = std::max(
                 GetDedicatedServerAutosaveCompletionCount(),
                 workerFrame.snapshot.processedAutosaveCommands);
+            NativeDedicatedServerHostedGameSessionFrameInput frameInput = {};
+            frameInput.workerSnapshot = workerFrame.snapshot;
+            frameInput.autosaveCompletions = autosaveCompletions;
+            frameInput.hostedThreadActive = true;
             TickNativeDedicatedServerHostedGameSessionFrameAndProject(
-                workerFrame.snapshot,
-                autosaveCompletions,
-                true,
+                frameInput,
                 LceGetMonotonicMilliseconds());
         }
 

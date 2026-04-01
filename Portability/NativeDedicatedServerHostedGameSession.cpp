@@ -783,9 +783,7 @@ namespace ServerRuntime
     }
 
     void TickNativeDedicatedServerHostedGameSessionFrame(
-        const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot,
-        std::uint64_t autosaveCompletions,
-        bool hostedThreadActive)
+        const NativeDedicatedServerHostedGameSessionFrameInput &frameInput)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         if (!g_nativeHostedSessionState.snapshot.active)
@@ -795,14 +793,14 @@ namespace ServerRuntime
 
         ApplyNativeHostedSessionWorkerSnapshot(
             &g_nativeHostedSessionState,
-            workerSnapshot);
+            frameInput.workerSnapshot);
         g_nativeHostedSessionState.snapshot.observedAutosaveCompletions =
-            autosaveCompletions;
+            frameInput.autosaveCompletions;
         ++g_nativeHostedSessionState.snapshot.sessionTicks;
         ++g_nativeHostedSessionState.snapshot.gameplayLoopIterations;
         g_nativeHostedSessionState.snapshot.hostedThreadActive =
-            hostedThreadActive;
-        if (hostedThreadActive)
+            frameInput.hostedThreadActive;
+        if (frameInput.hostedThreadActive)
         {
             g_nativeHostedSessionState.snapshot.hostedThreadTicks =
                 g_nativeHostedSessionState.snapshot.sessionTicks;
@@ -814,15 +812,10 @@ namespace ServerRuntime
     }
 
     void TickNativeDedicatedServerHostedGameSessionFrameAndProject(
-        const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot,
-        std::uint64_t autosaveCompletions,
-        bool hostedThreadActive,
+        const NativeDedicatedServerHostedGameSessionFrameInput &frameInput,
         std::uint64_t nowMs)
     {
-        TickNativeDedicatedServerHostedGameSessionFrame(
-            workerSnapshot,
-            autosaveCompletions,
-            hostedThreadActive);
+        TickNativeDedicatedServerHostedGameSessionFrame(frameInput);
         ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
     }
 

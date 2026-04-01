@@ -154,6 +154,13 @@ namespace ServerRuntime
         int listenerPort = 0;
     };
 
+    struct NativeDedicatedServerHostedGameSessionFrameInput
+    {
+        NativeDedicatedServerHostedGameWorkerSnapshot workerSnapshot = {};
+        std::uint64_t autosaveCompletions = 0;
+        bool hostedThreadActive = true;
+    };
+
     void ResetNativeDedicatedServerHostedGameSessionState();
 
     bool StartNativeDedicatedServerHostedGameSession(
@@ -173,14 +180,10 @@ namespace ServerRuntime
         bool hostedThreadActive = true);
 
     void TickNativeDedicatedServerHostedGameSessionFrame(
-        const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot,
-        std::uint64_t autosaveCompletions,
-        bool hostedThreadActive = true);
+        const NativeDedicatedServerHostedGameSessionFrameInput &frameInput);
 
     void TickNativeDedicatedServerHostedGameSessionFrameAndProject(
-        const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot,
-        std::uint64_t autosaveCompletions,
-        bool hostedThreadActive = true,
+        const NativeDedicatedServerHostedGameSessionFrameInput &frameInput,
         std::uint64_t nowMs = 0);
 
     void ObserveNativeDedicatedServerHostedGameSessionAutosaves(
