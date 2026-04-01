@@ -27,6 +27,55 @@ namespace
         }
     }
 
+    bool WaitForNativeDedicatedServerHostedGameThreadReady(
+        HANDLE startupReadyEvent,
+        HANDLE threadHandle,
+        const ServerRuntime::NativeDedicatedServerHostedGameThreadCallbacks
+            &callbacks)
+    {
+        while (!ServerRuntime::IsDedicatedServerShutdownRequested())
+        {
+            if (WaitForSingleObject(startupReadyEvent, 0) == WAIT_OBJECT_0)
+            {
+                return true;
+            }
+
+            if (WaitForSingleObject(threadHandle, 10) == WAIT_OBJECT_0)
+            {
+                return false;
+            }
+
+            TickNativeDedicatedServerHostedGameThreadCallbacks(callbacks);
+        }
+
+        return false;
+    }
+
+    void PumpNativeDedicatedServerHostedGameThreadUntilExit(
+        HANDLE threadHandle,
+        const ServerRuntime::NativeDedicatedServerHostedGameThreadCallbacks
+            &callbacks)
+    {
+        while (WaitForSingleObject(threadHandle, 10) == WAIT_TIMEOUT &&
+            !ServerRuntime::IsDedicatedServerShutdownRequested())
+        {
+            TickNativeDedicatedServerHostedGameThreadCallbacks(callbacks);
+        }
+    }
+
+    bool TryReadNativeDedicatedServerHostedGameThreadExitCode(
+        HANDLE threadHandle,
+        DWORD *outExitCode)
+    {
+        if (outExitCode == nullptr)
+        {
+            return false;
+        }
+
+        *outExitCode = static_cast<DWORD>(-1);
+        return GetExitCodeThread(threadHandle, outExitCode);
+    }
+
     DWORD WINAPI RunNativeDedicatedServerHostedGameThreadThunk(
         LPVOID threadParameter)
     {
@@ -67,53 +116,6 @@ namespace ServerRuntime
 
         (void)context.release();
         return threadHandle;
-    }
-
-    bool WaitForNativeDedicatedServerHostedGameThreadReady(
-        HANDLE startupReadyEvent,
-        HANDLE threadHandle,
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
-    {
-        while (!IsDedicatedServerShutdownRequested())
-        {
-            if (WaitForSingleObject(startupReadyEvent, 0) == WAIT_OBJECT_0)
-            {
-                return true;
-            }
-
-            if (WaitForSingleObject(threadHandle, 10) == WAIT_OBJECT_0)
-            {
-                return false;
-            }
-
-            TickNativeDedicatedServerHostedGameThreadCallbacks(callbacks);
-        }
-
-        return false;
-    }
-
-    void PumpNativeDedicatedServerHostedGameThreadUntilExit(
-        HANDLE threadHandle,
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
-    {
-        while (WaitForSingleObject(threadHandle, 10) == WAIT_TIMEOUT &&
-            !IsDedicatedServerShutdownRequested())
-        {
-            TickNativeDedicatedServerHostedGameThreadCallbacks(callbacks);
-        }
-    }
-
-    bool TryReadNativeDedicatedServerHostedGameThreadExitCode(
-        HANDLE threadHandle,
-        DWORD *outExitCode)
-    {
-        if (outExitCode == nullptr)
-        {
-            return false;
-        }
-
-        *outExitCode = static_cast<DWORD>(-1);
-        return GetExitCodeThread(threadHandle, outExitCode);
     }
 
     NativeDedicatedServerHostedGameThreadRunResult

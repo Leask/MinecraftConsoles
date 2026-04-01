@@ -1,5 +1,7 @@
 #include "NativeDedicatedServerHostedGameHost.h"
 
+#include "Minecraft.Server/Common/DedicatedServerSignalState.h"
+
 namespace
 {
     HANDLE g_nativeHostedStartupReadyEvent = nullptr;
@@ -42,6 +44,50 @@ namespace
 
         g_nativeHostedStartupReadyEvent = nullptr;
     }
+
+    bool WaitForNativeDedicatedServerHostedGameHostThreadReady(
+        HANDLE threadHandle,
+        const ServerRuntime::NativeDedicatedServerHostedGameThreadCallbacks
+            &callbacks)
+    {
+        while (!ServerRuntime::IsDedicatedServerShutdownRequested())
+        {
+            if (WaitForSingleObject(g_nativeHostedStartupReadyEvent, 0) ==
+                WAIT_OBJECT_0)
+            {
+                return true;
+            }
+
+            if (WaitForSingleObject(threadHandle, 10) == WAIT_OBJECT_0)
+            {
+                return false;
+            }
+
+            if (callbacks.tickPlatformRuntime != nullptr)
+            {
+                callbacks.tickPlatformRuntime();
+            }
+            if (callbacks.handlePlatformActions != nullptr)
+            {
+                callbacks.handlePlatformActions();
+            }
+        }
+
+        return false;
+    }
+
+    bool TryReadNativeDedicatedServerHostedGameHostThreadExitCode(
+        HANDLE threadHandle,
+        DWORD *outExitCode)
+    {
+        if (outExitCode == nullptr)
+        {
+            return false;
+        }
+
+        *outExitCode = static_cast<DWORD>(-1);
+        return GetExitCodeThread(threadHandle, outExitCode);
+    }
 }
 
 namespace ServerRuntime
@@ -71,8 +117,7 @@ namespace ServerRuntime
 
         SetNativeDedicatedServerHostedGameHostThreadHandle(threadHandle);
         result.threadInvoked = true;
-        if (WaitForNativeDedicatedServerHostedGameThreadReady(
-                g_nativeHostedStartupReadyEvent,
+        if (WaitForNativeDedicatedServerHostedGameHostThreadReady(
                 threadHandle,
                 callbacks))
         {
@@ -86,7 +131,7 @@ namespace ServerRuntime
 
         WaitForSingleObject(threadHandle, INFINITE);
         DWORD threadExitCode = static_cast<DWORD>(-1);
-        if (!TryReadNativeDedicatedServerHostedGameThreadExitCode(
+        if (!TryReadNativeDedicatedServerHostedGameHostThreadExitCode(
                 threadHandle,
                 &threadExitCode))
         {

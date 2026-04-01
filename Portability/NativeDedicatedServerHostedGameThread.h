@@ -22,19 +22,6 @@ namespace ServerRuntime
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam);
 
-    bool WaitForNativeDedicatedServerHostedGameThreadReady(
-        HANDLE startupReadyEvent,
-        HANDLE threadHandle,
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks);
-
-    void PumpNativeDedicatedServerHostedGameThreadUntilExit(
-        HANDLE threadHandle,
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks);
-
-    bool TryReadNativeDedicatedServerHostedGameThreadExitCode(
-        HANDLE threadHandle,
-        DWORD *outExitCode);
-
     NativeDedicatedServerHostedGameThreadRunResult
     RunNativeDedicatedServerHostedGameThreadAndReadExitCode(
         DedicatedServerHostedGameThreadProc *threadProc,
