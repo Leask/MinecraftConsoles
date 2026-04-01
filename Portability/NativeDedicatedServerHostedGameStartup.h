@@ -5,10 +5,7 @@
 
 namespace ServerRuntime
 {
-    using NativeDedicatedServerHostedGameRuntimeStartResult =
-        NativeDedicatedServerHostedGameHostStartResult;
-
-    NativeDedicatedServerHostedGameRuntimeStartResult
+    NativeDedicatedServerHostedGameHostStartResult
     StartNativeDedicatedServerHostedGameRuntimePath(
         const DedicatedServerHostedGamePlan &hostedGamePlan,
         DedicatedServerHostedGameThreadProc *threadProc,

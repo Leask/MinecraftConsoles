@@ -1633,7 +1633,7 @@ int main(int argc, char* argv[])
         &nativeHostedStubInitData,
         hostedGamePlan.networkInitPlan);
     nativeHostedStubInitData.saveData = nativeHostedSaveData;
-    const ServerRuntime::NativeDedicatedServerHostedGameRuntimeStartResult
+    const ServerRuntime::NativeDedicatedServerHostedGameHostStartResult
         nativeHostedPathResult =
             ServerRuntime::StartNativeDedicatedServerHostedGameRuntimePath(
                 hostedGamePlan,

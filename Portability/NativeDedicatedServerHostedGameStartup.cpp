@@ -22,8 +22,7 @@ namespace ServerRuntime
         }
 
         int CompletePersistentNativeDedicatedServerHostedGameStartup(
-            const NativeDedicatedServerHostedGameRuntimeStartResult
-                &startResult)
+            const NativeDedicatedServerHostedGameHostStartResult &startResult)
         {
             const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
             if (startResult.sessionSnapshotAvailable)
@@ -62,7 +61,7 @@ namespace ServerRuntime
                 hostedGamePlan.fakeLocalPlayerJoined;
         }
 
-        NativeDedicatedServerHostedGameRuntimeStartResult
+        NativeDedicatedServerHostedGameHostStartResult
         StartPersistentNativeDedicatedServerHostedGameRuntime(
             const DedicatedServerHostedGamePlan &hostedGamePlan,
             DedicatedServerHostedGameThreadProc *threadProc,
@@ -82,7 +81,7 @@ namespace ServerRuntime
         }
     }
 
-    NativeDedicatedServerHostedGameRuntimeStartResult
+    NativeDedicatedServerHostedGameHostStartResult
     StartNativeDedicatedServerHostedGameRuntimePath(
         const DedicatedServerHostedGamePlan &hostedGamePlan,
         DedicatedServerHostedGameThreadProc *threadProc,
@@ -101,7 +100,7 @@ namespace ServerRuntime
                 callbacks);
         }
 
-        NativeDedicatedServerHostedGameRuntimeStartResult result = {};
+        NativeDedicatedServerHostedGameHostStartResult result = {};
         const NativeDedicatedServerHostedGameThreadRunResult threadRunResult =
             RunNativeDedicatedServerHostedGameThreadAndReadExitCode(
                 threadProc,

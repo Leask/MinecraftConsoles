@@ -10,8 +10,7 @@ namespace ServerRuntime
     namespace
     {
         int CompletePersistentNativeDedicatedServerHostedGameRuntimeStartup(
-            const NativeDedicatedServerHostedGameRuntimeStartResult
-                &startResult)
+            const NativeDedicatedServerHostedGameHostStartResult &startResult)
         {
             const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
             if (startResult.sessionSnapshotAvailable)
@@ -55,7 +54,7 @@ namespace ServerRuntime
             return startupResult;
         }
 
-        const NativeDedicatedServerHostedGameRuntimeStartResult result =
+        const NativeDedicatedServerHostedGameHostStartResult result =
             StartNativeDedicatedServerHostedGameRuntimePath(
                 hostedGamePlan,
                 threadProc,
