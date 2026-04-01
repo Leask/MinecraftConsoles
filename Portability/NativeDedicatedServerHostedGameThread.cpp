@@ -115,4 +115,36 @@ namespace ServerRuntime
         *outExitCode = static_cast<DWORD>(-1);
         return GetExitCodeThread(threadHandle, outExitCode);
     }
+
+    NativeDedicatedServerHostedGameThreadRunResult
+    RunNativeDedicatedServerHostedGameThreadAndReadExitCode(
+        DedicatedServerHostedGameThreadProc *threadProc,
+        void *threadParam,
+        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
+    {
+        NativeDedicatedServerHostedGameThreadRunResult result = {};
+        HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
+            threadProc,
+            threadParam);
+        if (threadHandle == nullptr || threadHandle == INVALID_HANDLE_VALUE)
+        {
+            return result;
+        }
+
+        result.threadInvoked = true;
+        PumpNativeDedicatedServerHostedGameThreadUntilExit(
+            threadHandle,
+            callbacks);
+        WaitForSingleObject(threadHandle, INFINITE);
+        DWORD threadExitCode = static_cast<DWORD>(-1);
+        if (TryReadNativeDedicatedServerHostedGameThreadExitCode(
+                threadHandle,
+                &threadExitCode))
+        {
+            result.exitCode = static_cast<int>(threadExitCode);
+        }
+
+        CloseHandle(threadHandle);
+        return result;
+    }
 }

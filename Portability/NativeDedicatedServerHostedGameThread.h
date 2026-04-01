@@ -6,6 +6,12 @@
 
 namespace ServerRuntime
 {
+    struct NativeDedicatedServerHostedGameThreadRunResult
+    {
+        bool threadInvoked = false;
+        int exitCode = -1;
+    };
+
     struct NativeDedicatedServerHostedGameThreadCallbacks
     {
         void (*tickPlatformRuntime)() = nullptr;
@@ -28,4 +34,10 @@ namespace ServerRuntime
     bool TryReadNativeDedicatedServerHostedGameThreadExitCode(
         HANDLE threadHandle,
         DWORD *outExitCode);
+
+    NativeDedicatedServerHostedGameThreadRunResult
+    RunNativeDedicatedServerHostedGameThreadAndReadExitCode(
+        DedicatedServerHostedGameThreadProc *threadProc,
+        void *threadParam,
+        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks);
 }

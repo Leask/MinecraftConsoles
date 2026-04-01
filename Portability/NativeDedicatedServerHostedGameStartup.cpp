@@ -147,30 +147,13 @@ namespace ServerRuntime
         }
 
         NativeDedicatedServerHostedGameRuntimeStartResult result = {};
-        HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
-            threadProc,
-            threadParam);
-        if (threadHandle == nullptr || threadHandle == INVALID_HANDLE_VALUE)
-        {
-            return result;
-        }
-
-        result.threadInvoked = true;
-        PumpNativeDedicatedServerHostedGameThreadUntilExit(
-            threadHandle,
-            callbacks);
-        WaitForSingleObject(threadHandle, INFINITE);
-        DWORD threadExitCode = static_cast<DWORD>(-1);
-        if (!TryReadNativeDedicatedServerHostedGameThreadExitCode(
-                threadHandle,
-                &threadExitCode))
-        {
-            CloseHandle(threadHandle);
-            return result;
-        }
-
-        CloseHandle(threadHandle);
-        result.startupResult = static_cast<int>(threadExitCode);
+        const NativeDedicatedServerHostedGameThreadRunResult threadRunResult =
+            RunNativeDedicatedServerHostedGameThreadAndReadExitCode(
+                threadProc,
+                threadParam,
+                callbacks);
+        result.threadInvoked = threadRunResult.threadInvoked;
+        result.startupResult = threadRunResult.exitCode;
         return result;
     }
 
