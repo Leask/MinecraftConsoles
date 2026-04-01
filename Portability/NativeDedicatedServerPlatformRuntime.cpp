@@ -130,16 +130,19 @@ namespace ServerRuntime
 
     void RequestDedicatedServerWorldAutosave(int)
     {
-        MarkDedicatedServerAutosaveTrackerRequested();
         if (IsNativeDedicatedServerHostedGameSessionRunning())
         {
             RequestNativeDedicatedServerHostedGameSessionAutosave(
                 2,
                 LceGetMonotonicMilliseconds());
         }
-        else if (g_nativeRuntimeState.fallbackWorldActionTicks < 2)
+        else
         {
-            g_nativeRuntimeState.fallbackWorldActionTicks = 2;
+            MarkDedicatedServerAutosaveTrackerRequested();
+            if (g_nativeRuntimeState.fallbackWorldActionTicks < 2)
+            {
+                g_nativeRuntimeState.fallbackWorldActionTicks = 2;
+            }
         }
         RefreshNativeDedicatedServerRuntimeProjection(
             LceGetMonotonicMilliseconds());

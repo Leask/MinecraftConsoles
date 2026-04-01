@@ -5,7 +5,7 @@
 #include <deque>
 #include <mutex>
 
-#include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
+#include "Minecraft.Server/Common/DedicatedServerAutosaveTracker.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 
 namespace
@@ -162,7 +162,7 @@ namespace ServerRuntime
                     return false;
                 }
 
-                RequestDedicatedServerWorldAutosave(0);
+                RequestNativeDedicatedServerHostedGameWorkerAutosave(2);
                 SetNativeDedicatedServerHostedGameWorkerActiveCommand(
                     command,
                     1);
@@ -242,6 +242,7 @@ namespace ServerRuntime
     void RequestNativeDedicatedServerHostedGameWorkerAutosave(
         unsigned int workTicks)
     {
+        MarkDedicatedServerAutosaveTrackerRequested();
         const std::uint64_t commandId =
             g_nativeHostedWorkerNextCommandId.fetch_add(1);
         {
