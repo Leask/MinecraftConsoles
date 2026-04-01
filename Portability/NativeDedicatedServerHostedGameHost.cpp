@@ -5,6 +5,8 @@ namespace
     HANDLE g_nativeHostedStartupReadyEvent = nullptr;
     HANDLE g_nativeHostedThreadHandle = nullptr;
 
+    void ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
+
     void SetNativeDedicatedServerHostedGameHostThreadHandle(
         HANDLE threadHandle);
 
@@ -28,6 +30,17 @@ namespace
         }
 
         g_nativeHostedThreadHandle = nullptr;
+    }
+
+    void ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent()
+    {
+        if (g_nativeHostedStartupReadyEvent != nullptr &&
+            g_nativeHostedStartupReadyEvent != INVALID_HANDLE_VALUE)
+        {
+            CloseHandle(g_nativeHostedStartupReadyEvent);
+        }
+
+        g_nativeHostedStartupReadyEvent = nullptr;
     }
 }
 
@@ -97,17 +110,6 @@ namespace ServerRuntime
         return g_nativeHostedStartupReadyEvent != nullptr &&
             g_nativeHostedStartupReadyEvent != INVALID_HANDLE_VALUE &&
             SetEvent(g_nativeHostedStartupReadyEvent) != 0;
-    }
-
-    void ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent()
-    {
-        if (g_nativeHostedStartupReadyEvent != nullptr &&
-            g_nativeHostedStartupReadyEvent != INVALID_HANDLE_VALUE)
-        {
-            CloseHandle(g_nativeHostedStartupReadyEvent);
-        }
-
-        g_nativeHostedStartupReadyEvent = nullptr;
     }
 
     void ResetNativeDedicatedServerHostedGameHostState()

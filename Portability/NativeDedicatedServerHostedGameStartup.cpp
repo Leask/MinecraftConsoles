@@ -94,7 +94,6 @@ namespace ServerRuntime
             NativeDedicatedServerHostedGameRuntimeStartResult result = {};
             if (!PrepareNativeDedicatedServerHostedGameStartup())
             {
-                ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
                 return result;
             }
 

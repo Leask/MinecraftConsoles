@@ -21,8 +21,6 @@ namespace ServerRuntime
 
     bool SignalNativeDedicatedServerHostedGameHostReady();
 
-    void ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
-
     void ResetNativeDedicatedServerHostedGameHostState();
 
     bool WaitForNativeDedicatedServerHostedGameHostStop(
