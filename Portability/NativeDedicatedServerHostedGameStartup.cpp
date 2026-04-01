@@ -4,7 +4,6 @@
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameSession.h"
-#include "NativeDedicatedServerHostedGameThreadBridge.h"
 
 namespace ServerRuntime
 {
@@ -88,7 +87,7 @@ namespace ServerRuntime
         void *threadParam)
     {
         const bool persistentSession =
-            threadProc == GetNativeDedicatedServerHostedGameThreadProc();
+            threadProc == GetDedicatedServerHostedGameRuntimeThreadProc();
         const NativeDedicatedServerHostedGameThreadCallbacks callbacks =
             BuildNativeDedicatedServerHostedGameThreadCallbacks();
         if (persistentSession)
