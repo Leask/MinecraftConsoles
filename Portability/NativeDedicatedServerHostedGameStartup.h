@@ -13,9 +13,4 @@ namespace ServerRuntime
         const DedicatedServerHostedGamePlan &hostedGamePlan,
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam);
-
-    int StartNativeDedicatedServerHostedGameRuntimeAndComplete(
-        const DedicatedServerHostedGamePlan &hostedGamePlan,
-        DedicatedServerHostedGameThreadProc *threadProc,
-        void *threadParam);
 }

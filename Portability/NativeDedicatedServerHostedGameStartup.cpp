@@ -6,8 +6,6 @@
 #include "NativeDedicatedServerHostedGameSession.h"
 #include "NativeDedicatedServerHostedGameThreadBridge.h"
 
-#include "lce_time/lce_time.h"
-
 namespace ServerRuntime
 {
     namespace
@@ -112,39 +110,5 @@ namespace ServerRuntime
         result.threadInvoked = threadRunResult.threadInvoked;
         result.startupResult = threadRunResult.exitCode;
         return result;
-    }
-
-    int StartNativeDedicatedServerHostedGameRuntimeAndComplete(
-        const DedicatedServerHostedGamePlan &hostedGamePlan,
-        DedicatedServerHostedGameThreadProc *threadProc,
-        void *threadParam)
-    {
-        int startupResult = 0;
-        const bool persistentSession =
-            threadProc == GetNativeDedicatedServerHostedGameThreadProc();
-        if (!persistentSession &&
-            !BeginDedicatedServerHostedGameRuntimeStartup(
-                hostedGamePlan,
-                threadProc,
-                &startupResult))
-        {
-            return startupResult;
-        }
-
-        const NativeDedicatedServerHostedGameRuntimeStartResult result =
-            StartNativeDedicatedServerHostedGameRuntimePath(
-                hostedGamePlan,
-                threadProc,
-                threadParam);
-
-        if (persistentSession)
-        {
-            return CompletePersistentNativeDedicatedServerHostedGameStartup(
-                result);
-        }
-
-        return CompleteDedicatedServerHostedGameRuntimeStartup(
-            result.startupResult,
-            result.threadInvoked);
     }
 }
