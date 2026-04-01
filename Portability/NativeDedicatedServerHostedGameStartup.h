@@ -4,6 +4,7 @@
 
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
+#include "NativeDedicatedServerHostedGameSession.h"
 #include "NativeDedicatedServerHostedGameThread.h"
 
 namespace ServerRuntime
@@ -12,7 +13,9 @@ namespace ServerRuntime
     {
         bool startupReady = false;
         bool threadInvoked = false;
+        bool sessionSnapshotAvailable = false;
         int startupResult = -1;
+        NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot = {};
     };
 
     bool PrepareNativeDedicatedServerHostedGameStartup(
@@ -21,8 +24,7 @@ namespace ServerRuntime
 
     int CompleteNativeDedicatedServerHostedGameStartup(
         bool persistentSession,
-        int startupResult,
-        bool threadInvoked,
+        const NativeDedicatedServerHostedGameRuntimeStartResult &startResult,
         std::uint64_t nowMs = 0);
 
     void PopulateNativeDedicatedServerHostedGameRuntimeStubInitData(

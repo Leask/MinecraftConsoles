@@ -439,6 +439,58 @@ namespace ServerRuntime
                 state->snapshot.active = true;
             }
         }
+
+        NativeDedicatedServerHostedGameSessionSnapshot
+        BuildNativeHostedSessionStartupProjectionSnapshot(
+            const NativeDedicatedServerHostedGameSessionSnapshot &snapshot,
+            int startupResult,
+            bool threadInvoked)
+        {
+            NativeDedicatedServerHostedGameSessionSnapshot
+                projectedSnapshot = snapshot;
+            projectedSnapshot.startupResult = startupResult;
+            projectedSnapshot.threadInvoked = threadInvoked;
+
+            if (projectedSnapshot.runtimePhase ==
+                eDedicatedServerHostedGameRuntimePhase_Stopped)
+            {
+                projectedSnapshot.active = false;
+                return projectedSnapshot;
+            }
+
+            if (startupResult != 0)
+            {
+                projectedSnapshot.active = false;
+                projectedSnapshot.runtimePhase =
+                    eDedicatedServerHostedGameRuntimePhase_Failed;
+                return projectedSnapshot;
+            }
+
+            projectedSnapshot.active =
+                projectedSnapshot.hostedThreadActive ||
+                projectedSnapshot.threadInvoked ||
+                projectedSnapshot.payloadValidated ||
+                startupResult == 0;
+            if (projectedSnapshot.appShutdownRequested ||
+                projectedSnapshot.gameplayHalted)
+            {
+                projectedSnapshot.runtimePhase =
+                    eDedicatedServerHostedGameRuntimePhase_ShutdownRequested;
+                return projectedSnapshot;
+            }
+
+            if (projectedSnapshot.hostedThreadActive ||
+                projectedSnapshot.threadInvoked)
+            {
+                projectedSnapshot.runtimePhase =
+                    eDedicatedServerHostedGameRuntimePhase_Running;
+                return projectedSnapshot;
+            }
+
+            projectedSnapshot.runtimePhase =
+                eDedicatedServerHostedGameRuntimePhase_Startup;
+            return projectedSnapshot;
+        }
     }
 
     void ResetNativeDedicatedServerHostedGameSessionCoreState()
@@ -757,6 +809,23 @@ namespace ServerRuntime
             startupResult,
             threadInvoked);
         ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
+    }
+
+    void ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+        const NativeDedicatedServerHostedGameSessionSnapshot &snapshot,
+        int startupResult,
+        bool threadInvoked,
+        std::uint64_t nowMs)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionStartupResult(
+            startupResult,
+            threadInvoked);
+        ProjectNativeDedicatedServerHostedGameSessionSnapshotToRuntimeSnapshot(
+            BuildNativeHostedSessionStartupProjectionSnapshot(
+                snapshot,
+                startupResult,
+                threadInvoked),
+            nowMs);
     }
 
     void TickNativeDedicatedServerHostedGameSession(
@@ -1343,15 +1412,10 @@ namespace ServerRuntime
         return commandId;
     }
 
-    void ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+    void ProjectNativeDedicatedServerHostedGameSessionSnapshotToRuntimeSnapshot(
+        const NativeDedicatedServerHostedGameSessionSnapshot &snapshot,
         std::uint64_t nowMs)
     {
-        NativeDedicatedServerHostedGameSessionSnapshot snapshot = {};
-        {
-            std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-            snapshot = g_nativeHostedSessionState.snapshot;
-        }
-
         DedicatedServerHostedGameRuntimePlanMetadata planMetadata = {};
         planMetadata.startAttempted = snapshot.startAttempted;
         planMetadata.loadedFromSave = snapshot.loadedFromSave;
@@ -1578,6 +1642,20 @@ namespace ServerRuntime
             MarkDedicatedServerHostedGameRuntimeSessionStopped(
                 snapshot.stoppedMs);
         }
+    }
+
+    void ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+        std::uint64_t nowMs)
+    {
+        NativeDedicatedServerHostedGameSessionSnapshot snapshot = {};
+        {
+            std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
+            snapshot = g_nativeHostedSessionState.snapshot;
+        }
+
+        ProjectNativeDedicatedServerHostedGameSessionSnapshotToRuntimeSnapshot(
+            snapshot,
+            nowMs);
     }
 
     void StopNativeDedicatedServerHostedGameSession(
