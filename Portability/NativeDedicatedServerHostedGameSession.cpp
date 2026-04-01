@@ -10,6 +10,7 @@
 #include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameThreadBridge.h"
 #include "NativeDedicatedServerHostedGameWorker.h"
+#include "lce_time/lce_time.h"
 
 namespace ServerRuntime
 {
@@ -1769,7 +1770,12 @@ namespace ServerRuntime
             outExitCode);
         if (stopped)
         {
-            FinalizeNativeDedicatedServerHostedGameThreadStop();
+            const NativeDedicatedServerHostedGameSessionSnapshot snapshot =
+                GetNativeDedicatedServerHostedGameSessionSnapshot();
+            ObserveNativeDedicatedServerHostedGameSessionThreadStateAndWorkerProject(
+                false,
+                snapshot.hostedThreadTicks,
+                LceGetMonotonicMilliseconds());
         }
         return stopped;
     }

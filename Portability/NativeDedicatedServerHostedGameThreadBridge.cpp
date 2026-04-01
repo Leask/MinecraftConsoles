@@ -27,6 +27,15 @@ namespace ServerRuntime
             (void)SignalNativeDedicatedServerHostedGameHostReady();
         }
 
+        void FinalizeNativeDedicatedServerHostedGameThreadStop(
+            const NativeDedicatedServerHostedGameCoreRunResult &runResult)
+        {
+            ObserveNativeDedicatedServerHostedGameSessionThreadStateAndWorkerProject(
+                false,
+                runResult.finalSessionSnapshot.hostedThreadTicks,
+                LceGetMonotonicMilliseconds());
+        }
+
         void TickNativeDedicatedServerHostedGameThreadPlatformRuntime()
         {
             TickDedicatedServerPlatformRuntime();
@@ -42,13 +51,14 @@ namespace ServerRuntime
             NativeDedicatedServerHostedGameCoreHooks hooks = {};
             hooks.onThreadReady =
                 &SignalNativeDedicatedServerHostedGameThreadReady;
-            hooks.onThreadStopped =
-                &FinalizeNativeDedicatedServerHostedGameThreadStop;
-            return RunNativeDedicatedServerHostedGameCore(
+            const NativeDedicatedServerHostedGameCoreRunResult runResult =
+                RunNativeDedicatedServerHostedGameCoreWithResult(
                 static_cast<
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
                         threadParam),
                 hooks);
+            FinalizeNativeDedicatedServerHostedGameThreadStop(runResult);
+            return runResult.exitCode;
         }
     }
 
@@ -56,12 +66,6 @@ namespace ServerRuntime
     {
         ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot();
     }
-
-    void FinalizeNativeDedicatedServerHostedGameThreadStop()
-    {
-        SyncNativeDedicatedServerHostedThreadState(false);
-    }
-
     NativeDedicatedServerHostedGameThreadCallbacks
     BuildNativeDedicatedServerHostedGameThreadCallbacks()
     {

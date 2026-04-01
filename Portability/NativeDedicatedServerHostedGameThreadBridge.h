@@ -7,8 +7,6 @@ namespace ServerRuntime
 {
     void ProjectNativeDedicatedServerHostedGameThreadSnapshot();
 
-    void FinalizeNativeDedicatedServerHostedGameThreadStop();
-
     NativeDedicatedServerHostedGameThreadCallbacks
     BuildNativeDedicatedServerHostedGameThreadCallbacks();
 
