@@ -97,21 +97,10 @@ namespace ServerRuntime
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
                         threadParam),
                 hostedGamePlan);
-            const NativeDedicatedServerHostedGameHostStartResult hostResult =
-                StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
-                    threadProc,
-                    threadParam,
-                    callbacks);
-            result.threadInvoked = hostResult.threadInvoked;
-            result.startupReady = hostResult.startupReady;
-            result.startupResult = hostResult.startupResult;
-            result.sessionSnapshotAvailable =
-                hostResult.sessionSnapshotAvailable;
-            if (hostResult.sessionSnapshotAvailable)
-            {
-                result.sessionSnapshot = hostResult.sessionSnapshot;
-            }
-            return result;
+            return StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
+                threadProc,
+                threadParam,
+                callbacks);
         }
     }
 

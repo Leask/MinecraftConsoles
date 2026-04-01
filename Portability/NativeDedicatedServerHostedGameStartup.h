@@ -4,19 +4,14 @@
 
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
+#include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 #include "NativeDedicatedServerHostedGameThread.h"
 
 namespace ServerRuntime
 {
-    struct NativeDedicatedServerHostedGameRuntimeStartResult
-    {
-        bool startupReady = false;
-        bool threadInvoked = false;
-        bool sessionSnapshotAvailable = false;
-        int startupResult = -1;
-        NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot = {};
-    };
+    using NativeDedicatedServerHostedGameRuntimeStartResult =
+        NativeDedicatedServerHostedGameHostStartResult;
 
     NativeDedicatedServerHostedGameRuntimeStartResult
     StartNativeDedicatedServerHostedGameRuntimePath(
