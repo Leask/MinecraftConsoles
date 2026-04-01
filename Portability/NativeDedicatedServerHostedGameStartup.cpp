@@ -24,41 +24,27 @@ namespace ServerRuntime
             return callbacks;
         }
 
-        bool PrepareNativeDedicatedServerHostedGameStartup()
-        {
-            ResetNativeDedicatedServerHostedGameSessionState();
-            return true;
-        }
-
-        int CompleteNativeDedicatedServerHostedGameStartup(
-            bool persistentSession,
+        int CompletePersistentNativeDedicatedServerHostedGameStartup(
             const NativeDedicatedServerHostedGameRuntimeStartResult
-                &startResult,
-            std::uint64_t nowMs)
+                &startResult)
         {
-            if (persistentSession)
+            const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
+            if (startResult.sessionSnapshotAvailable)
             {
-                if (startResult.sessionSnapshotAvailable)
-                {
-                    ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
-                        startResult.sessionSnapshot,
-                        startResult.startupResult,
-                        startResult.threadInvoked,
-                        nowMs);
-                }
-                else
-                {
-                    ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
-                        startResult.startupResult,
-                        startResult.threadInvoked,
-                        nowMs);
-                }
-                return startResult.startupResult;
+                ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+                    startResult.sessionSnapshot,
+                    startResult.startupResult,
+                    startResult.threadInvoked,
+                    nowMs);
             }
-
-            return CompleteDedicatedServerHostedGameRuntimeStartup(
-                startResult.startupResult,
-                startResult.threadInvoked);
+            else
+            {
+                ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+                    startResult.startupResult,
+                    startResult.threadInvoked,
+                    nowMs);
+            }
+            return startResult.startupResult;
         }
 
         void PopulateNativeDedicatedServerHostedGameRuntimeStubInitData(
@@ -86,12 +72,7 @@ namespace ServerRuntime
             void *threadParam,
             const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
         {
-            NativeDedicatedServerHostedGameRuntimeStartResult result = {};
-            if (!PrepareNativeDedicatedServerHostedGameStartup())
-            {
-                return result;
-            }
-
+            ResetNativeDedicatedServerHostedGameSessionState();
             PopulateNativeDedicatedServerHostedGameRuntimeStubInitData(
                 static_cast<
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
@@ -158,9 +139,14 @@ namespace ServerRuntime
                 threadProc,
                 threadParam);
 
-        return CompleteNativeDedicatedServerHostedGameStartup(
-            persistentSession,
-            result,
-            LceGetMonotonicMilliseconds());
+        if (persistentSession)
+        {
+            return CompletePersistentNativeDedicatedServerHostedGameStartup(
+                result);
+        }
+
+        return CompleteDedicatedServerHostedGameRuntimeStartup(
+            result.startupResult,
+            result.threadInvoked);
     }
 }
