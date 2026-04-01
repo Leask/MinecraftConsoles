@@ -10,14 +10,8 @@
 
 namespace ServerRuntime
 {
-    bool PrepareNativeDedicatedServerHostedGameStartup(
-        bool persistentSession)
+    bool PrepareNativeDedicatedServerHostedGameStartup()
     {
-        if (!persistentSession)
-        {
-            return true;
-        }
-
         ResetDedicatedServerHostedGameRuntimeSnapshot();
         ResetNativeDedicatedServerHostedGameSessionState();
         if (!PrepareNativeDedicatedServerHostedGameHostStartup())
@@ -85,8 +79,7 @@ namespace ServerRuntime
             const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
         {
             NativeDedicatedServerHostedGameRuntimeStartResult result = {};
-            if (!PrepareNativeDedicatedServerHostedGameStartup(
-                    true))
+            if (!PrepareNativeDedicatedServerHostedGameStartup())
             {
                 ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
                 return result;
