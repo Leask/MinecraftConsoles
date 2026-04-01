@@ -1,6 +1,5 @@
 #include "NativeDedicatedServerHostedGameCore.h"
 
-#include "Minecraft.Server/Common/DedicatedServerAutosaveTracker.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
@@ -78,10 +77,8 @@ namespace ServerRuntime
     {
         NativeDedicatedServerHostedGameCoreFrameResult result = {};
         result.workerFrame = TickNativeDedicatedServerHostedGameWorkerFrame();
-        UpdateDedicatedServerAutosaveTracker(result.workerFrame.idle);
-        result.autosaveCompletions = std::max(
-            GetDedicatedServerAutosaveCompletionCount(),
-            result.workerFrame.snapshot.processedAutosaveCommands);
+        result.autosaveCompletions =
+            result.workerFrame.autosaveCompletions;
         result.sessionFrameInput.workerSnapshot =
             result.workerFrame.snapshot;
         result.sessionFrameInput.autosaveCompletions =
@@ -172,12 +169,13 @@ namespace ServerRuntime
         }
 
         StopNativeDedicatedServerHostedGameSession();
-        InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadStopped);
-        result.autosaveCompletions = GetDedicatedServerAutosaveCompletionCount();
         result.finalWorkerSnapshot =
             GetNativeDedicatedServerHostedGameWorkerSnapshot();
+        result.autosaveCompletions =
+            GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
         result.finalSessionSnapshot =
             GetNativeDedicatedServerHostedGameSessionSnapshot();
+        InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadStopped);
         result.exitCode = 0;
         return result;
     }

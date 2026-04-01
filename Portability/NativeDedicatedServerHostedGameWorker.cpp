@@ -1,5 +1,6 @@
 #include "NativeDedicatedServerHostedGameWorker.h"
 
+#include <algorithm>
 #include <atomic>
 #include <cstdint>
 #include <deque>
@@ -381,6 +382,9 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameWorkerFrameResult result = {};
         result.snapshot = GetNativeDedicatedServerHostedGameWorkerSnapshot();
         result.idle = IsNativeDedicatedServerHostedGameWorkerIdle();
+        UpdateDedicatedServerAutosaveTracker(result.idle);
+        result.autosaveCompletions =
+            GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
         return result;
     }
 
@@ -455,5 +459,12 @@ namespace ServerRuntime
             (ENativeDedicatedServerHostedGameWorkerCommandKind)
                 g_nativeHostedWorkerLastProcessedCommandKind.load();
         return snapshot;
+    }
+
+    std::uint64_t GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions()
+    {
+        return std::max(
+            GetDedicatedServerAutosaveTrackerCompletionCount(),
+            g_nativeHostedWorkerProcessedAutosaveCommands.load());
     }
 }

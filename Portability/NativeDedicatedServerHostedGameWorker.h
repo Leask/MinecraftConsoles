@@ -41,6 +41,7 @@ namespace ServerRuntime
     struct NativeDedicatedServerHostedGameWorkerFrameResult
     {
         NativeDedicatedServerHostedGameWorkerSnapshot snapshot = {};
+        std::uint64_t autosaveCompletions = 0;
         bool idle = true;
     };
 
@@ -73,4 +74,6 @@ namespace ServerRuntime
 
     NativeDedicatedServerHostedGameWorkerSnapshot
     GetNativeDedicatedServerHostedGameWorkerSnapshot();
+
+    std::uint64_t GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
 }
