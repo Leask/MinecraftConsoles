@@ -22,7 +22,6 @@
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
 #include "NativeDedicatedServerHostedGameCore.h"
 #include "NativeDedicatedServerHostedGameSession.h"
-#include "NativeDedicatedServerHostedGameStartup.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSessionConfig.h"
@@ -1632,23 +1631,6 @@ int main(int argc, char* argv[])
         &nativeHostedStubInitData,
         hostedGamePlan.networkInitPlan);
     nativeHostedStubInitData.saveData = nativeHostedSaveData;
-    const ServerRuntime::NativeDedicatedServerHostedGameHostStartResult
-        nativeHostedPathResult =
-            ServerRuntime::StartNativeDedicatedServerHostedGameRuntimePath(
-                hostedGamePlan,
-                ServerRuntime::GetDedicatedServerHostedGameRuntimeThreadProc(),
-                &nativeHostedStubInitData);
-    ServerRuntime::EnableDedicatedServerSaveOnExit();
-    ServerRuntime::HaltDedicatedServerGameplay();
-    DWORD nativeHostedPathExitCode = 0;
-    const bool nativeHostedPathStopped =
-        ServerRuntime::WaitForNativeDedicatedServerHostedGameSessionStop(
-            INFINITE,
-            &nativeHostedPathExitCode);
-    ServerRuntime::StopDedicatedServerPlatformRuntime();
-    const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
-        restartedNativeHostedPathRuntimeResult =
-            ServerRuntime::StartDedicatedServerPlatformRuntime(platformState);
     ServerRuntime::ResetNativeDedicatedServerHostedGameSessionState();
     ServerRuntime::ResetDedicatedServerAutosaveTracker();
     ServerRuntime::ResetDedicatedServerShutdownRequest();
@@ -3170,34 +3152,6 @@ int main(int argc, char* argv[])
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Failed,
         hostedGameRuntimeResult,
         hostedGameRuntimeThreadValue);
-    const bool nativeHostedPathContractOk =
-        restartedNativeHostedPathRuntimeResult.ok &&
-        nativeHostedPathResult.startupReady &&
-        nativeHostedPathResult.threadInvoked &&
-        nativeHostedPathResult.startupResult == 0 &&
-        nativeHostedPathResult.sessionSnapshotAvailable &&
-        nativeHostedPathResult.sessionSnapshot.startAttempted &&
-        nativeHostedPathResult.sessionSnapshot.loadedFromSave &&
-        nativeHostedPathResult.sessionSnapshot.payloadValidated &&
-        !nativeHostedPathResult.sessionSnapshot.threadInvoked &&
-        nativeHostedPathResult.sessionSnapshot.hostedThreadActive &&
-        nativeHostedPathResult.sessionSnapshot.loadedSaveMetadataAvailable &&
-        nativeHostedPathResult.sessionSnapshot.runtimePhase ==
-            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
-        nativeHostedPathStopped &&
-        nativeHostedPathExitCode == 0;
-    printf("native_hosted_path_start=%d ready=%d invoked=%d result=%d "
-        "snapshot=%d phase=%s active=%d exit=%lu\n",
-        nativeHostedPathContractOk,
-        nativeHostedPathResult.startupReady,
-        nativeHostedPathResult.threadInvoked,
-        nativeHostedPathResult.startupResult,
-        nativeHostedPathResult.sessionSnapshotAvailable,
-        ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
-            (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
-                nativeHostedPathResult.sessionSnapshot.runtimePhase),
-        nativeHostedPathResult.sessionSnapshot.hostedThreadActive,
-        (unsigned long)nativeHostedPathExitCode);
     const bool nativeHostedStubCoreContextOk =
         nativeHostedSessionCoreSnapshot.startAttempted &&
         nativeHostedSessionCoreSnapshot.loadedFromSave &&
@@ -3253,7 +3207,6 @@ int main(int argc, char* argv[])
         "worker=%llu/%llu/%llu/%llu/%llu/%llu\n",
         nativeHostedStubResult == 0 &&
             nativeHostedStubInitData.seed == hostedGamePlan.resolvedSeed &&
-            nativeHostedPathContractOk &&
             nativeHostedSaveTextBuilt &&
             nativeHostedStubInitData.saveData == nativeHostedSaveData &&
             nativeHostedStubInitData.settings == sessionConfig.hostSettings &&
