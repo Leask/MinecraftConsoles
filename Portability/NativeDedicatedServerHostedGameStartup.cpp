@@ -10,67 +10,68 @@
 
 namespace ServerRuntime
 {
-    bool PrepareNativeDedicatedServerHostedGameStartup()
-    {
-        ResetDedicatedServerHostedGameRuntimeSnapshot();
-        ResetNativeDedicatedServerHostedGameSessionState();
-        if (!PrepareNativeDedicatedServerHostedGameHostStartup())
-        {
-            return false;
-        }
-        return true;
-    }
-
-    int CompleteNativeDedicatedServerHostedGameStartup(
-        bool persistentSession,
-        const NativeDedicatedServerHostedGameRuntimeStartResult &startResult,
-        std::uint64_t nowMs)
-    {
-        if (persistentSession)
-        {
-            if (startResult.sessionSnapshotAvailable)
-            {
-                ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
-                    startResult.sessionSnapshot,
-                    startResult.startupResult,
-                    startResult.threadInvoked,
-                    nowMs);
-            }
-            else
-            {
-                ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
-                    startResult.startupResult,
-                    startResult.threadInvoked,
-                    nowMs);
-            }
-            return startResult.startupResult;
-        }
-
-        return CompleteDedicatedServerHostedGameRuntimeStartup(
-            startResult.startupResult,
-            startResult.threadInvoked);
-    }
-
-    void PopulateNativeDedicatedServerHostedGameRuntimeStubInitData(
-        NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
-        const DedicatedServerHostedGamePlan &hostedGamePlan)
-    {
-        if (initData == nullptr)
-        {
-            return;
-        }
-
-        initData->localUsersMask = hostedGamePlan.localUsersMask;
-        initData->onlineGame = hostedGamePlan.onlineGame;
-        initData->privateGame = hostedGamePlan.privateGame;
-        initData->publicSlots = hostedGamePlan.publicSlots;
-        initData->privateSlots = hostedGamePlan.privateSlots;
-        initData->fakeLocalPlayerJoined =
-            hostedGamePlan.fakeLocalPlayerJoined;
-    }
-
     namespace
     {
+        bool PrepareNativeDedicatedServerHostedGameStartup()
+        {
+            ResetDedicatedServerHostedGameRuntimeSnapshot();
+            ResetNativeDedicatedServerHostedGameSessionState();
+            if (!PrepareNativeDedicatedServerHostedGameHostStartup())
+            {
+                return false;
+            }
+            return true;
+        }
+
+        int CompleteNativeDedicatedServerHostedGameStartup(
+            bool persistentSession,
+            const NativeDedicatedServerHostedGameRuntimeStartResult
+                &startResult,
+            std::uint64_t nowMs)
+        {
+            if (persistentSession)
+            {
+                if (startResult.sessionSnapshotAvailable)
+                {
+                    ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+                        startResult.sessionSnapshot,
+                        startResult.startupResult,
+                        startResult.threadInvoked,
+                        nowMs);
+                }
+                else
+                {
+                    ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+                        startResult.startupResult,
+                        startResult.threadInvoked,
+                        nowMs);
+                }
+                return startResult.startupResult;
+            }
+
+            return CompleteDedicatedServerHostedGameRuntimeStartup(
+                startResult.startupResult,
+                startResult.threadInvoked);
+        }
+
+        void PopulateNativeDedicatedServerHostedGameRuntimeStubInitData(
+            NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
+            const DedicatedServerHostedGamePlan &hostedGamePlan)
+        {
+            if (initData == nullptr)
+            {
+                return;
+            }
+
+            initData->localUsersMask = hostedGamePlan.localUsersMask;
+            initData->onlineGame = hostedGamePlan.onlineGame;
+            initData->privateGame = hostedGamePlan.privateGame;
+            initData->publicSlots = hostedGamePlan.publicSlots;
+            initData->privateSlots = hostedGamePlan.privateSlots;
+            initData->fakeLocalPlayerJoined =
+                hostedGamePlan.fakeLocalPlayerJoined;
+        }
+
         NativeDedicatedServerHostedGameRuntimeStartResult
         StartPersistentNativeDedicatedServerHostedGameRuntime(
             const DedicatedServerHostedGamePlan &hostedGamePlan,

@@ -18,17 +18,6 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot = {};
     };
 
-    bool PrepareNativeDedicatedServerHostedGameStartup();
-
-    int CompleteNativeDedicatedServerHostedGameStartup(
-        bool persistentSession,
-        const NativeDedicatedServerHostedGameRuntimeStartResult &startResult,
-        std::uint64_t nowMs = 0);
-
-    void PopulateNativeDedicatedServerHostedGameRuntimeStubInitData(
-        NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
-        const DedicatedServerHostedGamePlan &hostedGamePlan);
-
     NativeDedicatedServerHostedGameRuntimeStartResult
     StartNativeDedicatedServerHostedGameRuntimePath(
         bool persistentSession,
