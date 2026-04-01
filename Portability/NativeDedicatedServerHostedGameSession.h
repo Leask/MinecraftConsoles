@@ -332,6 +332,13 @@ namespace ServerRuntime
         std::uint64_t hostedThreadTicks,
         std::uint64_t nowMs = 0);
 
+    void SignalNativeDedicatedServerHostedGameSessionThreadReady(
+        std::uint64_t nowMs = 0);
+
+    void SignalNativeDedicatedServerHostedGameSessionThreadStopped(
+        std::uint64_t hostedThreadTicks,
+        std::uint64_t nowMs = 0);
+
     void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
         std::uint64_t startupThreadIterations,
         std::uint64_t startupThreadDurationMs);

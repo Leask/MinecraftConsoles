@@ -15,8 +15,14 @@ namespace ServerRuntime
     {
         void SyncNativeDedicatedServerHostedThreadState(bool running)
         {
-            ObserveNativeDedicatedServerHostedGameSessionThreadStateAndWorkerProject(
-                running,
+            if (running)
+            {
+                SignalNativeDedicatedServerHostedGameSessionThreadReady(
+                    LceGetMonotonicMilliseconds());
+                return;
+            }
+
+            SignalNativeDedicatedServerHostedGameSessionThreadStopped(
                 GetNativeDedicatedServerHostedGameSessionThreadTicks(),
                 LceGetMonotonicMilliseconds());
         }
@@ -30,8 +36,7 @@ namespace ServerRuntime
         void FinalizeNativeDedicatedServerHostedGameThreadStop(
             const NativeDedicatedServerHostedGameCoreRunResult &runResult)
         {
-            ObserveNativeDedicatedServerHostedGameSessionThreadStateAndWorkerProject(
-                false,
+            SignalNativeDedicatedServerHostedGameSessionThreadStopped(
                 runResult.finalSessionSnapshot.hostedThreadTicks,
                 LceGetMonotonicMilliseconds());
         }

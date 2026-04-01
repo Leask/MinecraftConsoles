@@ -1658,6 +1658,25 @@ namespace ServerRuntime
             nowMs);
     }
 
+    void SignalNativeDedicatedServerHostedGameSessionThreadReady(
+        std::uint64_t nowMs)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionThreadStateAndWorkerProject(
+            true,
+            GetNativeDedicatedServerHostedGameSessionThreadTicks(),
+            nowMs);
+    }
+
+    void SignalNativeDedicatedServerHostedGameSessionThreadStopped(
+        std::uint64_t hostedThreadTicks,
+        std::uint64_t nowMs)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionThreadStateAndWorkerProject(
+            false,
+            hostedThreadTicks,
+            nowMs);
+    }
+
     void StopNativeDedicatedServerHostedGameSession(
         std::uint64_t stoppedMs)
     {
@@ -1850,8 +1869,7 @@ namespace ServerRuntime
         {
             const NativeDedicatedServerHostedGameSessionSnapshot snapshot =
                 GetNativeDedicatedServerHostedGameSessionSnapshot();
-            ObserveNativeDedicatedServerHostedGameSessionThreadStateAndWorkerProject(
-                false,
+            SignalNativeDedicatedServerHostedGameSessionThreadStopped(
                 snapshot.hostedThreadTicks,
                 LceGetMonotonicMilliseconds());
         }
