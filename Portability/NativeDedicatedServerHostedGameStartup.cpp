@@ -111,12 +111,14 @@ namespace ServerRuntime
 
     NativeDedicatedServerHostedGameRuntimeStartResult
     StartNativeDedicatedServerHostedGameRuntimePath(
-        bool persistentSession,
         const DedicatedServerHostedGamePlan &hostedGamePlan,
         DedicatedServerHostedGameThreadProc *threadProc,
-        void *threadParam,
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
+        void *threadParam)
     {
+        const bool persistentSession =
+            threadProc == GetNativeDedicatedServerHostedGameThreadProc();
+        const NativeDedicatedServerHostedGameThreadCallbacks callbacks =
+            BuildNativeDedicatedServerHostedGameThreadCallbacks();
         if (persistentSession)
         {
             return StartPersistentNativeDedicatedServerHostedGameRuntime(
@@ -155,15 +157,11 @@ namespace ServerRuntime
         }
 
         ActivateDedicatedServerHostedGamePlan(hostedGamePlan);
-        const NativeDedicatedServerHostedGameThreadCallbacks callbacks =
-            BuildNativeDedicatedServerHostedGameThreadCallbacks();
         const NativeDedicatedServerHostedGameRuntimeStartResult result =
             StartNativeDedicatedServerHostedGameRuntimePath(
-                persistentSession,
                 hostedGamePlan,
                 threadProc,
-                threadParam,
-                callbacks);
+                threadParam);
 
         return CompleteNativeDedicatedServerHostedGameStartup(
             persistentSession,

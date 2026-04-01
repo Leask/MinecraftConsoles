@@ -20,11 +20,9 @@ namespace ServerRuntime
 
     NativeDedicatedServerHostedGameRuntimeStartResult
     StartNativeDedicatedServerHostedGameRuntimePath(
-        bool persistentSession,
         const DedicatedServerHostedGamePlan &hostedGamePlan,
         DedicatedServerHostedGameThreadProc *threadProc,
-        void *threadParam,
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks);
+        void *threadParam);
 
     int StartNativeDedicatedServerHostedGameRuntimeAndComplete(
         const DedicatedServerHostedGamePlan &hostedGamePlan,

@@ -1633,17 +1633,12 @@ int main(int argc, char* argv[])
         &nativeHostedStubInitData,
         hostedGamePlan.networkInitPlan);
     nativeHostedStubInitData.saveData = nativeHostedSaveData;
-    const ServerRuntime::NativeDedicatedServerHostedGameThreadCallbacks
-        nativeHostedPathCallbacks =
-            ServerRuntime::BuildNativeDedicatedServerHostedGameThreadCallbacks();
     const ServerRuntime::NativeDedicatedServerHostedGameRuntimeStartResult
         nativeHostedPathResult =
             ServerRuntime::StartNativeDedicatedServerHostedGameRuntimePath(
-                true,
                 hostedGamePlan,
                 ServerRuntime::GetDedicatedServerHostedGameRuntimeThreadProc(),
-                &nativeHostedStubInitData,
-                nativeHostedPathCallbacks);
+                &nativeHostedStubInitData);
     ServerRuntime::EnableDedicatedServerSaveOnExit();
     ServerRuntime::HaltDedicatedServerGameplay();
     DWORD nativeHostedPathExitCode = 0;
