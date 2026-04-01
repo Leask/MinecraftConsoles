@@ -6,6 +6,17 @@
 
 namespace ServerRuntime
 {
+    struct NativeDedicatedServerHostedGameCoreFrameResult
+    {
+        NativeDedicatedServerHostedGameWorkerFrameResult workerFrame = {};
+        NativeDedicatedServerHostedGameSessionFrameInput
+            sessionFrameInput = {};
+        NativeDedicatedServerHostedGameSessionSnapshot
+            sessionSnapshot = {};
+        std::uint64_t autosaveCompletions = 0;
+        std::uint64_t frameTimestampMs = 0;
+    };
+
     struct NativeDedicatedServerHostedGameCoreRunResult
     {
         int exitCode = -1;
@@ -14,6 +25,7 @@ namespace ServerRuntime
         std::uint64_t startupDurationMs = 0;
         std::uint64_t loopIterations = 0;
         std::uint64_t autosaveCompletions = 0;
+        NativeDedicatedServerHostedGameCoreFrameResult lastFrame = {};
         NativeDedicatedServerHostedGameWorkerSnapshot
             finalWorkerSnapshot = {};
         NativeDedicatedServerHostedGameSessionSnapshot
@@ -25,6 +37,10 @@ namespace ServerRuntime
         void (*onThreadReady)() = nullptr;
         void (*onThreadStopped)() = nullptr;
     };
+
+    NativeDedicatedServerHostedGameCoreFrameResult
+    TickNativeDedicatedServerHostedGameCoreFrameWithResult(
+        bool hostedThreadActive = true);
 
     NativeDedicatedServerHostedGameCoreRunResult
     RunNativeDedicatedServerHostedGameCoreWithResult(

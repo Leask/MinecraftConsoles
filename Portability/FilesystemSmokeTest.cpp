@@ -1672,6 +1672,41 @@ int main(int argc, char* argv[])
     ServerRuntime::ResetDedicatedServerAutosaveTracker();
     ServerRuntime::ResetDedicatedServerShutdownRequest();
     ServerRuntime::SetDedicatedServerAppShutdownRequested(false);
+    ServerRuntime::NativeDedicatedServerHostedGameRuntimeStubInitData
+        nativeHostedCoreFrameInitData = {};
+    ServerRuntime::PopulateDedicatedServerNetworkGameInitData(
+        &nativeHostedCoreFrameInitData,
+        hostedGamePlan.networkInitPlan);
+    nativeHostedCoreFrameInitData.saveData = nullptr;
+    const bool nativeHostedCoreFrameStarted =
+        ServerRuntime::StartNativeDedicatedServerHostedGameSession(
+            nativeHostedCoreFrameInitData,
+            true);
+    ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+        0,
+        true,
+        LceGetMonotonicMilliseconds());
+    ServerRuntime::RequestNativeDedicatedServerHostedGameSessionAutosave(
+        2,
+        LceGetMonotonicMilliseconds());
+    const ServerRuntime::NativeDedicatedServerHostedGameCoreFrameResult
+        nativeHostedCoreFrameFirst =
+            ServerRuntime::TickNativeDedicatedServerHostedGameCoreFrameWithResult();
+    const ServerRuntime::NativeDedicatedServerHostedGameCoreFrameResult
+        nativeHostedCoreFrameSecond =
+            ServerRuntime::TickNativeDedicatedServerHostedGameCoreFrameWithResult();
+    ServerRuntime::StopNativeDedicatedServerHostedGameSession();
+    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+        nativeHostedCoreFrameStoppedSnapshot =
+            ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
+    ServerRuntime::ResetNativeDedicatedServerHostedGameSessionState();
+    ServerRuntime::ResetDedicatedServerAutosaveTracker();
+    ServerRuntime::ResetDedicatedServerShutdownRequest();
+    ServerRuntime::SetDedicatedServerAppShutdownRequested(false);
+    ServerRuntime::ResetNativeDedicatedServerHostedGameSessionState();
+    ServerRuntime::ResetDedicatedServerAutosaveTracker();
+    ServerRuntime::ResetDedicatedServerShutdownRequest();
+    ServerRuntime::SetDedicatedServerAppShutdownRequested(false);
     g_nativeHostedCoreHookSmokeContext = {};
     g_nativeHostedCoreHookSmokeContext.requestShutdownOnReady = true;
     ServerRuntime::NativeDedicatedServerHostedGameRuntimeStubInitData
@@ -2953,6 +2988,50 @@ int main(int argc, char* argv[])
         gameplayLoopRunResult.iterations,
         gameplayLoopRunPollContext.pollCount,
         gameplayLoopRunResult.requestedAppShutdown);
+    printf("hosted_game_core_frame=%d start=%d first=%llu/%llu/%d second=%llu/%llu/%d stopped=%d\n",
+        nativeHostedCoreFrameStarted &&
+            nativeHostedCoreFrameFirst.frameTimestampMs > 0U &&
+            nativeHostedCoreFrameFirst.autosaveCompletions == 0U &&
+            nativeHostedCoreFrameFirst.workerFrame.snapshot
+                    .pendingWorldActionTicks == 1U &&
+            nativeHostedCoreFrameFirst.workerFrame.snapshot
+                    .processedAutosaveCommands == 0U &&
+            !nativeHostedCoreFrameFirst.workerFrame.idle &&
+            nativeHostedCoreFrameFirst.sessionSnapshot.sessionTicks == 1U &&
+            nativeHostedCoreFrameFirst.sessionSnapshot
+                    .gameplayLoopIterations == 1U &&
+            nativeHostedCoreFrameFirst.sessionSnapshot.hostedThreadActive &&
+            nativeHostedCoreFrameFirst.sessionSnapshot.runtimePhase ==
+                ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
+            nativeHostedCoreFrameSecond.frameTimestampMs >=
+                nativeHostedCoreFrameFirst.frameTimestampMs &&
+            nativeHostedCoreFrameSecond.autosaveCompletions == 1U &&
+            nativeHostedCoreFrameSecond.workerFrame.snapshot
+                    .pendingWorldActionTicks == 0U &&
+            nativeHostedCoreFrameSecond.workerFrame.snapshot
+                    .processedAutosaveCommands == 1U &&
+            nativeHostedCoreFrameSecond.workerFrame.idle &&
+            nativeHostedCoreFrameSecond.sessionSnapshot.sessionTicks == 2U &&
+            nativeHostedCoreFrameSecond.sessionSnapshot
+                    .gameplayLoopIterations == 2U &&
+            nativeHostedCoreFrameSecond.sessionSnapshot
+                    .observedAutosaveCompletions == 1U &&
+            nativeHostedCoreFrameSecond.sessionSnapshot.hostedThreadActive &&
+            nativeHostedCoreFrameSecond.sessionSnapshot.runtimePhase ==
+                ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
+            !nativeHostedCoreFrameStoppedSnapshot.active &&
+            nativeHostedCoreFrameStoppedSnapshot.runtimePhase ==
+                ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped,
+        nativeHostedCoreFrameStarted,
+        (unsigned long long)nativeHostedCoreFrameFirst
+            .workerFrame.snapshot.pendingWorldActionTicks,
+        (unsigned long long)nativeHostedCoreFrameFirst.autosaveCompletions,
+        nativeHostedCoreFrameFirst.workerFrame.idle,
+        (unsigned long long)nativeHostedCoreFrameSecond
+            .workerFrame.snapshot.pendingWorldActionTicks,
+        (unsigned long long)nativeHostedCoreFrameSecond.autosaveCompletions,
+        nativeHostedCoreFrameSecond.workerFrame.idle,
+        !nativeHostedCoreFrameStoppedSnapshot.active);
     printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
         "loops=%llu autosaves=%llu worker_idle=%d hooks=%d/%d phase=%s\n",
         nativeHostedCoreRunResult.exitCode == 0 &&
@@ -2961,6 +3040,7 @@ int main(int argc, char* argv[])
             nativeHostedCoreRunResult.startupDurationMs > 0U &&
             nativeHostedCoreRunResult.loopIterations == 0U &&
             nativeHostedCoreRunResult.autosaveCompletions == 0U &&
+            nativeHostedCoreRunResult.lastFrame.frameTimestampMs == 0U &&
             nativeHostedCoreRunResult.finalWorkerSnapshot
                     .pendingWorldActionTicks == 0U &&
             nativeHostedCoreRunResult.finalWorkerSnapshot
@@ -3001,6 +3081,7 @@ int main(int argc, char* argv[])
             nativeHostedCoreRunResult.startupDurationMs > 0U &&
             nativeHostedCoreRunResult.loopIterations == 0U &&
             nativeHostedCoreRunResult.autosaveCompletions == 0U &&
+            nativeHostedCoreRunResult.lastFrame.frameTimestampMs == 0U &&
             nativeHostedCoreRunResult.finalWorkerSnapshot
                     .pendingWorldActionTicks == 0U &&
             nativeHostedCoreRunResult.finalWorkerSnapshot
@@ -3934,12 +4015,46 @@ int main(int argc, char* argv[])
         gameplayLoopRunPollContext.pollCount == 3 &&
         gameplayLoopRunResult.requestedAppShutdown &&
         gameplayLoopRunResult.lastIteration.shouldExit &&
+        nativeHostedCoreFrameStarted &&
+        nativeHostedCoreFrameFirst.frameTimestampMs > 0U &&
+        nativeHostedCoreFrameFirst.autosaveCompletions == 0U &&
+        nativeHostedCoreFrameFirst.workerFrame.snapshot
+                .pendingWorldActionTicks == 1U &&
+        nativeHostedCoreFrameFirst.workerFrame.snapshot
+                .processedAutosaveCommands == 0U &&
+        !nativeHostedCoreFrameFirst.workerFrame.idle &&
+        nativeHostedCoreFrameFirst.sessionSnapshot.sessionTicks == 1U &&
+        nativeHostedCoreFrameFirst.sessionSnapshot.gameplayLoopIterations ==
+            1U &&
+        nativeHostedCoreFrameFirst.sessionSnapshot.hostedThreadActive &&
+        nativeHostedCoreFrameFirst.sessionSnapshot.runtimePhase ==
+            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
+        nativeHostedCoreFrameSecond.frameTimestampMs >=
+            nativeHostedCoreFrameFirst.frameTimestampMs &&
+        nativeHostedCoreFrameSecond.autosaveCompletions == 1U &&
+        nativeHostedCoreFrameSecond.workerFrame.snapshot
+                .pendingWorldActionTicks == 0U &&
+        nativeHostedCoreFrameSecond.workerFrame.snapshot
+                .processedAutosaveCommands == 1U &&
+        nativeHostedCoreFrameSecond.workerFrame.idle &&
+        nativeHostedCoreFrameSecond.sessionSnapshot.sessionTicks == 2U &&
+        nativeHostedCoreFrameSecond.sessionSnapshot.gameplayLoopIterations ==
+            2U &&
+        nativeHostedCoreFrameSecond.sessionSnapshot
+                .observedAutosaveCompletions == 1U &&
+        nativeHostedCoreFrameSecond.sessionSnapshot.hostedThreadActive &&
+        nativeHostedCoreFrameSecond.sessionSnapshot.runtimePhase ==
+            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
+        !nativeHostedCoreFrameStoppedSnapshot.active &&
+        nativeHostedCoreFrameStoppedSnapshot.runtimePhase ==
+            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
         nativeHostedCoreRunResult.exitCode == 0 &&
         nativeHostedCoreRunResult.startupPayloadValidated &&
         nativeHostedCoreRunResult.startupIterations == 2U &&
         nativeHostedCoreRunResult.startupDurationMs > 0U &&
         nativeHostedCoreRunResult.loopIterations == 0U &&
         nativeHostedCoreRunResult.autosaveCompletions == 0U &&
+        nativeHostedCoreRunResult.lastFrame.frameTimestampMs == 0U &&
         nativeHostedCoreRunResult.finalWorkerSnapshot.pendingWorldActionTicks ==
             0U &&
         nativeHostedCoreRunResult.finalWorkerSnapshot.pendingAutosaveCommands ==

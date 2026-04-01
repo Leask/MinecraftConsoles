@@ -45,23 +45,6 @@ namespace ServerRuntime
                 &saveStub);
         }
 
-        void TickNativeDedicatedServerHostedGameCoreFrame()
-        {
-            const NativeDedicatedServerHostedGameWorkerFrameResult
-                workerFrame = TickNativeDedicatedServerHostedGameWorkerFrame();
-            UpdateDedicatedServerAutosaveTracker(workerFrame.idle);
-            const std::uint64_t autosaveCompletions = std::max(
-                GetDedicatedServerAutosaveCompletionCount(),
-                workerFrame.snapshot.processedAutosaveCommands);
-            NativeDedicatedServerHostedGameSessionFrameInput frameInput = {};
-            frameInput.workerSnapshot = workerFrame.snapshot;
-            frameInput.autosaveCompletions = autosaveCompletions;
-            frameInput.hostedThreadActive = true;
-            TickNativeDedicatedServerHostedGameSessionFrameAndProject(
-                frameInput,
-                LceGetMonotonicMilliseconds());
-        }
-
         bool ShouldStopNativeDedicatedServerHostedGameCore()
         {
             const bool shutdownRequested =
@@ -87,6 +70,30 @@ namespace ServerRuntime
             InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadStopped);
             return -2;
         }
+    }
+
+    NativeDedicatedServerHostedGameCoreFrameResult
+    TickNativeDedicatedServerHostedGameCoreFrameWithResult(
+        bool hostedThreadActive)
+    {
+        NativeDedicatedServerHostedGameCoreFrameResult result = {};
+        result.workerFrame = TickNativeDedicatedServerHostedGameWorkerFrame();
+        UpdateDedicatedServerAutosaveTracker(result.workerFrame.idle);
+        result.autosaveCompletions = std::max(
+            GetDedicatedServerAutosaveCompletionCount(),
+            result.workerFrame.snapshot.processedAutosaveCommands);
+        result.sessionFrameInput.workerSnapshot =
+            result.workerFrame.snapshot;
+        result.sessionFrameInput.autosaveCompletions =
+            result.autosaveCompletions;
+        result.sessionFrameInput.hostedThreadActive = hostedThreadActive;
+        result.frameTimestampMs = LceGetMonotonicMilliseconds();
+        TickNativeDedicatedServerHostedGameSessionFrameAndProject(
+            result.sessionFrameInput,
+            result.frameTimestampMs);
+        result.sessionSnapshot =
+            GetNativeDedicatedServerHostedGameSessionSnapshot();
+        return result;
     }
 
     NativeDedicatedServerHostedGameCoreRunResult
@@ -145,7 +152,8 @@ namespace ServerRuntime
         InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadReady);
         while (!ShouldStopNativeDedicatedServerHostedGameCore())
         {
-            TickNativeDedicatedServerHostedGameCoreFrame();
+            result.lastFrame =
+                TickNativeDedicatedServerHostedGameCoreFrameWithResult();
             ++result.loopIterations;
             LceSleepMilliseconds(10);
         }
