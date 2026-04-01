@@ -1,7 +1,6 @@
 #include "NativeDedicatedServerHostedGameCore.h"
 
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
-#include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 #include "NativeDedicatedServerHostedGameWorker.h"
@@ -42,16 +41,6 @@ namespace ServerRuntime
             return ParseNativeDedicatedServerSaveStubText(
                 payloadText,
                 &saveStub);
-        }
-
-        bool ShouldStopNativeDedicatedServerHostedGameCore()
-        {
-            const bool shutdownRequested =
-                IsDedicatedServerShutdownRequested() ||
-                IsDedicatedServerAppShutdownRequested() ||
-                IsDedicatedServerGameplayHalted();
-            return shutdownRequested &&
-                IsNativeDedicatedServerHostedGameWorkerIdle();
         }
 
         void InvokeNativeDedicatedServerHostedGameCoreHook(
@@ -160,11 +149,15 @@ namespace ServerRuntime
         }
 
         InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadReady);
-        while (!ShouldStopNativeDedicatedServerHostedGameCore())
+        while (true)
         {
             result.lastFrame =
                 TickNativeDedicatedServerHostedGameCoreFrameWithResult();
             ++result.loopIterations;
+            if (result.lastFrame.workerFrame.shouldStopRunning)
+            {
+                break;
+            }
             LceSleepMilliseconds(10);
         }
 

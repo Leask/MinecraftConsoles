@@ -7,6 +7,7 @@
 #include <mutex>
 
 #include "Minecraft.Server/Common/DedicatedServerAutosaveTracker.h"
+#include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 
 namespace
@@ -47,6 +48,13 @@ namespace ServerRuntime
 {
     namespace
     {
+        bool IsNativeDedicatedServerHostedGameWorkerShutdownRequested()
+        {
+            return ServerRuntime::IsDedicatedServerShutdownRequested() ||
+                ServerRuntime::IsDedicatedServerAppShutdownRequested() ||
+                ServerRuntime::IsDedicatedServerGameplayHalted();
+        }
+
         bool TryConsumePendingNativeDedicatedServerHostedGameWorkerCommand(
             std::atomic<std::uint64_t> *pendingCounter)
         {
@@ -382,6 +390,11 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameWorkerFrameResult result = {};
         result.snapshot = GetNativeDedicatedServerHostedGameWorkerSnapshot();
         result.idle = IsNativeDedicatedServerHostedGameWorkerIdle();
+        result.shutdownRequested =
+            IsNativeDedicatedServerHostedGameWorkerShutdownRequested();
+        result.shouldStopRunning =
+            result.shutdownRequested &&
+            result.idle;
         UpdateDedicatedServerAutosaveTracker(result.idle);
         result.autosaveCompletions =
             GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
