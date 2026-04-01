@@ -67,10 +67,6 @@ namespace ServerRuntime
         }
     }
 
-    void ProjectNativeDedicatedServerHostedGameThreadSnapshot()
-    {
-        ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot();
-    }
     NativeDedicatedServerHostedGameThreadCallbacks
     BuildNativeDedicatedServerHostedGameThreadCallbacks()
     {

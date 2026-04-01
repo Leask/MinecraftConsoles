@@ -5,8 +5,6 @@
 
 namespace ServerRuntime
 {
-    void ProjectNativeDedicatedServerHostedGameThreadSnapshot();
-
     NativeDedicatedServerHostedGameThreadCallbacks
     BuildNativeDedicatedServerHostedGameThreadCallbacks();
 

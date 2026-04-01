@@ -8,7 +8,6 @@
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
 #include "Minecraft.Server/Common/StringUtils.h"
 #include "NativeDedicatedServerHostedGameHost.h"
-#include "NativeDedicatedServerHostedGameThreadBridge.h"
 #include "NativeDedicatedServerHostedGameWorker.h"
 #include "lce_time/lce_time.h"
 
@@ -504,7 +503,7 @@ namespace ServerRuntime
         ResetNativeDedicatedServerHostedGameHostState();
         ResetNativeDedicatedServerHostedGameWorkerState();
         ResetNativeDedicatedServerHostedGameSessionCoreState();
-        ProjectNativeDedicatedServerHostedGameThreadSnapshot();
+        ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot();
     }
 
     bool StartNativeDedicatedServerHostedGameSession(
