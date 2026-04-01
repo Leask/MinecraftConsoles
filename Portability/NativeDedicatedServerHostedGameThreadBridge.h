@@ -5,9 +5,6 @@
 
 namespace ServerRuntime
 {
-    NativeDedicatedServerHostedGameThreadCallbacks
-    BuildNativeDedicatedServerHostedGameThreadCallbacks();
-
     DedicatedServerHostedGameThreadProc
         *GetNativeDedicatedServerHostedGameThreadProc();
 }

@@ -1,5 +1,6 @@
 #include "NativeDedicatedServerHostedGameStartup.h"
 
+#include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "NativeDedicatedServerHostedGameHost.h"
@@ -12,6 +13,17 @@ namespace ServerRuntime
 {
     namespace
     {
+        NativeDedicatedServerHostedGameThreadCallbacks
+        BuildNativeDedicatedServerHostedGameThreadCallbacks()
+        {
+            NativeDedicatedServerHostedGameThreadCallbacks callbacks = {};
+            callbacks.tickPlatformRuntime =
+                &TickDedicatedServerPlatformRuntime;
+            callbacks.handlePlatformActions =
+                &HandleDedicatedServerPlatformActions;
+            return callbacks;
+        }
+
         bool PrepareNativeDedicatedServerHostedGameStartup()
         {
             ResetDedicatedServerHostedGameRuntimeSnapshot();

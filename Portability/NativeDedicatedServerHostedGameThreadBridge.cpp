@@ -67,17 +67,6 @@ namespace ServerRuntime
         }
     }
 
-    NativeDedicatedServerHostedGameThreadCallbacks
-    BuildNativeDedicatedServerHostedGameThreadCallbacks()
-    {
-        NativeDedicatedServerHostedGameThreadCallbacks callbacks = {};
-        callbacks.tickPlatformRuntime =
-            &TickNativeDedicatedServerHostedGameThreadPlatformRuntime;
-        callbacks.handlePlatformActions =
-            &HandleNativeDedicatedServerHostedGameThreadPlatformActions;
-        return callbacks;
-    }
-
     DedicatedServerHostedGameThreadProc
         *GetNativeDedicatedServerHostedGameThreadProc()
     {
