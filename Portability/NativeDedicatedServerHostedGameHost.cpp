@@ -4,33 +4,12 @@ namespace
 {
     HANDLE g_nativeHostedStartupReadyEvent = nullptr;
     HANDLE g_nativeHostedThreadHandle = nullptr;
-}
 
-namespace ServerRuntime
-{
-    bool PrepareNativeDedicatedServerHostedGameHostStartup()
-    {
-        ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
-        g_nativeHostedStartupReadyEvent = CreateEvent(
-            nullptr,
-            TRUE,
-            FALSE,
-            nullptr);
-        return g_nativeHostedStartupReadyEvent != nullptr &&
-            g_nativeHostedStartupReadyEvent != INVALID_HANDLE_VALUE;
-    }
+    void SetNativeDedicatedServerHostedGameHostThreadHandle(
+        HANDLE threadHandle);
 
-    HANDLE GetNativeDedicatedServerHostedGameHostStartupReadyEvent()
-    {
-        return g_nativeHostedStartupReadyEvent;
-    }
-
-    bool SignalNativeDedicatedServerHostedGameHostReady()
-    {
-        return g_nativeHostedStartupReadyEvent != nullptr &&
-            g_nativeHostedStartupReadyEvent != INVALID_HANDLE_VALUE &&
-            SetEvent(g_nativeHostedStartupReadyEvent) != 0;
-    }
+    void ReleaseNativeDedicatedServerHostedGameHostThreadHandle(
+        bool closeHandle);
 
     void SetNativeDedicatedServerHostedGameHostThreadHandle(
         HANDLE threadHandle)
@@ -49,6 +28,75 @@ namespace ServerRuntime
         }
 
         g_nativeHostedThreadHandle = nullptr;
+    }
+}
+
+namespace ServerRuntime
+{
+    NativeDedicatedServerHostedGameHostStartResult
+    StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
+        DedicatedServerHostedGameThreadProc *threadProc,
+        void *threadParam,
+        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
+    {
+        NativeDedicatedServerHostedGameHostStartResult result = {};
+        HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
+            threadProc,
+            threadParam);
+        if (threadHandle == nullptr || threadHandle == INVALID_HANDLE_VALUE)
+        {
+            ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
+            return result;
+        }
+
+        SetNativeDedicatedServerHostedGameHostThreadHandle(threadHandle);
+        result.threadInvoked = true;
+        if (WaitForNativeDedicatedServerHostedGameThreadReady(
+                g_nativeHostedStartupReadyEvent,
+                threadHandle,
+                callbacks))
+        {
+            result.startupReady = true;
+            result.startupResult = 0;
+            result.sessionSnapshot =
+                GetNativeDedicatedServerHostedGameSessionSnapshot();
+            result.sessionSnapshotAvailable = true;
+            return result;
+        }
+
+        WaitForSingleObject(threadHandle, INFINITE);
+        DWORD threadExitCode = static_cast<DWORD>(-1);
+        if (!TryReadNativeDedicatedServerHostedGameThreadExitCode(
+                threadHandle,
+                &threadExitCode))
+        {
+            threadExitCode = static_cast<DWORD>(-1);
+        }
+
+        CloseHandle(threadHandle);
+        ReleaseNativeDedicatedServerHostedGameHostThreadHandle(false);
+        ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
+        result.startupResult = static_cast<int>(threadExitCode);
+        return result;
+    }
+
+    bool PrepareNativeDedicatedServerHostedGameHostStartup()
+    {
+        ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
+        g_nativeHostedStartupReadyEvent = CreateEvent(
+            nullptr,
+            TRUE,
+            FALSE,
+            nullptr);
+        return g_nativeHostedStartupReadyEvent != nullptr &&
+            g_nativeHostedStartupReadyEvent != INVALID_HANDLE_VALUE;
+    }
+
+    bool SignalNativeDedicatedServerHostedGameHostReady()
+    {
+        return g_nativeHostedStartupReadyEvent != nullptr &&
+            g_nativeHostedStartupReadyEvent != INVALID_HANDLE_VALUE &&
+            SetEvent(g_nativeHostedStartupReadyEvent) != 0;
     }
 
     void ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent()
@@ -111,52 +159,5 @@ namespace ServerRuntime
         ReleaseNativeDedicatedServerHostedGameHostThreadHandle(true);
         ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
         return true;
-    }
-
-    NativeDedicatedServerHostedGameHostStartResult
-    StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
-        DedicatedServerHostedGameThreadProc *threadProc,
-        void *threadParam,
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
-    {
-        NativeDedicatedServerHostedGameHostStartResult result = {};
-        HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
-            threadProc,
-            threadParam);
-        if (threadHandle == nullptr || threadHandle == INVALID_HANDLE_VALUE)
-        {
-            ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
-            return result;
-        }
-
-        SetNativeDedicatedServerHostedGameHostThreadHandle(threadHandle);
-        result.threadInvoked = true;
-        if (WaitForNativeDedicatedServerHostedGameThreadReady(
-                GetNativeDedicatedServerHostedGameHostStartupReadyEvent(),
-                threadHandle,
-                callbacks))
-        {
-            result.startupReady = true;
-            result.startupResult = 0;
-            result.sessionSnapshot =
-                GetNativeDedicatedServerHostedGameSessionSnapshot();
-            result.sessionSnapshotAvailable = true;
-            return result;
-        }
-
-        WaitForSingleObject(threadHandle, INFINITE);
-        DWORD threadExitCode = static_cast<DWORD>(-1);
-        if (!TryReadNativeDedicatedServerHostedGameThreadExitCode(
-                threadHandle,
-                &threadExitCode))
-        {
-            threadExitCode = static_cast<DWORD>(-1);
-        }
-
-        CloseHandle(threadHandle);
-        ReleaseNativeDedicatedServerHostedGameHostThreadHandle(false);
-        ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
-        result.startupResult = static_cast<int>(threadExitCode);
-        return result;
     }
 }

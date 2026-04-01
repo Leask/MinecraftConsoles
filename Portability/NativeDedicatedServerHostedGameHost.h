@@ -19,15 +19,7 @@ namespace ServerRuntime
 
     bool PrepareNativeDedicatedServerHostedGameHostStartup();
 
-    HANDLE GetNativeDedicatedServerHostedGameHostStartupReadyEvent();
-
     bool SignalNativeDedicatedServerHostedGameHostReady();
-
-    void SetNativeDedicatedServerHostedGameHostThreadHandle(
-        HANDLE threadHandle);
-
-    void ReleaseNativeDedicatedServerHostedGameHostThreadHandle(
-        bool closeHandle);
 
     void ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
 
