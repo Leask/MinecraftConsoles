@@ -26,12 +26,7 @@ namespace ServerRuntime
 
         bool PrepareNativeDedicatedServerHostedGameStartup()
         {
-            ResetDedicatedServerHostedGameRuntimeSnapshot();
             ResetNativeDedicatedServerHostedGameSessionState();
-            if (!PrepareNativeDedicatedServerHostedGameHostStartup())
-            {
-                return false;
-            }
             return true;
         }
 

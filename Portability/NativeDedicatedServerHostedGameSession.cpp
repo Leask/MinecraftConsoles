@@ -503,6 +503,7 @@ namespace ServerRuntime
         ResetNativeDedicatedServerHostedGameHostState();
         ResetNativeDedicatedServerHostedGameWorkerState();
         ResetNativeDedicatedServerHostedGameSessionCoreState();
+        ResetDedicatedServerHostedGameRuntimeSnapshot();
         ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot();
     }
 

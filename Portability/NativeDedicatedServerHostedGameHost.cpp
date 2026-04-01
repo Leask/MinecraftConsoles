@@ -46,6 +46,8 @@ namespace
 
 namespace ServerRuntime
 {
+    static bool PrepareNativeDedicatedServerHostedGameHostStartup();
+
     NativeDedicatedServerHostedGameHostStartResult
     StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
         DedicatedServerHostedGameThreadProc *threadProc,
@@ -53,6 +55,11 @@ namespace ServerRuntime
         const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
     {
         NativeDedicatedServerHostedGameHostStartResult result = {};
+        if (!PrepareNativeDedicatedServerHostedGameHostStartup())
+        {
+            return result;
+        }
+
         HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
             threadProc,
             threadParam);
@@ -93,7 +100,7 @@ namespace ServerRuntime
         return result;
     }
 
-    bool PrepareNativeDedicatedServerHostedGameHostStartup()
+    static bool PrepareNativeDedicatedServerHostedGameHostStartup()
     {
         ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
         g_nativeHostedStartupReadyEvent = CreateEvent(
