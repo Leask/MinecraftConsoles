@@ -102,6 +102,10 @@ namespace ServerRuntime
                 0,
                 0,
                 LceGetMonotonicMilliseconds());
+            result.finalWorkerSnapshot =
+                GetNativeDedicatedServerHostedGameWorkerSnapshot();
+            result.finalSessionSnapshot =
+                GetNativeDedicatedServerHostedGameSessionSnapshot();
             result.exitCode = -2;
             return result;
         }
@@ -131,6 +135,10 @@ namespace ServerRuntime
             result.exitCode =
                 CompleteFailedNativeDedicatedServerHostedGameCoreStartup(
                     hooks);
+            result.finalWorkerSnapshot =
+                GetNativeDedicatedServerHostedGameWorkerSnapshot();
+            result.finalSessionSnapshot =
+                GetNativeDedicatedServerHostedGameSessionSnapshot();
             return result;
         }
 
@@ -144,6 +152,11 @@ namespace ServerRuntime
 
         StopNativeDedicatedServerHostedGameSession();
         InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadStopped);
+        result.autosaveCompletions = GetDedicatedServerAutosaveCompletionCount();
+        result.finalWorkerSnapshot =
+            GetNativeDedicatedServerHostedGameWorkerSnapshot();
+        result.finalSessionSnapshot =
+            GetNativeDedicatedServerHostedGameSessionSnapshot();
         result.exitCode = 0;
         return result;
     }
