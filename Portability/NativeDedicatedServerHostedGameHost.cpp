@@ -144,6 +144,9 @@ namespace ServerRuntime
         {
             result.startupReady = true;
             result.startupResult = 0;
+            result.sessionSnapshot =
+                GetNativeDedicatedServerHostedGameSessionSnapshot();
+            result.sessionSnapshotAvailable = true;
             return result;
         }
 

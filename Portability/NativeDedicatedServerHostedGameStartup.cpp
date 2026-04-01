@@ -119,11 +119,11 @@ namespace ServerRuntime
             result.threadInvoked = hostResult.threadInvoked;
             result.startupReady = hostResult.startupReady;
             result.startupResult = hostResult.startupResult;
-            if (hostResult.threadInvoked || hostResult.startupReady)
+            result.sessionSnapshotAvailable =
+                hostResult.sessionSnapshotAvailable;
+            if (hostResult.sessionSnapshotAvailable)
             {
-                result.sessionSnapshot =
-                    GetNativeDedicatedServerHostedGameSessionSnapshot();
-                result.sessionSnapshotAvailable = true;
+                result.sessionSnapshot = hostResult.sessionSnapshot;
             }
             return result;
         }
