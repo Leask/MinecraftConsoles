@@ -1,5 +1,4 @@
-#include "NativeDedicatedServerHostedGameThreadBridge.h"
-
+#include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
@@ -13,6 +12,14 @@ namespace ServerRuntime
 {
     namespace
     {
+        int RunNativeDedicatedServerHostedGameThread(void *threadParam);
+
+        DedicatedServerHostedGameThreadProc
+            *GetNativeDedicatedServerHostedGameThreadProc()
+        {
+            return &RunNativeDedicatedServerHostedGameThread;
+        }
+
         void SyncNativeDedicatedServerHostedThreadState(bool running)
         {
             if (running)
@@ -68,8 +75,8 @@ namespace ServerRuntime
     }
 
     DedicatedServerHostedGameThreadProc
-        *GetNativeDedicatedServerHostedGameThreadProc()
+        *GetDedicatedServerHostedGameRuntimeThreadProc()
     {
-        return &RunNativeDedicatedServerHostedGameThread;
+        return GetNativeDedicatedServerHostedGameThreadProc();
     }
 }

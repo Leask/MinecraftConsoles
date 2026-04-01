@@ -23,7 +23,6 @@
 #include "NativeDedicatedServerHostedGameCore.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 #include "NativeDedicatedServerHostedGameStartup.h"
-#include "NativeDedicatedServerHostedGameThreadBridge.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSessionConfig.h"

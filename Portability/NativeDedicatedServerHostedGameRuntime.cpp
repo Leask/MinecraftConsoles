@@ -1,7 +1,6 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
 #include "NativeDedicatedServerHostedGameStartup.h"
 #include "NativeDedicatedServerHostedGameSession.h"
-#include "NativeDedicatedServerHostedGameThreadBridge.h"
 
 #include "lce_time/lce_time.h"
 
@@ -39,7 +38,7 @@ namespace ServerRuntime
     {
         int startupResult = 0;
         const bool persistentSession =
-            threadProc == GetNativeDedicatedServerHostedGameThreadProc();
+            threadProc == GetDedicatedServerHostedGameRuntimeThreadProc();
         if (!persistentSession &&
             !BeginDedicatedServerHostedGameRuntimeStartup(
                 hostedGamePlan,
@@ -64,11 +63,5 @@ namespace ServerRuntime
         return CompleteDedicatedServerHostedGameRuntimeStartup(
             result.startupResult,
             result.threadInvoked);
-    }
-
-    DedicatedServerHostedGameThreadProc
-        *GetDedicatedServerHostedGameRuntimeThreadProc()
-    {
-        return GetNativeDedicatedServerHostedGameThreadProc();
     }
 }
