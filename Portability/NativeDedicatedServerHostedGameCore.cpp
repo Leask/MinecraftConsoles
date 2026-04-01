@@ -89,10 +89,12 @@ namespace ServerRuntime
         }
     }
 
-    int RunNativeDedicatedServerHostedGameCore(
+    NativeDedicatedServerHostedGameCoreRunResult
+    RunNativeDedicatedServerHostedGameCoreWithResult(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
         const NativeDedicatedServerHostedGameCoreHooks &hooks)
     {
+        NativeDedicatedServerHostedGameCoreRunResult result = {};
         const std::uint64_t startMs = LceGetMonotonicMilliseconds();
         if (initData == nullptr)
         {
@@ -100,44 +102,58 @@ namespace ServerRuntime
                 0,
                 0,
                 LceGetMonotonicMilliseconds());
-            return -2;
+            result.exitCode = -2;
+            return result;
         }
 
         const bool startupPayloadPresent = initData->saveData != nullptr;
-        const bool startupPayloadValidated =
+        result.startupPayloadValidated =
             ValidateNativeDedicatedServerHostedGamePayload(*initData);
-        const std::uint64_t startupIterations =
+        result.startupIterations =
             kNativeHostedStartupBaseIterations +
             (startupPayloadPresent ? 2ULL : 0ULL);
-        for (std::uint64_t i = 0; i < startupIterations; ++i)
+        for (std::uint64_t i = 0; i < result.startupIterations; ++i)
         {
             LceSleepMilliseconds(kNativeHostedStartupStepDelayMs);
         }
 
-        const std::uint64_t durationMs =
+        result.startupDurationMs =
             LceGetMonotonicMilliseconds() - startMs;
         StartNativeDedicatedServerHostedGameSession(
             *initData,
-            startupPayloadValidated);
+            result.startupPayloadValidated);
         ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
-            startupIterations,
-            durationMs,
+            result.startupIterations,
+            result.startupDurationMs,
             LceGetMonotonicMilliseconds());
-        if (!startupPayloadValidated)
+        if (!result.startupPayloadValidated)
         {
-            return CompleteFailedNativeDedicatedServerHostedGameCoreStartup(
-                hooks);
+            result.exitCode =
+                CompleteFailedNativeDedicatedServerHostedGameCoreStartup(
+                    hooks);
+            return result;
         }
 
         InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadReady);
         while (!ShouldStopNativeDedicatedServerHostedGameCore())
         {
             TickNativeDedicatedServerHostedGameCoreFrame();
+            ++result.loopIterations;
             LceSleepMilliseconds(10);
         }
 
         StopNativeDedicatedServerHostedGameSession();
         InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadStopped);
-        return 0;
+        result.exitCode = 0;
+        return result;
+    }
+
+    int RunNativeDedicatedServerHostedGameCore(
+        NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
+        const NativeDedicatedServerHostedGameCoreHooks &hooks)
+    {
+        return RunNativeDedicatedServerHostedGameCoreWithResult(
+            initData,
+            hooks).exitCode;
     }
 }

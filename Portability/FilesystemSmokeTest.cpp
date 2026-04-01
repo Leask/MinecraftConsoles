@@ -20,6 +20,7 @@
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerLoadedSaveState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
+#include "NativeDedicatedServerHostedGameCore.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
@@ -268,6 +269,13 @@ namespace
         bool readOk = true;
     };
 
+    struct NativeHostedCoreHookSmokeContext
+    {
+        int readyCount = 0;
+        int stoppedCount = 0;
+        bool requestShutdownOnReady = false;
+    };
+
     void GameplayLoopRunPoll(void* context)
     {
         GameplayLoopRunPollContext* pollContext =
@@ -291,6 +299,22 @@ namespace
         {
             ++(*hookCount);
         }
+    }
+
+    NativeHostedCoreHookSmokeContext g_nativeHostedCoreHookSmokeContext = {};
+
+    void NativeHostedCoreReadyHook()
+    {
+        ++g_nativeHostedCoreHookSmokeContext.readyCount;
+        if (g_nativeHostedCoreHookSmokeContext.requestShutdownOnReady)
+        {
+            ServerRuntime::RequestDedicatedServerShutdown();
+        }
+    }
+
+    void NativeHostedCoreStoppedHook()
+    {
+        ++g_nativeHostedCoreHookSmokeContext.stoppedCount;
     }
 
     bool WaitHookIdleProc(int, void* context)
@@ -1644,6 +1668,31 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
         restartedHostedRuntimeResult =
             ServerRuntime::StartDedicatedServerPlatformRuntime(platformState);
+    ServerRuntime::ResetNativeDedicatedServerHostedGameSessionState();
+    ServerRuntime::ResetDedicatedServerAutosaveTracker();
+    ServerRuntime::ResetDedicatedServerShutdownRequest();
+    ServerRuntime::SetDedicatedServerAppShutdownRequested(false);
+    g_nativeHostedCoreHookSmokeContext = {};
+    g_nativeHostedCoreHookSmokeContext.requestShutdownOnReady = true;
+    ServerRuntime::NativeDedicatedServerHostedGameRuntimeStubInitData
+        nativeHostedCoreInitData = {};
+    ServerRuntime::PopulateDedicatedServerNetworkGameInitData(
+        &nativeHostedCoreInitData,
+        hostedGamePlan.networkInitPlan);
+    nativeHostedCoreInitData.saveData = nullptr;
+    ServerRuntime::NativeDedicatedServerHostedGameCoreHooks
+        nativeHostedCoreHooks = {};
+    nativeHostedCoreHooks.onThreadReady = &NativeHostedCoreReadyHook;
+    nativeHostedCoreHooks.onThreadStopped = &NativeHostedCoreStoppedHook;
+    const ServerRuntime::NativeDedicatedServerHostedGameCoreRunResult
+        nativeHostedCoreRunResult =
+            ServerRuntime::RunNativeDedicatedServerHostedGameCoreWithResult(
+                &nativeHostedCoreInitData,
+                nativeHostedCoreHooks);
+    ServerRuntime::ResetDedicatedServerShutdownRequest();
+    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+        nativeHostedCoreSnapshot =
+            ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
     const int hostedGameRuntimeNullThreadResult =
         ServerRuntime::StartDedicatedServerHostedGameRuntime(
             hostedGamePlan,
@@ -1813,7 +1862,7 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         hostedGameStoppedSnapshot =
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
-    const bool hostedGameSessionOk =
+    const bool hostedGameSessionCurrentSnapshotOk =
         hostedGameSessionSnapshot.sessionActive &&
         hostedGameSessionSnapshot.phase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_ShutdownRequested &&
@@ -1828,8 +1877,7 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.listenerPort == 19132 &&
         hostedGameSessionSnapshot.savePayloadName == "Smoke World" &&
         hostedGameSessionSnapshot.savePayloadBytes == 4 &&
-        hostedGameSessionSnapshot.savePayloadChecksum ==
-            fakeSaveChecksum &&
+        hostedGameSessionSnapshot.savePayloadChecksum == fakeSaveChecksum &&
         hostedGameSessionSnapshot.saveGeneration == 16U &&
         hostedGameSessionSnapshot.previousSessionStateChecksum ==
             0x0fedcba987654321ULL &&
@@ -1877,7 +1925,8 @@ int main(int argc, char* argv[])
             "NativeDesktop/GameHDD/SMOKE_SESSION.save" &&
         hostedGameSessionSnapshot.lastPersistedFileTime == 77 &&
         hostedGameSessionSnapshot.lastPersistedAutosaveCompletions == 5 &&
-        hostedGameSessionSnapshot.uptimeMs == 100 &&
+        hostedGameSessionSnapshot.uptimeMs == 100;
+    const bool hostedGameSessionObservedIdentityOk =
         nativeHostedSessionObservedSnapshot.worldName == "Smoke Session" &&
         nativeHostedSessionObservedSnapshot.worldSaveId == "SMOKE_SESSION" &&
         nativeHostedSessionObservedSnapshot.savePath ==
@@ -1897,7 +1946,8 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.fakeLocalPlayerJoined &&
         nativeHostedSessionObservedSnapshot.configuredPort == 25565 &&
         nativeHostedSessionObservedSnapshot.listenerPort == 19132 &&
-        nativeHostedSessionObservedSnapshot.sessionStartMs == 1000 &&
+        nativeHostedSessionObservedSnapshot.sessionStartMs == 1000;
+    const bool hostedGameSessionObservedWorkerOk =
         nativeHostedSessionObservedSnapshot.acceptedConnections == 2 &&
         nativeHostedSessionObservedSnapshot.remoteCommands == 3 &&
         nativeHostedSessionObservedSnapshot.autosaveRequests == 4 &&
@@ -1928,20 +1978,22 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.lastPersistedFileTime == 77 &&
         nativeHostedSessionObservedSnapshot
             .lastPersistedAutosaveCompletions == 5 &&
+        !nativeHostedSessionObservedSnapshot.worldActionIdle;
+    const bool hostedGameSessionObservedLifecycleOk =
         !nativeHostedSessionObservedSnapshot.worldActionIdle &&
         nativeHostedSessionObservedSnapshot.appShutdownRequested &&
-        nativeHostedSessionObservedSnapshot.gameplayHalted &&
         nativeHostedSessionObservedSnapshot.stopSignalValid &&
-        nativeHostedSessionObservedSnapshot.initialSaveRequested &&
-        nativeHostedSessionObservedSnapshot.initialSaveCompleted &&
-        !nativeHostedSessionObservedSnapshot.initialSaveTimedOut &&
         nativeHostedSessionObservedSnapshot.sessionCompleted &&
         nativeHostedSessionObservedSnapshot.requestedAppShutdown &&
-        nativeHostedSessionObservedSnapshot.shutdownHaltedGameplay &&
         nativeHostedSessionObservedSnapshot.runtimePhase ==
-            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_ShutdownRequested &&
+            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
         nativeHostedSessionObservedSnapshot.stoppedMs == 0 &&
-        nativeHostedSessionObservedSnapshot.stateChecksum != 0U &&
+        nativeHostedSessionObservedSnapshot.stateChecksum != 0U;
+    const bool hostedGameSessionObservedProjectionOk =
+        hostedGameSessionObservedIdentityOk &&
+        hostedGameSessionObservedWorkerOk &&
+        hostedGameSessionObservedLifecycleOk;
+    const bool hostedGameSessionStoppedOk =
         !hostedGameStoppedSnapshot.sessionActive &&
         hostedGameStoppedSnapshot.phase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
@@ -1953,6 +2005,10 @@ int main(int argc, char* argv[])
         nativeHostedSessionStoppedSnapshot.stoppedMs == 1200 &&
         nativeHostedSessionStoppedSnapshot.lastPersistedSavePath ==
             "NativeDesktop/GameHDD/SMOKE_SESSION.save";
+    const bool hostedGameSessionOk =
+        hostedGameSessionCurrentSnapshotOk &&
+        hostedGameSessionObservedProjectionOk &&
+        hostedGameSessionStoppedOk;
     ServerRuntime::StopDedicatedServerPlatformRuntime();
     ServerRuntime::ResetDedicatedServerShutdownRequest();
     const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
@@ -2897,8 +2953,40 @@ int main(int argc, char* argv[])
         gameplayLoopRunResult.iterations,
         gameplayLoopRunPollContext.pollCount,
         gameplayLoopRunResult.requestedAppShutdown);
+    printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
+        "loops=%llu hooks=%d/%d phase=%s\n",
+        nativeHostedCoreRunResult.exitCode == 0 &&
+            nativeHostedCoreRunResult.startupPayloadValidated &&
+            nativeHostedCoreRunResult.startupIterations == 2U &&
+            nativeHostedCoreRunResult.startupDurationMs > 0U &&
+            nativeHostedCoreRunResult.loopIterations == 0U &&
+            g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
+            g_nativeHostedCoreHookSmokeContext.stoppedCount == 1 &&
+            !nativeHostedCoreSnapshot.active &&
+            nativeHostedCoreSnapshot.runtimePhase ==
+                ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped,
+        nativeHostedCoreRunResult.exitCode,
+        nativeHostedCoreRunResult.startupPayloadValidated,
+        (unsigned long long)nativeHostedCoreRunResult.startupIterations,
+        (unsigned long long)nativeHostedCoreRunResult.startupDurationMs,
+        (unsigned long long)nativeHostedCoreRunResult.loopIterations,
+        g_nativeHostedCoreHookSmokeContext.readyCount,
+        g_nativeHostedCoreHookSmokeContext.stoppedCount,
+        ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
+            (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
+                nativeHostedCoreSnapshot.runtimePhase));
     printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
         restartedHostedRuntimeResult.ok &&
+            nativeHostedCoreRunResult.exitCode == 0 &&
+            nativeHostedCoreRunResult.startupPayloadValidated &&
+            nativeHostedCoreRunResult.startupIterations == 2U &&
+            nativeHostedCoreRunResult.startupDurationMs > 0U &&
+            nativeHostedCoreRunResult.loopIterations == 0U &&
+            g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
+            g_nativeHostedCoreHookSmokeContext.stoppedCount == 1 &&
+            !nativeHostedCoreSnapshot.active &&
+            nativeHostedCoreSnapshot.runtimePhase ==
+                ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
             hostedGameRuntimeSleepResult == 13 &&
             hostedGameRuntimeSleepThreadValue == 2 &&
             hostedGameRuntimeResult == 11 &&
@@ -2911,12 +2999,61 @@ int main(int argc, char* argv[])
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Failed,
         hostedGameRuntimeResult,
         hostedGameRuntimeThreadValue);
+    const bool nativeHostedStubCoreContextOk =
+        nativeHostedSessionCoreSnapshot.startAttempted &&
+        nativeHostedSessionCoreSnapshot.loadedFromSave &&
+        nativeHostedSessionCoreSnapshot.resolvedSeed ==
+            hostedGamePlan.resolvedSeed &&
+        nativeHostedSessionCoreSnapshot.hostSettings ==
+            sessionConfig.hostSettings &&
+        nativeHostedSessionCoreSnapshot.dedicatedNoLocalHostPlayer &&
+        nativeHostedSessionCoreSnapshot.worldSizeChunks ==
+            sessionConfig.worldSizeChunks &&
+        nativeHostedSessionCoreSnapshot.worldHellScale ==
+            sessionConfig.worldHellScale &&
+        nativeHostedSessionCoreSnapshot.savePayloadBytes ==
+            nativeHostedSaveBytes.size() &&
+        nativeHostedSessionCoreSnapshot.savePayloadName == "world" &&
+        nativeHostedSessionCoreSnapshot.loadedSaveMetadataAvailable &&
+        nativeHostedSessionCoreSnapshot.loadedSavePath ==
+            "NativeDesktop/GameHDD/SmokeSession.save" &&
+        nativeHostedSessionCoreSnapshot.previousStartupMode == "loaded";
+    const bool nativeHostedStubCoreFinalizationOk =
+        nativeHostedSessionCoreStoppedSnapshot.saveGeneration >=
+            nativeHostedSessionCoreSnapshot.saveGeneration &&
+        nativeHostedSessionCoreStoppedSnapshot.stateChecksum != 0U &&
+        !nativeHostedSessionCoreStoppedSnapshot.active;
+    const bool nativeHostedStubCoreOk =
+        nativeHostedStubCoreContextOk &&
+        nativeHostedStubCoreFinalizationOk;
+    const bool nativeHostedStubRuntimeStartupOk =
+        nativeHostedStubSnapshot.startAttempted &&
+        nativeHostedStubSnapshot.threadInvoked &&
+        nativeHostedStubSnapshot.startupResult == 0 &&
+        nativeHostedStubSnapshot.startupPayloadPresent &&
+        nativeHostedStubSnapshot.startupPayloadValidated &&
+        nativeHostedStubSnapshot.startupThreadIterations == 4U &&
+        nativeHostedStubSnapshot.startupThreadDurationMs > 0U &&
+        nativeHostedStubSnapshot.hostedThreadActive &&
+        nativeHostedStubSnapshot.loadedSaveMetadataAvailable &&
+        nativeHostedStubSnapshot.previousStartupMode == "loaded";
+    const bool nativeHostedStubRuntimeStopOk =
+        nativeHostedStubStopped &&
+        nativeHostedStubHaltQueued &&
+        nativeHostedStubExitCode == 0 &&
+        nativeHostedStubThreadTicks > 0U &&
+        !nativeHostedStubStoppedSnapshot.hostedThreadActive &&
+        nativeHostedStubStoppedSnapshot.hostedThreadTicks >=
+            nativeHostedStubThreadTicks;
+    const bool nativeHostedStubRuntimeOk =
+        nativeHostedStubRuntimeStartupOk &&
+        nativeHostedStubRuntimeStopOk;
     printf("native_hosted_stub=%d result=%d steps=%llu duration-ms=%llu "
         "ticks=%llu validated=%d halt=%d stopped=%d exit=%lu thread-ticks=%llu "
         "core-generation=%llu/%llu core-checksum=0x%016llx "
         "worker=%llu/%llu/%llu/%llu/%llu/%llu\n",
         nativeHostedStubResult == 0 &&
-        nativeHostedStubInitData.seed == hostedGamePlan.resolvedSeed &&
+            nativeHostedStubInitData.seed == hostedGamePlan.resolvedSeed &&
             nativeHostedSaveTextBuilt &&
             nativeHostedStubInitData.saveData == nativeHostedSaveData &&
             nativeHostedStubInitData.settings == sessionConfig.hostSettings &&
@@ -2937,74 +3074,8 @@ int main(int argc, char* argv[])
             nativeHostedStubInitData.hellScale ==
                 sessionConfig.worldHellScale &&
             nativeHostedStubTickAfter > nativeHostedStubTickBefore &&
-            nativeHostedSessionCoreSnapshot.startAttempted &&
-            nativeHostedSessionCoreSnapshot.loadedFromSave &&
-            nativeHostedSessionCoreSnapshot.resolvedSeed ==
-                hostedGamePlan.resolvedSeed &&
-            nativeHostedSessionCoreSnapshot.hostSettings ==
-                sessionConfig.hostSettings &&
-            nativeHostedSessionCoreSnapshot
-                .dedicatedNoLocalHostPlayer &&
-            nativeHostedSessionCoreSnapshot.worldSizeChunks ==
-                sessionConfig.worldSizeChunks &&
-            nativeHostedSessionCoreSnapshot.worldHellScale ==
-                sessionConfig.worldHellScale &&
-            nativeHostedSessionCoreSnapshot.savePayloadBytes == 4 &&
-            nativeHostedSessionCoreSnapshot.savePayloadName ==
-                "Smoke World" &&
-            nativeHostedSessionCoreSnapshot.loadedSaveMetadataAvailable &&
-            nativeHostedSessionCoreSnapshot.loadedSavePath ==
-                "NativeDesktop/GameHDD/SmokeSession.save" &&
-            nativeHostedSessionCoreSnapshot.previousStartupMode ==
-                "loaded" &&
-            nativeHostedStubSnapshot.startAttempted &&
-            nativeHostedStubSnapshot.threadInvoked &&
-            nativeHostedStubSnapshot.startupResult == 0 &&
-            nativeHostedStubSnapshot.startupPayloadPresent &&
-            nativeHostedStubSnapshot.startupPayloadValidated &&
-            nativeHostedStubSnapshot.startupThreadIterations == 4U &&
-            nativeHostedStubSnapshot.startupThreadDurationMs > 0U &&
-            nativeHostedStubSnapshot.hostedThreadActive &&
-            nativeHostedStubSnapshot.loadedSaveMetadataAvailable &&
-            nativeHostedStubSnapshot.previousStartupMode == "loaded" &&
-            nativeHostedStubSnapshot.previousSaveGeneration == 11U &&
-            nativeHostedStubSnapshot
-                .previousWorkerPendingWorldActionTicks == 1U &&
-            nativeHostedStubSnapshot.previousWorkerPendingAutosaveCommands == 4U &&
-            nativeHostedStubSnapshot.previousWorkerPendingSaveCommands == 2U &&
-            nativeHostedStubSnapshot.previousWorkerPendingStopCommands == 3U &&
-            nativeHostedStubSnapshot.previousWorkerPendingHaltCommands == 1U &&
-            nativeHostedStubSnapshot.previousWorkerTickCount == 22U &&
-            nativeHostedStubSnapshot.previousCompletedWorkerActions == 6U &&
-            nativeHostedStubSnapshot.previousProcessedAutosaveCommands == 7U &&
-            nativeHostedStubSnapshot.previousProcessedSaveCommands == 13U &&
-            nativeHostedStubSnapshot.previousProcessedStopCommands == 5U &&
-            nativeHostedStubSnapshot.previousProcessedHaltCommands == 6U &&
-            nativeHostedStubSnapshot.previousLastQueuedCommandId == 17U &&
-            nativeHostedStubSnapshot.previousLastProcessedCommandId == 16U &&
-            nativeHostedStubSnapshot.previousLastProcessedCommandKind ==
-                ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop &&
-            nativeHostedStubSnapshot.previousGameplayLoopIterations == 14U &&
-            nativeHostedStubSnapshot.previousSessionStateChecksum ==
-                0x0fedcba987654321ULL &&
-            nativeHostedStubSnapshot.previousStartupPayloadPresent == false &&
-            nativeHostedStubSnapshot.previousStartupPayloadValidated == false &&
-            nativeHostedStubSnapshot.previousStartupThreadIterations == 0U &&
-            nativeHostedStubSnapshot.previousStartupThreadDurationMs == 0U &&
-            nativeHostedStubStopped &&
-            nativeHostedStubHaltQueued &&
-            nativeHostedStubExitCode == 0 &&
-            nativeHostedStubThreadTicks > 0U &&
-            !nativeHostedSessionCoreStoppedSnapshot.active &&
-            nativeHostedSessionCoreStoppedSnapshot.stateChecksum != 0U &&
-            nativeHostedStubStoppedSnapshot.gameplayHalted &&
-            nativeHostedStubStoppedSnapshot.processedAutosaveCommands >
-                nativeHostedStubSnapshot.previousProcessedAutosaveCommands &&
-            nativeHostedStubStoppedSnapshot.processedStopCommands >
-                nativeHostedStubSnapshot.previousProcessedStopCommands &&
-            !nativeHostedStubStoppedSnapshot.hostedThreadActive &&
-            nativeHostedStubStoppedSnapshot.hostedThreadTicks >=
-                nativeHostedStubThreadTicks,
+            nativeHostedStubCoreOk &&
+            nativeHostedStubRuntimeOk,
         nativeHostedStubResult,
         (unsigned long long)
             nativeHostedStubSnapshot.startupThreadIterations,
@@ -3034,6 +3105,27 @@ int main(int argc, char* argv[])
             nativeHostedSessionCoreSnapshot.processedStopCommands,
         (unsigned long long)
             nativeHostedSessionCoreSnapshot.processedHaltCommands);
+    printf("native_hosted_stub_contract=%d core=%d/%d runtime=%d/%d\n",
+        nativeHostedStubCoreOk && nativeHostedStubRuntimeOk,
+        nativeHostedStubCoreContextOk,
+        nativeHostedStubCoreFinalizationOk,
+        nativeHostedStubRuntimeStartupOk,
+        nativeHostedStubRuntimeStopOk);
+    printf("native_hosted_stub_core_context loaded=%d start=%d seed=%lld "
+        "host=0x%x nolocal=%d size=%u hell=%u payload=%s/%lld meta=%d "
+        "path=%s mode=%s\n",
+        nativeHostedSessionCoreSnapshot.loadedFromSave,
+        nativeHostedSessionCoreSnapshot.startAttempted,
+        (long long)nativeHostedSessionCoreSnapshot.resolvedSeed,
+        nativeHostedSessionCoreSnapshot.hostSettings,
+        nativeHostedSessionCoreSnapshot.dedicatedNoLocalHostPlayer,
+        nativeHostedSessionCoreSnapshot.worldSizeChunks,
+        nativeHostedSessionCoreSnapshot.worldHellScale,
+        nativeHostedSessionCoreSnapshot.savePayloadName.c_str(),
+        (long long)nativeHostedSessionCoreSnapshot.savePayloadBytes,
+        nativeHostedSessionCoreSnapshot.loadedSaveMetadataAvailable,
+        nativeHostedSessionCoreSnapshot.loadedSavePath.c_str(),
+        nativeHostedSessionCoreSnapshot.previousStartupMode.c_str());
     printf("hosted_game_startup=%d result=%d abort=%d code=%d\n",
         hostedGameStartupExecution.startupResult == 0 &&
             !hostedGameStartupExecution.startupPlan.shouldAbortStartup &&
@@ -3246,6 +3338,30 @@ int main(int argc, char* argv[])
             nativeHostedSessionObservedSnapshot.activeCommandTicksRemaining,
         ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
             hostedGameStoppedSnapshot.phase));
+    printf("hosted_game_session_contract=%d current=%d observed=%d/%d/%d "
+        "stopped=%d\n",
+        hostedGameSessionOk,
+        hostedGameSessionCurrentSnapshotOk,
+        hostedGameSessionObservedIdentityOk,
+        hostedGameSessionObservedWorkerOk,
+        hostedGameSessionObservedLifecycleOk,
+        hostedGameSessionStoppedOk);
+    printf("hosted_game_session_lifecycle shutdown=%d stop=%d initial=%d/%d/%d "
+        "completed=%d requested=%d halted=%d phase=%s stopped_ms=%llu "
+        "checksum=0x%016llx\n",
+        nativeHostedSessionObservedSnapshot.appShutdownRequested,
+        nativeHostedSessionObservedSnapshot.stopSignalValid,
+        nativeHostedSessionObservedSnapshot.initialSaveRequested,
+        nativeHostedSessionObservedSnapshot.initialSaveCompleted,
+        nativeHostedSessionObservedSnapshot.initialSaveTimedOut,
+        nativeHostedSessionObservedSnapshot.sessionCompleted,
+        nativeHostedSessionObservedSnapshot.requestedAppShutdown,
+        nativeHostedSessionObservedSnapshot.shutdownHaltedGameplay,
+        ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
+            (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
+                nativeHostedSessionObservedSnapshot.runtimePhase),
+        (unsigned long long)nativeHostedSessionObservedSnapshot.stoppedMs,
+        (unsigned long long)nativeHostedSessionObservedSnapshot.stateChecksum);
     printf("session_execution=%d runtime=%d initial=%d shutdown=%d "
         "iterations=%zu polls=%d\n",
         platformSessionRuntimeResult.ok &&
@@ -3786,6 +3902,16 @@ int main(int argc, char* argv[])
         gameplayLoopRunPollContext.pollCount == 3 &&
         gameplayLoopRunResult.requestedAppShutdown &&
         gameplayLoopRunResult.lastIteration.shouldExit &&
+        nativeHostedCoreRunResult.exitCode == 0 &&
+        nativeHostedCoreRunResult.startupPayloadValidated &&
+        nativeHostedCoreRunResult.startupIterations == 2U &&
+        nativeHostedCoreRunResult.startupDurationMs > 0U &&
+        nativeHostedCoreRunResult.loopIterations == 0U &&
+        g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
+        g_nativeHostedCoreHookSmokeContext.stoppedCount == 1 &&
+        !nativeHostedCoreSnapshot.active &&
+        nativeHostedCoreSnapshot.runtimePhase ==
+            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
         hostedGameRuntimeNullThreadResult == -1 &&
         hostedGameRuntimeNullThreadSnapshot.startAttempted &&
         !hostedGameRuntimeNullThreadSnapshot.threadInvoked &&
