@@ -1,7 +1,6 @@
 #include "NativeDedicatedServerHostedGameStartup.h"
 
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
-#include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameSession.h"
@@ -132,7 +131,6 @@ namespace ServerRuntime
             return startupResult;
         }
 
-        ActivateDedicatedServerHostedGamePlan(hostedGamePlan);
         const NativeDedicatedServerHostedGameRuntimeStartResult result =
             StartNativeDedicatedServerHostedGameRuntimePath(
                 hostedGamePlan,
