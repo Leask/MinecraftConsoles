@@ -1,11 +1,36 @@
 #include "NativeDedicatedServerHostedGameHost.h"
 
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
+#include "NativeDedicatedServerHostedGameSession.h"
+#include "NativeDedicatedServerHostedGameThread.h"
 
 namespace
 {
     HANDLE g_nativeHostedStartupReadyEvent = nullptr;
     HANDLE g_nativeHostedThreadHandle = nullptr;
+
+    void ResetNativeDedicatedServerHostedGameHostStartOutputs(
+        bool *outThreadInvoked,
+        ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+            *outSessionSnapshot,
+        bool *outSessionSnapshotAvailable)
+    {
+        if (outThreadInvoked != nullptr)
+        {
+            *outThreadInvoked = false;
+        }
+
+        if (outSessionSnapshot != nullptr)
+        {
+            *outSessionSnapshot =
+                ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot{};
+        }
+
+        if (outSessionSnapshotAvailable != nullptr)
+        {
+            *outSessionSnapshotAvailable = false;
+        }
+    }
 
     void ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
 
@@ -94,16 +119,22 @@ namespace ServerRuntime
 {
     static bool PrepareNativeDedicatedServerHostedGameHostStartup();
 
-    NativeDedicatedServerHostedGameHostStartResult
+    int
     StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam,
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
+        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks,
+        bool *outThreadInvoked,
+        NativeDedicatedServerHostedGameSessionSnapshot *outSessionSnapshot,
+        bool *outSessionSnapshotAvailable)
     {
-        NativeDedicatedServerHostedGameHostStartResult result = {};
+        ResetNativeDedicatedServerHostedGameHostStartOutputs(
+            outThreadInvoked,
+            outSessionSnapshot,
+            outSessionSnapshotAvailable);
         if (!PrepareNativeDedicatedServerHostedGameHostStartup())
         {
-            return result;
+            return -1;
         }
 
         HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
@@ -112,21 +143,28 @@ namespace ServerRuntime
         if (threadHandle == nullptr || threadHandle == INVALID_HANDLE_VALUE)
         {
             ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
-            return result;
+            return -1;
         }
 
         SetNativeDedicatedServerHostedGameHostThreadHandle(threadHandle);
-        result.threadInvoked = true;
+        if (outThreadInvoked != nullptr)
+        {
+            *outThreadInvoked = true;
+        }
         if (WaitForNativeDedicatedServerHostedGameHostThreadReady(
                 threadHandle,
                 callbacks))
         {
-            result.startupReady = true;
-            result.startupResult = 0;
-            result.sessionSnapshot =
-                GetNativeDedicatedServerHostedGameSessionSnapshot();
-            result.sessionSnapshotAvailable = true;
-            return result;
+            if (outSessionSnapshot != nullptr)
+            {
+                *outSessionSnapshot =
+                    GetNativeDedicatedServerHostedGameSessionSnapshot();
+            }
+            if (outSessionSnapshotAvailable != nullptr)
+            {
+                *outSessionSnapshotAvailable = true;
+            }
+            return 0;
         }
 
         WaitForSingleObject(threadHandle, INFINITE);
@@ -141,8 +179,7 @@ namespace ServerRuntime
         CloseHandle(threadHandle);
         ReleaseNativeDedicatedServerHostedGameHostThreadHandle(false);
         ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
-        result.startupResult = static_cast<int>(threadExitCode);
-        return result;
+        return static_cast<int>(threadExitCode);
     }
 
     static bool PrepareNativeDedicatedServerHostedGameHostStartup()

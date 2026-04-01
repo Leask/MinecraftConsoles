@@ -3,6 +3,7 @@
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameSession.h"
+#include "NativeDedicatedServerHostedGameThread.h"
 
 #include "lce_time/lce_time.h"
 
@@ -10,6 +11,15 @@ namespace ServerRuntime
 {
     namespace
     {
+        struct NativeDedicatedServerHostedGameRuntimePathResult
+        {
+            bool threadInvoked = false;
+            bool sessionSnapshotAvailable = false;
+            int startupResult = -1;
+            NativeDedicatedServerHostedGameSessionSnapshot
+                sessionSnapshot = {};
+        };
+
         NativeDedicatedServerHostedGameThreadCallbacks
         BuildNativeDedicatedServerHostedGameThreadCallbacks()
         {
@@ -39,26 +49,32 @@ namespace ServerRuntime
                 hostedGamePlan.fakeLocalPlayerJoined;
         }
 
-        NativeDedicatedServerHostedGameHostStartResult
+        NativeDedicatedServerHostedGameRuntimePathResult
         StartPersistentNativeDedicatedServerHostedGameRuntime(
             const DedicatedServerHostedGamePlan &hostedGamePlan,
             DedicatedServerHostedGameThreadProc *threadProc,
             void *threadParam,
             const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
         {
+            NativeDedicatedServerHostedGameRuntimePathResult result = {};
             ResetNativeDedicatedServerHostedGameSessionState();
             PopulateNativeDedicatedServerHostedGameRuntimeStubInitData(
                 static_cast<
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
                         threadParam),
                 hostedGamePlan);
-            return StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
-                threadProc,
-                threadParam,
-                callbacks);
+            result.startupResult =
+                StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
+                    threadProc,
+                    threadParam,
+                    callbacks,
+                    &result.threadInvoked,
+                    &result.sessionSnapshot,
+                    &result.sessionSnapshotAvailable);
+            return result;
         }
 
-        NativeDedicatedServerHostedGameHostStartResult
+        NativeDedicatedServerHostedGameRuntimePathResult
         StartNativeDedicatedServerHostedGameRuntimePath(
             const DedicatedServerHostedGamePlan &hostedGamePlan,
             DedicatedServerHostedGameThreadProc *threadProc,
@@ -77,7 +93,7 @@ namespace ServerRuntime
                     callbacks);
             }
 
-            NativeDedicatedServerHostedGameHostStartResult result = {};
+            NativeDedicatedServerHostedGameRuntimePathResult result = {};
             const NativeDedicatedServerHostedGameThreadRunResult
                 threadRunResult =
                     RunNativeDedicatedServerHostedGameThreadAndReadExitCode(
@@ -90,7 +106,8 @@ namespace ServerRuntime
         }
 
         int CompletePersistentNativeDedicatedServerHostedGameRuntimeStartup(
-            const NativeDedicatedServerHostedGameHostStartResult &startResult)
+            const NativeDedicatedServerHostedGameRuntimePathResult
+                &startResult)
         {
             const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
             if (startResult.sessionSnapshotAvailable)
@@ -129,7 +146,7 @@ namespace ServerRuntime
             return startupResult;
         }
 
-        const NativeDedicatedServerHostedGameHostStartResult result =
+        const NativeDedicatedServerHostedGameRuntimePathResult result =
             StartNativeDedicatedServerHostedGameRuntimePath(
                 hostedGamePlan,
                 threadProc,
