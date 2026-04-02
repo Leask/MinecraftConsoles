@@ -813,6 +813,25 @@ namespace ServerRuntime
         return startupPayloadValidated;
     }
 
+    NativeDedicatedServerHostedGameSessionStartupResult
+    StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
+        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
+        std::uint64_t startupThreadIterations,
+        std::uint64_t startupThreadDurationMs,
+        std::uint64_t nowMs)
+    {
+        NativeDedicatedServerHostedGameSessionStartupResult result = {};
+        result.payloadValidated =
+            StartNativeDedicatedServerHostedGameSessionAndProjectStartup(
+                initData,
+                startupThreadIterations,
+                startupThreadDurationMs,
+                nowMs);
+        result.sessionSnapshot =
+            GetNativeDedicatedServerHostedGameSessionSnapshot();
+        return result;
+    }
+
     void ObserveNativeDedicatedServerHostedGameSessionStartupResult(
         int startupResult,
         bool threadInvoked)
@@ -1744,11 +1763,8 @@ namespace ServerRuntime
     }
 
     NativeDedicatedServerHostedGameSessionStopResult
-    StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState(
-        std::uint64_t stoppedMs)
+    CaptureNativeDedicatedServerHostedGameSessionState()
     {
-        StopNativeDedicatedServerHostedGameSession(stoppedMs);
-
         NativeDedicatedServerHostedGameSessionStopResult result = {};
         result.workerSnapshot = GetNativeDedicatedServerHostedGameWorkerSnapshot();
         result.autosaveCompletions =
@@ -1756,6 +1772,14 @@ namespace ServerRuntime
         result.sessionSnapshot =
             GetNativeDedicatedServerHostedGameSessionSnapshot();
         return result;
+    }
+
+    NativeDedicatedServerHostedGameSessionStopResult
+    StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState(
+        std::uint64_t stoppedMs)
+    {
+        StopNativeDedicatedServerHostedGameSession(stoppedMs);
+        return CaptureNativeDedicatedServerHostedGameSessionState();
     }
 
     bool IsNativeDedicatedServerHostedGameSessionRunning()

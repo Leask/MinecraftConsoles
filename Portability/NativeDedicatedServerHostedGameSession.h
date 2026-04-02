@@ -161,6 +161,12 @@ namespace ServerRuntime
         bool hostedThreadActive = true;
     };
 
+    struct NativeDedicatedServerHostedGameSessionStartupResult
+    {
+        bool payloadValidated = false;
+        NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot = {};
+    };
+
     struct NativeDedicatedServerHostedGameSessionStopResult
     {
         NativeDedicatedServerHostedGameWorkerSnapshot workerSnapshot = {};
@@ -174,6 +180,13 @@ namespace ServerRuntime
         const NativeDedicatedServerHostedGameRuntimeStubInitData &initData);
 
     bool StartNativeDedicatedServerHostedGameSessionAndProjectStartup(
+        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
+        std::uint64_t startupThreadIterations,
+        std::uint64_t startupThreadDurationMs,
+        std::uint64_t nowMs = 0);
+
+    NativeDedicatedServerHostedGameSessionStartupResult
+    StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
         const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
         std::uint64_t startupThreadIterations,
         std::uint64_t startupThreadDurationMs,
@@ -417,6 +430,9 @@ namespace ServerRuntime
 
     void StopNativeDedicatedServerHostedGameSession(
         std::uint64_t stoppedMs = 0);
+
+    NativeDedicatedServerHostedGameSessionStopResult
+    CaptureNativeDedicatedServerHostedGameSessionState();
 
     NativeDedicatedServerHostedGameSessionStopResult
     StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState(

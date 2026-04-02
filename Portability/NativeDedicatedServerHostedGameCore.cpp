@@ -83,14 +83,17 @@ namespace ServerRuntime
 
         result.startupDurationMs =
             LceGetMonotonicMilliseconds() - startMs;
+        const NativeDedicatedServerHostedGameSessionStartupResult
+            sessionStartupResult =
+                StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
+                    *initData,
+                    result.startupIterations,
+                    result.startupDurationMs,
+                    LceGetMonotonicMilliseconds());
         result.payloadValidated =
-            StartNativeDedicatedServerHostedGameSessionAndProjectStartup(
-            *initData,
-            result.startupIterations,
-            result.startupDurationMs,
-            LceGetMonotonicMilliseconds());
+            sessionStartupResult.payloadValidated;
         result.sessionSnapshot =
-            GetNativeDedicatedServerHostedGameSessionSnapshot();
+            sessionStartupResult.sessionSnapshot;
         result.exitCode = result.payloadValidated ? 0 : -2;
         return result;
     }
@@ -108,12 +111,18 @@ namespace ServerRuntime
         result.startupDurationMs = startup.startupDurationMs;
         if (startup.exitCode != 0)
         {
+            const NativeDedicatedServerHostedGameSessionStopResult
+                failedStartupState =
+                    CaptureNativeDedicatedServerHostedGameSessionState();
             result.exitCode =
                 CompleteFailedNativeDedicatedServerHostedGameCoreStartup(
                     hooks);
             result.finalWorkerSnapshot =
-                GetNativeDedicatedServerHostedGameWorkerSnapshot();
-            result.finalSessionSnapshot = startup.sessionSnapshot;
+                failedStartupState.workerSnapshot;
+            result.autosaveCompletions =
+                failedStartupState.autosaveCompletions;
+            result.finalSessionSnapshot =
+                failedStartupState.sessionSnapshot;
             return result;
         }
 
