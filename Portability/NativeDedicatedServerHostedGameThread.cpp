@@ -78,33 +78,4 @@ namespace ServerRuntime
         (void)context.release();
         return threadHandle;
     }
-
-    NativeDedicatedServerHostedGameThreadRunResult
-    RunNativeDedicatedServerHostedGameThreadAndReadExitCode(
-        DedicatedServerHostedGameThreadProc *threadProc,
-        void *threadParam)
-    {
-        NativeDedicatedServerHostedGameThreadRunResult result = {};
-        HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
-            threadProc,
-            threadParam);
-        if (threadHandle == nullptr || threadHandle == INVALID_HANDLE_VALUE)
-        {
-            return result;
-        }
-
-        result.threadInvoked = true;
-        PumpNativeDedicatedServerHostedGameThreadUntilExit(threadHandle);
-        WaitForSingleObject(threadHandle, INFINITE);
-        DWORD threadExitCode = static_cast<DWORD>(-1);
-        if (TryReadNativeDedicatedServerHostedGameThreadExitCode(
-                threadHandle,
-                &threadExitCode))
-        {
-            result.exitCode = static_cast<int>(threadExitCode);
-        }
-
-        CloseHandle(threadHandle);
-        return result;
-    }
 }

@@ -6,18 +6,7 @@
 
 namespace ServerRuntime
 {
-    struct NativeDedicatedServerHostedGameThreadRunResult
-    {
-        bool threadInvoked = false;
-        int exitCode = -1;
-    };
-
     HANDLE StartNativeDedicatedServerHostedGameThread(
-        DedicatedServerHostedGameThreadProc *threadProc,
-        void *threadParam);
-
-    NativeDedicatedServerHostedGameThreadRunResult
-    RunNativeDedicatedServerHostedGameThreadAndReadExitCode(
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam);
 }
