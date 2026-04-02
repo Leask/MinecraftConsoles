@@ -1,15 +1,12 @@
 #include "NativeDedicatedServerHostedGameCore.h"
 
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
-#include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 #include "NativeDedicatedServerHostedGameWorker.h"
 
 #include "lce_time/lce_time.h"
 
-#include <algorithm>
 #include <cstdint>
-#include <string>
 
 namespace ServerRuntime
 {
@@ -17,31 +14,6 @@ namespace ServerRuntime
     {
         constexpr std::uint64_t kNativeHostedStartupStepDelayMs = 5;
         constexpr std::uint64_t kNativeHostedStartupBaseIterations = 2;
-
-        bool ValidateNativeDedicatedServerHostedGamePayload(
-            const NativeDedicatedServerHostedGameRuntimeStubInitData &initData)
-        {
-            if (initData.saveData == nullptr)
-            {
-                return true;
-            }
-
-            if (initData.saveData->data == nullptr ||
-                initData.saveData->fileSize <= 0)
-            {
-                return false;
-            }
-
-            const char *payloadBytes =
-                static_cast<const char *>(initData.saveData->data);
-            const std::string payloadText(
-                payloadBytes,
-                payloadBytes + initData.saveData->fileSize);
-            NativeDedicatedServerSaveStub saveStub = {};
-            return ParseNativeDedicatedServerSaveStubText(
-                payloadText,
-                &saveStub);
-        }
 
         void InvokeNativeDedicatedServerHostedGameCoreHook(
             void (*hook)())
@@ -101,8 +73,6 @@ namespace ServerRuntime
         }
 
         result.payloadPresent = initData->saveData != nullptr;
-        result.payloadValidated =
-            ValidateNativeDedicatedServerHostedGamePayload(*initData);
         result.startupIterations =
             kNativeHostedStartupBaseIterations +
             (result.payloadPresent ? 2ULL : 0ULL);
@@ -113,9 +83,8 @@ namespace ServerRuntime
 
         result.startupDurationMs =
             LceGetMonotonicMilliseconds() - startMs;
-        StartNativeDedicatedServerHostedGameSession(
-            *initData,
-            result.payloadValidated);
+        result.payloadValidated =
+            StartNativeDedicatedServerHostedGameSession(*initData);
         ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
             result.startupIterations,
             result.startupDurationMs,

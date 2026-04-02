@@ -1699,8 +1699,7 @@ int main(int argc, char* argv[])
     nativeHostedCoreFrameInitData.saveData = nullptr;
     const bool nativeHostedCoreFrameStarted =
         ServerRuntime::StartNativeDedicatedServerHostedGameSession(
-            nativeHostedCoreFrameInitData,
-            true);
+            nativeHostedCoreFrameInitData);
     ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
         0,
         true,

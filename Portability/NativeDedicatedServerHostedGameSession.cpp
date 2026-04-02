@@ -508,9 +508,26 @@ namespace ServerRuntime
     }
 
     bool StartNativeDedicatedServerHostedGameSession(
-        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
-        bool startupPayloadValidated)
+        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData)
     {
+        bool startupPayloadValidated = initData.saveData == nullptr;
+        NativeDedicatedServerSaveStub saveStub = {};
+        bool hasParsedSaveStub = false;
+        if (initData.saveData != nullptr &&
+            initData.saveData->data != nullptr &&
+            initData.saveData->fileSize > 0)
+        {
+            const char *payloadBytes =
+                static_cast<const char *>(initData.saveData->data);
+            const std::string payloadText(
+                payloadBytes,
+                payloadBytes + initData.saveData->fileSize);
+            hasParsedSaveStub = ParseNativeDedicatedServerSaveStubText(
+                payloadText,
+                &saveStub);
+            startupPayloadValidated = hasParsedSaveStub;
+        }
+
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState = NativeDedicatedServerHostedGameSessionState{};
         g_nativeHostedSessionState.snapshot.startAttempted = true;
@@ -558,13 +575,7 @@ namespace ServerRuntime
             g_nativeHostedSessionState.snapshot.savePayloadName =
                 StringUtils::WideToUtf8(
                     initData.saveData->saveName);
-            const char *payloadBytes =
-                static_cast<const char *>(initData.saveData->data);
-            const std::string payloadText(
-                payloadBytes,
-                payloadBytes + initData.saveData->fileSize);
-            NativeDedicatedServerSaveStub saveStub = {};
-            if (ParseNativeDedicatedServerSaveStubText(payloadText, &saveStub))
+            if (hasParsedSaveStub)
             {
                 g_nativeHostedSessionState.baseSaveGeneration =
                     saveStub.saveGeneration;

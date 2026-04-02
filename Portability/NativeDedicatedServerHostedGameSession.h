@@ -164,8 +164,7 @@ namespace ServerRuntime
     void ResetNativeDedicatedServerHostedGameSessionState();
 
     bool StartNativeDedicatedServerHostedGameSession(
-        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
-        bool startupPayloadValidated);
+        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData);
 
     void ObserveNativeDedicatedServerHostedGameSessionStartupResult(
         int startupResult,
