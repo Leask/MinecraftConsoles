@@ -7,7 +7,6 @@
 namespace ServerRuntime
 {
     struct NativeDedicatedServerHostedGameSessionSnapshot;
-    struct NativeDedicatedServerHostedGameThreadCallbacks;
 
     bool SignalNativeDedicatedServerHostedGameHostReady();
 
@@ -21,7 +20,6 @@ namespace ServerRuntime
     StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam,
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks,
         bool *outThreadInvoked,
         NativeDedicatedServerHostedGameSessionSnapshot *outSessionSnapshot,
         bool *outSessionSnapshotAvailable);

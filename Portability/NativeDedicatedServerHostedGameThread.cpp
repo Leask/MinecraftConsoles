@@ -1,11 +1,18 @@
 #include "NativeDedicatedServerHostedGameThread.h"
 
+#include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 
 #include <memory>
 
 namespace
 {
+    struct NativeDedicatedServerHostedGameThreadCallbacks
+    {
+        void (*tickPlatformRuntime)() = nullptr;
+        void (*handlePlatformActions)() = nullptr;
+    };
+
     struct NativeDedicatedServerHostedGameThreadContext
     {
         ServerRuntime::DedicatedServerHostedGameThreadProc *threadProc =
@@ -13,9 +20,19 @@ namespace
         void *threadParam = nullptr;
     };
 
+    NativeDedicatedServerHostedGameThreadCallbacks
+    BuildNativeDedicatedServerHostedGameThreadCallbacks()
+    {
+        NativeDedicatedServerHostedGameThreadCallbacks callbacks = {};
+        callbacks.tickPlatformRuntime =
+            &ServerRuntime::TickDedicatedServerPlatformRuntime;
+        callbacks.handlePlatformActions =
+            &ServerRuntime::HandleDedicatedServerPlatformActions;
+        return callbacks;
+    }
+
     void TickNativeDedicatedServerHostedGameThreadCallbacks(
-        const ServerRuntime::NativeDedicatedServerHostedGameThreadCallbacks
-            &callbacks)
+        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
     {
         if (callbacks.tickPlatformRuntime != nullptr)
         {
@@ -30,8 +47,7 @@ namespace
     bool WaitForNativeDedicatedServerHostedGameThreadReady(
         HANDLE startupReadyEvent,
         HANDLE threadHandle,
-        const ServerRuntime::NativeDedicatedServerHostedGameThreadCallbacks
-            &callbacks)
+        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
     {
         while (!ServerRuntime::IsDedicatedServerShutdownRequested())
         {
@@ -53,8 +69,7 @@ namespace
 
     void PumpNativeDedicatedServerHostedGameThreadUntilExit(
         HANDLE threadHandle,
-        const ServerRuntime::NativeDedicatedServerHostedGameThreadCallbacks
-            &callbacks)
+        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
     {
         while (WaitForSingleObject(threadHandle, 10) == WAIT_TIMEOUT &&
             !ServerRuntime::IsDedicatedServerShutdownRequested())
@@ -121,10 +136,11 @@ namespace ServerRuntime
     NativeDedicatedServerHostedGameThreadRunResult
     RunNativeDedicatedServerHostedGameThreadAndReadExitCode(
         DedicatedServerHostedGameThreadProc *threadProc,
-        void *threadParam,
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
+        void *threadParam)
     {
         NativeDedicatedServerHostedGameThreadRunResult result = {};
+        const NativeDedicatedServerHostedGameThreadCallbacks callbacks =
+            BuildNativeDedicatedServerHostedGameThreadCallbacks();
         HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
             threadProc,
             threadParam);

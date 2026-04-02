@@ -11,26 +11,6 @@ namespace ServerRuntime
 {
     namespace
     {
-        struct NativeDedicatedServerHostedGameRuntimePathResult
-        {
-            bool threadInvoked = false;
-            bool sessionSnapshotAvailable = false;
-            int startupResult = -1;
-            NativeDedicatedServerHostedGameSessionSnapshot
-                sessionSnapshot = {};
-        };
-
-        NativeDedicatedServerHostedGameThreadCallbacks
-        BuildNativeDedicatedServerHostedGameThreadCallbacks()
-        {
-            NativeDedicatedServerHostedGameThreadCallbacks callbacks = {};
-            callbacks.tickPlatformRuntime =
-                &TickDedicatedServerPlatformRuntime;
-            callbacks.handlePlatformActions =
-                &HandleDedicatedServerPlatformActions;
-            return callbacks;
-        }
-
         void PopulateNativeDedicatedServerHostedGameRuntimeStubInitData(
             NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
             const DedicatedServerHostedGamePlan &hostedGamePlan)
@@ -49,60 +29,35 @@ namespace ServerRuntime
                 hostedGamePlan.fakeLocalPlayerJoined;
         }
 
-        NativeDedicatedServerHostedGameRuntimePathResult
-        StartPersistentNativeDedicatedServerHostedGameRuntime(
+        int StartPersistentNativeDedicatedServerHostedGameRuntime(
             const DedicatedServerHostedGamePlan &hostedGamePlan,
             DedicatedServerHostedGameThreadProc *threadProc,
-            void *threadParam,
-            const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
+            void *threadParam)
         {
-            NativeDedicatedServerHostedGameRuntimePathResult result = {};
             ResetNativeDedicatedServerHostedGameSessionState();
             PopulateNativeDedicatedServerHostedGameRuntimeStubInitData(
                 static_cast<
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
                         threadParam),
                 hostedGamePlan);
-            result.startupResult =
+            bool threadInvoked = false;
+            bool sessionSnapshotAvailable = false;
+            NativeDedicatedServerHostedGameSessionSnapshot
+                sessionSnapshot = {};
+            const int startupResult =
                 StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
                     threadProc,
                     threadParam,
-                    callbacks,
-                    &result.threadInvoked,
-                    &result.sessionSnapshot,
-                    &result.sessionSnapshotAvailable);
-            return result;
-        }
-
-        NativeDedicatedServerHostedGameRuntimePathResult
-        StartNativeDedicatedServerHostedGameRuntimePath(
-            const DedicatedServerHostedGamePlan &hostedGamePlan,
-            DedicatedServerHostedGameThreadProc *threadProc,
-            void *threadParam)
-        {
-            const bool persistentSession =
-                threadProc == GetDedicatedServerHostedGameRuntimeThreadProc();
-            const NativeDedicatedServerHostedGameThreadCallbacks callbacks =
-                BuildNativeDedicatedServerHostedGameThreadCallbacks();
-            if (persistentSession)
-            {
-                return StartPersistentNativeDedicatedServerHostedGameRuntime(
-                    hostedGamePlan,
-                    threadProc,
-                    threadParam,
-                    callbacks);
-            }
-
-            NativeDedicatedServerHostedGameRuntimePathResult result = {};
-            const NativeDedicatedServerHostedGameThreadRunResult
-                threadRunResult =
-                    RunNativeDedicatedServerHostedGameThreadAndReadExitCode(
-                        threadProc,
-                        threadParam,
-                        callbacks);
-            result.threadInvoked = threadRunResult.threadInvoked;
-            result.startupResult = threadRunResult.exitCode;
-            return result;
+                    &threadInvoked,
+                    &sessionSnapshot,
+                    &sessionSnapshotAvailable);
+            return FinalizeNativeDedicatedServerHostedGameSessionStartupAndProject(
+                startupResult,
+                threadInvoked,
+                sessionSnapshotAvailable
+                    ? &sessionSnapshot
+                    : nullptr,
+                LceGetMonotonicMilliseconds());
         }
 
     }
@@ -124,25 +79,20 @@ namespace ServerRuntime
             return startupResult;
         }
 
-        const NativeDedicatedServerHostedGameRuntimePathResult result =
-            StartNativeDedicatedServerHostedGameRuntimePath(
+        if (persistentSession)
+        {
+            return StartPersistentNativeDedicatedServerHostedGameRuntime(
                 hostedGamePlan,
                 threadProc,
                 threadParam);
-
-        if (persistentSession)
-        {
-            return FinalizeNativeDedicatedServerHostedGameSessionStartupAndProject(
-                result.startupResult,
-                result.threadInvoked,
-                result.sessionSnapshotAvailable
-                    ? &result.sessionSnapshot
-                    : nullptr,
-                LceGetMonotonicMilliseconds());
         }
 
+        const NativeDedicatedServerHostedGameThreadRunResult result =
+            RunNativeDedicatedServerHostedGameThreadAndReadExitCode(
+                threadProc,
+                threadParam);
         return CompleteDedicatedServerHostedGameRuntimeStartup(
-            result.startupResult,
+            result.exitCode,
             result.threadInvoked);
     }
 }

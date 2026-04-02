@@ -1,5 +1,6 @@
 #include "NativeDedicatedServerHostedGameHost.h"
 
+#include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 #include "NativeDedicatedServerHostedGameThread.h"
@@ -71,9 +72,7 @@ namespace
     }
 
     bool WaitForNativeDedicatedServerHostedGameHostThreadReady(
-        HANDLE threadHandle,
-        const ServerRuntime::NativeDedicatedServerHostedGameThreadCallbacks
-            &callbacks)
+        HANDLE threadHandle)
     {
         while (!ServerRuntime::IsDedicatedServerShutdownRequested())
         {
@@ -88,14 +87,8 @@ namespace
                 return false;
             }
 
-            if (callbacks.tickPlatformRuntime != nullptr)
-            {
-                callbacks.tickPlatformRuntime();
-            }
-            if (callbacks.handlePlatformActions != nullptr)
-            {
-                callbacks.handlePlatformActions();
-            }
+            ServerRuntime::TickDedicatedServerPlatformRuntime();
+            ServerRuntime::HandleDedicatedServerPlatformActions();
         }
 
         return false;
@@ -123,7 +116,6 @@ namespace ServerRuntime
     StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam,
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks,
         bool *outThreadInvoked,
         NativeDedicatedServerHostedGameSessionSnapshot *outSessionSnapshot,
         bool *outSessionSnapshotAvailable)
@@ -152,8 +144,7 @@ namespace ServerRuntime
             *outThreadInvoked = true;
         }
         if (WaitForNativeDedicatedServerHostedGameHostThreadReady(
-                threadHandle,
-                callbacks))
+                threadHandle))
         {
             if (outSessionSnapshot != nullptr)
             {

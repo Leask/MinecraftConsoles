@@ -12,12 +12,6 @@ namespace ServerRuntime
         int exitCode = -1;
     };
 
-    struct NativeDedicatedServerHostedGameThreadCallbacks
-    {
-        void (*tickPlatformRuntime)() = nullptr;
-        void (*handlePlatformActions)() = nullptr;
-    };
-
     HANDLE StartNativeDedicatedServerHostedGameThread(
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam);
@@ -25,6 +19,5 @@ namespace ServerRuntime
     NativeDedicatedServerHostedGameThreadRunResult
     RunNativeDedicatedServerHostedGameThreadAndReadExitCode(
         DedicatedServerHostedGameThreadProc *threadProc,
-        void *threadParam,
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks);
+        void *threadParam);
 }
