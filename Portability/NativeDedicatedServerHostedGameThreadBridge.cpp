@@ -44,7 +44,7 @@ namespace ServerRuntime
             const NativeDedicatedServerHostedGameCoreRunResult &runResult)
         {
             SignalNativeDedicatedServerHostedGameSessionThreadStopped(
-                runResult.finalSessionSnapshot.hostedThreadTicks,
+                runResult.finalState.sessionSnapshot.hostedThreadTicks,
                 LceGetMonotonicMilliseconds());
         }
 

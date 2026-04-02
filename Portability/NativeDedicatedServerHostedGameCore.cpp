@@ -109,18 +109,11 @@ namespace ServerRuntime
         result.startupDurationMs = startup.startupDurationMs;
         if (startup.exitCode != 0)
         {
-            const NativeDedicatedServerHostedGameSessionStopResult
-                failedStartupState =
-                    CaptureNativeDedicatedServerHostedGameSessionState();
+            result.finalState =
+                CaptureNativeDedicatedServerHostedGameSessionState();
             result.exitCode =
                 CompleteFailedNativeDedicatedServerHostedGameCoreStartup(
                     hooks);
-            result.finalWorkerSnapshot =
-                failedStartupState.workerSnapshot;
-            result.autosaveCompletions =
-                failedStartupState.autosaveCompletions;
-            result.finalSessionSnapshot =
-                failedStartupState.sessionSnapshot;
             return result;
         }
 
@@ -141,11 +134,8 @@ namespace ServerRuntime
             }
         }
 
-        const NativeDedicatedServerHostedGameSessionStopResult stopResult =
+        result.finalState =
             StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState();
-        result.finalWorkerSnapshot = stopResult.workerSnapshot;
-        result.autosaveCompletions = stopResult.autosaveCompletions;
-        result.finalSessionSnapshot = stopResult.sessionSnapshot;
         InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadStopped);
         result.exitCode = 0;
         return result;

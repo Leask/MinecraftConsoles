@@ -35,12 +35,8 @@ namespace ServerRuntime
         std::uint64_t startupIterations = 0;
         std::uint64_t startupDurationMs = 0;
         std::uint64_t loopIterations = 0;
-        std::uint64_t autosaveCompletions = 0;
         NativeDedicatedServerHostedGameCoreFrameResult lastFrame = {};
-        NativeDedicatedServerHostedGameWorkerSnapshot
-            finalWorkerSnapshot = {};
-        NativeDedicatedServerHostedGameSessionSnapshot
-            finalSessionSnapshot = {};
+        NativeDedicatedServerHostedGameSessionStopResult finalState = {};
     };
 
     struct NativeDedicatedServerHostedGameCoreHooks
