@@ -219,9 +219,6 @@ namespace ServerRuntime
         const NativeDedicatedServerHostedGameSessionSnapshot *snapshot = nullptr,
         std::uint64_t nowMs = 0);
 
-    void TickNativeDedicatedServerHostedGameSession(
-        bool hostedThreadActive = true);
-
     void TickNativeDedicatedServerHostedGameSessionFrame(
         const NativeDedicatedServerHostedGameSessionFrameInput &frameInput);
 

@@ -1,5 +1,4 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
-#include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "NativeDedicatedServerHostedGameCore.h"
@@ -20,23 +19,10 @@ namespace ServerRuntime
             return &RunNativeDedicatedServerHostedGameThread;
         }
 
-        void SyncNativeDedicatedServerHostedThreadState(bool running)
-        {
-            if (running)
-            {
-                SignalNativeDedicatedServerHostedGameSessionThreadReady(
-                    LceGetMonotonicMilliseconds());
-                return;
-            }
-
-            SignalNativeDedicatedServerHostedGameSessionThreadStopped(
-                GetNativeDedicatedServerHostedGameSessionThreadTicks(),
-                LceGetMonotonicMilliseconds());
-        }
-
         void SignalNativeDedicatedServerHostedGameThreadReady()
         {
-            SyncNativeDedicatedServerHostedThreadState(true);
+            SignalNativeDedicatedServerHostedGameSessionThreadReady(
+                LceGetMonotonicMilliseconds());
             (void)SignalNativeDedicatedServerHostedGameHostReady();
         }
 
@@ -46,16 +32,6 @@ namespace ServerRuntime
             SignalNativeDedicatedServerHostedGameSessionThreadStopped(
                 runResult.finalState.sessionSnapshot.hostedThreadTicks,
                 LceGetMonotonicMilliseconds());
-        }
-
-        void TickNativeDedicatedServerHostedGameThreadPlatformRuntime()
-        {
-            TickDedicatedServerPlatformRuntime();
-        }
-
-        void HandleNativeDedicatedServerHostedGameThreadPlatformActions()
-        {
-            HandleDedicatedServerPlatformActions();
         }
 
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)
