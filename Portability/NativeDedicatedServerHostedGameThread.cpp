@@ -7,12 +7,6 @@
 
 namespace
 {
-    struct NativeDedicatedServerHostedGameThreadCallbacks
-    {
-        void (*tickPlatformRuntime)() = nullptr;
-        void (*handlePlatformActions)() = nullptr;
-    };
-
     struct NativeDedicatedServerHostedGameThreadContext
     {
         ServerRuntime::DedicatedServerHostedGameThreadProc *threadProc =
@@ -20,61 +14,13 @@ namespace
         void *threadParam = nullptr;
     };
 
-    NativeDedicatedServerHostedGameThreadCallbacks
-    BuildNativeDedicatedServerHostedGameThreadCallbacks()
-    {
-        NativeDedicatedServerHostedGameThreadCallbacks callbacks = {};
-        callbacks.tickPlatformRuntime =
-            &ServerRuntime::TickDedicatedServerPlatformRuntime;
-        callbacks.handlePlatformActions =
-            &ServerRuntime::HandleDedicatedServerPlatformActions;
-        return callbacks;
-    }
-
-    void TickNativeDedicatedServerHostedGameThreadCallbacks(
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
-    {
-        if (callbacks.tickPlatformRuntime != nullptr)
-        {
-            callbacks.tickPlatformRuntime();
-        }
-        if (callbacks.handlePlatformActions != nullptr)
-        {
-            callbacks.handlePlatformActions();
-        }
-    }
-
-    bool WaitForNativeDedicatedServerHostedGameThreadReady(
-        HANDLE startupReadyEvent,
-        HANDLE threadHandle,
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
-    {
-        while (!ServerRuntime::IsDedicatedServerShutdownRequested())
-        {
-            if (WaitForSingleObject(startupReadyEvent, 0) == WAIT_OBJECT_0)
-            {
-                return true;
-            }
-
-            if (WaitForSingleObject(threadHandle, 10) == WAIT_OBJECT_0)
-            {
-                return false;
-            }
-
-            TickNativeDedicatedServerHostedGameThreadCallbacks(callbacks);
-        }
-
-        return false;
-    }
-
-    void PumpNativeDedicatedServerHostedGameThreadUntilExit(
-        HANDLE threadHandle,
-        const NativeDedicatedServerHostedGameThreadCallbacks &callbacks)
+    void PumpNativeDedicatedServerHostedGameThreadUntilExit(HANDLE threadHandle)
     {
         while (WaitForSingleObject(threadHandle, 10) == WAIT_TIMEOUT &&
             !ServerRuntime::IsDedicatedServerShutdownRequested())
         {
-            TickNativeDedicatedServerHostedGameThreadCallbacks(callbacks);
+            ServerRuntime::TickDedicatedServerPlatformRuntime();
+            ServerRuntime::HandleDedicatedServerPlatformActions();
         }
     }
 
@@ -139,8 +85,6 @@ namespace ServerRuntime
         void *threadParam)
     {
         NativeDedicatedServerHostedGameThreadRunResult result = {};
-        const NativeDedicatedServerHostedGameThreadCallbacks callbacks =
-            BuildNativeDedicatedServerHostedGameThreadCallbacks();
         HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
             threadProc,
             threadParam);
@@ -150,9 +94,7 @@ namespace ServerRuntime
         }
 
         result.threadInvoked = true;
-        PumpNativeDedicatedServerHostedGameThreadUntilExit(
-            threadHandle,
-            callbacks);
+        PumpNativeDedicatedServerHostedGameThreadUntilExit(threadHandle);
         WaitForSingleObject(threadHandle, INFINITE);
         DWORD threadExitCode = static_cast<DWORD>(-1);
         if (TryReadNativeDedicatedServerHostedGameThreadExitCode(
