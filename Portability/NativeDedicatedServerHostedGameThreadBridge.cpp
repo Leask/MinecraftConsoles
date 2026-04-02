@@ -13,25 +13,11 @@ namespace ServerRuntime
     {
         int RunNativeDedicatedServerHostedGameThread(void *threadParam);
 
-        DedicatedServerHostedGameThreadProc
-            *GetNativeDedicatedServerHostedGameThreadProc()
-        {
-            return &RunNativeDedicatedServerHostedGameThread;
-        }
-
         void SignalNativeDedicatedServerHostedGameThreadReady()
         {
             SignalNativeDedicatedServerHostedGameSessionThreadReady(
                 LceGetMonotonicMilliseconds());
             (void)SignalNativeDedicatedServerHostedGameHostReady();
-        }
-
-        void FinalizeNativeDedicatedServerHostedGameThreadStop(
-            const NativeDedicatedServerHostedGameCoreRunResult &runResult)
-        {
-            SignalNativeDedicatedServerHostedGameSessionThreadStopped(
-                runResult.finalState.sessionSnapshot.hostedThreadTicks,
-                LceGetMonotonicMilliseconds());
         }
 
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)
@@ -45,7 +31,9 @@ namespace ServerRuntime
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
                         threadParam),
                 hooks);
-            FinalizeNativeDedicatedServerHostedGameThreadStop(runResult);
+            SignalNativeDedicatedServerHostedGameSessionThreadStopped(
+                runResult.finalState.sessionSnapshot.hostedThreadTicks,
+                LceGetMonotonicMilliseconds());
             return runResult.exitCode;
         }
     }
@@ -53,6 +41,6 @@ namespace ServerRuntime
     DedicatedServerHostedGameThreadProc
         *GetDedicatedServerHostedGameRuntimeThreadProc()
     {
-        return GetNativeDedicatedServerHostedGameThreadProc();
+        return &RunNativeDedicatedServerHostedGameThread;
     }
 }

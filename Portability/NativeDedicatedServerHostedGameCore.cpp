@@ -135,13 +135,4 @@ namespace ServerRuntime
         result.exitCode = 0;
         return result;
     }
-
-    int RunNativeDedicatedServerHostedGameCore(
-        NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
-        const NativeDedicatedServerHostedGameCoreHooks &hooks)
-    {
-        return RunNativeDedicatedServerHostedGameCoreWithResult(
-            initData,
-            hooks).exitCode;
-    }
 }

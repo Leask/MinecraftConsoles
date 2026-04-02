@@ -54,8 +54,4 @@ namespace ServerRuntime
     RunNativeDedicatedServerHostedGameCoreWithResult(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
         const NativeDedicatedServerHostedGameCoreHooks &hooks);
-
-    int RunNativeDedicatedServerHostedGameCore(
-        NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
-        const NativeDedicatedServerHostedGameCoreHooks &hooks);
 }
