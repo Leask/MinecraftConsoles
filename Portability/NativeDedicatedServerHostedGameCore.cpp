@@ -23,13 +23,6 @@ namespace ServerRuntime
                 hook();
             }
         }
-
-        int CompleteFailedNativeDedicatedServerHostedGameCoreStartup(
-            const NativeDedicatedServerHostedGameCoreHooks &hooks)
-        {
-            InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadStopped);
-            return -2;
-        }
     }
 
     NativeDedicatedServerHostedGameCoreFrameResult
@@ -106,9 +99,9 @@ namespace ServerRuntime
         {
             result.finalState =
                 CaptureNativeDedicatedServerHostedGameSessionState();
-            result.exitCode =
-                CompleteFailedNativeDedicatedServerHostedGameCoreStartup(
-                    hooks);
+            InvokeNativeDedicatedServerHostedGameCoreHook(
+                hooks.onThreadStopped);
+            result.exitCode = result.startup.exitCode;
             return result;
         }
 
