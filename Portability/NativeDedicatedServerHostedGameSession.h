@@ -161,6 +161,13 @@ namespace ServerRuntime
         bool hostedThreadActive = true;
     };
 
+    struct NativeDedicatedServerHostedGameSessionStopResult
+    {
+        NativeDedicatedServerHostedGameWorkerSnapshot workerSnapshot = {};
+        NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot = {};
+        std::uint64_t autosaveCompletions = 0;
+    };
+
     void ResetNativeDedicatedServerHostedGameSessionState();
 
     bool StartNativeDedicatedServerHostedGameSession(
@@ -409,6 +416,10 @@ namespace ServerRuntime
         std::uint64_t nowMs = 0);
 
     void StopNativeDedicatedServerHostedGameSession(
+        std::uint64_t stoppedMs = 0);
+
+    NativeDedicatedServerHostedGameSessionStopResult
+    StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState(
         std::uint64_t stoppedMs = 0);
 
     bool IsNativeDedicatedServerHostedGameSessionRunning();

@@ -134,13 +134,11 @@ namespace ServerRuntime
             }
         }
 
-        StopNativeDedicatedServerHostedGameSession();
-        result.finalWorkerSnapshot =
-            GetNativeDedicatedServerHostedGameWorkerSnapshot();
-        result.autosaveCompletions =
-            GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
-        result.finalSessionSnapshot =
-            GetNativeDedicatedServerHostedGameSessionSnapshot();
+        const NativeDedicatedServerHostedGameSessionStopResult stopResult =
+            StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState();
+        result.finalWorkerSnapshot = stopResult.workerSnapshot;
+        result.autosaveCompletions = stopResult.autosaveCompletions;
+        result.finalSessionSnapshot = stopResult.sessionSnapshot;
         InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadStopped);
         result.exitCode = 0;
         return result;

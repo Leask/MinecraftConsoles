@@ -1743,6 +1743,21 @@ namespace ServerRuntime
             &g_nativeHostedSessionState);
     }
 
+    NativeDedicatedServerHostedGameSessionStopResult
+    StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState(
+        std::uint64_t stoppedMs)
+    {
+        StopNativeDedicatedServerHostedGameSession(stoppedMs);
+
+        NativeDedicatedServerHostedGameSessionStopResult result = {};
+        result.workerSnapshot = GetNativeDedicatedServerHostedGameWorkerSnapshot();
+        result.autosaveCompletions =
+            GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
+        result.sessionSnapshot =
+            GetNativeDedicatedServerHostedGameSessionSnapshot();
+        return result;
+    }
+
     bool IsNativeDedicatedServerHostedGameSessionRunning()
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
