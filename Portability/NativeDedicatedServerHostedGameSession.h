@@ -185,22 +185,12 @@ namespace ServerRuntime
     bool StartNativeDedicatedServerHostedGameSession(
         const NativeDedicatedServerHostedGameRuntimeStubInitData &initData);
 
-    bool StartNativeDedicatedServerHostedGameSessionAndProjectStartup(
-        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
-        std::uint64_t startupThreadIterations,
-        std::uint64_t startupThreadDurationMs,
-        std::uint64_t nowMs = 0);
-
     NativeDedicatedServerHostedGameSessionStartupResult
     StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
         const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
         std::uint64_t startupThreadIterations,
         std::uint64_t startupThreadDurationMs,
         std::uint64_t nowMs = 0);
-
-    void ObserveNativeDedicatedServerHostedGameSessionStartupResult(
-        int startupResult,
-        bool threadInvoked);
 
     void ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
         int startupResult,
@@ -218,9 +208,6 @@ namespace ServerRuntime
         bool threadInvoked,
         const NativeDedicatedServerHostedGameSessionSnapshot *snapshot = nullptr,
         std::uint64_t nowMs = 0);
-
-    void TickNativeDedicatedServerHostedGameSessionFrame(
-        const NativeDedicatedServerHostedGameSessionFrameInput &frameInput);
 
     void TickNativeDedicatedServerHostedGameSessionFrameAndProject(
         const NativeDedicatedServerHostedGameSessionFrameInput &frameInput,
@@ -378,10 +365,6 @@ namespace ServerRuntime
     void SignalNativeDedicatedServerHostedGameSessionThreadStopped(
         std::uint64_t hostedThreadTicks,
         std::uint64_t nowMs = 0);
-
-    void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetry(
-        std::uint64_t startupThreadIterations,
-        std::uint64_t startupThreadDurationMs);
 
     void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
         std::uint64_t startupThreadIterations,

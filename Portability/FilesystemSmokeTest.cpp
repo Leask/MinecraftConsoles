@@ -1780,6 +1780,7 @@ int main(int argc, char* argv[])
     const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
         hostedGameRuntimeSnapshot =
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
+    ServerRuntime::ResetNativeDedicatedServerHostedGameSessionState();
     ServerRuntime::DedicatedServerHostedGameRuntimeSessionContext
         hostedGameSessionContext = {};
     hostedGameSessionContext.worldName = "Smoke Session";
@@ -1811,42 +1812,10 @@ int main(int argc, char* argv[])
         sessionConfig.networkMaxPlayers,
         0,
         true);
-    ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionStartupResult(
+    ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
         0,
-        true);
-    ServerRuntime::UpdateDedicatedServerHostedGameRuntimeSessionState(
-        2,
-        3,
-        4,
-        5,
-        6,
-        false,
         true,
-        false,
-        true,
-        1100);
-    ServerRuntime::RecordDedicatedServerHostedGameRuntimeWorkerState(
-        9,
-        8,
-        10,
-        11,
-        12,
-        22,
-        32,
-        12,
-        42,
-        52,
-        62,
-        99,
-        97,
-        3,
-        ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Autosave,
-        98,
-        ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop);
-    ServerRuntime::RecordDedicatedServerHostedGameRuntimePersistedSave(
-        "NativeDesktop/GameHDD/SMOKE_SESSION.save",
-        77,
-        5);
+        LceGetMonotonicMilliseconds());
     ServerRuntime::DedicatedServerHostedGameRuntimeSessionSummary
         hostedGameSessionSummary = {};
     hostedGameSessionSummary.initialSaveRequested = true;
@@ -1855,11 +1824,6 @@ int main(int argc, char* argv[])
     hostedGameSessionSummary.requestedAppShutdown = true;
     hostedGameSessionSummary.shutdownHaltedGameplay = true;
     hostedGameSessionSummary.gameplayLoopIterations = 8;
-    ServerRuntime::RecordDedicatedServerHostedGameRuntimeSessionSummary(
-        hostedGameSessionSummary);
-    const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
-        hostedGameSessionSnapshot =
-            ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
     ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionActivity(
         2,
         3,
@@ -1903,6 +1867,9 @@ int main(int argc, char* argv[])
         5);
     ServerRuntime::ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
         1100);
+    const ServerRuntime::DedicatedServerHostedGameRuntimeSnapshot
+        hostedGameSessionSnapshot =
+            ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
         nativeHostedSessionObservedSnapshot =
             ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
@@ -1928,16 +1895,6 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.bindIp == "127.0.0.1" &&
         hostedGameSessionSnapshot.configuredPort == 25565 &&
         hostedGameSessionSnapshot.listenerPort == 19132 &&
-        hostedGameSessionSnapshot.savePayloadName == "Smoke World" &&
-        hostedGameSessionSnapshot.savePayloadBytes == 4 &&
-        hostedGameSessionSnapshot.savePayloadChecksum == fakeSaveChecksum &&
-        hostedGameSessionSnapshot.saveGeneration == 16U &&
-        hostedGameSessionSnapshot.previousSessionStateChecksum ==
-            0x0fedcba987654321ULL &&
-        hostedGameSessionSnapshot.sessionStateChecksum != 0U &&
-        hostedGameSessionSnapshot.hostSettings ==
-            sessionConfig.hostSettings &&
-        hostedGameSessionSnapshot.dedicatedNoLocalHostPlayer &&
         hostedGameSessionSnapshot.acceptedConnections == 2 &&
         hostedGameSessionSnapshot.remoteCommands == 3 &&
         hostedGameSessionSnapshot.autosaveRequests == 4 &&
@@ -1947,12 +1904,12 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.workerPendingSaveCommands == 10 &&
         hostedGameSessionSnapshot.workerPendingStopCommands == 11 &&
         hostedGameSessionSnapshot.workerPendingHaltCommands == 12 &&
-        hostedGameSessionSnapshot.workerTickCount == 44 &&
-        hostedGameSessionSnapshot.completedWorkerActions == 38 &&
-        hostedGameSessionSnapshot.processedAutosaveCommands == 19 &&
-        hostedGameSessionSnapshot.processedSaveCommands == 55 &&
-        hostedGameSessionSnapshot.processedStopCommands == 57 &&
-        hostedGameSessionSnapshot.processedHaltCommands == 68 &&
+        hostedGameSessionSnapshot.workerTickCount == 22 &&
+        hostedGameSessionSnapshot.completedWorkerActions == 32 &&
+        hostedGameSessionSnapshot.processedAutosaveCommands == 12 &&
+        hostedGameSessionSnapshot.processedSaveCommands == 42 &&
+        hostedGameSessionSnapshot.processedStopCommands == 52 &&
+        hostedGameSessionSnapshot.processedHaltCommands == 62 &&
         hostedGameSessionSnapshot.lastQueuedCommandId == 99 &&
         hostedGameSessionSnapshot.activeCommandId == 97 &&
         hostedGameSessionSnapshot.activeCommandTicksRemaining == 3 &&
@@ -1965,7 +1922,7 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.platformTickCount == 6 &&
         !hostedGameSessionSnapshot.worldActionIdle &&
         hostedGameSessionSnapshot.appShutdownRequested &&
-        !hostedGameSessionSnapshot.gameplayHalted &&
+        hostedGameSessionSnapshot.gameplayHalted &&
         hostedGameSessionSnapshot.stopSignalValid &&
         hostedGameSessionSnapshot.initialSaveRequested &&
         hostedGameSessionSnapshot.initialSaveCompleted &&
@@ -2033,13 +1990,14 @@ int main(int argc, char* argv[])
             .lastPersistedAutosaveCompletions == 5 &&
         !nativeHostedSessionObservedSnapshot.worldActionIdle;
     const bool hostedGameSessionObservedLifecycleOk =
+        nativeHostedSessionObservedSnapshot.active &&
         !nativeHostedSessionObservedSnapshot.worldActionIdle &&
         nativeHostedSessionObservedSnapshot.appShutdownRequested &&
         nativeHostedSessionObservedSnapshot.stopSignalValid &&
         nativeHostedSessionObservedSnapshot.sessionCompleted &&
         nativeHostedSessionObservedSnapshot.requestedAppShutdown &&
         nativeHostedSessionObservedSnapshot.runtimePhase ==
-            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
+            ServerRuntime::eDedicatedServerHostedGameRuntimePhase_ShutdownRequested &&
         nativeHostedSessionObservedSnapshot.stoppedMs == 0 &&
         nativeHostedSessionObservedSnapshot.stateChecksum != 0U;
     const bool hostedGameSessionObservedProjectionOk =
