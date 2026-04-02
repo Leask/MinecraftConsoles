@@ -100,12 +100,9 @@ namespace ServerRuntime
         const NativeDedicatedServerHostedGameCoreHooks &hooks)
     {
         NativeDedicatedServerHostedGameCoreRunResult result = {};
-        const NativeDedicatedServerHostedGameCoreStartupResult startup =
+        result.startup =
             StartNativeDedicatedServerHostedGameCoreWithResult(initData);
-        result.startupPayloadValidated = startup.payloadValidated;
-        result.startupIterations = startup.startupIterations;
-        result.startupDurationMs = startup.startupDurationMs;
-        if (startup.exitCode != 0)
+        if (result.startup.exitCode != 0)
         {
             result.finalState =
                 CaptureNativeDedicatedServerHostedGameSessionState();

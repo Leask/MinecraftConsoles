@@ -3084,9 +3084,9 @@ int main(int argc, char* argv[])
     printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
         "loops=%llu autosaves=%llu worker_idle=%d hooks=%d/%d phase=%s\n",
         nativeHostedCoreRunResult.exitCode == 0 &&
-            nativeHostedCoreRunResult.startupPayloadValidated &&
-            nativeHostedCoreRunResult.startupIterations == 2U &&
-            nativeHostedCoreRunResult.startupDurationMs > 0U &&
+            nativeHostedCoreRunResult.startup.payloadValidated &&
+            nativeHostedCoreRunResult.startup.startupIterations == 2U &&
+            nativeHostedCoreRunResult.startup.startupDurationMs > 0U &&
             nativeHostedCoreRunResult.loopIterations == 1U &&
             nativeHostedCoreRunResult.finalState.autosaveCompletions == 0U &&
             nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
@@ -3114,9 +3114,11 @@ int main(int argc, char* argv[])
             nativeHostedCoreSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped,
         nativeHostedCoreRunResult.exitCode,
-        nativeHostedCoreRunResult.startupPayloadValidated,
-        (unsigned long long)nativeHostedCoreRunResult.startupIterations,
-        (unsigned long long)nativeHostedCoreRunResult.startupDurationMs,
+        nativeHostedCoreRunResult.startup.payloadValidated,
+        (unsigned long long)nativeHostedCoreRunResult.startup
+            .startupIterations,
+        (unsigned long long)nativeHostedCoreRunResult.startup
+            .startupDurationMs,
         (unsigned long long)nativeHostedCoreRunResult.loopIterations,
         (unsigned long long)nativeHostedCoreRunResult.finalState
             .autosaveCompletions,
@@ -3132,9 +3134,9 @@ int main(int argc, char* argv[])
     printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
         restartedHostedRuntimeResult.ok &&
             nativeHostedCoreRunResult.exitCode == 0 &&
-            nativeHostedCoreRunResult.startupPayloadValidated &&
-            nativeHostedCoreRunResult.startupIterations == 2U &&
-            nativeHostedCoreRunResult.startupDurationMs > 0U &&
+            nativeHostedCoreRunResult.startup.payloadValidated &&
+            nativeHostedCoreRunResult.startup.startupIterations == 2U &&
+            nativeHostedCoreRunResult.startup.startupDurationMs > 0U &&
             nativeHostedCoreRunResult.loopIterations == 1U &&
             nativeHostedCoreRunResult.finalState.autosaveCompletions == 0U &&
             nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
@@ -4127,9 +4129,9 @@ int main(int argc, char* argv[])
         nativeHostedCoreFrameStoppedSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
         nativeHostedCoreRunResult.exitCode == 0 &&
-        nativeHostedCoreRunResult.startupPayloadValidated &&
-        nativeHostedCoreRunResult.startupIterations == 2U &&
-        nativeHostedCoreRunResult.startupDurationMs > 0U &&
+        nativeHostedCoreRunResult.startup.payloadValidated &&
+        nativeHostedCoreRunResult.startup.startupIterations == 2U &&
+        nativeHostedCoreRunResult.startup.startupDurationMs > 0U &&
         nativeHostedCoreRunResult.loopIterations == 1U &&
         nativeHostedCoreRunResult.finalState.autosaveCompletions == 0U &&
         nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
