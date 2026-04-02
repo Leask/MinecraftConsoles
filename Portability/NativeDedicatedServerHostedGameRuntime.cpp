@@ -40,22 +40,15 @@ namespace ServerRuntime
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
                         threadParam),
                 hostedGamePlan);
-            bool threadInvoked = false;
-            bool sessionSnapshotAvailable = false;
-            NativeDedicatedServerHostedGameSessionSnapshot
-                sessionSnapshot = {};
-            const int startupResult =
+            const NativeDedicatedServerHostedGameHostStartResult result =
                 StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
                     threadProc,
-                    threadParam,
-                    &threadInvoked,
-                    &sessionSnapshot,
-                    &sessionSnapshotAvailable);
+                    threadParam);
             return FinalizeNativeDedicatedServerHostedGameSessionStartupAndProject(
-                startupResult,
-                threadInvoked,
-                sessionSnapshotAvailable
-                    ? &sessionSnapshot
+                result.startupResult,
+                result.threadInvoked,
+                result.sessionSnapshotAvailable
+                    ? &result.sessionSnapshot
                     : nullptr,
                 LceGetMonotonicMilliseconds());
         }
