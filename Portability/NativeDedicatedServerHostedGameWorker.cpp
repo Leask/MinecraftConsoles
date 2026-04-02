@@ -48,6 +48,8 @@ namespace ServerRuntime
 {
     namespace
     {
+        constexpr std::uint64_t kNativeHostedGameWorkerFrameDelayMs = 10;
+
         bool IsNativeDedicatedServerHostedGameWorkerShutdownRequested()
         {
             return ServerRuntime::IsDedicatedServerShutdownRequested() ||
@@ -395,6 +397,8 @@ namespace ServerRuntime
         result.shouldStopRunning =
             result.shutdownRequested &&
             result.idle;
+        result.nextSleepDurationMs =
+            result.shouldStopRunning ? 0U : kNativeHostedGameWorkerFrameDelayMs;
         UpdateDedicatedServerAutosaveTracker(result.idle);
         result.autosaveCompletions =
             GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();

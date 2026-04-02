@@ -42,6 +42,7 @@ namespace ServerRuntime
     {
         NativeDedicatedServerHostedGameWorkerSnapshot snapshot = {};
         std::uint64_t autosaveCompletions = 0;
+        std::uint64_t nextSleepDurationMs = 0;
         bool shutdownRequested = false;
         bool shouldStopRunning = false;
         bool idle = true;

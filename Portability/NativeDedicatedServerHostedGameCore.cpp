@@ -158,7 +158,11 @@ namespace ServerRuntime
             {
                 break;
             }
-            LceSleepMilliseconds(10);
+            if (result.lastFrame.workerFrame.nextSleepDurationMs > 0U)
+            {
+                LceSleepMilliseconds(
+                    result.lastFrame.workerFrame.nextSleepDurationMs);
+            }
         }
 
         StopNativeDedicatedServerHostedGameSession();

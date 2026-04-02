@@ -3032,6 +3032,7 @@ int main(int argc, char* argv[])
         nativeHostedCoreFrameStarted &&
             nativeHostedCoreFrameFirst.frameTimestampMs > 0U &&
             nativeHostedCoreFrameFirst.autosaveCompletions == 0U &&
+            nativeHostedCoreFrameFirst.workerFrame.nextSleepDurationMs == 10U &&
             !nativeHostedCoreFrameFirst.workerFrame.shutdownRequested &&
             !nativeHostedCoreFrameFirst.workerFrame.shouldStopRunning &&
             nativeHostedCoreFrameFirst.workerFrame.snapshot
@@ -3048,6 +3049,7 @@ int main(int argc, char* argv[])
             nativeHostedCoreFrameSecond.frameTimestampMs >=
                 nativeHostedCoreFrameFirst.frameTimestampMs &&
             nativeHostedCoreFrameSecond.autosaveCompletions == 1U &&
+            nativeHostedCoreFrameSecond.workerFrame.nextSleepDurationMs == 10U &&
             !nativeHostedCoreFrameSecond.workerFrame.shutdownRequested &&
             !nativeHostedCoreFrameSecond.workerFrame.shouldStopRunning &&
             nativeHostedCoreFrameSecond.workerFrame.snapshot
@@ -3085,6 +3087,8 @@ int main(int argc, char* argv[])
             nativeHostedCoreRunResult.loopIterations == 1U &&
             nativeHostedCoreRunResult.autosaveCompletions == 0U &&
             nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
+            nativeHostedCoreRunResult.lastFrame.workerFrame
+                    .nextSleepDurationMs == 0U &&
             nativeHostedCoreRunResult.lastFrame.workerFrame
                     .shouldStopRunning &&
             nativeHostedCoreRunResult.finalWorkerSnapshot
@@ -3128,6 +3132,8 @@ int main(int argc, char* argv[])
             nativeHostedCoreRunResult.loopIterations == 1U &&
             nativeHostedCoreRunResult.autosaveCompletions == 0U &&
             nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
+            nativeHostedCoreRunResult.lastFrame.workerFrame
+                    .nextSleepDurationMs == 0U &&
             nativeHostedCoreRunResult.lastFrame.workerFrame
                     .shouldStopRunning &&
             nativeHostedCoreRunResult.finalWorkerSnapshot
@@ -4075,6 +4081,7 @@ int main(int argc, char* argv[])
         nativeHostedCoreFrameStarted &&
         nativeHostedCoreFrameFirst.frameTimestampMs > 0U &&
         nativeHostedCoreFrameFirst.autosaveCompletions == 0U &&
+        nativeHostedCoreFrameFirst.workerFrame.nextSleepDurationMs == 10U &&
         !nativeHostedCoreFrameFirst.workerFrame.shutdownRequested &&
         !nativeHostedCoreFrameFirst.workerFrame.shouldStopRunning &&
         nativeHostedCoreFrameFirst.workerFrame.snapshot
@@ -4091,6 +4098,7 @@ int main(int argc, char* argv[])
         nativeHostedCoreFrameSecond.frameTimestampMs >=
             nativeHostedCoreFrameFirst.frameTimestampMs &&
         nativeHostedCoreFrameSecond.autosaveCompletions == 1U &&
+        nativeHostedCoreFrameSecond.workerFrame.nextSleepDurationMs == 10U &&
         !nativeHostedCoreFrameSecond.workerFrame.shutdownRequested &&
         !nativeHostedCoreFrameSecond.workerFrame.shouldStopRunning &&
         nativeHostedCoreFrameSecond.workerFrame.snapshot
@@ -4116,6 +4124,8 @@ int main(int argc, char* argv[])
         nativeHostedCoreRunResult.loopIterations == 1U &&
         nativeHostedCoreRunResult.autosaveCompletions == 0U &&
         nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
+        nativeHostedCoreRunResult.lastFrame.workerFrame.nextSleepDurationMs ==
+            0U &&
         nativeHostedCoreRunResult.lastFrame.workerFrame.shouldStopRunning &&
         nativeHostedCoreRunResult.finalWorkerSnapshot.pendingWorldActionTicks ==
             0U &&
