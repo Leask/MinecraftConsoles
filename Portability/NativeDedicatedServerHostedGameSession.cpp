@@ -959,6 +959,25 @@ namespace ServerRuntime
         ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
     }
 
+    NativeDedicatedServerHostedGameSessionFrameResult
+    TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
+        const NativeDedicatedServerHostedGameWorkerFrameResult &workerFrame,
+        bool hostedThreadActive,
+        std::uint64_t nowMs)
+    {
+        NativeDedicatedServerHostedGameSessionFrameResult result = {};
+        result.input.workerSnapshot = workerFrame.snapshot;
+        result.input.autosaveCompletions =
+            workerFrame.autosaveCompletions;
+        result.input.hostedThreadActive = hostedThreadActive;
+        TickNativeDedicatedServerHostedGameSessionFrameAndProject(
+            result.input,
+            nowMs);
+        result.snapshot =
+            GetNativeDedicatedServerHostedGameSessionSnapshot();
+        return result;
+    }
+
     void ObserveNativeDedicatedServerHostedGameSessionAutosaves(
         std::uint64_t autosaveCompletions)
     {

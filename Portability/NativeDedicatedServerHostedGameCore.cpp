@@ -38,19 +38,17 @@ namespace ServerRuntime
     {
         NativeDedicatedServerHostedGameCoreFrameResult result = {};
         result.workerFrame = TickNativeDedicatedServerHostedGameWorkerFrame();
+        result.frameTimestampMs = LceGetMonotonicMilliseconds();
+        const NativeDedicatedServerHostedGameSessionFrameResult
+            sessionFrameResult =
+                TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
+                    result.workerFrame,
+                    hostedThreadActive,
+                    result.frameTimestampMs);
         result.autosaveCompletions =
             result.workerFrame.autosaveCompletions;
-        result.sessionFrameInput.workerSnapshot =
-            result.workerFrame.snapshot;
-        result.sessionFrameInput.autosaveCompletions =
-            result.autosaveCompletions;
-        result.sessionFrameInput.hostedThreadActive = hostedThreadActive;
-        result.frameTimestampMs = LceGetMonotonicMilliseconds();
-        TickNativeDedicatedServerHostedGameSessionFrameAndProject(
-            result.sessionFrameInput,
-            result.frameTimestampMs);
-        result.sessionSnapshot =
-            GetNativeDedicatedServerHostedGameSessionSnapshot();
+        result.sessionFrameInput = sessionFrameResult.input;
+        result.sessionSnapshot = sessionFrameResult.snapshot;
         return result;
     }
 

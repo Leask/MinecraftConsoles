@@ -161,6 +161,12 @@ namespace ServerRuntime
         bool hostedThreadActive = true;
     };
 
+    struct NativeDedicatedServerHostedGameSessionFrameResult
+    {
+        NativeDedicatedServerHostedGameSessionFrameInput input = {};
+        NativeDedicatedServerHostedGameSessionSnapshot snapshot = {};
+    };
+
     struct NativeDedicatedServerHostedGameSessionStartupResult
     {
         bool payloadValidated = false;
@@ -221,6 +227,12 @@ namespace ServerRuntime
 
     void TickNativeDedicatedServerHostedGameSessionFrameAndProject(
         const NativeDedicatedServerHostedGameSessionFrameInput &frameInput,
+        std::uint64_t nowMs = 0);
+
+    NativeDedicatedServerHostedGameSessionFrameResult
+    TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
+        const NativeDedicatedServerHostedGameWorkerFrameResult &workerFrame,
+        bool hostedThreadActive = true,
         std::uint64_t nowMs = 0);
 
     void ObserveNativeDedicatedServerHostedGameSessionAutosaves(
