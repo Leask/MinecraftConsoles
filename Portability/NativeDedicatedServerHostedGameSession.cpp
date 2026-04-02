@@ -854,6 +854,31 @@ namespace ServerRuntime
             nowMs);
     }
 
+    int FinalizeNativeDedicatedServerHostedGameSessionStartupAndProject(
+        int startupResult,
+        bool threadInvoked,
+        const NativeDedicatedServerHostedGameSessionSnapshot *snapshot,
+        std::uint64_t nowMs)
+    {
+        if (snapshot != nullptr)
+        {
+            ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+                *snapshot,
+                startupResult,
+                threadInvoked,
+                nowMs);
+        }
+        else
+        {
+            ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+                startupResult,
+                threadInvoked,
+                nowMs);
+        }
+
+        return startupResult;
+    }
+
     void TickNativeDedicatedServerHostedGameSession(
         bool hostedThreadActive)
     {
