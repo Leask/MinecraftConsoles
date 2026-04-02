@@ -54,7 +54,7 @@ namespace ServerRuntime
             return FinalizeNativeDedicatedServerHostedGameSessionStartupAndProject(
                 result.startupResult,
                 result.threadInvoked,
-                result.sessionSnapshotAvailable
+                result.startupResult == 0
                     ? &result.sessionSnapshot
                     : nullptr,
                 LceGetMonotonicMilliseconds());

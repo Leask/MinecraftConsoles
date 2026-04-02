@@ -10,7 +10,6 @@ namespace ServerRuntime
     struct NativeDedicatedServerHostedGameHostStartResult
     {
         bool threadInvoked = false;
-        bool sessionSnapshotAvailable = false;
         int startupResult = -1;
         NativeDedicatedServerHostedGameSessionSnapshot
             sessionSnapshot = {};

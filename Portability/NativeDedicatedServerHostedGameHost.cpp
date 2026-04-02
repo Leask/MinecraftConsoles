@@ -118,7 +118,6 @@ namespace ServerRuntime
         {
             result.sessionSnapshot =
                 GetNativeDedicatedServerHostedGameSessionSnapshot();
-            result.sessionSnapshotAvailable = true;
             result.startupResult = 0;
             return result;
         }
