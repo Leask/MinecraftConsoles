@@ -3030,7 +3030,8 @@ int main(int argc, char* argv[])
     printf("hosted_game_core_frame=%d start=%d first=%llu/%llu/%d second=%llu/%llu/%d stopped=%d\n",
         nativeHostedCoreFrameStarted &&
             nativeHostedCoreFrameFirst.frameTimestampMs > 0U &&
-            nativeHostedCoreFrameFirst.autosaveCompletions == 0U &&
+            nativeHostedCoreFrameFirst.sessionFrameInput
+                    .autosaveCompletions == 0U &&
             nativeHostedCoreFrameFirst.workerFrame.nextSleepDurationMs == 10U &&
             !nativeHostedCoreFrameFirst.workerFrame.shutdownRequested &&
             !nativeHostedCoreFrameFirst.workerFrame.shouldStopRunning &&
@@ -3047,7 +3048,8 @@ int main(int argc, char* argv[])
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
             nativeHostedCoreFrameSecond.frameTimestampMs >=
                 nativeHostedCoreFrameFirst.frameTimestampMs &&
-            nativeHostedCoreFrameSecond.autosaveCompletions == 1U &&
+            nativeHostedCoreFrameSecond.sessionFrameInput
+                    .autosaveCompletions == 1U &&
             nativeHostedCoreFrameSecond.workerFrame.nextSleepDurationMs == 10U &&
             !nativeHostedCoreFrameSecond.workerFrame.shutdownRequested &&
             !nativeHostedCoreFrameSecond.workerFrame.shouldStopRunning &&
@@ -3070,11 +3072,13 @@ int main(int argc, char* argv[])
         nativeHostedCoreFrameStarted,
         (unsigned long long)nativeHostedCoreFrameFirst
             .workerFrame.snapshot.pendingWorldActionTicks,
-        (unsigned long long)nativeHostedCoreFrameFirst.autosaveCompletions,
+        (unsigned long long)nativeHostedCoreFrameFirst
+            .sessionFrameInput.autosaveCompletions,
         nativeHostedCoreFrameFirst.workerFrame.idle,
         (unsigned long long)nativeHostedCoreFrameSecond
             .workerFrame.snapshot.pendingWorldActionTicks,
-        (unsigned long long)nativeHostedCoreFrameSecond.autosaveCompletions,
+        (unsigned long long)nativeHostedCoreFrameSecond
+            .sessionFrameInput.autosaveCompletions,
         nativeHostedCoreFrameSecond.workerFrame.idle,
         !nativeHostedCoreFrameStoppedSnapshot.active);
     printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
@@ -4083,7 +4087,8 @@ int main(int argc, char* argv[])
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Startup &&
         nativeHostedCoreFrameStarted &&
         nativeHostedCoreFrameFirst.frameTimestampMs > 0U &&
-        nativeHostedCoreFrameFirst.autosaveCompletions == 0U &&
+        nativeHostedCoreFrameFirst.sessionFrameInput.autosaveCompletions ==
+            0U &&
         nativeHostedCoreFrameFirst.workerFrame.nextSleepDurationMs == 10U &&
         !nativeHostedCoreFrameFirst.workerFrame.shutdownRequested &&
         !nativeHostedCoreFrameFirst.workerFrame.shouldStopRunning &&
@@ -4100,7 +4105,8 @@ int main(int argc, char* argv[])
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
         nativeHostedCoreFrameSecond.frameTimestampMs >=
             nativeHostedCoreFrameFirst.frameTimestampMs &&
-        nativeHostedCoreFrameSecond.autosaveCompletions == 1U &&
+        nativeHostedCoreFrameSecond.sessionFrameInput.autosaveCompletions ==
+            1U &&
         nativeHostedCoreFrameSecond.workerFrame.nextSleepDurationMs == 10U &&
         !nativeHostedCoreFrameSecond.workerFrame.shutdownRequested &&
         !nativeHostedCoreFrameSecond.workerFrame.shouldStopRunning &&

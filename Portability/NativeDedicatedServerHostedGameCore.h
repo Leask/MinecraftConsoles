@@ -24,7 +24,6 @@ namespace ServerRuntime
             sessionFrameInput = {};
         NativeDedicatedServerHostedGameSessionSnapshot
             sessionSnapshot = {};
-        std::uint64_t autosaveCompletions = 0;
         std::uint64_t frameTimestampMs = 0;
     };
 

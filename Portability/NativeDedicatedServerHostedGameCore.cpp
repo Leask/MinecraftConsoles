@@ -45,8 +45,6 @@ namespace ServerRuntime
                     result.workerFrame,
                     hostedThreadActive,
                     result.frameTimestampMs);
-        result.autosaveCompletions =
-            result.workerFrame.autosaveCompletions;
         result.sessionFrameInput = sessionFrameResult.input;
         result.sessionSnapshot = sessionFrameResult.snapshot;
         return result;
