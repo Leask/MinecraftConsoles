@@ -798,6 +798,21 @@ namespace ServerRuntime
         return startupPayloadValidated;
     }
 
+    bool StartNativeDedicatedServerHostedGameSessionAndProjectStartup(
+        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
+        std::uint64_t startupThreadIterations,
+        std::uint64_t startupThreadDurationMs,
+        std::uint64_t nowMs)
+    {
+        const bool startupPayloadValidated =
+            StartNativeDedicatedServerHostedGameSession(initData);
+        ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
+            startupThreadIterations,
+            startupThreadDurationMs,
+            nowMs);
+        return startupPayloadValidated;
+    }
+
     void ObserveNativeDedicatedServerHostedGameSessionStartupResult(
         int startupResult,
         bool threadInvoked)

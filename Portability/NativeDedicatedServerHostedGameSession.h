@@ -166,6 +166,12 @@ namespace ServerRuntime
     bool StartNativeDedicatedServerHostedGameSession(
         const NativeDedicatedServerHostedGameRuntimeStubInitData &initData);
 
+    bool StartNativeDedicatedServerHostedGameSessionAndProjectStartup(
+        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
+        std::uint64_t startupThreadIterations,
+        std::uint64_t startupThreadDurationMs,
+        std::uint64_t nowMs = 0);
+
     void ObserveNativeDedicatedServerHostedGameSessionStartupResult(
         int startupResult,
         bool threadInvoked);

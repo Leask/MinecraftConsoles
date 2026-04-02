@@ -84,8 +84,8 @@ namespace ServerRuntime
         result.startupDurationMs =
             LceGetMonotonicMilliseconds() - startMs;
         result.payloadValidated =
-            StartNativeDedicatedServerHostedGameSession(*initData);
-        ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
+            StartNativeDedicatedServerHostedGameSessionAndProjectStartup(
+            *initData,
             result.startupIterations,
             result.startupDurationMs,
             LceGetMonotonicMilliseconds());
