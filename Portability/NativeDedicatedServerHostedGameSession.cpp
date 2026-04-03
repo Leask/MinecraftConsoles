@@ -821,12 +821,11 @@ namespace ServerRuntime
         std::uint64_t nowMs)
     {
         NativeDedicatedServerHostedGameSessionStartupResult result = {};
-        result.payloadValidated =
-            StartNativeDedicatedServerHostedGameSessionAndProjectStartup(
-                initData,
-                startupThreadIterations,
-                startupThreadDurationMs,
-                nowMs);
+        (void)StartNativeDedicatedServerHostedGameSessionAndProjectStartup(
+            initData,
+            startupThreadIterations,
+            startupThreadDurationMs,
+            nowMs);
         result.sessionSnapshot =
             GetNativeDedicatedServerHostedGameSessionSnapshot();
         return result;

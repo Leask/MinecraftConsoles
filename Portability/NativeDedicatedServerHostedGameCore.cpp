@@ -61,29 +61,27 @@ namespace ServerRuntime
             return result;
         }
 
-        result.payloadPresent = initData->saveData != nullptr;
-        result.startupIterations =
+        const std::uint64_t startupIterations =
             kNativeHostedStartupBaseIterations +
-            (result.payloadPresent ? 2ULL : 0ULL);
-        for (std::uint64_t i = 0; i < result.startupIterations; ++i)
+            (initData->saveData != nullptr ? 2ULL : 0ULL);
+        for (std::uint64_t i = 0; i < startupIterations; ++i)
         {
             LceSleepMilliseconds(kNativeHostedStartupStepDelayMs);
         }
 
-        result.startupDurationMs =
+        const std::uint64_t startupDurationMs =
             LceGetMonotonicMilliseconds() - startMs;
         const NativeDedicatedServerHostedGameSessionStartupResult
             sessionStartupResult =
                 StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
                     *initData,
-                    result.startupIterations,
-                    result.startupDurationMs,
+                    startupIterations,
+                    startupDurationMs,
                     LceGetMonotonicMilliseconds());
-        result.payloadValidated =
-            sessionStartupResult.payloadValidated;
         result.sessionSnapshot =
             sessionStartupResult.sessionSnapshot;
-        result.exitCode = result.payloadValidated ? 0 : -2;
+        result.exitCode =
+            result.sessionSnapshot.payloadValidated ? 0 : -2;
         return result;
     }
 

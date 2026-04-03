@@ -9,10 +9,6 @@ namespace ServerRuntime
     struct NativeDedicatedServerHostedGameCoreStartupResult
     {
         int exitCode = -1;
-        bool payloadPresent = false;
-        bool payloadValidated = false;
-        std::uint64_t startupIterations = 0;
-        std::uint64_t startupDurationMs = 0;
         NativeDedicatedServerHostedGameSessionSnapshot
             sessionSnapshot = {};
     };

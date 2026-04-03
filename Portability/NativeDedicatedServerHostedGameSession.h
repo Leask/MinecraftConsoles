@@ -169,7 +169,6 @@ namespace ServerRuntime
 
     struct NativeDedicatedServerHostedGameSessionStartupResult
     {
-        bool payloadValidated = false;
         NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot = {};
     };
 
