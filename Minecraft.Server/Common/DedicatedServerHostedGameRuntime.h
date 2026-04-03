@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DedicatedServerWorldBootstrap.h"
+#include "NativeDedicatedServerHostedGameRuntimeStub.h"
 
 namespace ServerRuntime
 {
@@ -25,6 +26,24 @@ namespace ServerRuntime
     int CompleteDedicatedServerHostedGameRuntimeStartup(
         int startupResult,
         bool threadInvoked);
+
+    inline void PopulateDedicatedServerHostedGameRuntimeStubInitData(
+        NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
+        const DedicatedServerHostedGamePlan &hostedGamePlan)
+    {
+        if (initData == nullptr)
+        {
+            return;
+        }
+
+        initData->localUsersMask = hostedGamePlan.localUsersMask;
+        initData->onlineGame = hostedGamePlan.onlineGame;
+        initData->privateGame = hostedGamePlan.privateGame;
+        initData->publicSlots = hostedGamePlan.publicSlots;
+        initData->privateSlots = hostedGamePlan.privateSlots;
+        initData->fakeLocalPlayerJoined =
+            hostedGamePlan.fakeLocalPlayerJoined;
+    }
 
     DedicatedServerHostedGameThreadProc
         *GetDedicatedServerHostedGameRuntimeThreadProc();

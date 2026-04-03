@@ -10,24 +10,6 @@ namespace ServerRuntime
 {
     namespace
     {
-        void PopulateNativeDedicatedServerHostedGameRuntimeStubInitData(
-            NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
-            const DedicatedServerHostedGamePlan &hostedGamePlan)
-        {
-            if (initData == nullptr)
-            {
-                return;
-            }
-
-            initData->localUsersMask = hostedGamePlan.localUsersMask;
-            initData->onlineGame = hostedGamePlan.onlineGame;
-            initData->privateGame = hostedGamePlan.privateGame;
-            initData->publicSlots = hostedGamePlan.publicSlots;
-            initData->privateSlots = hostedGamePlan.privateSlots;
-            initData->fakeLocalPlayerJoined =
-                hostedGamePlan.fakeLocalPlayerJoined;
-        }
-
         int StartPersistentNativeDedicatedServerHostedGameRuntime(
             const DedicatedServerHostedGamePlan &hostedGamePlan,
             DedicatedServerHostedGameThreadProc *threadProc,
@@ -38,7 +20,7 @@ namespace ServerRuntime
             NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot = {};
 
             ResetNativeDedicatedServerHostedGameSessionState();
-            PopulateNativeDedicatedServerHostedGameRuntimeStubInitData(
+            PopulateDedicatedServerHostedGameRuntimeStubInitData(
                 static_cast<
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
                         threadParam),

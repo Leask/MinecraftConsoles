@@ -1681,6 +1681,9 @@ int main(int argc, char* argv[])
     ServerRuntime::PopulateDedicatedServerNetworkGameInitData(
         &nativeHostedCoreStartupInitData,
         hostedGamePlan.networkInitPlan);
+    ServerRuntime::PopulateDedicatedServerHostedGameRuntimeStubInitData(
+        &nativeHostedCoreStartupInitData,
+        hostedGamePlan);
     nativeHostedCoreStartupInitData.saveData = nullptr;
     const ServerRuntime::NativeDedicatedServerHostedGameCoreStartupResult
         nativeHostedCoreStartupResult =
@@ -1696,6 +1699,9 @@ int main(int argc, char* argv[])
     ServerRuntime::PopulateDedicatedServerNetworkGameInitData(
         &nativeHostedCoreFrameInitData,
         hostedGamePlan.networkInitPlan);
+    ServerRuntime::PopulateDedicatedServerHostedGameRuntimeStubInitData(
+        &nativeHostedCoreFrameInitData,
+        hostedGamePlan);
     nativeHostedCoreFrameInitData.saveData = nullptr;
     const bool nativeHostedCoreFrameStarted =
         ServerRuntime::StartNativeDedicatedServerHostedGameSession(
