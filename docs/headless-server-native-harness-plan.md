@@ -42,6 +42,7 @@ loop.
 - the command fails fast on the first broken stage
 - local and remote bootstrap checks both use isolated storage roots
 - smoke output is captured into stage logs
+- a summary artifact is written under `build/harness/summary.txt`
 
 ## Phase 2: Runtime Ownership Convergence
 
