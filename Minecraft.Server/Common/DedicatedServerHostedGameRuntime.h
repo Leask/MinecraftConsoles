@@ -1,12 +1,11 @@
 #pragma once
 
+#include "DedicatedServerHostedGameThreadProc.h"
 #include "DedicatedServerWorldBootstrap.h"
 #include "NativeDedicatedServerHostedGameRuntimeStub.h"
 
 namespace ServerRuntime
 {
-    typedef int DedicatedServerHostedGameThreadProc(void* threadParam);
-
     struct DedicatedServerHostedGameStartupExecutionResult
     {
         int startupResult = 0;

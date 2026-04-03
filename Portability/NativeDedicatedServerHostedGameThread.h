@@ -2,7 +2,7 @@
 
 #include <lce_win32/lce_win32.h>
 
-#include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
+#include "Minecraft.Server/Common/DedicatedServerHostedGameThreadProc.h"
 
 namespace ServerRuntime
 {
