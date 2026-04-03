@@ -78,4 +78,42 @@ namespace ServerRuntime
         (void)context.release();
         return threadHandle;
     }
+
+    int RunNativeDedicatedServerHostedGameTransientThread(
+        DedicatedServerHostedGameThreadProc *threadProc,
+        void *threadParam,
+        bool *outThreadInvoked)
+    {
+        if (outThreadInvoked != nullptr)
+        {
+            *outThreadInvoked = false;
+        }
+
+        HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
+            threadProc,
+            threadParam);
+        if (threadHandle == nullptr || threadHandle == INVALID_HANDLE_VALUE)
+        {
+            return -1;
+        }
+
+        if (outThreadInvoked != nullptr)
+        {
+            *outThreadInvoked = true;
+        }
+
+        PumpNativeDedicatedServerHostedGameThreadUntilExit(threadHandle);
+        WaitForSingleObject(threadHandle, INFINITE);
+
+        DWORD threadExitCode = static_cast<DWORD>(-1);
+        if (!TryReadNativeDedicatedServerHostedGameThreadExitCode(
+                threadHandle,
+                &threadExitCode))
+        {
+            threadExitCode = static_cast<DWORD>(-1);
+        }
+
+        CloseHandle(threadHandle);
+        return static_cast<int>(threadExitCode);
+    }
 }

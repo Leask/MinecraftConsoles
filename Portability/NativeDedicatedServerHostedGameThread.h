@@ -9,4 +9,9 @@ namespace ServerRuntime
     HANDLE StartNativeDedicatedServerHostedGameThread(
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam);
+
+    int RunNativeDedicatedServerHostedGameTransientThread(
+        DedicatedServerHostedGameThreadProc *threadProc,
+        void *threadParam,
+        bool *outThreadInvoked);
 }

@@ -1,6 +1,4 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
-#include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
-#include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameSession.h"
@@ -12,12 +10,6 @@ namespace ServerRuntime
 {
     namespace
     {
-        struct NativeDedicatedServerHostedGameTransientThreadResult
-        {
-            bool threadInvoked = false;
-            int exitCode = -1;
-        };
-
         void PopulateNativeDedicatedServerHostedGameRuntimeStubInitData(
             NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
             const DedicatedServerHostedGamePlan &hostedGamePlan)
@@ -65,40 +57,6 @@ namespace ServerRuntime
                     : nullptr,
                 LceGetMonotonicMilliseconds());
         }
-
-        NativeDedicatedServerHostedGameTransientThreadResult
-        RunTransientNativeDedicatedServerHostedGameThread(
-            DedicatedServerHostedGameThreadProc *threadProc,
-            void *threadParam)
-        {
-            NativeDedicatedServerHostedGameTransientThreadResult result = {};
-            HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
-                threadProc,
-                threadParam);
-            if (threadHandle == nullptr || threadHandle == INVALID_HANDLE_VALUE)
-            {
-                return result;
-            }
-
-            result.threadInvoked = true;
-            while (WaitForSingleObject(threadHandle, 10) == WAIT_TIMEOUT &&
-                !ServerRuntime::IsDedicatedServerShutdownRequested())
-            {
-                TickDedicatedServerPlatformRuntime();
-                HandleDedicatedServerPlatformActions();
-            }
-
-            WaitForSingleObject(threadHandle, INFINITE);
-            DWORD threadExitCode = static_cast<DWORD>(-1);
-            if (GetExitCodeThread(threadHandle, &threadExitCode))
-            {
-                result.exitCode = static_cast<int>(threadExitCode);
-            }
-
-            CloseHandle(threadHandle);
-            return result;
-        }
-
     }
 
     int StartDedicatedServerHostedGameRuntime(
@@ -126,12 +84,13 @@ namespace ServerRuntime
                 threadParam);
         }
 
-        const NativeDedicatedServerHostedGameTransientThreadResult result =
-            RunTransientNativeDedicatedServerHostedGameThread(
-                threadProc,
-                threadParam);
+        bool threadInvoked = false;
+        const int exitCode = RunNativeDedicatedServerHostedGameTransientThread(
+            threadProc,
+            threadParam,
+            &threadInvoked);
         return CompleteDedicatedServerHostedGameRuntimeStartup(
-            result.exitCode,
-            result.threadInvoked);
+            exitCode,
+            threadInvoked);
     }
 }
