@@ -88,16 +88,11 @@ namespace ServerRuntime
 {
     static bool PrepareNativeDedicatedServerHostedGameHostStartup();
 
-    void StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
+    int StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam,
-        int *outStartupResult,
         bool *outThreadInvoked)
     {
-        if (outStartupResult != nullptr)
-        {
-            *outStartupResult = -1;
-        }
         if (outThreadInvoked != nullptr)
         {
             *outThreadInvoked = false;
@@ -105,7 +100,7 @@ namespace ServerRuntime
 
         if (!PrepareNativeDedicatedServerHostedGameHostStartup())
         {
-            return;
+            return -1;
         }
 
         HANDLE threadHandle = StartNativeDedicatedServerHostedGameThread(
@@ -114,7 +109,7 @@ namespace ServerRuntime
         if (threadHandle == nullptr || threadHandle == INVALID_HANDLE_VALUE)
         {
             ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
-            return;
+            return -1;
         }
 
         SetNativeDedicatedServerHostedGameHostThreadHandle(threadHandle);
@@ -125,11 +120,7 @@ namespace ServerRuntime
         if (WaitForNativeDedicatedServerHostedGameHostThreadReady(
                 threadHandle))
         {
-            if (outStartupResult != nullptr)
-            {
-                *outStartupResult = 0;
-            }
-            return;
+            return 0;
         }
 
         WaitForSingleObject(threadHandle, INFINITE);
@@ -144,10 +135,7 @@ namespace ServerRuntime
         CloseHandle(threadHandle);
         ReleaseNativeDedicatedServerHostedGameHostThreadHandle(false);
         ReleaseNativeDedicatedServerHostedGameHostStartupReadyEvent();
-        if (outStartupResult != nullptr)
-        {
-            *outStartupResult = static_cast<int>(threadExitCode);
-        }
+        return static_cast<int>(threadExitCode);
     }
 
     static bool PrepareNativeDedicatedServerHostedGameHostStartup()

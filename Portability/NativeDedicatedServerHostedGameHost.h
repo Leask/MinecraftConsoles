@@ -12,9 +12,8 @@ namespace ServerRuntime
         DWORD timeoutMs,
         DWORD *outExitCode);
 
-    void StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
+    int StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam,
-        int *outStartupResult,
         bool *outThreadInvoked);
 }

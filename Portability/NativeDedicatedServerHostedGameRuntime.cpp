@@ -15,7 +15,6 @@ namespace ServerRuntime
             DedicatedServerHostedGameThreadProc *threadProc,
             void *threadParam)
         {
-            int startupResult = -1;
             bool threadInvoked = false;
 
             ResetNativeDedicatedServerHostedGameSessionState();
@@ -24,10 +23,10 @@ namespace ServerRuntime
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
                         threadParam),
                 hostedGamePlan);
-            StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
+            const int startupResult =
+                StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
                 threadProc,
                 threadParam,
-                &startupResult,
                 &threadInvoked);
 
             const NativeDedicatedServerHostedGameSessionSnapshot
