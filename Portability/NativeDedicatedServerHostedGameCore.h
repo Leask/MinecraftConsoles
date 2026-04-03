@@ -16,8 +16,6 @@ namespace ServerRuntime
     struct NativeDedicatedServerHostedGameCoreFrameResult
     {
         NativeDedicatedServerHostedGameWorkerFrameResult workerFrame = {};
-        NativeDedicatedServerHostedGameSessionFrameInput
-            sessionFrameInput = {};
         NativeDedicatedServerHostedGameSessionSnapshot
             sessionSnapshot = {};
         std::uint64_t frameTimestampMs = 0;

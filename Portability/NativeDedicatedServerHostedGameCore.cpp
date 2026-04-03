@@ -38,7 +38,6 @@ namespace ServerRuntime
                     result.workerFrame,
                     hostedThreadActive,
                     result.frameTimestampMs);
-        result.sessionFrameInput = sessionFrameResult.input;
         result.sessionSnapshot = sessionFrameResult.snapshot;
         return result;
     }
