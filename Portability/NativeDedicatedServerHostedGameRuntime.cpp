@@ -17,7 +17,6 @@ namespace ServerRuntime
         {
             int startupResult = -1;
             bool threadInvoked = false;
-            NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot = {};
 
             ResetNativeDedicatedServerHostedGameSessionState();
             PopulateDedicatedServerHostedGameRuntimeStubInitData(
@@ -29,8 +28,13 @@ namespace ServerRuntime
                 threadProc,
                 threadParam,
                 &startupResult,
-                &threadInvoked,
-                &sessionSnapshot);
+                &threadInvoked);
+
+            const NativeDedicatedServerHostedGameSessionSnapshot
+                sessionSnapshot =
+                    startupResult == 0
+                        ? GetNativeDedicatedServerHostedGameSessionSnapshot()
+                        : NativeDedicatedServerHostedGameSessionSnapshot{};
             return FinalizeNativeDedicatedServerHostedGameSessionStartupAndProject(
                 startupResult,
                 threadInvoked,

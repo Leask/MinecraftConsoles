@@ -2,7 +2,6 @@
 
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
-#include "NativeDedicatedServerHostedGameSession.h"
 #include "NativeDedicatedServerHostedGameThread.h"
 
 namespace
@@ -93,8 +92,7 @@ namespace ServerRuntime
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam,
         int *outStartupResult,
-        bool *outThreadInvoked,
-        NativeDedicatedServerHostedGameSessionSnapshot *outSessionSnapshot)
+        bool *outThreadInvoked)
     {
         if (outStartupResult != nullptr)
         {
@@ -103,11 +101,6 @@ namespace ServerRuntime
         if (outThreadInvoked != nullptr)
         {
             *outThreadInvoked = false;
-        }
-        if (outSessionSnapshot != nullptr)
-        {
-            *outSessionSnapshot =
-                NativeDedicatedServerHostedGameSessionSnapshot{};
         }
 
         if (!PrepareNativeDedicatedServerHostedGameHostStartup())
@@ -132,11 +125,6 @@ namespace ServerRuntime
         if (WaitForNativeDedicatedServerHostedGameHostThreadReady(
                 threadHandle))
         {
-            if (outSessionSnapshot != nullptr)
-            {
-                *outSessionSnapshot =
-                    GetNativeDedicatedServerHostedGameSessionSnapshot();
-            }
             if (outStartupResult != nullptr)
             {
                 *outStartupResult = 0;

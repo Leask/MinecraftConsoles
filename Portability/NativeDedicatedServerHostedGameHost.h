@@ -6,8 +6,6 @@
 
 namespace ServerRuntime
 {
-    struct NativeDedicatedServerHostedGameSessionSnapshot;
-
     void ResetNativeDedicatedServerHostedGameHostState();
 
     bool WaitForNativeDedicatedServerHostedGameHostStop(
@@ -18,6 +16,5 @@ namespace ServerRuntime
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam,
         int *outStartupResult,
-        bool *outThreadInvoked,
-        NativeDedicatedServerHostedGameSessionSnapshot *outSessionSnapshot);
+        bool *outThreadInvoked);
 }
