@@ -9,6 +9,8 @@
 
 namespace ServerRuntime
 {
+    bool SignalNativeDedicatedServerHostedGameHostReady();
+
     namespace
     {
         int RunNativeDedicatedServerHostedGameThread(void *threadParam);

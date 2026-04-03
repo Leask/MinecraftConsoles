@@ -8,8 +8,6 @@ namespace ServerRuntime
 {
     struct NativeDedicatedServerHostedGameSessionSnapshot;
 
-    bool SignalNativeDedicatedServerHostedGameHostReady();
-
     void ResetNativeDedicatedServerHostedGameHostState();
 
     bool WaitForNativeDedicatedServerHostedGameHostStop(
