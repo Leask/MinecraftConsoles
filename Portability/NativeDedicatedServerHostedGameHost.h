@@ -3,17 +3,10 @@
 #include <lce_win32/lce_win32.h>
 
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
-#include "NativeDedicatedServerHostedGameSession.h"
 
 namespace ServerRuntime
 {
-    struct NativeDedicatedServerHostedGameHostStartResult
-    {
-        bool threadInvoked = false;
-        int startupResult = -1;
-        NativeDedicatedServerHostedGameSessionSnapshot
-            sessionSnapshot = {};
-    };
+    struct NativeDedicatedServerHostedGameSessionSnapshot;
 
     bool SignalNativeDedicatedServerHostedGameHostReady();
 
@@ -23,8 +16,10 @@ namespace ServerRuntime
         DWORD timeoutMs,
         DWORD *outExitCode);
 
-    NativeDedicatedServerHostedGameHostStartResult
-    StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
+    void StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
         DedicatedServerHostedGameThreadProc *threadProc,
-        void *threadParam);
+        void *threadParam,
+        int *outStartupResult,
+        bool *outThreadInvoked,
+        NativeDedicatedServerHostedGameSessionSnapshot *outSessionSnapshot);
 }
