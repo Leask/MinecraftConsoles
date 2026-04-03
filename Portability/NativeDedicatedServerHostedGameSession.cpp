@@ -813,22 +813,19 @@ namespace ServerRuntime
         return startupPayloadValidated;
     }
 
-    NativeDedicatedServerHostedGameSessionStartupResult
+    NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
         const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
         std::uint64_t startupThreadIterations,
         std::uint64_t startupThreadDurationMs,
         std::uint64_t nowMs)
     {
-        NativeDedicatedServerHostedGameSessionStartupResult result = {};
         (void)StartNativeDedicatedServerHostedGameSessionAndProjectStartup(
             initData,
             startupThreadIterations,
             startupThreadDurationMs,
             nowMs);
-        result.sessionSnapshot =
-            GetNativeDedicatedServerHostedGameSessionSnapshot();
-        return result;
+        return GetNativeDedicatedServerHostedGameSessionSnapshot();
     }
 
     void ObserveNativeDedicatedServerHostedGameSessionStartupResult(

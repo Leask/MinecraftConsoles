@@ -70,15 +70,12 @@ namespace ServerRuntime
 
         const std::uint64_t startupDurationMs =
             LceGetMonotonicMilliseconds() - startMs;
-        const NativeDedicatedServerHostedGameSessionStartupResult
-            sessionStartupResult =
-                StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
-                    *initData,
-                    startupIterations,
-                    startupDurationMs,
-                    LceGetMonotonicMilliseconds());
         result.sessionSnapshot =
-            sessionStartupResult.sessionSnapshot;
+            StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
+                *initData,
+                startupIterations,
+                startupDurationMs,
+                LceGetMonotonicMilliseconds());
         result.exitCode =
             result.sessionSnapshot.payloadValidated ? 0 : -2;
         return result;

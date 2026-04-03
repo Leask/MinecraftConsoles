@@ -167,11 +167,6 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameSessionSnapshot snapshot = {};
     };
 
-    struct NativeDedicatedServerHostedGameSessionStartupResult
-    {
-        NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot = {};
-    };
-
     struct NativeDedicatedServerHostedGameSessionStopResult
     {
         NativeDedicatedServerHostedGameWorkerSnapshot workerSnapshot = {};
@@ -184,7 +179,7 @@ namespace ServerRuntime
     bool StartNativeDedicatedServerHostedGameSession(
         const NativeDedicatedServerHostedGameRuntimeStubInitData &initData);
 
-    NativeDedicatedServerHostedGameSessionStartupResult
+    NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
         const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
         std::uint64_t startupThreadIterations,
