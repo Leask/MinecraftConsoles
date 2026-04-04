@@ -191,18 +191,11 @@ namespace ServerRuntime
         bool threadInvoked,
         std::uint64_t nowMs = 0);
 
-    void TickNativeDedicatedServerHostedGameSessionFrameAndProject(
-        const NativeDedicatedServerHostedGameSessionFrameInput &frameInput,
-        std::uint64_t nowMs = 0);
-
     NativeDedicatedServerHostedGameSessionFrameResult
     TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
         const NativeDedicatedServerHostedGameWorkerFrameResult &workerFrame,
         bool hostedThreadActive = true,
         std::uint64_t nowMs = 0);
-
-    void ObserveNativeDedicatedServerHostedGameSessionAutosaves(
-        std::uint64_t autosaveCompletions);
 
     void ObserveNativeDedicatedServerHostedGameSessionAutosavesAndProject(
         std::uint64_t autosaveCompletions,
