@@ -320,10 +320,6 @@ namespace ServerRuntime
         std::uint64_t stoppedMs = 0,
         std::uint64_t nowMs = 0);
 
-    void ObserveNativeDedicatedServerHostedGameSessionThreadState(
-        bool hostedThreadActive,
-        std::uint64_t hostedThreadTicks);
-
     void ObserveNativeDedicatedServerHostedGameSessionThreadStateAndProject(
         bool hostedThreadActive,
         std::uint64_t hostedThreadTicks,
@@ -366,9 +362,6 @@ namespace ServerRuntime
         std::uint64_t lastProcessedCommandId,
         ENativeDedicatedServerHostedGameWorkerCommandKind
             lastProcessedCommandKind);
-
-    void ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
-        const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot);
 
     void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
         std::uint64_t nowMs = 0);
