@@ -13,6 +13,11 @@
 
 namespace ServerRuntime
 {
+    void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
+        std::uint64_t startupThreadIterations,
+        std::uint64_t startupThreadDurationMs,
+        std::uint64_t nowMs);
+
     namespace
     {
         static constexpr std::uint64_t kNativeHostedSessionHashOffset =
@@ -748,13 +753,14 @@ namespace ServerRuntime
     }
 
     bool StartNativeDedicatedServerHostedGameSessionAndProjectStartup(
-        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
+        const NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
         std::uint64_t startupThreadIterations,
         std::uint64_t startupThreadDurationMs,
         std::uint64_t nowMs)
     {
         const bool startupPayloadValidated =
-            StartNativeDedicatedServerHostedGameSession(initData);
+            initData != nullptr &&
+            StartNativeDedicatedServerHostedGameSession(*initData);
         ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
             startupThreadIterations,
             startupThreadDurationMs,
@@ -764,7 +770,7 @@ namespace ServerRuntime
 
     NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
-        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
+        const NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
         std::uint64_t startupThreadIterations,
         std::uint64_t startupThreadDurationMs,
         std::uint64_t nowMs)

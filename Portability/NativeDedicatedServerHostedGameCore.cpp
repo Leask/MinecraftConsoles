@@ -48,35 +48,28 @@ namespace ServerRuntime
     {
         NativeDedicatedServerHostedGameCoreStartupResult result = {};
         const std::uint64_t startMs = LceGetMonotonicMilliseconds();
-        if (initData == nullptr)
+        std::uint64_t startupIterations = 0;
+        if (initData != nullptr)
         {
-            ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
-                0,
-                0,
-                LceGetMonotonicMilliseconds());
-            result.exitCode = -2;
-            result.sessionSnapshot =
-                GetNativeDedicatedServerHostedGameSessionSnapshot();
-            return result;
-        }
-
-        const std::uint64_t startupIterations =
-            kNativeHostedStartupBaseIterations +
-            (initData->saveData != nullptr ? 2ULL : 0ULL);
-        for (std::uint64_t i = 0; i < startupIterations; ++i)
-        {
-            LceSleepMilliseconds(kNativeHostedStartupStepDelayMs);
+            startupIterations =
+                kNativeHostedStartupBaseIterations +
+                (initData->saveData != nullptr ? 2ULL : 0ULL);
+            for (std::uint64_t i = 0; i < startupIterations; ++i)
+            {
+                LceSleepMilliseconds(kNativeHostedStartupStepDelayMs);
+            }
         }
 
         const std::uint64_t startupDurationMs =
             LceGetMonotonicMilliseconds() - startMs;
         result.sessionSnapshot =
             StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
-                *initData,
+                initData,
                 startupIterations,
                 startupDurationMs,
                 LceGetMonotonicMilliseconds());
         result.exitCode =
+            initData != nullptr &&
             result.sessionSnapshot.payloadValidated ? 0 : -2;
         return result;
     }

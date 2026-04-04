@@ -109,6 +109,23 @@ Immediate deliverables:
 2. reduce remaining `host/thread/core` glue only when it improves ownership
 3. keep stage commits small, attributable, and dual-platform green
 
+## Active Sprint: Startup Convergence
+
+### Goal
+
+Make native hosted startup ownership explicit and low-friction so that:
+
+- `session` owns startup state and startup telemetry
+- `core` only drives startup pacing and consumes a single startup result
+- `runtime` only coordinates persistent vs transient startup paths
+- every startup refactor still goes through the unattended harness
+
+### Immediate Iteration Targets
+
+1. move `null initData` startup handling into the session-side startup helper
+2. remove startup telemetry writes from `core` when `session` can own them
+3. keep shrinking startup-only public helper surface after each green harness run
+
 ## Next Stage Queue
 
 After the harness is in place, the next unattended iterations should target:

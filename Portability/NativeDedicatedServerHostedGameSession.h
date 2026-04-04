@@ -181,7 +181,7 @@ namespace ServerRuntime
 
     NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
-        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData,
+        const NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
         std::uint64_t startupThreadIterations,
         std::uint64_t startupThreadDurationMs,
         std::uint64_t nowMs = 0);
@@ -335,11 +335,6 @@ namespace ServerRuntime
 
     void SignalNativeDedicatedServerHostedGameSessionThreadStopped(
         std::uint64_t hostedThreadTicks,
-        std::uint64_t nowMs = 0);
-
-    void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
-        std::uint64_t startupThreadIterations,
-        std::uint64_t startupThreadDurationMs,
         std::uint64_t nowMs = 0);
 
     void ObserveNativeDedicatedServerHostedGameSessionWorkerState(
