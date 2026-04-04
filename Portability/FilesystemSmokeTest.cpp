@@ -1703,13 +1703,15 @@ int main(int argc, char* argv[])
         &nativeHostedCoreFrameInitData,
         hostedGamePlan);
     nativeHostedCoreFrameInitData.saveData = nullptr;
+    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+        nativeHostedCoreFrameStartupSnapshot =
+            ServerRuntime::StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
+                &nativeHostedCoreFrameInitData,
+                0,
+                0,
+                LceGetMonotonicMilliseconds());
     const bool nativeHostedCoreFrameStarted =
-        ServerRuntime::StartNativeDedicatedServerHostedGameSession(
-            nativeHostedCoreFrameInitData);
-    ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
-        0,
-        true,
-        LceGetMonotonicMilliseconds());
+        nativeHostedCoreFrameStartupSnapshot.payloadValidated;
     ServerRuntime::RequestNativeDedicatedServerHostedGameSessionAutosave(
         2,
         LceGetMonotonicMilliseconds());

@@ -176,9 +176,6 @@ namespace ServerRuntime
 
     void ResetNativeDedicatedServerHostedGameSessionState();
 
-    bool StartNativeDedicatedServerHostedGameSession(
-        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData);
-
     NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
         const NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
