@@ -191,18 +191,6 @@ namespace ServerRuntime
         bool threadInvoked,
         std::uint64_t nowMs = 0);
 
-    void ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
-        const NativeDedicatedServerHostedGameSessionSnapshot &snapshot,
-        int startupResult,
-        bool threadInvoked,
-        std::uint64_t nowMs = 0);
-
-    int FinalizeNativeDedicatedServerHostedGameSessionStartupAndProject(
-        int startupResult,
-        bool threadInvoked,
-        const NativeDedicatedServerHostedGameSessionSnapshot *snapshot = nullptr,
-        std::uint64_t nowMs = 0);
-
     void TickNativeDedicatedServerHostedGameSessionFrameAndProject(
         const NativeDedicatedServerHostedGameSessionFrameInput &frameInput,
         std::uint64_t nowMs = 0);

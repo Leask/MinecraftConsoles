@@ -29,18 +29,11 @@ namespace ServerRuntime
                 threadParam,
                 &threadInvoked);
 
-            const NativeDedicatedServerHostedGameSessionSnapshot
-                sessionSnapshot =
-                    startupResult == 0
-                        ? GetNativeDedicatedServerHostedGameSessionSnapshot()
-                        : NativeDedicatedServerHostedGameSessionSnapshot{};
-            return FinalizeNativeDedicatedServerHostedGameSessionStartupAndProject(
+            ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
                 startupResult,
                 threadInvoked,
-                startupResult == 0
-                    ? &sessionSnapshot
-                    : nullptr,
                 LceGetMonotonicMilliseconds());
+            return startupResult;
         }
     }
 

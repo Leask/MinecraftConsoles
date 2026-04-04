@@ -439,57 +439,6 @@ namespace ServerRuntime
             }
         }
 
-        NativeDedicatedServerHostedGameSessionSnapshot
-        BuildNativeHostedSessionStartupProjectionSnapshot(
-            const NativeDedicatedServerHostedGameSessionSnapshot &snapshot,
-            int startupResult,
-            bool threadInvoked)
-        {
-            NativeDedicatedServerHostedGameSessionSnapshot
-                projectedSnapshot = snapshot;
-            projectedSnapshot.startupResult = startupResult;
-            projectedSnapshot.threadInvoked = threadInvoked;
-
-            if (projectedSnapshot.runtimePhase ==
-                eDedicatedServerHostedGameRuntimePhase_Stopped)
-            {
-                projectedSnapshot.active = false;
-                return projectedSnapshot;
-            }
-
-            if (startupResult != 0)
-            {
-                projectedSnapshot.active = false;
-                projectedSnapshot.runtimePhase =
-                    eDedicatedServerHostedGameRuntimePhase_Failed;
-                return projectedSnapshot;
-            }
-
-            projectedSnapshot.active =
-                projectedSnapshot.hostedThreadActive ||
-                projectedSnapshot.threadInvoked ||
-                projectedSnapshot.payloadValidated ||
-                startupResult == 0;
-            if (projectedSnapshot.appShutdownRequested ||
-                projectedSnapshot.gameplayHalted)
-            {
-                projectedSnapshot.runtimePhase =
-                    eDedicatedServerHostedGameRuntimePhase_ShutdownRequested;
-                return projectedSnapshot;
-            }
-
-            if (projectedSnapshot.hostedThreadActive ||
-                projectedSnapshot.threadInvoked)
-            {
-                projectedSnapshot.runtimePhase =
-                    eDedicatedServerHostedGameRuntimePhase_Running;
-                return projectedSnapshot;
-            }
-
-            projectedSnapshot.runtimePhase =
-                eDedicatedServerHostedGameRuntimePhase_Startup;
-            return projectedSnapshot;
-        }
     }
 
     void ResetNativeDedicatedServerHostedGameSessionCoreState()
@@ -850,48 +799,6 @@ namespace ServerRuntime
             startupResult,
             threadInvoked);
         ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
-    }
-
-    void ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
-        const NativeDedicatedServerHostedGameSessionSnapshot &snapshot,
-        int startupResult,
-        bool threadInvoked,
-        std::uint64_t nowMs)
-    {
-        ObserveNativeDedicatedServerHostedGameSessionStartupResult(
-            startupResult,
-            threadInvoked);
-        ProjectNativeDedicatedServerHostedGameSessionSnapshotToRuntimeSnapshot(
-            BuildNativeHostedSessionStartupProjectionSnapshot(
-                snapshot,
-                startupResult,
-                threadInvoked),
-            nowMs);
-    }
-
-    int FinalizeNativeDedicatedServerHostedGameSessionStartupAndProject(
-        int startupResult,
-        bool threadInvoked,
-        const NativeDedicatedServerHostedGameSessionSnapshot *snapshot,
-        std::uint64_t nowMs)
-    {
-        if (snapshot != nullptr)
-        {
-            ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
-                *snapshot,
-                startupResult,
-                threadInvoked,
-                nowMs);
-        }
-        else
-        {
-            ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
-                startupResult,
-                threadInvoked,
-                nowMs);
-        }
-
-        return startupResult;
     }
 
     void TickNativeDedicatedServerHostedGameSession(
