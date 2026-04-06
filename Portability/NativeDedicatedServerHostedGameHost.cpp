@@ -2,7 +2,13 @@
 
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
-#include "NativeDedicatedServerHostedGameThread.h"
+
+namespace ServerRuntime
+{
+    HANDLE StartNativeDedicatedServerHostedGameThread(
+        DedicatedServerHostedGameThreadProc *threadProc,
+        void *threadParam);
+}
 
 namespace
 {

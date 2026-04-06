@@ -2,12 +2,16 @@
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameSession.h"
-#include "NativeDedicatedServerHostedGameThread.h"
 
 #include "lce_time/lce_time.h"
 
 namespace ServerRuntime
 {
+    int RunNativeDedicatedServerHostedGameTransientThread(
+        DedicatedServerHostedGameThreadProc *threadProc,
+        void *threadParam,
+        bool *outThreadInvoked);
+
     namespace
     {
         int StartPersistentNativeDedicatedServerHostedGameRuntime(

@@ -1,7 +1,8 @@
-#include "NativeDedicatedServerHostedGameThread.h"
-
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
+#include "Minecraft.Server/Common/DedicatedServerHostedGameThreadProc.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
+
+#include <lce_win32/lce_win32.h>
 
 #include <memory>
 
