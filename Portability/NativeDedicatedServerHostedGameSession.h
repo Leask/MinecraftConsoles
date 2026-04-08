@@ -286,23 +286,6 @@ namespace ServerRuntime
         std::uint64_t stoppedMs = 0,
         std::uint64_t nowMs = 0);
 
-    void ObserveNativeDedicatedServerHostedGameSessionThreadStateAndProject(
-        bool hostedThreadActive,
-        std::uint64_t hostedThreadTicks,
-        std::uint64_t nowMs = 0);
-
-    void ObserveNativeDedicatedServerHostedGameSessionThreadStateAndWorkerProject(
-        bool hostedThreadActive,
-        std::uint64_t hostedThreadTicks,
-        std::uint64_t nowMs = 0);
-
-    void SignalNativeDedicatedServerHostedGameSessionThreadReady(
-        std::uint64_t nowMs = 0);
-
-    void SignalNativeDedicatedServerHostedGameSessionThreadStopped(
-        std::uint64_t hostedThreadTicks,
-        std::uint64_t nowMs = 0);
-
     void ObserveNativeDedicatedServerHostedGameSessionWorkerState(
         std::uint64_t pendingWorldActionTicks,
         std::uint64_t pendingAutosaveCommands,

@@ -10,6 +10,11 @@
 namespace ServerRuntime
 {
     bool SignalNativeDedicatedServerHostedGameHostReady();
+    void SignalNativeDedicatedServerHostedGameSessionThreadReady(
+        std::uint64_t nowMs = 0);
+    void SignalNativeDedicatedServerHostedGameSessionThreadStopped(
+        std::uint64_t hostedThreadTicks,
+        std::uint64_t nowMs = 0);
 
     namespace
     {
