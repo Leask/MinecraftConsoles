@@ -57,6 +57,11 @@
 
 namespace ServerRuntime
 {
+    void ResetNativeDedicatedServerHostedGameSessionState();
+
+    void StopNativeDedicatedServerHostedGameSession(
+        std::uint64_t stoppedMs = 0);
+
     void ObserveNativeDedicatedServerHostedGameSessionActivity(
         std::uint64_t acceptedConnections,
         std::uint64_t remoteCommands,

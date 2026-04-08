@@ -9,6 +9,8 @@
 
 namespace ServerRuntime
 {
+    void ResetNativeDedicatedServerHostedGameSessionState();
+
     void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
         std::uint64_t nowMs = 0);
     void RequestNativeDedicatedServerHostedGameSessionAutosave(

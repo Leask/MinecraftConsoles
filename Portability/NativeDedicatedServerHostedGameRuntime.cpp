@@ -7,6 +7,8 @@
 
 namespace ServerRuntime
 {
+    void ResetNativeDedicatedServerHostedGameSessionState();
+
     int StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam,

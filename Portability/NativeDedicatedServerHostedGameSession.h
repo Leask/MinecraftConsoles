@@ -174,17 +174,12 @@ namespace ServerRuntime
         std::uint64_t autosaveCompletions = 0;
     };
 
-    void ResetNativeDedicatedServerHostedGameSessionState();
-
     NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
         const NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
         std::uint64_t startupThreadIterations,
         std::uint64_t startupThreadDurationMs,
         std::uint64_t nowMs = 0);
-
-    void StopNativeDedicatedServerHostedGameSession(
-        std::uint64_t stoppedMs = 0);
 
     bool IsNativeDedicatedServerHostedGameSessionRunning();
 
