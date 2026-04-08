@@ -23,6 +23,11 @@ sync_excludes=(
 )
 
 current_step=''
+local_build_ok=0
+local_bootstrap_ok=0
+remote_sync_ok=0
+remote_build_ok=0
+remote_bootstrap_ok=0
 
 write_summary_header() {
     local git_head
@@ -88,6 +93,8 @@ run_local_build_and_test() {
         "$local_build_preset" \
         --target \
         "$local_test_target"
+    local_build_ok=1
+    append_summary_line "local.build_test=ok"
 }
 
 run_local_bootstrap() {
@@ -108,6 +115,8 @@ run_local_bootstrap() {
         127.0.0.1 \
         -name \
         HarnessLocal
+    local_bootstrap_ok=1
+    append_summary_line "local.bootstrap=ok"
 }
 
 sync_remote_tree() {
@@ -119,6 +128,8 @@ sync_remote_tree() {
         "${sync_excludes[@]}" \
         "$repo_root/" \
         "$remote_host:$remote_root/"
+    remote_sync_ok=1
+    append_summary_line "remote.sync=ok"
 }
 
 run_remote_build_and_test() {
@@ -152,6 +163,8 @@ EOF
         ssh \
         "$remote_host" \
         "$remote_cmd"
+    remote_build_ok=1
+    append_summary_line "remote.build_test=ok"
 }
 
 run_remote_bootstrap() {
@@ -180,6 +193,8 @@ EOF
         ssh \
         "$remote_host" \
         "$remote_cmd"
+    remote_bootstrap_ok=1
+    append_summary_line "remote.bootstrap=ok"
 }
 
 main() {
@@ -197,6 +212,19 @@ main() {
     sync_remote_tree
     run_remote_build_and_test
     run_remote_bootstrap
+
+    if [[ "$local_build_ok" -eq 1 && "$local_bootstrap_ok" -eq 1 ]]; then
+        append_summary_line "platform.local=ok"
+    fi
+    if [[ "$remote_sync_ok" -eq 1 && "$remote_build_ok" -eq 1 &&
+        "$remote_bootstrap_ok" -eq 1 ]]; then
+        append_summary_line "platform.remote=ok"
+    fi
+    if [[ "$local_build_ok" -eq 1 && "$local_bootstrap_ok" -eq 1 &&
+        "$remote_sync_ok" -eq 1 && "$remote_build_ok" -eq 1 &&
+        "$remote_bootstrap_ok" -eq 1 ]]; then
+        append_summary_line "goal.headless_server_native_runtime=complete"
+    fi
 
     mark_summary_success
     echo "Harness completed successfully."

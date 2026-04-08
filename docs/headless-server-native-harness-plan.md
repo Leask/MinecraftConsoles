@@ -101,7 +101,7 @@ Immediate deliverables:
 
 ## Active Stage
 
-Stage 2 is active.
+Stage 2 is complete.
 
 Immediate deliverables:
 
@@ -125,6 +125,29 @@ Make native hosted startup ownership explicit and low-friction so that:
 1. move `null initData` startup handling into the session-side startup helper
 2. remove startup telemetry writes from `core` when `session` can own them
 3. keep shrinking startup-only public helper surface after each green harness run
+
+## Completion Snapshot
+
+The `headless server-native runtime` goal is complete.
+
+Completed evidence:
+
+- `Minecraft.Server.NativeBootstrap` is the only shipped native entrypoint
+- the unattended harness validates macOS local build/smoke/bootstrap
+- the same harness validates Linux `elm` sync/build/smoke/bootstrap
+- all 11 native smoke cases stay green on both platforms
+- create/load/save/reload/save-on-exit/remote-shell/live-accept remain covered
+- the remaining native public surface is reduced to core owner APIs rather than
+  projection glue
+- `build/harness/summary.txt` now records per-platform success and a final
+  `goal.headless_server_native_runtime=complete` marker
+
+Stage status:
+
+- Phase 1: complete
+- Phase 2: complete
+- Phase 3: complete
+- Phase 4: complete
 
 ## Next Stage Queue
 
