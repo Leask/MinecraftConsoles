@@ -13,6 +13,13 @@
 
 namespace ServerRuntime
 {
+    bool IsNativeDedicatedServerHostedGameSessionRunning();
+
+    std::uint64_t GetNativeDedicatedServerHostedGameSessionThreadTicks();
+
+    NativeDedicatedServerHostedGameSessionSnapshot
+    GetNativeDedicatedServerHostedGameSessionSnapshot();
+
     void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
         std::uint64_t startupThreadIterations,
         std::uint64_t startupThreadDurationMs,

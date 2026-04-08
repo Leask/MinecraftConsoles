@@ -10,6 +10,13 @@
 
 namespace ServerRuntime
 {
+    NativeDedicatedServerHostedGameSessionSnapshot
+    StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
+        const NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
+        std::uint64_t startupThreadIterations,
+        std::uint64_t startupThreadDurationMs,
+        std::uint64_t nowMs = 0);
+
     NativeDedicatedServerHostedGameSessionFrameResult
     TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
         const NativeDedicatedServerHostedGameWorkerFrameResult &workerFrame,

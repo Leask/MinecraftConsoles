@@ -24,6 +24,9 @@
 
 namespace ServerRuntime
 {
+    NativeDedicatedServerHostedGameSessionSnapshot
+    GetNativeDedicatedServerHostedGameSessionSnapshot();
+
     void FinalizeNativeDedicatedServerHostedGameSessionAndProject(
         bool initialSaveRequested,
         bool initialSaveCompleted,

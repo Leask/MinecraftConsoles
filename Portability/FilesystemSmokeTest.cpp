@@ -57,6 +57,20 @@
 
 namespace ServerRuntime
 {
+    NativeDedicatedServerHostedGameSessionSnapshot
+    StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
+        const NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
+        std::uint64_t startupThreadIterations,
+        std::uint64_t startupThreadDurationMs,
+        std::uint64_t nowMs = 0);
+
+    bool IsNativeDedicatedServerHostedGameSessionRunning();
+
+    std::uint64_t GetNativeDedicatedServerHostedGameSessionThreadTicks();
+
+    NativeDedicatedServerHostedGameSessionSnapshot
+    GetNativeDedicatedServerHostedGameSessionSnapshot();
+
     void ResetNativeDedicatedServerHostedGameSessionState();
 
     void StopNativeDedicatedServerHostedGameSession(
