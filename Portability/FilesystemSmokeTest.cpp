@@ -55,6 +55,12 @@
 #include "WorldFileHeaderSmoke.h"
 #include "WorldSystemSmoke.h"
 
+namespace ServerRuntime
+{
+    void ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+        std::uint64_t nowMs = 0);
+}
+
 namespace
 {
     struct SmokeNetworkGameInitData;

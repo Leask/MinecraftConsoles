@@ -18,6 +18,13 @@ namespace ServerRuntime
         std::uint64_t startupThreadDurationMs,
         std::uint64_t nowMs);
 
+    void ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
+        std::uint64_t nowMs = 0);
+
+    void ProjectNativeDedicatedServerHostedGameSessionSnapshotToRuntimeSnapshot(
+        const NativeDedicatedServerHostedGameSessionSnapshot &snapshot,
+        std::uint64_t nowMs = 0);
+
     namespace
     {
         static constexpr std::uint64_t kNativeHostedSessionHashOffset =

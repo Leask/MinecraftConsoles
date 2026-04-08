@@ -325,13 +325,6 @@ namespace ServerRuntime
         unsigned int autosaveWorkTicks,
         std::uint64_t nowMs = 0);
 
-    void ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
-        std::uint64_t nowMs = 0);
-
-    void ProjectNativeDedicatedServerHostedGameSessionSnapshotToRuntimeSnapshot(
-        const NativeDedicatedServerHostedGameSessionSnapshot &snapshot,
-        std::uint64_t nowMs = 0);
-
     void StopNativeDedicatedServerHostedGameSession(
         std::uint64_t stoppedMs = 0);
 
