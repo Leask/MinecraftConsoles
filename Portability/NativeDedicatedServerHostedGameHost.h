@@ -11,9 +11,4 @@ namespace ServerRuntime
     bool WaitForNativeDedicatedServerHostedGameHostStop(
         DWORD timeoutMs,
         DWORD *outExitCode);
-
-    int StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
-        DedicatedServerHostedGameThreadProc *threadProc,
-        void *threadParam,
-        bool *outThreadInvoked);
 }

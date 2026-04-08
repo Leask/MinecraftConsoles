@@ -7,6 +7,11 @@
 
 namespace ServerRuntime
 {
+    int StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
+        DedicatedServerHostedGameThreadProc *threadProc,
+        void *threadParam,
+        bool *outThreadInvoked);
+
     int RunNativeDedicatedServerHostedGameTransientThread(
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam,
