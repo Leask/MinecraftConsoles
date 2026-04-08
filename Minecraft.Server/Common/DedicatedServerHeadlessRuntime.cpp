@@ -22,6 +22,27 @@
 #include "lce_stdin/lce_stdin.h"
 #include "lce_time/lce_time.h"
 
+namespace ServerRuntime
+{
+    void ObserveNativeDedicatedServerHostedGameSessionContextAndProject(
+        const std::string &worldName,
+        const std::string &worldSaveId,
+        const std::string &savePath,
+        const std::string &storageRoot,
+        const std::string &hostName,
+        const std::string &bindIp,
+        int configuredPort,
+        int listenerPort,
+        std::uint64_t sessionStartMs = 0,
+        std::uint64_t nowMs = 0);
+
+    void ObserveNativeDedicatedServerHostedGameSessionPersistedSaveAndProject(
+        const std::string &savePath,
+        std::uint64_t savedAtFileTime,
+        std::uint64_t autosaveCompletions,
+        std::uint64_t nowMs = 0);
+}
+
 namespace
 {
     static constexpr int kDedicatedServerStartupFailureExitCode = 4;

@@ -14,6 +14,15 @@
 #include "StringUtils.h"
 #include "lce_time/lce_time.h"
 
+namespace ServerRuntime
+{
+    void ObserveNativeDedicatedServerHostedGameSessionActivityAndProject(
+        std::uint64_t acceptedConnections,
+        std::uint64_t remoteCommands,
+        bool worldActionIdle,
+        std::uint64_t nowMs = 0);
+}
+
 namespace
 {
     std::string TrimAscii(const std::string &value)

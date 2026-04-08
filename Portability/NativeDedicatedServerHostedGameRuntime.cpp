@@ -17,6 +17,11 @@ namespace ServerRuntime
         void *threadParam,
         bool *outThreadInvoked);
 
+    void ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+        int startupResult,
+        bool threadInvoked,
+        std::uint64_t nowMs = 0);
+
     namespace
     {
         int StartPersistentNativeDedicatedServerHostedGameRuntime(

@@ -57,6 +57,11 @@
 
 namespace ServerRuntime
 {
+    void ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+        int startupResult,
+        bool threadInvoked,
+        std::uint64_t nowMs = 0);
+
     void ObserveNativeDedicatedServerHostedGameSessionPlatformState(
         std::uint64_t autosaveRequests,
         std::uint64_t platformTickCount);

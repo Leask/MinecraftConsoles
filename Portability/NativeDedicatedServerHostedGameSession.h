@@ -183,21 +183,10 @@ namespace ServerRuntime
         std::uint64_t startupThreadDurationMs,
         std::uint64_t nowMs = 0);
 
-    void ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
-        int startupResult,
-        bool threadInvoked,
-        std::uint64_t nowMs = 0);
-
     void ObserveNativeDedicatedServerHostedGameSessionActivity(
         std::uint64_t acceptedConnections,
         std::uint64_t remoteCommands,
         bool worldActionIdle);
-
-    void ObserveNativeDedicatedServerHostedGameSessionActivityAndProject(
-        std::uint64_t acceptedConnections,
-        std::uint64_t remoteCommands,
-        bool worldActionIdle,
-        std::uint64_t nowMs = 0);
 
     void ObserveNativeDedicatedServerHostedGameSessionContext(
         const std::string &worldName,
@@ -209,18 +198,6 @@ namespace ServerRuntime
         int configuredPort,
         int listenerPort,
         std::uint64_t sessionStartMs = 0);
-
-    void ObserveNativeDedicatedServerHostedGameSessionContextAndProject(
-        const std::string &worldName,
-        const std::string &worldSaveId,
-        const std::string &savePath,
-        const std::string &storageRoot,
-        const std::string &hostName,
-        const std::string &bindIp,
-        int configuredPort,
-        int listenerPort,
-        std::uint64_t sessionStartMs = 0,
-        std::uint64_t nowMs = 0);
 
     void ObserveNativeDedicatedServerHostedGameSessionActivation(
         int localUsersMask,
@@ -234,12 +211,6 @@ namespace ServerRuntime
         const std::string &savePath,
         std::uint64_t savedAtFileTime,
         std::uint64_t autosaveCompletions);
-
-    void ObserveNativeDedicatedServerHostedGameSessionPersistedSaveAndProject(
-        const std::string &savePath,
-        std::uint64_t savedAtFileTime,
-        std::uint64_t autosaveCompletions,
-        std::uint64_t nowMs = 0);
 
     void ObserveNativeDedicatedServerHostedGameSessionSummary(
         bool initialSaveRequested,
