@@ -16,6 +16,10 @@
 
 namespace ServerRuntime
 {
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameSessionSaveCommand(
+        std::uint64_t nowMs = 0);
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameSessionStopCommand(
+        std::uint64_t nowMs = 0);
     void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
         std::uint64_t nowMs = 0);
 

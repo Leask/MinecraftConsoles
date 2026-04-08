@@ -199,26 +199,6 @@ namespace ServerRuntime
         int listenerPort,
         std::uint64_t sessionStartMs = 0);
 
-    void ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
-        const std::string &savePath,
-        std::uint64_t savedAtFileTime,
-        std::uint64_t autosaveCompletions);
-
-    void RequestNativeDedicatedServerHostedGameSessionAutosave(
-        unsigned int workTicks,
-        std::uint64_t nowMs = 0);
-
-    std::uint64_t EnqueueNativeDedicatedServerHostedGameSessionSaveCommand(
-        std::uint64_t nowMs = 0);
-
-    std::uint64_t EnqueueNativeDedicatedServerHostedGameSessionStopCommand(
-        std::uint64_t nowMs = 0);
-
-    std::uint64_t EnqueueNativeDedicatedServerHostedGameSessionHaltSequence(
-        bool requestAutosaveFirst,
-        unsigned int autosaveWorkTicks,
-        std::uint64_t nowMs = 0);
-
     void StopNativeDedicatedServerHostedGameSession(
         std::uint64_t stoppedMs = 0);
 
@@ -229,14 +209,4 @@ namespace ServerRuntime
     NativeDedicatedServerHostedGameSessionSnapshot
     GetNativeDedicatedServerHostedGameSessionSnapshot();
 
-    bool BuildNativeDedicatedServerSaveStubFromSessionSnapshot(
-        const NativeDedicatedServerHostedGameSessionPersistContext
-            &persistContext,
-        std::uint64_t nowMs,
-        std::uint64_t savedAtFileTime,
-        NativeDedicatedServerSaveStub *outSaveStub);
-
-    bool WaitForNativeDedicatedServerHostedGameSessionStop(
-        DWORD timeoutMs,
-        DWORD *outExitCode = nullptr);
 }

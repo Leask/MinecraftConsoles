@@ -57,6 +57,11 @@
 
 namespace ServerRuntime
 {
+    void ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
+        const std::string &savePath,
+        std::uint64_t savedAtFileTime,
+        std::uint64_t autosaveCompletions);
+
     void ObserveNativeDedicatedServerHostedGameSessionActivation(
         int localUsersMask,
         bool onlineGame,
@@ -108,6 +113,14 @@ namespace ServerRuntime
         bool sessionCompleted,
         bool requestedAppShutdown,
         bool shutdownHaltedGameplay);
+
+    void RequestNativeDedicatedServerHostedGameSessionAutosave(
+        unsigned int workTicks,
+        std::uint64_t nowMs = 0);
+
+    bool WaitForNativeDedicatedServerHostedGameSessionStop(
+        DWORD timeoutMs,
+        DWORD *outExitCode = nullptr);
 
     void ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
         std::uint64_t nowMs = 0);

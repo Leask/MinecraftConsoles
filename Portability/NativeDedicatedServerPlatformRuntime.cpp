@@ -11,6 +11,16 @@ namespace ServerRuntime
 {
     void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
         std::uint64_t nowMs = 0);
+    void RequestNativeDedicatedServerHostedGameSessionAutosave(
+        unsigned int workTicks,
+        std::uint64_t nowMs = 0);
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameSessionHaltSequence(
+        bool requestAutosaveFirst,
+        unsigned int autosaveWorkTicks,
+        std::uint64_t nowMs = 0);
+    bool WaitForNativeDedicatedServerHostedGameSessionStop(
+        DWORD timeoutMs,
+        DWORD *outExitCode = nullptr);
 
     void ObserveNativeDedicatedServerHostedGameSessionAutosavesAndProject(
         std::uint64_t autosaveCompletions,

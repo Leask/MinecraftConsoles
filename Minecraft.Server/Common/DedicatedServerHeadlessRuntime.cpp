@@ -55,6 +55,13 @@ namespace ServerRuntime
         std::uint64_t savedAtFileTime,
         std::uint64_t autosaveCompletions,
         std::uint64_t nowMs = 0);
+
+    bool BuildNativeDedicatedServerSaveStubFromSessionSnapshot(
+        const NativeDedicatedServerHostedGameSessionPersistContext
+            &persistContext,
+        std::uint64_t nowMs,
+        std::uint64_t savedAtFileTime,
+        NativeDedicatedServerSaveStub *outSaveStub);
 }
 
 namespace
