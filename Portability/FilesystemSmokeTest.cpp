@@ -57,6 +57,22 @@
 
 namespace ServerRuntime
 {
+    void ObserveNativeDedicatedServerHostedGameSessionActivity(
+        std::uint64_t acceptedConnections,
+        std::uint64_t remoteCommands,
+        bool worldActionIdle);
+
+    void ObserveNativeDedicatedServerHostedGameSessionContext(
+        const std::string &worldName,
+        const std::string &worldSaveId,
+        const std::string &savePath,
+        const std::string &storageRoot,
+        const std::string &hostName,
+        const std::string &bindIp,
+        int configuredPort,
+        int listenerPort,
+        std::uint64_t sessionStartMs = 0);
+
     void ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
         const std::string &savePath,
         std::uint64_t savedAtFileTime,
