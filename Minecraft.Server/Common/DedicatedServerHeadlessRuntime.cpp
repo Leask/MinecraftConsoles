@@ -24,6 +24,20 @@
 
 namespace ServerRuntime
 {
+    void FinalizeNativeDedicatedServerHostedGameSessionAndProject(
+        bool initialSaveRequested,
+        bool initialSaveCompleted,
+        bool initialSaveTimedOut,
+        bool sessionCompleted,
+        bool requestedAppShutdown,
+        bool shutdownHaltedGameplay,
+        std::uint64_t gameplayLoopIterations,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid,
+        std::uint64_t stoppedMs = 0,
+        std::uint64_t nowMs = 0);
+
     void ObserveNativeDedicatedServerHostedGameSessionContextAndProject(
         const std::string &worldName,
         const std::string &worldSaveId,

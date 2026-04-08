@@ -199,74 +199,10 @@ namespace ServerRuntime
         int listenerPort,
         std::uint64_t sessionStartMs = 0);
 
-    void ObserveNativeDedicatedServerHostedGameSessionActivation(
-        int localUsersMask,
-        bool onlineGame,
-        bool privateGame,
-        unsigned int publicSlots,
-        unsigned int privateSlots,
-        bool fakeLocalPlayerJoined);
-
     void ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
         const std::string &savePath,
         std::uint64_t savedAtFileTime,
         std::uint64_t autosaveCompletions);
-
-    void ObserveNativeDedicatedServerHostedGameSessionSummary(
-        bool initialSaveRequested,
-        bool initialSaveCompleted,
-        bool initialSaveTimedOut,
-        bool sessionCompleted,
-        bool requestedAppShutdown,
-        bool shutdownHaltedGameplay);
-
-    void FinalizeNativeDedicatedServerHostedGameSession(
-        bool initialSaveRequested,
-        bool initialSaveCompleted,
-        bool initialSaveTimedOut,
-        bool sessionCompleted,
-        bool requestedAppShutdown,
-        bool shutdownHaltedGameplay,
-        std::uint64_t gameplayLoopIterations,
-        bool appShutdownRequested,
-        bool gameplayHalted,
-        bool stopSignalValid,
-        std::uint64_t stoppedMs = 0);
-
-    void FinalizeNativeDedicatedServerHostedGameSessionAndProject(
-        bool initialSaveRequested,
-        bool initialSaveCompleted,
-        bool initialSaveTimedOut,
-        bool sessionCompleted,
-        bool requestedAppShutdown,
-        bool shutdownHaltedGameplay,
-        std::uint64_t gameplayLoopIterations,
-        bool appShutdownRequested,
-        bool gameplayHalted,
-        bool stopSignalValid,
-        std::uint64_t stoppedMs = 0,
-        std::uint64_t nowMs = 0);
-
-    void ObserveNativeDedicatedServerHostedGameSessionWorkerState(
-        std::uint64_t pendingWorldActionTicks,
-        std::uint64_t pendingAutosaveCommands,
-        std::uint64_t pendingSaveCommands,
-        std::uint64_t pendingStopCommands,
-        std::uint64_t pendingHaltCommands,
-        std::uint64_t workerTickCount,
-        std::uint64_t completedWorkerActions,
-        std::uint64_t processedAutosaveCommands,
-        std::uint64_t processedSaveCommands,
-        std::uint64_t processedStopCommands,
-        std::uint64_t processedHaltCommands,
-        std::uint64_t lastQueuedCommandId,
-        std::uint64_t activeCommandId,
-        std::uint64_t activeCommandTicksRemaining,
-        ENativeDedicatedServerHostedGameWorkerCommandKind
-            activeCommandKind,
-        std::uint64_t lastProcessedCommandId,
-        ENativeDedicatedServerHostedGameWorkerCommandKind
-            lastProcessedCommandKind);
 
     void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
         std::uint64_t nowMs = 0);
