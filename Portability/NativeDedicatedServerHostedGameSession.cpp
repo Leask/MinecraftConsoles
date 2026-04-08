@@ -25,6 +25,9 @@ namespace ServerRuntime
         const NativeDedicatedServerHostedGameSessionSnapshot &snapshot,
         std::uint64_t nowMs = 0);
 
+    void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
+        std::uint64_t nowMs = 0);
+
     void ObserveNativeDedicatedServerHostedGameSessionPlatformState(
         std::uint64_t autosaveRequests,
         std::uint64_t platformTickCount);

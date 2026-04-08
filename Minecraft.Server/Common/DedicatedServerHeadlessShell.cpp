@@ -16,6 +16,9 @@
 
 namespace ServerRuntime
 {
+    void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
+        std::uint64_t nowMs = 0);
+
     void ObserveNativeDedicatedServerHostedGameSessionActivityAndProject(
         std::uint64_t acceptedConnections,
         std::uint64_t remoteCommands,

@@ -9,6 +9,9 @@
 
 namespace ServerRuntime
 {
+    void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
+        std::uint64_t nowMs = 0);
+
     void ObserveNativeDedicatedServerHostedGameSessionAutosavesAndProject(
         std::uint64_t autosaveCompletions,
         std::uint64_t nowMs = 0);

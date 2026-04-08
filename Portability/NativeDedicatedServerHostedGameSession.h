@@ -204,9 +204,6 @@ namespace ServerRuntime
         std::uint64_t savedAtFileTime,
         std::uint64_t autosaveCompletions);
 
-    void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
-        std::uint64_t nowMs = 0);
-
     void RequestNativeDedicatedServerHostedGameSessionAutosave(
         unsigned int workTicks,
         std::uint64_t nowMs = 0);
