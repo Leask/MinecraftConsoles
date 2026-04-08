@@ -7,6 +7,22 @@
 
 #include <algorithm>
 
+namespace ServerRuntime
+{
+    void ObserveNativeDedicatedServerHostedGameSessionAutosavesAndProject(
+        std::uint64_t autosaveCompletions,
+        std::uint64_t nowMs = 0);
+
+    void ObserveNativeDedicatedServerHostedGameSessionPlatformRuntimeStateAndProject(
+        std::uint64_t autosaveRequests,
+        std::uint64_t platformTickCount,
+        std::uint64_t gameplayLoopIterations,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid,
+        std::uint64_t nowMs = 0);
+}
+
 namespace
 {
     struct NativeDedicatedServerPlatformRuntimeState

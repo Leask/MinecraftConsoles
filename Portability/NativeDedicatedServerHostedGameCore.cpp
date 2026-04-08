@@ -10,6 +10,19 @@
 
 namespace ServerRuntime
 {
+    NativeDedicatedServerHostedGameSessionFrameResult
+    TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
+        const NativeDedicatedServerHostedGameWorkerFrameResult &workerFrame,
+        bool hostedThreadActive,
+        std::uint64_t nowMs);
+
+    NativeDedicatedServerHostedGameSessionStopResult
+    CaptureNativeDedicatedServerHostedGameSessionState();
+
+    NativeDedicatedServerHostedGameSessionStopResult
+    StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState(
+        std::uint64_t stoppedMs = 0);
+
     namespace
     {
         constexpr std::uint64_t kNativeHostedStartupStepDelayMs = 5;

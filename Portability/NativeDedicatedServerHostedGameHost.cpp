@@ -1,5 +1,6 @@
 #include "NativeDedicatedServerHostedGameHost.h"
 
+#include "Minecraft.Server/Common/DedicatedServerHostedGameThreadProc.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 

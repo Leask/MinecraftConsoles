@@ -188,16 +188,6 @@ namespace ServerRuntime
         bool threadInvoked,
         std::uint64_t nowMs = 0);
 
-    NativeDedicatedServerHostedGameSessionFrameResult
-    TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
-        const NativeDedicatedServerHostedGameWorkerFrameResult &workerFrame,
-        bool hostedThreadActive = true,
-        std::uint64_t nowMs = 0);
-
-    void ObserveNativeDedicatedServerHostedGameSessionAutosavesAndProject(
-        std::uint64_t autosaveCompletions,
-        std::uint64_t nowMs = 0);
-
     void ObserveNativeDedicatedServerHostedGameSessionActivity(
         std::uint64_t acceptedConnections,
         std::uint64_t remoteCommands,
@@ -244,32 +234,11 @@ namespace ServerRuntime
         std::uint64_t autosaveRequests,
         std::uint64_t platformTickCount);
 
-    void ObserveNativeDedicatedServerHostedGameSessionPlatformStateAndProject(
-        std::uint64_t autosaveRequests,
-        std::uint64_t platformTickCount,
-        std::uint64_t nowMs = 0);
-
-    void ObserveNativeDedicatedServerHostedGameSessionPlatformRuntimeStateAndProject(
-        std::uint64_t autosaveRequests,
-        std::uint64_t platformTickCount,
-        std::uint64_t gameplayLoopIterations,
-        bool appShutdownRequested,
-        bool gameplayHalted,
-        bool stopSignalValid,
-        std::uint64_t nowMs = 0);
-
     void ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
         std::uint64_t gameplayLoopIterations,
         bool appShutdownRequested,
         bool gameplayHalted,
         bool stopSignalValid);
-
-    void ObserveNativeDedicatedServerHostedGameSessionRuntimeStateAndProject(
-        std::uint64_t gameplayLoopIterations,
-        bool appShutdownRequested,
-        bool gameplayHalted,
-        bool stopSignalValid,
-        std::uint64_t nowMs = 0);
 
     void ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
         const std::string &savePath,
@@ -381,13 +350,6 @@ namespace ServerRuntime
         std::uint64_t nowMs = 0);
 
     void StopNativeDedicatedServerHostedGameSession(
-        std::uint64_t stoppedMs = 0);
-
-    NativeDedicatedServerHostedGameSessionStopResult
-    CaptureNativeDedicatedServerHostedGameSessionState();
-
-    NativeDedicatedServerHostedGameSessionStopResult
-    StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState(
         std::uint64_t stoppedMs = 0);
 
     bool IsNativeDedicatedServerHostedGameSessionRunning();
