@@ -57,6 +57,16 @@
 
 namespace ServerRuntime
 {
+    void ObserveNativeDedicatedServerHostedGameSessionPlatformState(
+        std::uint64_t autosaveRequests,
+        std::uint64_t platformTickCount);
+
+    void ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
+        std::uint64_t gameplayLoopIterations,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid);
+
     void ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
         std::uint64_t nowMs = 0);
 }

@@ -25,6 +25,16 @@ namespace ServerRuntime
         const NativeDedicatedServerHostedGameSessionSnapshot &snapshot,
         std::uint64_t nowMs = 0);
 
+    void ObserveNativeDedicatedServerHostedGameSessionPlatformState(
+        std::uint64_t autosaveRequests,
+        std::uint64_t platformTickCount);
+
+    void ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
+        std::uint64_t gameplayLoopIterations,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid);
+
     namespace
     {
         static constexpr std::uint64_t kNativeHostedSessionHashOffset =

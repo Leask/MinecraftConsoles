@@ -230,16 +230,6 @@ namespace ServerRuntime
         unsigned int privateSlots,
         bool fakeLocalPlayerJoined);
 
-    void ObserveNativeDedicatedServerHostedGameSessionPlatformState(
-        std::uint64_t autosaveRequests,
-        std::uint64_t platformTickCount);
-
-    void ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
-        std::uint64_t gameplayLoopIterations,
-        bool appShutdownRequested,
-        bool gameplayHalted,
-        bool stopSignalValid);
-
     void ObserveNativeDedicatedServerHostedGameSessionPersistedSave(
         const std::string &savePath,
         std::uint64_t savedAtFileTime,
