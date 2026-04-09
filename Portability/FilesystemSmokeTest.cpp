@@ -3163,10 +3163,12 @@ int main(int argc, char* argv[])
         !nativeHostedCoreFrameStoppedSnapshot.active);
     printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
         "loops=%llu autosaves=%llu worker_idle=%d hooks=%d/%d phase=%s\n",
-        nativeHostedCoreRunResult.startup.startupResult == 0 &&
-            nativeHostedCoreRunResult.startup.payloadValidated &&
-            nativeHostedCoreRunResult.startup.startupThreadIterations == 2U &&
-            nativeHostedCoreRunResult.startup.startupThreadDurationMs > 0U &&
+        nativeHostedCoreRunResult.finalState.startupResult == 0 &&
+            nativeHostedCoreRunResult.finalState.payloadValidated &&
+            nativeHostedCoreRunResult.finalState
+                    .startupThreadIterations == 2U &&
+            nativeHostedCoreRunResult.finalState
+                    .startupThreadDurationMs > 0U &&
             nativeHostedCoreRunResult.finalState.gameplayLoopIterations ==
                 1U &&
             nativeHostedCoreRunResult.finalState
@@ -3194,11 +3196,11 @@ int main(int argc, char* argv[])
             !nativeHostedCoreSnapshot.active &&
             nativeHostedCoreSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped,
-        nativeHostedCoreRunResult.startup.startupResult,
-        nativeHostedCoreRunResult.startup.payloadValidated,
-        (unsigned long long)nativeHostedCoreRunResult.startup
+        nativeHostedCoreRunResult.finalState.startupResult,
+        nativeHostedCoreRunResult.finalState.payloadValidated,
+        (unsigned long long)nativeHostedCoreRunResult.finalState
             .startupThreadIterations,
-        (unsigned long long)nativeHostedCoreRunResult.startup
+        (unsigned long long)nativeHostedCoreRunResult.finalState
             .startupThreadDurationMs,
         (unsigned long long)nativeHostedCoreRunResult.finalState
             .gameplayLoopIterations,
@@ -3214,10 +3216,12 @@ int main(int argc, char* argv[])
                 nativeHostedCoreSnapshot.runtimePhase));
     printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
         restartedHostedRuntimeResult.ok &&
-            nativeHostedCoreRunResult.startup.startupResult == 0 &&
-            nativeHostedCoreRunResult.startup.payloadValidated &&
-            nativeHostedCoreRunResult.startup.startupThreadIterations == 2U &&
-            nativeHostedCoreRunResult.startup.startupThreadDurationMs > 0U &&
+            nativeHostedCoreRunResult.finalState.startupResult == 0 &&
+            nativeHostedCoreRunResult.finalState.payloadValidated &&
+            nativeHostedCoreRunResult.finalState
+                    .startupThreadIterations == 2U &&
+            nativeHostedCoreRunResult.finalState
+                    .startupThreadDurationMs > 0U &&
             nativeHostedCoreRunResult.finalState.gameplayLoopIterations ==
                 1U &&
             nativeHostedCoreRunResult.finalState
@@ -4210,10 +4214,10 @@ int main(int argc, char* argv[])
         !nativeHostedCoreFrameStoppedSnapshot.active &&
         nativeHostedCoreFrameStoppedSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
-        nativeHostedCoreRunResult.startup.startupResult == 0 &&
-        nativeHostedCoreRunResult.startup.payloadValidated &&
-        nativeHostedCoreRunResult.startup.startupThreadIterations == 2U &&
-        nativeHostedCoreRunResult.startup.startupThreadDurationMs > 0U &&
+        nativeHostedCoreRunResult.finalState.startupResult == 0 &&
+        nativeHostedCoreRunResult.finalState.payloadValidated &&
+        nativeHostedCoreRunResult.finalState.startupThreadIterations == 2U &&
+        nativeHostedCoreRunResult.finalState.startupThreadDurationMs > 0U &&
         nativeHostedCoreRunResult.finalState.gameplayLoopIterations ==
             1U &&
         nativeHostedCoreRunResult.finalState

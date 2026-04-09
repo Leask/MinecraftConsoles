@@ -14,7 +14,6 @@ namespace ServerRuntime
 
     struct NativeDedicatedServerHostedGameCoreRunResult
     {
-        NativeDedicatedServerHostedGameSessionSnapshot startup = {};
         NativeDedicatedServerHostedGameCoreFrameResult lastFrame = {};
         NativeDedicatedServerHostedGameSessionSnapshot finalState = {};
     };

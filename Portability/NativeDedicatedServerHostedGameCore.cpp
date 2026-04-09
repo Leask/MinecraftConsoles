@@ -105,9 +105,9 @@ namespace ServerRuntime
         const NativeDedicatedServerHostedGameCoreHooks &hooks)
     {
         NativeDedicatedServerHostedGameCoreRunResult result = {};
-        result.startup =
+        const NativeDedicatedServerHostedGameSessionSnapshot startupSnapshot =
             StartNativeDedicatedServerHostedGameCoreWithResult(initData);
-        if (result.startup.startupResult != 0)
+        if (startupSnapshot.startupResult != 0)
         {
             result.finalState =
                 CaptureNativeDedicatedServerHostedGameSessionState();
