@@ -3113,7 +3113,6 @@ int main(int argc, char* argv[])
             nativeHostedCoreFrameFirst.frameTimestampMs > 0U &&
             nativeHostedCoreFrameFirst.workerFrame.autosaveCompletions == 0U &&
             nativeHostedCoreFrameFirst.workerFrame.nextSleepDurationMs == 10U &&
-            !nativeHostedCoreFrameFirst.workerFrame.shutdownRequested &&
             !nativeHostedCoreFrameFirst.workerFrame.shouldStopRunning &&
             nativeHostedCoreFrameFirst.workerFrame.snapshot
                     .pendingWorldActionTicks == 1U &&
@@ -3131,7 +3130,6 @@ int main(int argc, char* argv[])
             nativeHostedCoreFrameSecond.workerFrame.autosaveCompletions ==
                 1U &&
             nativeHostedCoreFrameSecond.workerFrame.nextSleepDurationMs == 10U &&
-            !nativeHostedCoreFrameSecond.workerFrame.shutdownRequested &&
             !nativeHostedCoreFrameSecond.workerFrame.shouldStopRunning &&
             nativeHostedCoreFrameSecond.workerFrame.snapshot
                     .pendingWorldActionTicks == 0U &&
@@ -4179,7 +4177,6 @@ int main(int argc, char* argv[])
         nativeHostedCoreFrameFirst.frameTimestampMs > 0U &&
         nativeHostedCoreFrameFirst.workerFrame.autosaveCompletions == 0U &&
         nativeHostedCoreFrameFirst.workerFrame.nextSleepDurationMs == 10U &&
-        !nativeHostedCoreFrameFirst.workerFrame.shutdownRequested &&
         !nativeHostedCoreFrameFirst.workerFrame.shouldStopRunning &&
         nativeHostedCoreFrameFirst.workerFrame.snapshot
                 .pendingWorldActionTicks == 1U &&
@@ -4196,7 +4193,6 @@ int main(int argc, char* argv[])
             nativeHostedCoreFrameFirst.frameTimestampMs &&
         nativeHostedCoreFrameSecond.workerFrame.autosaveCompletions == 1U &&
         nativeHostedCoreFrameSecond.workerFrame.nextSleepDurationMs == 10U &&
-        !nativeHostedCoreFrameSecond.workerFrame.shutdownRequested &&
         !nativeHostedCoreFrameSecond.workerFrame.shouldStopRunning &&
         nativeHostedCoreFrameSecond.workerFrame.snapshot
                 .pendingWorldActionTicks == 0U &&

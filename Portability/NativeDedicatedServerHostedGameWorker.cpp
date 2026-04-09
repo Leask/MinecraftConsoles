@@ -392,10 +392,8 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameWorkerFrameResult result = {};
         result.snapshot = GetNativeDedicatedServerHostedGameWorkerSnapshot();
         result.idle = IsNativeDedicatedServerHostedGameWorkerIdle();
-        result.shutdownRequested =
-            IsNativeDedicatedServerHostedGameWorkerShutdownRequested();
         result.shouldStopRunning =
-            result.shutdownRequested &&
+            IsNativeDedicatedServerHostedGameWorkerShutdownRequested() &&
             result.idle;
         result.nextSleepDurationMs =
             result.shouldStopRunning ? 0U : kNativeHostedGameWorkerFrameDelayMs;
