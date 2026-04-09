@@ -425,6 +425,23 @@ namespace ServerRuntime
                     eNativeDedicatedServerHostedGameWorkerCommand_None;
         }
 
+        void SetNativeHostedSessionStartupValidationState(
+            NativeDedicatedServerHostedGameSessionState *state,
+            bool startupPayloadValidated)
+        {
+            if (state == nullptr)
+            {
+                return;
+            }
+
+            state->snapshot.active = startupPayloadValidated;
+            state->snapshot.payloadValidated = startupPayloadValidated;
+            state->snapshot.runtimePhase =
+                startupPayloadValidated
+                    ? eDedicatedServerHostedGameRuntimePhase_Startup
+                    : eDedicatedServerHostedGameRuntimePhase_Failed;
+        }
+
         void RefreshNativeHostedSessionPhase(
             NativeDedicatedServerHostedGameSessionState *state)
         {
@@ -502,6 +519,26 @@ namespace ServerRuntime
             }
         }
 
+        void SetNativeHostedSessionStoppedState(
+            NativeDedicatedServerHostedGameSessionState *state,
+            std::uint64_t stoppedMs)
+        {
+            if (state == nullptr)
+            {
+                return;
+            }
+
+            state->snapshot.active = false;
+            state->snapshot.runtimePhase =
+                eDedicatedServerHostedGameRuntimePhase_Stopped;
+            if (stoppedMs != 0)
+            {
+                state->snapshot.stoppedMs = stoppedMs;
+            }
+
+            RefreshNativeHostedSessionPhase(state);
+            RefreshNativeHostedSessionStateChecksum(state);
+        }
     }
 
     void ResetNativeDedicatedServerHostedGameSessionCoreState()
@@ -543,11 +580,8 @@ namespace ServerRuntime
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState = NativeDedicatedServerHostedGameSessionState{};
         g_nativeHostedSessionState.snapshot.startAttempted = true;
-        g_nativeHostedSessionState.snapshot.active = startupPayloadValidated;
         g_nativeHostedSessionState.snapshot.loadedFromSave =
             initData.saveData != nullptr;
-        g_nativeHostedSessionState.snapshot.payloadValidated =
-            startupPayloadValidated;
         g_nativeHostedSessionState.snapshot.resolvedSeed = initData.seed;
         g_nativeHostedSessionState.snapshot.hostSettings =
             initData.settings;
@@ -569,10 +603,9 @@ namespace ServerRuntime
             initData.xzSize;
         g_nativeHostedSessionState.snapshot.worldHellScale =
             initData.hellScale;
-        g_nativeHostedSessionState.snapshot.runtimePhase =
-            startupPayloadValidated
-                ? eDedicatedServerHostedGameRuntimePhase_Startup
-                : eDedicatedServerHostedGameRuntimePhase_Failed;
+        SetNativeHostedSessionStartupValidationState(
+            &g_nativeHostedSessionState,
+            startupPayloadValidated);
         g_nativeHostedSessionState.snapshot.payloadChecksum =
             ComputeNativeHostedSessionBytesChecksum(
                 initData.saveData != nullptr ? initData.saveData->data : nullptr,
@@ -1250,16 +1283,9 @@ namespace ServerRuntime
             gameplayHalted;
         g_nativeHostedSessionState.snapshot.stopSignalValid =
             stopSignalValid;
-        g_nativeHostedSessionState.snapshot.active = false;
-        g_nativeHostedSessionState.snapshot.runtimePhase =
-            eDedicatedServerHostedGameRuntimePhase_Stopped;
-        if (stoppedMs != 0)
-        {
-            g_nativeHostedSessionState.snapshot.stoppedMs = stoppedMs;
-        }
-        RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
-        RefreshNativeHostedSessionStateChecksum(
-            &g_nativeHostedSessionState);
+        SetNativeHostedSessionStoppedState(
+            &g_nativeHostedSessionState,
+            stoppedMs);
     }
 
     void FinalizeNativeDedicatedServerHostedGameSessionAndProject(
@@ -1737,15 +1763,9 @@ namespace ServerRuntime
         std::uint64_t stoppedMs)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        g_nativeHostedSessionState.snapshot.active = false;
-        g_nativeHostedSessionState.snapshot.runtimePhase =
-            eDedicatedServerHostedGameRuntimePhase_Stopped;
-        if (stoppedMs != 0)
-        {
-            g_nativeHostedSessionState.snapshot.stoppedMs = stoppedMs;
-        }
-        RefreshNativeHostedSessionStateChecksum(
-            &g_nativeHostedSessionState);
+        SetNativeHostedSessionStoppedState(
+            &g_nativeHostedSessionState,
+            stoppedMs);
     }
 
     NativeDedicatedServerHostedGameSessionStopResult
