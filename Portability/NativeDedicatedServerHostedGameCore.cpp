@@ -35,12 +35,26 @@ namespace ServerRuntime
         constexpr std::uint64_t kNativeHostedStartupStepDelayMs = 5;
         constexpr std::uint64_t kNativeHostedStartupBaseIterations = 2;
 
-        void InvokeNativeDedicatedServerHostedGameCoreHook(
-            void (*hook)())
+        void InvokeNativeDedicatedServerHostedGameCoreReadyHook(
+            void (*hook)(std::uint64_t nowMs),
+            std::uint64_t nowMs)
         {
             if (hook != nullptr)
             {
-                hook();
+                hook(nowMs);
+            }
+        }
+
+        void InvokeNativeDedicatedServerHostedGameCoreStoppedHook(
+            void (*hook)(
+                std::uint64_t hostedThreadTicks,
+                std::uint64_t nowMs),
+            std::uint64_t hostedThreadTicks,
+            std::uint64_t nowMs)
+        {
+            if (hook != nullptr)
+            {
+                hook(hostedThreadTicks, nowMs);
             }
         }
     }
@@ -106,13 +120,17 @@ namespace ServerRuntime
         {
             result.finalState =
                 CaptureNativeDedicatedServerHostedGameSessionState();
-            InvokeNativeDedicatedServerHostedGameCoreHook(
-                hooks.onThreadStopped);
+            InvokeNativeDedicatedServerHostedGameCoreStoppedHook(
+                hooks.onThreadStopped,
+                result.finalState.sessionSnapshot.hostedThreadTicks,
+                LceGetMonotonicMilliseconds());
             result.exitCode = result.startup.exitCode;
             return result;
         }
 
-        InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadReady);
+        InvokeNativeDedicatedServerHostedGameCoreReadyHook(
+            hooks.onThreadReady,
+            LceGetMonotonicMilliseconds());
         while (true)
         {
             result.lastFrame =
@@ -131,7 +149,10 @@ namespace ServerRuntime
 
         result.finalState =
             StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState();
-        InvokeNativeDedicatedServerHostedGameCoreHook(hooks.onThreadStopped);
+        InvokeNativeDedicatedServerHostedGameCoreStoppedHook(
+            hooks.onThreadStopped,
+            result.finalState.sessionSnapshot.hostedThreadTicks,
+            LceGetMonotonicMilliseconds());
         result.exitCode = 0;
         return result;
     }

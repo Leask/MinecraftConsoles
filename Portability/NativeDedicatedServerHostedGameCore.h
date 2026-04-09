@@ -32,8 +32,10 @@ namespace ServerRuntime
 
     struct NativeDedicatedServerHostedGameCoreHooks
     {
-        void (*onThreadReady)() = nullptr;
-        void (*onThreadStopped)() = nullptr;
+        void (*onThreadReady)(std::uint64_t nowMs) = nullptr;
+        void (*onThreadStopped)(
+            std::uint64_t hostedThreadTicks,
+            std::uint64_t nowMs) = nullptr;
     };
 
     NativeDedicatedServerHostedGameCoreStartupResult

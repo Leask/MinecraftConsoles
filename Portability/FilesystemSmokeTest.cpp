@@ -409,7 +409,7 @@ namespace
 
     NativeHostedCoreHookSmokeContext g_nativeHostedCoreHookSmokeContext = {};
 
-    void NativeHostedCoreReadyHook()
+    void NativeHostedCoreReadyHook(std::uint64_t)
     {
         ++g_nativeHostedCoreHookSmokeContext.readyCount;
         if (g_nativeHostedCoreHookSmokeContext.requestShutdownOnReady)
@@ -418,7 +418,7 @@ namespace
         }
     }
 
-    void NativeHostedCoreStoppedHook()
+    void NativeHostedCoreStoppedHook(std::uint64_t, std::uint64_t)
     {
         ++g_nativeHostedCoreHookSmokeContext.stoppedCount;
     }

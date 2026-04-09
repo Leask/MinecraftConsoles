@@ -5,8 +5,6 @@
 #include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 
-#include "lce_time/lce_time.h"
-
 namespace ServerRuntime
 {
     bool SignalNativeDedicatedServerHostedGameHostReady();
@@ -20,11 +18,20 @@ namespace ServerRuntime
     {
         int RunNativeDedicatedServerHostedGameThread(void *threadParam);
 
-        void SignalNativeDedicatedServerHostedGameThreadReady()
+        void SignalNativeDedicatedServerHostedGameThreadReady(
+            std::uint64_t nowMs)
         {
-            SignalNativeDedicatedServerHostedGameSessionThreadReady(
-                LceGetMonotonicMilliseconds());
+            SignalNativeDedicatedServerHostedGameSessionThreadReady(nowMs);
             (void)SignalNativeDedicatedServerHostedGameHostReady();
+        }
+
+        void SignalNativeDedicatedServerHostedGameThreadStopped(
+            std::uint64_t hostedThreadTicks,
+            std::uint64_t nowMs)
+        {
+            SignalNativeDedicatedServerHostedGameSessionThreadStopped(
+                hostedThreadTicks,
+                nowMs);
         }
 
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)
@@ -32,15 +39,14 @@ namespace ServerRuntime
             NativeDedicatedServerHostedGameCoreHooks hooks = {};
             hooks.onThreadReady =
                 &SignalNativeDedicatedServerHostedGameThreadReady;
+            hooks.onThreadStopped =
+                &SignalNativeDedicatedServerHostedGameThreadStopped;
             const NativeDedicatedServerHostedGameCoreRunResult runResult =
                 RunNativeDedicatedServerHostedGameCoreWithResult(
                 static_cast<
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
                         threadParam),
                 hooks);
-            SignalNativeDedicatedServerHostedGameSessionThreadStopped(
-                runResult.finalState.sessionSnapshot.hostedThreadTicks,
-                LceGetMonotonicMilliseconds());
             return runResult.exitCode;
         }
     }

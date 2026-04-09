@@ -156,3 +156,28 @@ After the harness is in place, the next unattended iterations should target:
 1. remaining `host/core` startup result glue
 2. remaining `core/session/worker` result ownership cleanup
 3. only then, deeper runtime-core contract work
+
+## Phase 5: Native Core Convergence
+
+### Scope
+
+- move hosted thread lifecycle ownership into `core`
+- keep shrinking `runtime/bridge` responsibilities down to wiring only
+- make `core` the canonical owner of ready/stopped lifecycle callbacks
+- continue validating every iteration through the unattended harness
+
+### Exit Criteria
+
+- `thread bridge` no longer patches lifecycle state after core returns
+- `core` emits enough lifecycle context for runtime/session to project state
+- macOS and Linux harness runs stay green after each core contract change
+
+## Current Stage
+
+Phase 5 is in progress.
+
+Immediate deliverables:
+
+1. route `ready/stopped` lifecycle callbacks directly through `core`
+2. keep `bridge` as a thin adapter over thread entry only
+3. keep dual-platform harness validation mandatory for each checkpoint
