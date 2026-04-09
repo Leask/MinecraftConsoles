@@ -157,7 +157,6 @@ namespace ServerRuntime
     struct NativeDedicatedServerHostedGameSessionFrameInput
     {
         NativeDedicatedServerHostedGameWorkerSnapshot workerSnapshot = {};
-        std::uint64_t autosaveCompletions = 0;
         bool hostedThreadActive = true;
     };
 

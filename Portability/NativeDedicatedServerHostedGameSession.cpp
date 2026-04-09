@@ -954,7 +954,7 @@ namespace ServerRuntime
             &g_nativeHostedSessionState,
             frameInput.workerSnapshot);
         g_nativeHostedSessionState.snapshot.observedAutosaveCompletions =
-            frameInput.autosaveCompletions;
+            GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
         ++g_nativeHostedSessionState.snapshot.sessionTicks;
         ++g_nativeHostedSessionState.snapshot.gameplayLoopIterations;
         g_nativeHostedSessionState.snapshot.hostedThreadActive =
@@ -986,8 +986,6 @@ namespace ServerRuntime
     {
         NativeDedicatedServerHostedGameSessionFrameInput frameInput = {};
         frameInput.workerSnapshot = workerFrame.snapshot;
-        frameInput.autosaveCompletions =
-            workerFrame.autosaveCompletions;
         frameInput.hostedThreadActive = hostedThreadActive;
         TickNativeDedicatedServerHostedGameSessionFrameAndProject(
             frameInput,

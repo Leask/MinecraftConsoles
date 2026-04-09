@@ -398,8 +398,6 @@ namespace ServerRuntime
         result.nextSleepDurationMs =
             result.shouldStopRunning ? 0U : kNativeHostedGameWorkerFrameDelayMs;
         UpdateDedicatedServerAutosaveTracker(idle);
-        result.autosaveCompletions =
-            GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
         return result;
     }
 
