@@ -9,8 +9,6 @@ namespace ServerRuntime
     struct NativeDedicatedServerHostedGameCoreFrameResult
     {
         NativeDedicatedServerHostedGameWorkerFrameResult workerFrame = {};
-        NativeDedicatedServerHostedGameSessionSnapshot
-            sessionSnapshot = {};
         std::uint64_t frameTimestampMs = 0;
     };
 

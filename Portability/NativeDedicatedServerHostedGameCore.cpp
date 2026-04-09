@@ -66,13 +66,10 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameCoreFrameResult result = {};
         result.workerFrame = TickNativeDedicatedServerHostedGameWorkerFrame();
         result.frameTimestampMs = LceGetMonotonicMilliseconds();
-        const NativeDedicatedServerHostedGameSessionFrameResult
-            sessionFrameResult =
-                TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
-                    result.workerFrame,
-                    hostedThreadActive,
-                    result.frameTimestampMs);
-        result.sessionSnapshot = sessionFrameResult.snapshot;
+        TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
+            result.workerFrame,
+            hostedThreadActive,
+            result.frameTimestampMs);
         return result;
     }
 

@@ -1824,9 +1824,15 @@ int main(int argc, char* argv[])
     const ServerRuntime::NativeDedicatedServerHostedGameCoreFrameResult
         nativeHostedCoreFrameFirst =
             ServerRuntime::TickNativeDedicatedServerHostedGameCoreFrameWithResult();
+    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+        nativeHostedCoreFrameFirstSnapshot =
+            ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
     const ServerRuntime::NativeDedicatedServerHostedGameCoreFrameResult
         nativeHostedCoreFrameSecond =
             ServerRuntime::TickNativeDedicatedServerHostedGameCoreFrameWithResult();
+    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+        nativeHostedCoreFrameSecondSnapshot =
+            ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
     ServerRuntime::StopNativeDedicatedServerHostedGameSession();
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
         nativeHostedCoreFrameStoppedSnapshot =
@@ -3114,11 +3120,11 @@ int main(int argc, char* argv[])
             nativeHostedCoreFrameFirst.workerFrame.snapshot
                     .processedAutosaveCommands == 0U &&
             !nativeHostedCoreFrameFirst.workerFrame.idle &&
-            nativeHostedCoreFrameFirst.sessionSnapshot.sessionTicks == 1U &&
-            nativeHostedCoreFrameFirst.sessionSnapshot
+            nativeHostedCoreFrameFirstSnapshot.sessionTicks == 1U &&
+            nativeHostedCoreFrameFirstSnapshot
                     .gameplayLoopIterations == 1U &&
-            nativeHostedCoreFrameFirst.sessionSnapshot.hostedThreadActive &&
-            nativeHostedCoreFrameFirst.sessionSnapshot.runtimePhase ==
+            nativeHostedCoreFrameFirstSnapshot.hostedThreadActive &&
+            nativeHostedCoreFrameFirstSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
             nativeHostedCoreFrameSecond.frameTimestampMs >=
                 nativeHostedCoreFrameFirst.frameTimestampMs &&
@@ -3132,13 +3138,13 @@ int main(int argc, char* argv[])
             nativeHostedCoreFrameSecond.workerFrame.snapshot
                     .processedAutosaveCommands == 1U &&
             nativeHostedCoreFrameSecond.workerFrame.idle &&
-            nativeHostedCoreFrameSecond.sessionSnapshot.sessionTicks == 2U &&
-            nativeHostedCoreFrameSecond.sessionSnapshot
+            nativeHostedCoreFrameSecondSnapshot.sessionTicks == 2U &&
+            nativeHostedCoreFrameSecondSnapshot
                     .gameplayLoopIterations == 2U &&
-            nativeHostedCoreFrameSecond.sessionSnapshot
+            nativeHostedCoreFrameSecondSnapshot
                     .observedAutosaveCompletions == 1U &&
-            nativeHostedCoreFrameSecond.sessionSnapshot.hostedThreadActive &&
-            nativeHostedCoreFrameSecond.sessionSnapshot.runtimePhase ==
+            nativeHostedCoreFrameSecondSnapshot.hostedThreadActive &&
+            nativeHostedCoreFrameSecondSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
             !nativeHostedCoreFrameStoppedSnapshot.active &&
             nativeHostedCoreFrameStoppedSnapshot.runtimePhase ==
@@ -4176,11 +4182,11 @@ int main(int argc, char* argv[])
         nativeHostedCoreFrameFirst.workerFrame.snapshot
                 .processedAutosaveCommands == 0U &&
         !nativeHostedCoreFrameFirst.workerFrame.idle &&
-        nativeHostedCoreFrameFirst.sessionSnapshot.sessionTicks == 1U &&
-        nativeHostedCoreFrameFirst.sessionSnapshot.gameplayLoopIterations ==
+        nativeHostedCoreFrameFirstSnapshot.sessionTicks == 1U &&
+        nativeHostedCoreFrameFirstSnapshot.gameplayLoopIterations ==
             1U &&
-        nativeHostedCoreFrameFirst.sessionSnapshot.hostedThreadActive &&
-        nativeHostedCoreFrameFirst.sessionSnapshot.runtimePhase ==
+        nativeHostedCoreFrameFirstSnapshot.hostedThreadActive &&
+        nativeHostedCoreFrameFirstSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
         nativeHostedCoreFrameSecond.frameTimestampMs >=
             nativeHostedCoreFrameFirst.frameTimestampMs &&
@@ -4193,13 +4199,13 @@ int main(int argc, char* argv[])
         nativeHostedCoreFrameSecond.workerFrame.snapshot
                 .processedAutosaveCommands == 1U &&
         nativeHostedCoreFrameSecond.workerFrame.idle &&
-        nativeHostedCoreFrameSecond.sessionSnapshot.sessionTicks == 2U &&
-        nativeHostedCoreFrameSecond.sessionSnapshot.gameplayLoopIterations ==
+        nativeHostedCoreFrameSecondSnapshot.sessionTicks == 2U &&
+        nativeHostedCoreFrameSecondSnapshot.gameplayLoopIterations ==
             2U &&
-        nativeHostedCoreFrameSecond.sessionSnapshot
+        nativeHostedCoreFrameSecondSnapshot
                 .observedAutosaveCompletions == 1U &&
-        nativeHostedCoreFrameSecond.sessionSnapshot.hostedThreadActive &&
-        nativeHostedCoreFrameSecond.sessionSnapshot.runtimePhase ==
+        nativeHostedCoreFrameSecondSnapshot.hostedThreadActive &&
+        nativeHostedCoreFrameSecondSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
         !nativeHostedCoreFrameStoppedSnapshot.active &&
         nativeHostedCoreFrameStoppedSnapshot.runtimePhase ==
