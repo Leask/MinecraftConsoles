@@ -99,23 +99,22 @@ namespace ServerRuntime
             LceGetMonotonicMilliseconds());
     }
 
-    NativeDedicatedServerHostedGameCoreRunResult
+    NativeDedicatedServerHostedGameSessionSnapshot
     RunNativeDedicatedServerHostedGameCoreWithResult(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
         const NativeDedicatedServerHostedGameCoreHooks &hooks)
     {
-        NativeDedicatedServerHostedGameCoreRunResult result = {};
         const NativeDedicatedServerHostedGameSessionSnapshot startupSnapshot =
             StartNativeDedicatedServerHostedGameCoreWithResult(initData);
         if (startupSnapshot.startupResult != 0)
         {
-            result.finalState =
+            const NativeDedicatedServerHostedGameSessionSnapshot finalState =
                 CaptureNativeDedicatedServerHostedGameSessionState();
             InvokeNativeDedicatedServerHostedGameCoreStoppedHook(
                 hooks.onThreadStopped,
-                result.finalState.hostedThreadTicks,
+                finalState.hostedThreadTicks,
                 LceGetMonotonicMilliseconds());
-            return result;
+            return finalState;
         }
 
         InvokeNativeDedicatedServerHostedGameCoreReadyHook(
@@ -123,25 +122,25 @@ namespace ServerRuntime
             LceGetMonotonicMilliseconds());
         while (true)
         {
-            result.lastFrame =
+            const NativeDedicatedServerHostedGameCoreFrameResult lastFrame =
                 TickNativeDedicatedServerHostedGameCoreFrameWithResult();
-            if (result.lastFrame.workerFrame.shouldStopRunning)
+            if (lastFrame.workerFrame.shouldStopRunning)
             {
                 break;
             }
-            if (result.lastFrame.workerFrame.nextSleepDurationMs > 0U)
+            if (lastFrame.workerFrame.nextSleepDurationMs > 0U)
             {
                 LceSleepMilliseconds(
-                    result.lastFrame.workerFrame.nextSleepDurationMs);
+                    lastFrame.workerFrame.nextSleepDurationMs);
             }
         }
 
-        result.finalState =
+        const NativeDedicatedServerHostedGameSessionSnapshot finalState =
             StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState();
         InvokeNativeDedicatedServerHostedGameCoreStoppedHook(
             hooks.onThreadStopped,
-            result.finalState.hostedThreadTicks,
+            finalState.hostedThreadTicks,
             LceGetMonotonicMilliseconds());
-        return result;
+        return finalState;
     }
 }

@@ -41,15 +41,15 @@ namespace ServerRuntime
                 &SignalNativeDedicatedServerHostedGameThreadReady;
             hooks.onThreadStopped =
                 &SignalNativeDedicatedServerHostedGameThreadStopped;
-            const NativeDedicatedServerHostedGameCoreRunResult runResult =
+            const NativeDedicatedServerHostedGameSessionSnapshot finalState =
                 RunNativeDedicatedServerHostedGameCoreWithResult(
                 static_cast<
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
                         threadParam),
                 hooks);
-            if (runResult.finalState.startupResult != 0)
+            if (finalState.startupResult != 0)
             {
-                return runResult.finalState.startupResult;
+                return finalState.startupResult;
             }
 
             return 0;

@@ -1857,14 +1857,14 @@ int main(int argc, char* argv[])
         nativeHostedCoreHooks = {};
     nativeHostedCoreHooks.onThreadReady = &NativeHostedCoreReadyHook;
     nativeHostedCoreHooks.onThreadStopped = &NativeHostedCoreStoppedHook;
-    const ServerRuntime::NativeDedicatedServerHostedGameCoreRunResult
+    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
         nativeHostedCoreRunResult =
             ServerRuntime::RunNativeDedicatedServerHostedGameCoreWithResult(
                 &nativeHostedCoreInitData,
                 nativeHostedCoreHooks);
     ServerRuntime::ResetDedicatedServerShutdownRequest();
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
-        nativeHostedCoreSnapshot = nativeHostedCoreRunResult.finalState;
+        nativeHostedCoreSnapshot = nativeHostedCoreRunResult;
     const int hostedGameRuntimeNullThreadResult =
         ServerRuntime::StartDedicatedServerHostedGameRuntime(
             hostedGamePlan,
@@ -3158,32 +3158,27 @@ int main(int argc, char* argv[])
         !nativeHostedCoreFrameStoppedSnapshot.active);
     printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
         "loops=%llu autosaves=%llu worker_idle=%d hooks=%d/%d phase=%s\n",
-        nativeHostedCoreRunResult.finalState.startupResult == 0 &&
-            nativeHostedCoreRunResult.finalState.payloadValidated &&
-            nativeHostedCoreRunResult.finalState
+        nativeHostedCoreRunResult.startupResult == 0 &&
+            nativeHostedCoreRunResult.payloadValidated &&
+            nativeHostedCoreRunResult
                     .startupThreadIterations == 2U &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult
                     .startupThreadDurationMs > 0U &&
-            nativeHostedCoreRunResult.finalState.gameplayLoopIterations ==
+            nativeHostedCoreRunResult.gameplayLoopIterations ==
                 1U &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult
                     .observedAutosaveCompletions == 0U &&
-            nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
-            nativeHostedCoreRunResult.lastFrame.workerFrame
-                    .nextSleepDurationMs == 0U &&
-            nativeHostedCoreRunResult.lastFrame.workerFrame
-                    .shouldStopRunning &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult
                     .workerPendingWorldActionTicks == 0U &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult
                     .workerPendingAutosaveCommands == 0U &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult
                     .workerPendingSaveCommands == 0U &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult
                     .workerPendingStopCommands == 0U &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult
                     .workerPendingHaltCommands == 0U &&
-            nativeHostedCoreRunResult.finalState.activeCommandKind ==
+            nativeHostedCoreRunResult.activeCommandKind ==
                 ServerRuntime::
                     eNativeDedicatedServerHostedGameWorkerCommand_None &&
             g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
@@ -3191,17 +3186,17 @@ int main(int argc, char* argv[])
             !nativeHostedCoreSnapshot.active &&
             nativeHostedCoreSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped,
-        nativeHostedCoreRunResult.finalState.startupResult,
-        nativeHostedCoreRunResult.finalState.payloadValidated,
-        (unsigned long long)nativeHostedCoreRunResult.finalState
+        nativeHostedCoreRunResult.startupResult,
+        nativeHostedCoreRunResult.payloadValidated,
+        (unsigned long long)nativeHostedCoreRunResult
             .startupThreadIterations,
-        (unsigned long long)nativeHostedCoreRunResult.finalState
+        (unsigned long long)nativeHostedCoreRunResult
             .startupThreadDurationMs,
-        (unsigned long long)nativeHostedCoreRunResult.finalState
+        (unsigned long long)nativeHostedCoreRunResult
             .gameplayLoopIterations,
-        (unsigned long long)nativeHostedCoreRunResult.finalState
+        (unsigned long long)nativeHostedCoreRunResult
             .observedAutosaveCompletions,
-        nativeHostedCoreRunResult.finalState.activeCommandKind ==
+        nativeHostedCoreRunResult.activeCommandKind ==
             ServerRuntime::
                 eNativeDedicatedServerHostedGameWorkerCommand_None,
         g_nativeHostedCoreHookSmokeContext.readyCount,
@@ -3211,32 +3206,27 @@ int main(int argc, char* argv[])
                 nativeHostedCoreSnapshot.runtimePhase));
     printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
         restartedHostedRuntimeResult.ok &&
-            nativeHostedCoreRunResult.finalState.startupResult == 0 &&
-            nativeHostedCoreRunResult.finalState.payloadValidated &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult.startupResult == 0 &&
+            nativeHostedCoreRunResult.payloadValidated &&
+            nativeHostedCoreRunResult
                     .startupThreadIterations == 2U &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult
                     .startupThreadDurationMs > 0U &&
-            nativeHostedCoreRunResult.finalState.gameplayLoopIterations ==
+            nativeHostedCoreRunResult.gameplayLoopIterations ==
                 1U &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult
                     .observedAutosaveCompletions == 0U &&
-            nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
-            nativeHostedCoreRunResult.lastFrame.workerFrame
-                    .nextSleepDurationMs == 0U &&
-            nativeHostedCoreRunResult.lastFrame.workerFrame
-                    .shouldStopRunning &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult
                     .workerPendingWorldActionTicks == 0U &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult
                     .workerPendingAutosaveCommands == 0U &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult
                     .workerPendingSaveCommands == 0U &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult
                     .workerPendingStopCommands == 0U &&
-            nativeHostedCoreRunResult.finalState
+            nativeHostedCoreRunResult
                     .workerPendingHaltCommands == 0U &&
-            nativeHostedCoreRunResult.finalState.activeCommandKind ==
+            nativeHostedCoreRunResult.activeCommandKind ==
                 ServerRuntime::
                     eNativeDedicatedServerHostedGameWorkerCommand_None &&
             g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
@@ -4205,34 +4195,30 @@ int main(int argc, char* argv[])
         !nativeHostedCoreFrameStoppedSnapshot.active &&
         nativeHostedCoreFrameStoppedSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
-        nativeHostedCoreRunResult.finalState.startupResult == 0 &&
-        nativeHostedCoreRunResult.finalState.payloadValidated &&
-        nativeHostedCoreRunResult.finalState.startupThreadIterations == 2U &&
-        nativeHostedCoreRunResult.finalState.startupThreadDurationMs > 0U &&
-        nativeHostedCoreRunResult.finalState.gameplayLoopIterations ==
+        nativeHostedCoreRunResult.startupResult == 0 &&
+        nativeHostedCoreRunResult.payloadValidated &&
+        nativeHostedCoreRunResult.startupThreadIterations == 2U &&
+        nativeHostedCoreRunResult.startupThreadDurationMs > 0U &&
+        nativeHostedCoreRunResult.gameplayLoopIterations ==
             1U &&
-        nativeHostedCoreRunResult.finalState
+        nativeHostedCoreRunResult
                 .observedAutosaveCompletions == 0U &&
-        nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
-        nativeHostedCoreRunResult.lastFrame.workerFrame.nextSleepDurationMs ==
-            0U &&
-        nativeHostedCoreRunResult.lastFrame.workerFrame.shouldStopRunning &&
-        nativeHostedCoreRunResult.finalState
+        nativeHostedCoreRunResult
             .workerPendingWorldActionTicks ==
             0U &&
-        nativeHostedCoreRunResult.finalState
+        nativeHostedCoreRunResult
             .workerPendingAutosaveCommands ==
             0U &&
-        nativeHostedCoreRunResult.finalState
+        nativeHostedCoreRunResult
             .workerPendingSaveCommands ==
             0U &&
-        nativeHostedCoreRunResult.finalState
+        nativeHostedCoreRunResult
             .workerPendingStopCommands ==
             0U &&
-        nativeHostedCoreRunResult.finalState
+        nativeHostedCoreRunResult
             .workerPendingHaltCommands ==
             0U &&
-        nativeHostedCoreRunResult.finalState.activeCommandKind ==
+        nativeHostedCoreRunResult.activeCommandKind ==
             ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_None &&
         g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
         g_nativeHostedCoreHookSmokeContext.stoppedCount == 1 &&
