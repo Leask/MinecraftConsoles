@@ -44,7 +44,6 @@ namespace ServerRuntime
         std::uint64_t autosaveCompletions = 0;
         std::uint64_t nextSleepDurationMs = 0;
         bool shouldStopRunning = false;
-        bool idle = true;
     };
 
     void ResetNativeDedicatedServerHostedGameWorkerState();

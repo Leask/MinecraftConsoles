@@ -3108,7 +3108,8 @@ int main(int argc, char* argv[])
             (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
                 nativeHostedCoreStartupResult.runtimePhase),
         nativeHostedCoreStartupResult.active);
-    printf("hosted_game_core_frame=%d start=%d first=%llu/%llu/%d second=%llu/%llu/%d stopped=%d\n",
+    printf("hosted_game_core_frame=%d start=%d first=%llu/%llu "
+        "second=%llu/%llu stopped=%d\n",
             nativeHostedCoreFrameStarted &&
             nativeHostedCoreFrameFirst.frameTimestampMs > 0U &&
             nativeHostedCoreFrameFirst.workerFrame.autosaveCompletions == 0U &&
@@ -3118,7 +3119,6 @@ int main(int argc, char* argv[])
                     .pendingWorldActionTicks == 1U &&
             nativeHostedCoreFrameFirst.workerFrame.snapshot
                     .processedAutosaveCommands == 0U &&
-            !nativeHostedCoreFrameFirst.workerFrame.idle &&
             nativeHostedCoreFrameFirstSnapshot.sessionTicks == 1U &&
             nativeHostedCoreFrameFirstSnapshot
                     .gameplayLoopIterations == 1U &&
@@ -3135,7 +3135,6 @@ int main(int argc, char* argv[])
                     .pendingWorldActionTicks == 0U &&
             nativeHostedCoreFrameSecond.workerFrame.snapshot
                     .processedAutosaveCommands == 1U &&
-            nativeHostedCoreFrameSecond.workerFrame.idle &&
             nativeHostedCoreFrameSecondSnapshot.sessionTicks == 2U &&
             nativeHostedCoreFrameSecondSnapshot
                     .gameplayLoopIterations == 2U &&
@@ -3152,12 +3151,10 @@ int main(int argc, char* argv[])
             .workerFrame.snapshot.pendingWorldActionTicks,
         (unsigned long long)nativeHostedCoreFrameFirst
             .workerFrame.autosaveCompletions,
-        nativeHostedCoreFrameFirst.workerFrame.idle,
         (unsigned long long)nativeHostedCoreFrameSecond
             .workerFrame.snapshot.pendingWorldActionTicks,
         (unsigned long long)nativeHostedCoreFrameSecond
             .workerFrame.autosaveCompletions,
-        nativeHostedCoreFrameSecond.workerFrame.idle,
         !nativeHostedCoreFrameStoppedSnapshot.active);
     printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
         "loops=%llu autosaves=%llu worker_idle=%d hooks=%d/%d phase=%s\n",
@@ -4182,7 +4179,6 @@ int main(int argc, char* argv[])
                 .pendingWorldActionTicks == 1U &&
         nativeHostedCoreFrameFirst.workerFrame.snapshot
                 .processedAutosaveCommands == 0U &&
-        !nativeHostedCoreFrameFirst.workerFrame.idle &&
         nativeHostedCoreFrameFirstSnapshot.sessionTicks == 1U &&
         nativeHostedCoreFrameFirstSnapshot.gameplayLoopIterations ==
             1U &&
@@ -4198,7 +4194,6 @@ int main(int argc, char* argv[])
                 .pendingWorldActionTicks == 0U &&
         nativeHostedCoreFrameSecond.workerFrame.snapshot
                 .processedAutosaveCommands == 1U &&
-        nativeHostedCoreFrameSecond.workerFrame.idle &&
         nativeHostedCoreFrameSecondSnapshot.sessionTicks == 2U &&
         nativeHostedCoreFrameSecondSnapshot.gameplayLoopIterations ==
             2U &&

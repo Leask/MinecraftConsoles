@@ -391,13 +391,13 @@ namespace ServerRuntime
         TickNativeDedicatedServerHostedGameWorker();
         NativeDedicatedServerHostedGameWorkerFrameResult result = {};
         result.snapshot = GetNativeDedicatedServerHostedGameWorkerSnapshot();
-        result.idle = IsNativeDedicatedServerHostedGameWorkerIdle();
+        const bool idle = IsNativeDedicatedServerHostedGameWorkerIdle();
         result.shouldStopRunning =
             IsNativeDedicatedServerHostedGameWorkerShutdownRequested() &&
-            result.idle;
+            idle;
         result.nextSleepDurationMs =
             result.shouldStopRunning ? 0U : kNativeHostedGameWorkerFrameDelayMs;
-        UpdateDedicatedServerAutosaveTracker(result.idle);
+        UpdateDedicatedServerAutosaveTracker(idle);
         result.autosaveCompletions =
             GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
         return result;
