@@ -167,9 +167,4 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameSessionSnapshot snapshot = {};
     };
 
-    struct NativeDedicatedServerHostedGameSessionStopResult
-    {
-        NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot = {};
-    };
-
 }

@@ -6,12 +6,6 @@
 
 namespace ServerRuntime
 {
-    struct NativeDedicatedServerHostedGameCoreStartupResult
-    {
-        NativeDedicatedServerHostedGameSessionSnapshot
-            sessionSnapshot = {};
-    };
-
     struct NativeDedicatedServerHostedGameCoreFrameResult
     {
         NativeDedicatedServerHostedGameWorkerFrameResult workerFrame = {};
@@ -22,9 +16,9 @@ namespace ServerRuntime
 
     struct NativeDedicatedServerHostedGameCoreRunResult
     {
-        NativeDedicatedServerHostedGameCoreStartupResult startup = {};
+        NativeDedicatedServerHostedGameSessionSnapshot startup = {};
         NativeDedicatedServerHostedGameCoreFrameResult lastFrame = {};
-        NativeDedicatedServerHostedGameSessionStopResult finalState = {};
+        NativeDedicatedServerHostedGameSessionSnapshot finalState = {};
     };
 
     struct NativeDedicatedServerHostedGameCoreHooks
@@ -35,7 +29,7 @@ namespace ServerRuntime
             std::uint64_t nowMs) = nullptr;
     };
 
-    NativeDedicatedServerHostedGameCoreStartupResult
+    NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameCoreWithResult(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData);
 

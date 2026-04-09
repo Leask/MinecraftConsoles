@@ -47,9 +47,9 @@ namespace ServerRuntime
                     NativeDedicatedServerHostedGameRuntimeStubInitData *>(
                         threadParam),
                 hooks);
-            if (runResult.startup.sessionSnapshot.startupResult != 0)
+            if (runResult.startup.startupResult != 0)
             {
-                return runResult.startup.sessionSnapshot.startupResult;
+                return runResult.startup.startupResult;
             }
 
             return 0;

@@ -1787,16 +1787,13 @@ namespace ServerRuntime
             stoppedMs);
     }
 
-    NativeDedicatedServerHostedGameSessionStopResult
+    NativeDedicatedServerHostedGameSessionSnapshot
     CaptureNativeDedicatedServerHostedGameSessionState()
     {
-        NativeDedicatedServerHostedGameSessionStopResult result = {};
-        result.sessionSnapshot =
-            GetNativeDedicatedServerHostedGameSessionSnapshot();
-        return result;
+        return GetNativeDedicatedServerHostedGameSessionSnapshot();
     }
 
-    NativeDedicatedServerHostedGameSessionStopResult
+    NativeDedicatedServerHostedGameSessionSnapshot
     StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState(
         std::uint64_t stoppedMs)
     {

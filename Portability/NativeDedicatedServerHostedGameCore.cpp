@@ -23,10 +23,10 @@ namespace ServerRuntime
         bool hostedThreadActive,
         std::uint64_t nowMs);
 
-    NativeDedicatedServerHostedGameSessionStopResult
+    NativeDedicatedServerHostedGameSessionSnapshot
     CaptureNativeDedicatedServerHostedGameSessionState();
 
-    NativeDedicatedServerHostedGameSessionStopResult
+    NativeDedicatedServerHostedGameSessionSnapshot
     StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState(
         std::uint64_t stoppedMs = 0);
 
@@ -76,11 +76,10 @@ namespace ServerRuntime
         return result;
     }
 
-    NativeDedicatedServerHostedGameCoreStartupResult
+    NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameCoreWithResult(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData)
     {
-        NativeDedicatedServerHostedGameCoreStartupResult result = {};
         const std::uint64_t startMs = LceGetMonotonicMilliseconds();
         std::uint64_t startupIterations = 0;
         if (initData != nullptr)
@@ -96,13 +95,11 @@ namespace ServerRuntime
 
         const std::uint64_t startupDurationMs =
             LceGetMonotonicMilliseconds() - startMs;
-        result.sessionSnapshot =
-            StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
-                initData,
-                startupIterations,
-                startupDurationMs,
-                LceGetMonotonicMilliseconds());
-        return result;
+        return StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
+            initData,
+            startupIterations,
+            startupDurationMs,
+            LceGetMonotonicMilliseconds());
     }
 
     NativeDedicatedServerHostedGameCoreRunResult
@@ -113,13 +110,13 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameCoreRunResult result = {};
         result.startup =
             StartNativeDedicatedServerHostedGameCoreWithResult(initData);
-        if (result.startup.sessionSnapshot.startupResult != 0)
+        if (result.startup.startupResult != 0)
         {
             result.finalState =
                 CaptureNativeDedicatedServerHostedGameSessionState();
             InvokeNativeDedicatedServerHostedGameCoreStoppedHook(
                 hooks.onThreadStopped,
-                result.finalState.sessionSnapshot.hostedThreadTicks,
+                result.finalState.hostedThreadTicks,
                 LceGetMonotonicMilliseconds());
             return result;
         }
@@ -146,7 +143,7 @@ namespace ServerRuntime
             StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState();
         InvokeNativeDedicatedServerHostedGameCoreStoppedHook(
             hooks.onThreadStopped,
-            result.finalState.sessionSnapshot.hostedThreadTicks,
+            result.finalState.hostedThreadTicks,
             LceGetMonotonicMilliseconds());
         return result;
     }
