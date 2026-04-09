@@ -161,10 +161,4 @@ namespace ServerRuntime
         bool hostedThreadActive = true;
     };
 
-    struct NativeDedicatedServerHostedGameSessionFrameResult
-    {
-        NativeDedicatedServerHostedGameSessionFrameInput input = {};
-        NativeDedicatedServerHostedGameSessionSnapshot snapshot = {};
-    };
-
 }

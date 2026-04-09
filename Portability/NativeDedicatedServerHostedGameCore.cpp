@@ -17,7 +17,7 @@ namespace ServerRuntime
         std::uint64_t startupThreadDurationMs,
         std::uint64_t nowMs = 0);
 
-    NativeDedicatedServerHostedGameSessionFrameResult
+    void
     TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
         const NativeDedicatedServerHostedGameWorkerFrameResult &workerFrame,
         bool hostedThreadActive,
