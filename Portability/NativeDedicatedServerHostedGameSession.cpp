@@ -25,6 +25,11 @@ namespace ServerRuntime
         std::uint64_t startupThreadDurationMs,
         std::uint64_t nowMs);
 
+    void ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+        int startupResult,
+        bool threadInvoked,
+        std::uint64_t nowMs);
+
     void ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
         std::uint64_t nowMs = 0);
 
@@ -539,6 +544,13 @@ namespace ServerRuntime
             RefreshNativeHostedSessionPhase(state);
             RefreshNativeHostedSessionStateChecksum(state);
         }
+
+        int BuildNativeHostedSessionStartupResult(
+            const NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
+            bool startupPayloadValidated)
+        {
+            return initData != nullptr && startupPayloadValidated ? 0 : -2;
+        }
     }
 
     void ResetNativeDedicatedServerHostedGameSessionCoreState()
@@ -852,9 +864,16 @@ namespace ServerRuntime
         const bool startupPayloadValidated =
             initData != nullptr &&
             StartNativeDedicatedServerHostedGameSession(*initData);
+        const int startupResult = BuildNativeHostedSessionStartupResult(
+            initData,
+            startupPayloadValidated);
         ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
             startupThreadIterations,
             startupThreadDurationMs,
+            nowMs);
+        ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+            startupResult,
+            false,
             nowMs);
         return startupPayloadValidated;
     }

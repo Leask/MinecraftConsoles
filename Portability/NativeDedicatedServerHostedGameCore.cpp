@@ -102,9 +102,7 @@ namespace ServerRuntime
                 startupIterations,
                 startupDurationMs,
                 LceGetMonotonicMilliseconds());
-        result.exitCode =
-            initData != nullptr &&
-            result.sessionSnapshot.payloadValidated ? 0 : -2;
+        result.exitCode = result.sessionSnapshot.startupResult;
         return result;
     }
 
