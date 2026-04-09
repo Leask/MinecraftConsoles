@@ -8,7 +8,6 @@ namespace ServerRuntime
 {
     struct NativeDedicatedServerHostedGameCoreStartupResult
     {
-        int exitCode = -1;
         NativeDedicatedServerHostedGameSessionSnapshot
             sessionSnapshot = {};
     };

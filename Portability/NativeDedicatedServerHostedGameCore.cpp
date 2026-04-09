@@ -102,7 +102,6 @@ namespace ServerRuntime
                 startupIterations,
                 startupDurationMs,
                 LceGetMonotonicMilliseconds());
-        result.exitCode = result.sessionSnapshot.startupResult;
         return result;
     }
 
@@ -114,7 +113,7 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameCoreRunResult result = {};
         result.startup =
             StartNativeDedicatedServerHostedGameCoreWithResult(initData);
-        if (result.startup.exitCode != 0)
+        if (result.startup.sessionSnapshot.startupResult != 0)
         {
             result.finalState =
                 CaptureNativeDedicatedServerHostedGameSessionState();
@@ -122,7 +121,8 @@ namespace ServerRuntime
                 hooks.onThreadStopped,
                 result.finalState.sessionSnapshot.hostedThreadTicks,
                 LceGetMonotonicMilliseconds());
-            result.exitCode = result.startup.exitCode;
+            result.exitCode =
+                result.startup.sessionSnapshot.startupResult;
             return result;
         }
 

@@ -3080,7 +3080,7 @@ int main(int argc, char* argv[])
         gameplayLoopRunResult.requestedAppShutdown);
     printf("hosted_game_core_startup=%d exit=%d present=%d validated=%d "
         "startup=%llu/%llu phase=%s active=%d\n",
-        nativeHostedCoreStartupResult.exitCode == 0 &&
+        nativeHostedCoreStartupResult.sessionSnapshot.startupResult == 0 &&
             !nativeHostedCoreStartupResult.sessionSnapshot.loadedFromSave &&
             nativeHostedCoreStartupResult.sessionSnapshot.payloadValidated &&
             nativeHostedCoreStartupResult.sessionSnapshot
@@ -3092,7 +3092,7 @@ int main(int argc, char* argv[])
                 false &&
             nativeHostedCoreStartupResult.sessionSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Startup,
-        nativeHostedCoreStartupResult.exitCode,
+        nativeHostedCoreStartupResult.sessionSnapshot.startupResult,
         nativeHostedCoreStartupResult.sessionSnapshot.loadedFromSave,
         nativeHostedCoreStartupResult.sessionSnapshot.payloadValidated,
         (unsigned long long)nativeHostedCoreStartupResult.sessionSnapshot
@@ -4159,7 +4159,7 @@ int main(int argc, char* argv[])
         gameplayLoopRunPollContext.pollCount == 3 &&
         gameplayLoopRunResult.requestedAppShutdown &&
         gameplayLoopRunResult.lastIteration.shouldExit &&
-        nativeHostedCoreStartupResult.exitCode == 0 &&
+        nativeHostedCoreStartupResult.sessionSnapshot.startupResult == 0 &&
         !nativeHostedCoreStartupResult.sessionSnapshot.loadedFromSave &&
         nativeHostedCoreStartupResult.sessionSnapshot.payloadValidated &&
         nativeHostedCoreStartupResult.sessionSnapshot
