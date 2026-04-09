@@ -3165,7 +3165,8 @@ int main(int argc, char* argv[])
                     .startupThreadIterations == 2U &&
             nativeHostedCoreRunResult.startup.sessionSnapshot
                     .startupThreadDurationMs > 0U &&
-            nativeHostedCoreRunResult.loopIterations == 1U &&
+            nativeHostedCoreRunResult.finalState.sessionSnapshot
+                    .gameplayLoopIterations == 1U &&
             nativeHostedCoreRunResult.finalState.autosaveCompletions == 0U &&
             nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
             nativeHostedCoreRunResult.lastFrame.workerFrame
@@ -3197,7 +3198,8 @@ int main(int argc, char* argv[])
             .sessionSnapshot.startupThreadIterations,
         (unsigned long long)nativeHostedCoreRunResult.startup
             .sessionSnapshot.startupThreadDurationMs,
-        (unsigned long long)nativeHostedCoreRunResult.loopIterations,
+        (unsigned long long)nativeHostedCoreRunResult.finalState
+            .sessionSnapshot.gameplayLoopIterations,
         (unsigned long long)nativeHostedCoreRunResult.finalState
             .autosaveCompletions,
         nativeHostedCoreRunResult.finalState.workerSnapshot
@@ -3219,7 +3221,8 @@ int main(int argc, char* argv[])
                     .startupThreadIterations == 2U &&
             nativeHostedCoreRunResult.startup.sessionSnapshot
                     .startupThreadDurationMs > 0U &&
-            nativeHostedCoreRunResult.loopIterations == 1U &&
+            nativeHostedCoreRunResult.finalState.sessionSnapshot
+                    .gameplayLoopIterations == 1U &&
             nativeHostedCoreRunResult.finalState.autosaveCompletions == 0U &&
             nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
             nativeHostedCoreRunResult.lastFrame.workerFrame
@@ -4217,7 +4220,8 @@ int main(int argc, char* argv[])
                 .startupThreadIterations == 2U &&
         nativeHostedCoreRunResult.startup.sessionSnapshot
                 .startupThreadDurationMs > 0U &&
-        nativeHostedCoreRunResult.loopIterations == 1U &&
+        nativeHostedCoreRunResult.finalState.sessionSnapshot
+                .gameplayLoopIterations == 1U &&
         nativeHostedCoreRunResult.finalState.autosaveCompletions == 0U &&
         nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
         nativeHostedCoreRunResult.lastFrame.workerFrame.nextSleepDurationMs ==

@@ -131,7 +131,6 @@ namespace ServerRuntime
         {
             result.lastFrame =
                 TickNativeDedicatedServerHostedGameCoreFrameWithResult();
-            ++result.loopIterations;
             if (result.lastFrame.workerFrame.shouldStopRunning)
             {
                 break;
