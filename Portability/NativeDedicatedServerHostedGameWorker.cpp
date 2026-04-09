@@ -46,6 +46,10 @@ namespace
 
 namespace ServerRuntime
 {
+    bool IsNativeDedicatedServerHostedGameWorkerIdle();
+
+    std::uint64_t GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
+
     namespace
     {
         constexpr std::uint64_t kNativeHostedGameWorkerFrameDelayMs = 10;

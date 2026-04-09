@@ -13,12 +13,20 @@
 
 namespace ServerRuntime
 {
+    struct NativeDedicatedServerHostedGameSessionFrameInput
+    {
+        NativeDedicatedServerHostedGameWorkerSnapshot workerSnapshot = {};
+        bool hostedThreadActive = true;
+    };
+
     bool IsNativeDedicatedServerHostedGameSessionRunning();
 
     std::uint64_t GetNativeDedicatedServerHostedGameSessionThreadTicks();
 
     NativeDedicatedServerHostedGameSessionSnapshot
     GetNativeDedicatedServerHostedGameSessionSnapshot();
+
+    std::uint64_t GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
 
     void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
         std::uint64_t startupThreadIterations,

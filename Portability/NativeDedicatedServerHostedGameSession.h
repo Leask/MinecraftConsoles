@@ -154,10 +154,4 @@ namespace ServerRuntime
         int listenerPort = 0;
     };
 
-    struct NativeDedicatedServerHostedGameSessionFrameInput
-    {
-        NativeDedicatedServerHostedGameWorkerSnapshot workerSnapshot = {};
-        bool hostedThreadActive = true;
-    };
-
 }

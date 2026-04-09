@@ -67,13 +67,9 @@ namespace ServerRuntime
     NativeDedicatedServerHostedGameWorkerFrameResult
     TickNativeDedicatedServerHostedGameWorkerFrame();
 
-    bool IsNativeDedicatedServerHostedGameWorkerIdle();
-
     const char *GetNativeDedicatedServerHostedGameWorkerCommandKindName(
         ENativeDedicatedServerHostedGameWorkerCommandKind kind);
 
     NativeDedicatedServerHostedGameWorkerSnapshot
-    GetNativeDedicatedServerHostedGameWorkerSnapshot();
-
-    std::uint64_t GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
+        GetNativeDedicatedServerHostedGameWorkerSnapshot();
 }
