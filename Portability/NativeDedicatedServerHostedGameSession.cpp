@@ -1791,7 +1791,6 @@ namespace ServerRuntime
     CaptureNativeDedicatedServerHostedGameSessionState()
     {
         NativeDedicatedServerHostedGameSessionStopResult result = {};
-        result.workerSnapshot = GetNativeDedicatedServerHostedGameWorkerSnapshot();
         result.sessionSnapshot =
             GetNativeDedicatedServerHostedGameSessionSnapshot();
         return result;

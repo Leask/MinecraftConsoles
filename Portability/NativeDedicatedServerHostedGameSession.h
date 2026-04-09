@@ -169,7 +169,6 @@ namespace ServerRuntime
 
     struct NativeDedicatedServerHostedGameSessionStopResult
     {
-        NativeDedicatedServerHostedGameWorkerSnapshot workerSnapshot = {};
         NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot = {};
     };
 
