@@ -6,12 +6,6 @@
 
 namespace ServerRuntime
 {
-    struct NativeDedicatedServerHostedGameCoreFrameResult
-    {
-        NativeDedicatedServerHostedGameWorkerFrameResult workerFrame = {};
-        std::uint64_t frameTimestampMs = 0;
-    };
-
     struct NativeDedicatedServerHostedGameCoreHooks
     {
         void (*onThreadReady)(std::uint64_t nowMs) = nullptr;
@@ -24,7 +18,7 @@ namespace ServerRuntime
     StartNativeDedicatedServerHostedGameCoreWithResult(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData);
 
-    NativeDedicatedServerHostedGameCoreFrameResult
+    NativeDedicatedServerHostedGameWorkerFrameResult
     TickNativeDedicatedServerHostedGameCoreFrameWithResult(
         bool hostedThreadActive = true);
 

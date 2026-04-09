@@ -59,18 +59,18 @@ namespace ServerRuntime
         }
     }
 
-    NativeDedicatedServerHostedGameCoreFrameResult
+    NativeDedicatedServerHostedGameWorkerFrameResult
     TickNativeDedicatedServerHostedGameCoreFrameWithResult(
         bool hostedThreadActive)
     {
-        NativeDedicatedServerHostedGameCoreFrameResult result = {};
-        result.workerFrame = TickNativeDedicatedServerHostedGameWorkerFrame();
-        result.frameTimestampMs = LceGetMonotonicMilliseconds();
+        const NativeDedicatedServerHostedGameWorkerFrameResult workerFrame =
+            TickNativeDedicatedServerHostedGameWorkerFrame();
+        const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
         TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
-            result.workerFrame,
+            workerFrame,
             hostedThreadActive,
-            result.frameTimestampMs);
-        return result;
+            nowMs);
+        return workerFrame;
     }
 
     NativeDedicatedServerHostedGameSessionSnapshot
@@ -122,16 +122,16 @@ namespace ServerRuntime
             LceGetMonotonicMilliseconds());
         while (true)
         {
-            const NativeDedicatedServerHostedGameCoreFrameResult lastFrame =
+            const NativeDedicatedServerHostedGameWorkerFrameResult lastFrame =
                 TickNativeDedicatedServerHostedGameCoreFrameWithResult();
-            if (lastFrame.workerFrame.shouldStopRunning)
+            if (lastFrame.shouldStopRunning)
             {
                 break;
             }
-            if (lastFrame.workerFrame.nextSleepDurationMs > 0U)
+            if (lastFrame.nextSleepDurationMs > 0U)
             {
                 LceSleepMilliseconds(
-                    lastFrame.workerFrame.nextSleepDurationMs);
+                    lastFrame.nextSleepDurationMs);
             }
         }
 

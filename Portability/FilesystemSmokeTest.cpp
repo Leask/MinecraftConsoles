@@ -1821,13 +1821,13 @@ int main(int argc, char* argv[])
     ServerRuntime::RequestNativeDedicatedServerHostedGameSessionAutosave(
         2,
         LceGetMonotonicMilliseconds());
-    const ServerRuntime::NativeDedicatedServerHostedGameCoreFrameResult
+    const ServerRuntime::NativeDedicatedServerHostedGameWorkerFrameResult
         nativeHostedCoreFrameFirst =
             ServerRuntime::TickNativeDedicatedServerHostedGameCoreFrameWithResult();
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
         nativeHostedCoreFrameFirstSnapshot =
             ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
-    const ServerRuntime::NativeDedicatedServerHostedGameCoreFrameResult
+    const ServerRuntime::NativeDedicatedServerHostedGameWorkerFrameResult
         nativeHostedCoreFrameSecond =
             ServerRuntime::TickNativeDedicatedServerHostedGameCoreFrameWithResult();
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
@@ -3111,13 +3111,12 @@ int main(int argc, char* argv[])
     printf("hosted_game_core_frame=%d start=%d first=%llu/%llu "
         "second=%llu/%llu stopped=%d\n",
             nativeHostedCoreFrameStarted &&
-            nativeHostedCoreFrameFirst.frameTimestampMs > 0U &&
-            nativeHostedCoreFrameFirst.workerFrame.autosaveCompletions == 0U &&
-            nativeHostedCoreFrameFirst.workerFrame.nextSleepDurationMs == 10U &&
-            !nativeHostedCoreFrameFirst.workerFrame.shouldStopRunning &&
-            nativeHostedCoreFrameFirst.workerFrame.snapshot
+            nativeHostedCoreFrameFirst.autosaveCompletions == 0U &&
+            nativeHostedCoreFrameFirst.nextSleepDurationMs == 10U &&
+            !nativeHostedCoreFrameFirst.shouldStopRunning &&
+            nativeHostedCoreFrameFirst.snapshot
                     .pendingWorldActionTicks == 1U &&
-            nativeHostedCoreFrameFirst.workerFrame.snapshot
+            nativeHostedCoreFrameFirst.snapshot
                     .processedAutosaveCommands == 0U &&
             nativeHostedCoreFrameFirstSnapshot.sessionTicks == 1U &&
             nativeHostedCoreFrameFirstSnapshot
@@ -3125,15 +3124,13 @@ int main(int argc, char* argv[])
             nativeHostedCoreFrameFirstSnapshot.hostedThreadActive &&
             nativeHostedCoreFrameFirstSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
-            nativeHostedCoreFrameSecond.frameTimestampMs >=
-                nativeHostedCoreFrameFirst.frameTimestampMs &&
-            nativeHostedCoreFrameSecond.workerFrame.autosaveCompletions ==
+            nativeHostedCoreFrameSecond.autosaveCompletions ==
                 1U &&
-            nativeHostedCoreFrameSecond.workerFrame.nextSleepDurationMs == 10U &&
-            !nativeHostedCoreFrameSecond.workerFrame.shouldStopRunning &&
-            nativeHostedCoreFrameSecond.workerFrame.snapshot
+            nativeHostedCoreFrameSecond.nextSleepDurationMs == 10U &&
+            !nativeHostedCoreFrameSecond.shouldStopRunning &&
+            nativeHostedCoreFrameSecond.snapshot
                     .pendingWorldActionTicks == 0U &&
-            nativeHostedCoreFrameSecond.workerFrame.snapshot
+            nativeHostedCoreFrameSecond.snapshot
                     .processedAutosaveCommands == 1U &&
             nativeHostedCoreFrameSecondSnapshot.sessionTicks == 2U &&
             nativeHostedCoreFrameSecondSnapshot
@@ -3148,13 +3145,13 @@ int main(int argc, char* argv[])
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped,
         nativeHostedCoreFrameStarted,
         (unsigned long long)nativeHostedCoreFrameFirst
-            .workerFrame.snapshot.pendingWorldActionTicks,
+            .snapshot.pendingWorldActionTicks,
         (unsigned long long)nativeHostedCoreFrameFirst
-            .workerFrame.autosaveCompletions,
+            .autosaveCompletions,
         (unsigned long long)nativeHostedCoreFrameSecond
-            .workerFrame.snapshot.pendingWorldActionTicks,
+            .snapshot.pendingWorldActionTicks,
         (unsigned long long)nativeHostedCoreFrameSecond
-            .workerFrame.autosaveCompletions,
+            .autosaveCompletions,
         !nativeHostedCoreFrameStoppedSnapshot.active);
     printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
         "loops=%llu autosaves=%llu worker_idle=%d hooks=%d/%d phase=%s\n",
@@ -4161,13 +4158,12 @@ int main(int argc, char* argv[])
         nativeHostedCoreStartupResult.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Startup &&
         nativeHostedCoreFrameStarted &&
-        nativeHostedCoreFrameFirst.frameTimestampMs > 0U &&
-        nativeHostedCoreFrameFirst.workerFrame.autosaveCompletions == 0U &&
-        nativeHostedCoreFrameFirst.workerFrame.nextSleepDurationMs == 10U &&
-        !nativeHostedCoreFrameFirst.workerFrame.shouldStopRunning &&
-        nativeHostedCoreFrameFirst.workerFrame.snapshot
+        nativeHostedCoreFrameFirst.autosaveCompletions == 0U &&
+        nativeHostedCoreFrameFirst.nextSleepDurationMs == 10U &&
+        !nativeHostedCoreFrameFirst.shouldStopRunning &&
+        nativeHostedCoreFrameFirst.snapshot
                 .pendingWorldActionTicks == 1U &&
-        nativeHostedCoreFrameFirst.workerFrame.snapshot
+        nativeHostedCoreFrameFirst.snapshot
                 .processedAutosaveCommands == 0U &&
         nativeHostedCoreFrameFirstSnapshot.sessionTicks == 1U &&
         nativeHostedCoreFrameFirstSnapshot.gameplayLoopIterations ==
@@ -4175,14 +4171,12 @@ int main(int argc, char* argv[])
         nativeHostedCoreFrameFirstSnapshot.hostedThreadActive &&
         nativeHostedCoreFrameFirstSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
-        nativeHostedCoreFrameSecond.frameTimestampMs >=
-            nativeHostedCoreFrameFirst.frameTimestampMs &&
-        nativeHostedCoreFrameSecond.workerFrame.autosaveCompletions == 1U &&
-        nativeHostedCoreFrameSecond.workerFrame.nextSleepDurationMs == 10U &&
-        !nativeHostedCoreFrameSecond.workerFrame.shouldStopRunning &&
-        nativeHostedCoreFrameSecond.workerFrame.snapshot
+        nativeHostedCoreFrameSecond.autosaveCompletions == 1U &&
+        nativeHostedCoreFrameSecond.nextSleepDurationMs == 10U &&
+        !nativeHostedCoreFrameSecond.shouldStopRunning &&
+        nativeHostedCoreFrameSecond.snapshot
                 .pendingWorldActionTicks == 0U &&
-        nativeHostedCoreFrameSecond.workerFrame.snapshot
+        nativeHostedCoreFrameSecond.snapshot
                 .processedAutosaveCommands == 1U &&
         nativeHostedCoreFrameSecondSnapshot.sessionTicks == 2U &&
         nativeHostedCoreFrameSecondSnapshot.gameplayLoopIterations ==
