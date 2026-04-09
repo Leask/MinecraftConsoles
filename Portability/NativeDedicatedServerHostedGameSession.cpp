@@ -1792,8 +1792,6 @@ namespace ServerRuntime
     {
         NativeDedicatedServerHostedGameSessionStopResult result = {};
         result.workerSnapshot = GetNativeDedicatedServerHostedGameWorkerSnapshot();
-        result.autosaveCompletions =
-            GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
         result.sessionSnapshot =
             GetNativeDedicatedServerHostedGameSessionSnapshot();
         return result;

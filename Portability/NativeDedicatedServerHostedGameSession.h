@@ -171,7 +171,6 @@ namespace ServerRuntime
     {
         NativeDedicatedServerHostedGameWorkerSnapshot workerSnapshot = {};
         NativeDedicatedServerHostedGameSessionSnapshot sessionSnapshot = {};
-        std::uint64_t autosaveCompletions = 0;
     };
 
 }

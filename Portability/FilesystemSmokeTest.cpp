@@ -3167,7 +3167,8 @@ int main(int argc, char* argv[])
                     .startupThreadDurationMs > 0U &&
             nativeHostedCoreRunResult.finalState.sessionSnapshot
                     .gameplayLoopIterations == 1U &&
-            nativeHostedCoreRunResult.finalState.autosaveCompletions == 0U &&
+            nativeHostedCoreRunResult.finalState.sessionSnapshot
+                    .observedAutosaveCompletions == 0U &&
             nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
             nativeHostedCoreRunResult.lastFrame.workerFrame
                     .nextSleepDurationMs == 0U &&
@@ -3201,7 +3202,7 @@ int main(int argc, char* argv[])
         (unsigned long long)nativeHostedCoreRunResult.finalState
             .sessionSnapshot.gameplayLoopIterations,
         (unsigned long long)nativeHostedCoreRunResult.finalState
-            .autosaveCompletions,
+            .sessionSnapshot.observedAutosaveCompletions,
         nativeHostedCoreRunResult.finalState.workerSnapshot
             .activeCommandKind ==
             ServerRuntime::
@@ -3223,7 +3224,8 @@ int main(int argc, char* argv[])
                     .startupThreadDurationMs > 0U &&
             nativeHostedCoreRunResult.finalState.sessionSnapshot
                     .gameplayLoopIterations == 1U &&
-            nativeHostedCoreRunResult.finalState.autosaveCompletions == 0U &&
+            nativeHostedCoreRunResult.finalState.sessionSnapshot
+                    .observedAutosaveCompletions == 0U &&
             nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
             nativeHostedCoreRunResult.lastFrame.workerFrame
                     .nextSleepDurationMs == 0U &&
@@ -4222,7 +4224,8 @@ int main(int argc, char* argv[])
                 .startupThreadDurationMs > 0U &&
         nativeHostedCoreRunResult.finalState.sessionSnapshot
                 .gameplayLoopIterations == 1U &&
-        nativeHostedCoreRunResult.finalState.autosaveCompletions == 0U &&
+        nativeHostedCoreRunResult.finalState.sessionSnapshot
+                .observedAutosaveCompletions == 0U &&
         nativeHostedCoreRunResult.lastFrame.frameTimestampMs > 0U &&
         nativeHostedCoreRunResult.lastFrame.workerFrame.nextSleepDurationMs ==
             0U &&
