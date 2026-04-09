@@ -3158,7 +3158,7 @@ int main(int argc, char* argv[])
         !nativeHostedCoreFrameStoppedSnapshot.active);
     printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
         "loops=%llu autosaves=%llu worker_idle=%d hooks=%d/%d phase=%s\n",
-        nativeHostedCoreRunResult.exitCode == 0 &&
+        nativeHostedCoreRunResult.startup.sessionSnapshot.startupResult == 0 &&
             nativeHostedCoreRunResult.startup.sessionSnapshot
                     .payloadValidated &&
             nativeHostedCoreRunResult.startup.sessionSnapshot
@@ -3191,7 +3191,7 @@ int main(int argc, char* argv[])
             !nativeHostedCoreSnapshot.active &&
             nativeHostedCoreSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped,
-        nativeHostedCoreRunResult.exitCode,
+        nativeHostedCoreRunResult.startup.sessionSnapshot.startupResult,
         nativeHostedCoreRunResult.startup.sessionSnapshot.payloadValidated,
         (unsigned long long)nativeHostedCoreRunResult.startup
             .sessionSnapshot.startupThreadIterations,
@@ -3211,7 +3211,8 @@ int main(int argc, char* argv[])
                 nativeHostedCoreSnapshot.runtimePhase));
     printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
         restartedHostedRuntimeResult.ok &&
-            nativeHostedCoreRunResult.exitCode == 0 &&
+            nativeHostedCoreRunResult.startup.sessionSnapshot.startupResult ==
+                0 &&
             nativeHostedCoreRunResult.startup.sessionSnapshot
                     .payloadValidated &&
             nativeHostedCoreRunResult.startup.sessionSnapshot
@@ -4209,7 +4210,7 @@ int main(int argc, char* argv[])
         !nativeHostedCoreFrameStoppedSnapshot.active &&
         nativeHostedCoreFrameStoppedSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
-        nativeHostedCoreRunResult.exitCode == 0 &&
+        nativeHostedCoreRunResult.startup.sessionSnapshot.startupResult == 0 &&
         nativeHostedCoreRunResult.startup.sessionSnapshot
                 .payloadValidated &&
         nativeHostedCoreRunResult.startup.sessionSnapshot

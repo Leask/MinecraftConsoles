@@ -121,8 +121,6 @@ namespace ServerRuntime
                 hooks.onThreadStopped,
                 result.finalState.sessionSnapshot.hostedThreadTicks,
                 LceGetMonotonicMilliseconds());
-            result.exitCode =
-                result.startup.sessionSnapshot.startupResult;
             return result;
         }
 
@@ -151,7 +149,6 @@ namespace ServerRuntime
             hooks.onThreadStopped,
             result.finalState.sessionSnapshot.hostedThreadTicks,
             LceGetMonotonicMilliseconds());
-        result.exitCode = 0;
         return result;
     }
 }

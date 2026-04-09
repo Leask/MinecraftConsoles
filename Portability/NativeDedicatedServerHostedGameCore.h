@@ -22,7 +22,6 @@ namespace ServerRuntime
 
     struct NativeDedicatedServerHostedGameCoreRunResult
     {
-        int exitCode = -1;
         NativeDedicatedServerHostedGameCoreStartupResult startup = {};
         std::uint64_t loopIterations = 0;
         NativeDedicatedServerHostedGameCoreFrameResult lastFrame = {};
