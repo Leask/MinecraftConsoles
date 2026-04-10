@@ -2105,7 +2105,7 @@ int main(int argc, char* argv[])
             25565 &&
         nativeHostedSessionObservedSnapshot.context.listenerPort ==
             19132 &&
-        nativeHostedSessionObservedSnapshot.sessionStartMs == 1000;
+        nativeHostedSessionObservedSnapshot.timing.sessionStartMs == 1000;
     const bool hostedGameSessionObservedWorkerOk =
         nativeHostedSessionObservedSnapshot.progress.acceptedConnections ==
             2 &&
@@ -2149,7 +2149,7 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.summary.requestedAppShutdown &&
         nativeHostedSessionObservedSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_ShutdownRequested &&
-        nativeHostedSessionObservedSnapshot.stoppedMs == 0 &&
+        nativeHostedSessionObservedSnapshot.timing.stoppedMs == 0 &&
         nativeHostedSessionObservedSnapshot.progress.stateChecksum != 0U;
     const bool hostedGameSessionObservedProjectionOk =
         hostedGameSessionObservedIdentityOk &&
@@ -2164,7 +2164,7 @@ int main(int argc, char* argv[])
         !nativeHostedSessionStoppedSnapshot.active &&
         nativeHostedSessionStoppedSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
-        nativeHostedSessionStoppedSnapshot.stoppedMs == 1200 &&
+        nativeHostedSessionStoppedSnapshot.timing.stoppedMs == 1200 &&
         nativeHostedSessionStoppedSnapshot.persistedSave.savePath ==
             "NativeDesktop/GameHDD/SMOKE_SESSION.save";
     const bool hostedGameSessionOk =
@@ -3637,7 +3637,8 @@ int main(int argc, char* argv[])
         ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
             (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
                 nativeHostedSessionObservedSnapshot.runtimePhase),
-        (unsigned long long)nativeHostedSessionObservedSnapshot.stoppedMs,
+        (unsigned long long)
+            nativeHostedSessionObservedSnapshot.timing.stoppedMs,
         (unsigned long long)
             nativeHostedSessionObservedSnapshot.progress.stateChecksum);
     printf("session_execution=%d runtime=%d initial=%d shutdown=%d "

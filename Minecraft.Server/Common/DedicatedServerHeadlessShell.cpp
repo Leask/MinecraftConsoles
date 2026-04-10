@@ -239,12 +239,12 @@ namespace
                 (unsigned long long)
                     sessionSnapshot.progress.platformTickCount,
                 (unsigned long long)
-                    (sessionSnapshot.sessionStartMs == 0
+                    (sessionSnapshot.timing.sessionStartMs == 0
                         ? 0
-                        : ((sessionSnapshot.stoppedMs != 0
-                                ? sessionSnapshot.stoppedMs
+                        : ((sessionSnapshot.timing.stoppedMs != 0
+                                ? sessionSnapshot.timing.stoppedMs
                                 : LceGetMonotonicMilliseconds()) -
-                            sessionSnapshot.sessionStartMs)),
+                            sessionSnapshot.timing.sessionStartMs)),
                 sessionSnapshot.control.worldActionIdle ? "idle" : "busy",
                 sessionSnapshot.control.appShutdownRequested
                     ? "true"

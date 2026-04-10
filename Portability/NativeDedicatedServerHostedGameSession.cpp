@@ -322,7 +322,7 @@ namespace ServerRuntime
                 state->snapshot.progress.saveGeneration);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.sessionStartMs);
+                state->snapshot.timing.sessionStartMs);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.persistedSave.fileTime);
@@ -343,7 +343,7 @@ namespace ServerRuntime
                 state->snapshot.thread.ticks);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.stoppedMs);
+                state->snapshot.timing.stoppedMs);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.loadedFromSave ? 1U : 0U);
@@ -569,7 +569,7 @@ namespace ServerRuntime
                 eDedicatedServerHostedGameRuntimePhase_Stopped;
             if (stoppedMs != 0)
             {
-                state->snapshot.stoppedMs = stoppedMs;
+                state->snapshot.timing.stoppedMs = stoppedMs;
             }
 
             RefreshNativeHostedSessionPhase(state);
@@ -1120,9 +1120,9 @@ namespace ServerRuntime
             listenerPort;
         if (sessionStartMs != 0)
         {
-            g_nativeHostedSessionState.snapshot.sessionStartMs =
+            g_nativeHostedSessionState.snapshot.timing.sessionStartMs =
                 sessionStartMs;
-            g_nativeHostedSessionState.snapshot.stoppedMs = 0;
+            g_nativeHostedSessionState.snapshot.timing.stoppedMs = 0;
         }
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
@@ -1666,7 +1666,7 @@ namespace ServerRuntime
                 snapshot.context.listenerPort;
             RecordDedicatedServerHostedGameRuntimeSessionContext(
                 sessionContext,
-                snapshot.sessionStartMs);
+                snapshot.timing.sessionStartMs);
         }
 
         if (nowMs != 0)
@@ -1748,12 +1748,12 @@ namespace ServerRuntime
                 snapshot.persistedSave.fileTime,
                 snapshot.persistedSave.autosaveCompletions);
         }
-        if (snapshot.stoppedMs != 0 ||
+        if (snapshot.timing.stoppedMs != 0 ||
             snapshot.runtimePhase ==
                 eDedicatedServerHostedGameRuntimePhase_Stopped)
         {
             MarkDedicatedServerHostedGameRuntimeSessionStopped(
-                snapshot.stoppedMs);
+                snapshot.timing.stoppedMs);
         }
     }
 
@@ -1918,16 +1918,16 @@ namespace ServerRuntime
         saveStub.lastProcessedCommandKind =
             snapshot.worker.lastProcessedCommandKind;
         saveStub.platformTickCount = snapshot.progress.platformTickCount;
-        if (snapshot.sessionStartMs != 0)
+        if (snapshot.timing.sessionStartMs != 0)
         {
             const std::uint64_t stoppedMs =
-                snapshot.stoppedMs != 0
-                    ? snapshot.stoppedMs
+                snapshot.timing.stoppedMs != 0
+                    ? snapshot.timing.stoppedMs
                     : nowMs;
-            if (stoppedMs >= snapshot.sessionStartMs)
+            if (stoppedMs >= snapshot.timing.sessionStartMs)
             {
                 saveStub.uptimeMs =
-                    stoppedMs - snapshot.sessionStartMs;
+                    stoppedMs - snapshot.timing.sessionStartMs;
             }
         }
         saveStub.initialSaveRequested =

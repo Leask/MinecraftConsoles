@@ -158,6 +158,12 @@ namespace ServerRuntime
         bool stopSignalValid = false;
     };
 
+    struct NativeDedicatedServerHostedGameTimingSnapshot
+    {
+        std::uint64_t sessionStartMs = 0;
+        std::uint64_t stoppedMs = 0;
+    };
+
     struct NativeDedicatedServerHostedGameSessionSnapshot
     {
         bool startAttempted = false;
@@ -170,7 +176,6 @@ namespace ServerRuntime
         std::int64_t resolvedSeed = 0;
         NativeDedicatedServerHostedGameWorkerSnapshot previousWorker = {};
         NativeDedicatedServerHostedGameWorkerSnapshot worker = {};
-        std::uint64_t sessionStartMs = 0;
         NativeDedicatedServerHostedGamePreviousStartupSnapshot
             previousStartup = {};
         NativeDedicatedServerHostedGameStartupSnapshot startup = {};
@@ -196,7 +201,7 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameThreadSnapshot previousThread = {};
         NativeDedicatedServerHostedGameThreadSnapshot thread = {};
         NativeDedicatedServerHostedGameControlSnapshot control = {};
-        std::uint64_t stoppedMs = 0;
+        NativeDedicatedServerHostedGameTimingSnapshot timing = {};
     };
 
 }
