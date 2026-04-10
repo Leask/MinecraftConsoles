@@ -9,14 +9,6 @@
 
 namespace ServerRuntime
 {
-    struct NativeDedicatedServerHostedGameCoreHooks
-    {
-        void (*onThreadReady)(std::uint64_t nowMs) = nullptr;
-        void (*onThreadStopped)(
-            std::uint64_t hostedThreadTicks,
-            std::uint64_t nowMs) = nullptr;
-    };
-
     NativeDedicatedServerHostedGameWorkerSnapshot
     TickNativeDedicatedServerHostedGameWorkerFrame(
         std::uint64_t *outNextSleepDurationMs,
@@ -117,7 +109,10 @@ namespace ServerRuntime
     NativeDedicatedServerHostedGameSessionSnapshot
     RunNativeDedicatedServerHostedGameCoreWithResult(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
-        const NativeDedicatedServerHostedGameCoreHooks &hooks)
+        void (*onThreadReady)(std::uint64_t nowMs),
+        void (*onThreadStopped)(
+            std::uint64_t hostedThreadTicks,
+            std::uint64_t nowMs))
     {
         const NativeDedicatedServerHostedGameSessionSnapshot startupSnapshot =
             StartNativeDedicatedServerHostedGameCoreWithResult(initData);
@@ -126,14 +121,14 @@ namespace ServerRuntime
             const NativeDedicatedServerHostedGameSessionSnapshot finalState =
                 CaptureNativeDedicatedServerHostedGameSessionState();
             InvokeNativeDedicatedServerHostedGameCoreStoppedHook(
-                hooks.onThreadStopped,
+                onThreadStopped,
                 finalState.hostedThreadTicks,
                 LceGetMonotonicMilliseconds());
             return finalState;
         }
 
         InvokeNativeDedicatedServerHostedGameCoreReadyHook(
-            hooks.onThreadReady,
+            onThreadReady,
             LceGetMonotonicMilliseconds());
         while (true)
         {
@@ -156,7 +151,7 @@ namespace ServerRuntime
         const NativeDedicatedServerHostedGameSessionSnapshot finalState =
             StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState();
         InvokeNativeDedicatedServerHostedGameCoreStoppedHook(
-            hooks.onThreadStopped,
+            onThreadStopped,
             finalState.hostedThreadTicks,
             LceGetMonotonicMilliseconds());
         return finalState;

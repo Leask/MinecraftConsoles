@@ -59,14 +59,6 @@ namespace ServerRuntime
     const char *GetNativeDedicatedServerHostedGameWorkerCommandKindName(
         ENativeDedicatedServerHostedGameWorkerCommandKind kind);
 
-    struct NativeDedicatedServerHostedGameCoreHooks
-    {
-        void (*onThreadReady)(std::uint64_t nowMs) = nullptr;
-        void (*onThreadStopped)(
-            std::uint64_t hostedThreadTicks,
-            std::uint64_t nowMs) = nullptr;
-    };
-
     NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameCoreWithResult(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData);
@@ -80,7 +72,10 @@ namespace ServerRuntime
     NativeDedicatedServerHostedGameSessionSnapshot
     RunNativeDedicatedServerHostedGameCoreWithResult(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
-        const NativeDedicatedServerHostedGameCoreHooks &hooks);
+        void (*onThreadReady)(std::uint64_t nowMs),
+        void (*onThreadStopped)(
+            std::uint64_t hostedThreadTicks,
+            std::uint64_t nowMs));
 
     NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
@@ -1886,15 +1881,12 @@ int main(int argc, char* argv[])
         &nativeHostedCoreInitData,
         hostedGamePlan.networkInitPlan);
     nativeHostedCoreInitData.saveData = nullptr;
-    ServerRuntime::NativeDedicatedServerHostedGameCoreHooks
-        nativeHostedCoreHooks = {};
-    nativeHostedCoreHooks.onThreadReady = &NativeHostedCoreReadyHook;
-    nativeHostedCoreHooks.onThreadStopped = &NativeHostedCoreStoppedHook;
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
         nativeHostedCoreRunResult =
             ServerRuntime::RunNativeDedicatedServerHostedGameCoreWithResult(
                 &nativeHostedCoreInitData,
-                nativeHostedCoreHooks);
+                &NativeHostedCoreReadyHook,
+                &NativeHostedCoreStoppedHook);
     ServerRuntime::ResetDedicatedServerShutdownRequest();
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
         nativeHostedCoreSnapshot = nativeHostedCoreRunResult;

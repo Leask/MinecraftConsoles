@@ -6,18 +6,13 @@
 
 namespace ServerRuntime
 {
-    struct NativeDedicatedServerHostedGameCoreHooks
-    {
-        void (*onThreadReady)(std::uint64_t nowMs) = nullptr;
-        void (*onThreadStopped)(
-            std::uint64_t hostedThreadTicks,
-            std::uint64_t nowMs) = nullptr;
-    };
-
     NativeDedicatedServerHostedGameSessionSnapshot
     RunNativeDedicatedServerHostedGameCoreWithResult(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
-        const NativeDedicatedServerHostedGameCoreHooks &hooks);
+        void (*onThreadReady)(std::uint64_t nowMs),
+        void (*onThreadStopped)(
+            std::uint64_t hostedThreadTicks,
+            std::uint64_t nowMs));
 
     bool SignalNativeDedicatedServerHostedGameHostReady();
     void SignalNativeDedicatedServerHostedGameSessionThreadReady(
@@ -48,17 +43,13 @@ namespace ServerRuntime
 
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)
         {
-            NativeDedicatedServerHostedGameCoreHooks hooks = {};
-            hooks.onThreadReady =
-                &SignalNativeDedicatedServerHostedGameThreadReady;
-            hooks.onThreadStopped =
-                &SignalNativeDedicatedServerHostedGameThreadStopped;
             const NativeDedicatedServerHostedGameSessionSnapshot finalState =
                 RunNativeDedicatedServerHostedGameCoreWithResult(
-                static_cast<
-                    NativeDedicatedServerHostedGameRuntimeStubInitData *>(
-                        threadParam),
-                hooks);
+                    static_cast<
+                        NativeDedicatedServerHostedGameRuntimeStubInitData *>(
+                            threadParam),
+                    &SignalNativeDedicatedServerHostedGameThreadReady,
+                    &SignalNativeDedicatedServerHostedGameThreadStopped);
             if (finalState.startupResult != 0)
             {
                 return finalState.startupResult;
