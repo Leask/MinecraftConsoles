@@ -340,7 +340,7 @@ namespace ServerRuntime
                 state->snapshot.startup.threadDurationMs);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.hostedThreadTicks);
+                state->snapshot.thread.ticks);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.stoppedMs);
@@ -379,7 +379,7 @@ namespace ServerRuntime
                 state->snapshot.stopSignalValid ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.hostedThreadActive ? 1U : 0U);
+                state->snapshot.thread.active ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.summary.initialSaveRequested ? 1U : 0U);
@@ -508,7 +508,7 @@ namespace ServerRuntime
                 return;
             }
 
-            if (state->snapshot.hostedThreadActive ||
+            if (state->snapshot.thread.active ||
                 state->snapshot.threadInvoked)
             {
                 state->snapshot.runtimePhase =
@@ -546,7 +546,7 @@ namespace ServerRuntime
                 return;
             }
 
-            if (state->snapshot.hostedThreadActive ||
+            if (state->snapshot.thread.active ||
                 state->snapshot.threadInvoked ||
                 state->snapshot.startup.payloadValidated ||
                 state->snapshot.startup.result == 0)
@@ -877,9 +877,9 @@ namespace ServerRuntime
                     loadedSaveMetadata.saveStub
                         .startupThreadDurationMs;
             g_nativeHostedSessionState.snapshot
-                .previousHostedThreadActive =
+                .previousThread.active =
                     loadedSaveMetadata.saveStub.hostedThreadActive;
-            g_nativeHostedSessionState.snapshot.previousHostedThreadTicks =
+            g_nativeHostedSessionState.snapshot.previousThread.ticks =
                 loadedSaveMetadata.saveStub.hostedThreadTicks;
             g_nativeHostedSessionState.snapshot
                 .previousSummary.initialSaveRequested =
@@ -982,11 +982,11 @@ namespace ServerRuntime
         ++g_nativeHostedSessionState.snapshot.progress.sessionTicks;
         ++g_nativeHostedSessionState.snapshot
             .progress.gameplayLoopIterations;
-        g_nativeHostedSessionState.snapshot.hostedThreadActive =
+        g_nativeHostedSessionState.snapshot.thread.active =
             hostedThreadActive;
         if (hostedThreadActive)
         {
-            g_nativeHostedSessionState.snapshot.hostedThreadTicks =
+            g_nativeHostedSessionState.snapshot.thread.ticks =
                 g_nativeHostedSessionState.snapshot.progress.sessionTicks;
         }
         RefreshNativeHostedSessionActive(&g_nativeHostedSessionState);
@@ -1013,11 +1013,11 @@ namespace ServerRuntime
         ++g_nativeHostedSessionState.snapshot.progress.sessionTicks;
         ++g_nativeHostedSessionState.snapshot
             .progress.gameplayLoopIterations;
-        g_nativeHostedSessionState.snapshot.hostedThreadActive =
+        g_nativeHostedSessionState.snapshot.thread.active =
             frameInput.hostedThreadActive;
         if (frameInput.hostedThreadActive)
         {
-            g_nativeHostedSessionState.snapshot.hostedThreadTicks =
+            g_nativeHostedSessionState.snapshot.thread.ticks =
                 g_nativeHostedSessionState.snapshot.progress.sessionTicks;
         }
         RefreshNativeHostedSessionActive(&g_nativeHostedSessionState);
@@ -1402,9 +1402,9 @@ namespace ServerRuntime
         std::uint64_t hostedThreadTicks)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        g_nativeHostedSessionState.snapshot.hostedThreadActive =
+        g_nativeHostedSessionState.snapshot.thread.active =
             hostedThreadActive;
-        g_nativeHostedSessionState.snapshot.hostedThreadTicks =
+        g_nativeHostedSessionState.snapshot.thread.ticks =
             hostedThreadTicks;
         RefreshNativeHostedSessionActive(&g_nativeHostedSessionState);
         RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
@@ -1623,9 +1623,9 @@ namespace ServerRuntime
         planMetadata.previousStartupThreadDurationMs =
             snapshot.previousStartup.threadDurationMs;
         planMetadata.previousHostedThreadActive =
-            snapshot.previousHostedThreadActive;
+            snapshot.previousThread.active;
         planMetadata.previousHostedThreadTicks =
-            snapshot.previousHostedThreadTicks;
+            snapshot.previousThread.ticks;
         planMetadata.previousSessionCompleted =
             snapshot.previousSummary.sessionCompleted;
         planMetadata.previousRequestedAppShutdown =
@@ -1702,8 +1702,8 @@ namespace ServerRuntime
             snapshot.worker.lastProcessedCommandId,
             (unsigned int)snapshot.worker.lastProcessedCommandKind);
         RecordDedicatedServerHostedGameRuntimeThreadState(
-            snapshot.hostedThreadActive,
-            snapshot.hostedThreadTicks);
+            snapshot.thread.active,
+            snapshot.thread.ticks);
         RecordDedicatedServerHostedGameRuntimeGameplayLoopIteration(
             snapshot.progress.gameplayLoopIterations);
         RecordDedicatedServerHostedGameRuntimeStartupResult(
@@ -1817,13 +1817,13 @@ namespace ServerRuntime
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         return g_nativeHostedSessionState.snapshot.active &&
-            g_nativeHostedSessionState.snapshot.hostedThreadActive;
+            g_nativeHostedSessionState.snapshot.thread.active;
     }
 
     std::uint64_t GetNativeDedicatedServerHostedGameSessionThreadTicks()
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        return g_nativeHostedSessionState.snapshot.hostedThreadTicks;
+        return g_nativeHostedSessionState.snapshot.thread.ticks;
     }
 
     NativeDedicatedServerHostedGameSessionSnapshot
@@ -1975,9 +1975,9 @@ namespace ServerRuntime
             saveStub.startupThreadDurationMs =
                 snapshot.startup.threadDurationMs;
             saveStub.hostedThreadActive =
-                snapshot.hostedThreadActive;
+                snapshot.thread.active;
             saveStub.hostedThreadTicks =
-                snapshot.hostedThreadTicks;
+                snapshot.thread.ticks;
         }
 
         *outSaveStub = saveStub;
@@ -2001,7 +2001,7 @@ namespace ServerRuntime
             const NativeDedicatedServerHostedGameSessionSnapshot snapshot =
                 GetNativeDedicatedServerHostedGameSessionSnapshot();
             SignalNativeDedicatedServerHostedGameSessionThreadStopped(
-                snapshot.hostedThreadTicks,
+                snapshot.thread.ticks,
                 LceGetMonotonicMilliseconds());
         }
         return stopped;

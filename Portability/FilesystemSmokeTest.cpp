@@ -3125,7 +3125,7 @@ int main(int argc, char* argv[])
             nativeHostedCoreStartupResult
                     .startup.threadDurationMs > 0U &&
             nativeHostedCoreStartupResult.active &&
-            nativeHostedCoreStartupResult.hostedThreadActive ==
+            nativeHostedCoreStartupResult.thread.active ==
                 false &&
             nativeHostedCoreStartupResult.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Startup,
@@ -3153,7 +3153,7 @@ int main(int argc, char* argv[])
                     .progress.sessionTicks == 1U &&
             nativeHostedCoreFrameFirstSnapshot
                     .progress.gameplayLoopIterations == 1U &&
-            nativeHostedCoreFrameFirstSnapshot.hostedThreadActive &&
+            nativeHostedCoreFrameFirstSnapshot.thread.active &&
             nativeHostedCoreFrameFirstSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
             nativeHostedCoreFrameSecondSleepDurationMs == 10U &&
@@ -3168,7 +3168,7 @@ int main(int argc, char* argv[])
                     .progress.gameplayLoopIterations == 2U &&
             nativeHostedCoreFrameSecondSnapshot
                     .progress.observedAutosaveCompletions == 1U &&
-            nativeHostedCoreFrameSecondSnapshot.hostedThreadActive &&
+            nativeHostedCoreFrameSecondSnapshot.thread.active &&
             nativeHostedCoreFrameSecondSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
             !nativeHostedCoreFrameStoppedSnapshot.active &&
@@ -4185,10 +4185,10 @@ int main(int argc, char* argv[])
         nativeHostedCoreStartupResult.startup.payloadValidated &&
         nativeHostedCoreStartupResult
                 .startup.threadIterations == 2U &&
-        nativeHostedCoreStartupResult
-                .startup.threadDurationMs > 0U &&
-        nativeHostedCoreStartupResult.active &&
-        !nativeHostedCoreStartupResult.hostedThreadActive &&
+            nativeHostedCoreStartupResult
+                    .startup.threadDurationMs > 0U &&
+            nativeHostedCoreStartupResult.active &&
+        !nativeHostedCoreStartupResult.thread.active &&
         nativeHostedCoreStartupResult.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Startup &&
         nativeHostedCoreFrameStarted &&
@@ -4201,7 +4201,7 @@ int main(int argc, char* argv[])
         nativeHostedCoreFrameFirstSnapshot.progress.sessionTicks == 1U &&
         nativeHostedCoreFrameFirstSnapshot.progress.gameplayLoopIterations ==
             1U &&
-        nativeHostedCoreFrameFirstSnapshot.hostedThreadActive &&
+        nativeHostedCoreFrameFirstSnapshot.thread.active &&
         nativeHostedCoreFrameFirstSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
         nativeHostedCoreFrameSecondSleepDurationMs == 10U &&
@@ -4215,7 +4215,7 @@ int main(int argc, char* argv[])
             2U &&
         nativeHostedCoreFrameSecondSnapshot
                 .progress.observedAutosaveCompletions == 1U &&
-        nativeHostedCoreFrameSecondSnapshot.hostedThreadActive &&
+        nativeHostedCoreFrameSecondSnapshot.thread.active &&
         nativeHostedCoreFrameSecondSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
         !nativeHostedCoreFrameStoppedSnapshot.active &&

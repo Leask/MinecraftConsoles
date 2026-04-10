@@ -121,7 +121,7 @@ namespace ServerRuntime
                 CaptureNativeDedicatedServerHostedGameSessionState();
             InvokeNativeDedicatedServerHostedGameCoreStoppedHook(
                 onThreadStopped,
-                finalState.hostedThreadTicks,
+                finalState.thread.ticks,
                 LceGetMonotonicMilliseconds());
             return finalState;
         }
@@ -151,7 +151,7 @@ namespace ServerRuntime
             StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState();
         InvokeNativeDedicatedServerHostedGameCoreStoppedHook(
             onThreadStopped,
-            finalState.hostedThreadTicks,
+            finalState.thread.ticks,
             LceGetMonotonicMilliseconds());
         return finalState;
     }

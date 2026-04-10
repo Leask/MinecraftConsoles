@@ -248,8 +248,8 @@ namespace
                 sessionSnapshot.worldActionIdle ? "idle" : "busy",
                 sessionSnapshot.appShutdownRequested ? "true" : "false",
                 sessionSnapshot.gameplayHalted ? "true" : "false",
-                sessionSnapshot.hostedThreadActive ? "active" : "stopped",
-                (unsigned long long)sessionSnapshot.hostedThreadTicks);
+                sessionSnapshot.thread.active ? "active" : "stopped",
+                (unsigned long long)sessionSnapshot.thread.ticks);
             AppendResponseLine(response, buffer);
 
             std::snprintf(
