@@ -201,22 +201,22 @@ namespace ServerRuntime
                     : kNativeHostedSessionHashOffset;
             checksum = MixNativeHostedSessionStringHash(
                 checksum,
-                state->snapshot.worldName);
+                state->snapshot.context.worldName);
             checksum = MixNativeHostedSessionStringHash(
                 checksum,
-                state->snapshot.worldSaveId);
+                state->snapshot.context.worldSaveId);
             checksum = MixNativeHostedSessionStringHash(
                 checksum,
-                state->snapshot.savePath);
+                state->snapshot.context.savePath);
             checksum = MixNativeHostedSessionStringHash(
                 checksum,
-                state->snapshot.storageRoot);
+                state->snapshot.context.storageRoot);
             checksum = MixNativeHostedSessionStringHash(
                 checksum,
-                state->snapshot.hostName);
+                state->snapshot.context.hostName);
             checksum = MixNativeHostedSessionStringHash(
                 checksum,
-                state->snapshot.bindIp);
+                state->snapshot.context.bindIp);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 static_cast<std::uint64_t>(state->snapshot.startup.result));
@@ -228,10 +228,12 @@ namespace ServerRuntime
                 static_cast<std::uint64_t>(state->snapshot.localUsersMask));
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                static_cast<std::uint64_t>(state->snapshot.configuredPort));
+                static_cast<std::uint64_t>(
+                    state->snapshot.context.configuredPort));
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                static_cast<std::uint64_t>(state->snapshot.listenerPort));
+                static_cast<std::uint64_t>(
+                    state->snapshot.context.listenerPort));
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.activation.publicSlots);
@@ -1099,14 +1101,16 @@ namespace ServerRuntime
         std::uint64_t sessionStartMs)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        g_nativeHostedSessionState.snapshot.worldName = worldName;
-        g_nativeHostedSessionState.snapshot.worldSaveId = worldSaveId;
-        g_nativeHostedSessionState.snapshot.savePath = savePath;
-        g_nativeHostedSessionState.snapshot.storageRoot = storageRoot;
-        g_nativeHostedSessionState.snapshot.hostName = hostName;
-        g_nativeHostedSessionState.snapshot.bindIp = bindIp;
-        g_nativeHostedSessionState.snapshot.configuredPort = configuredPort;
-        g_nativeHostedSessionState.snapshot.listenerPort = listenerPort;
+        g_nativeHostedSessionState.snapshot.context.worldName = worldName;
+        g_nativeHostedSessionState.snapshot.context.worldSaveId = worldSaveId;
+        g_nativeHostedSessionState.snapshot.context.savePath = savePath;
+        g_nativeHostedSessionState.snapshot.context.storageRoot = storageRoot;
+        g_nativeHostedSessionState.snapshot.context.hostName = hostName;
+        g_nativeHostedSessionState.snapshot.context.bindIp = bindIp;
+        g_nativeHostedSessionState.snapshot.context.configuredPort =
+            configuredPort;
+        g_nativeHostedSessionState.snapshot.context.listenerPort =
+            listenerPort;
         if (sessionStartMs != 0)
         {
             g_nativeHostedSessionState.snapshot.sessionStartMs =
@@ -1629,24 +1633,26 @@ namespace ServerRuntime
         }
 
         if (nowMs != 0 &&
-            (!snapshot.worldName.empty() ||
-            !snapshot.worldSaveId.empty() ||
-            !snapshot.savePath.empty() ||
-            !snapshot.storageRoot.empty() ||
-            !snapshot.hostName.empty() ||
-            !snapshot.bindIp.empty() ||
-            snapshot.configuredPort != 0 ||
-            snapshot.listenerPort != 0))
+            (!snapshot.context.worldName.empty() ||
+            !snapshot.context.worldSaveId.empty() ||
+            !snapshot.context.savePath.empty() ||
+            !snapshot.context.storageRoot.empty() ||
+            !snapshot.context.hostName.empty() ||
+            !snapshot.context.bindIp.empty() ||
+            snapshot.context.configuredPort != 0 ||
+            snapshot.context.listenerPort != 0))
         {
             DedicatedServerHostedGameRuntimeSessionContext sessionContext = {};
-            sessionContext.worldName = snapshot.worldName;
-            sessionContext.worldSaveId = snapshot.worldSaveId;
-            sessionContext.savePath = snapshot.savePath;
-            sessionContext.storageRoot = snapshot.storageRoot;
-            sessionContext.hostName = snapshot.hostName;
-            sessionContext.bindIp = snapshot.bindIp;
-            sessionContext.configuredPort = snapshot.configuredPort;
-            sessionContext.listenerPort = snapshot.listenerPort;
+            sessionContext.worldName = snapshot.context.worldName;
+            sessionContext.worldSaveId = snapshot.context.worldSaveId;
+            sessionContext.savePath = snapshot.context.savePath;
+            sessionContext.storageRoot = snapshot.context.storageRoot;
+            sessionContext.hostName = snapshot.context.hostName;
+            sessionContext.bindIp = snapshot.context.bindIp;
+            sessionContext.configuredPort =
+                snapshot.context.configuredPort;
+            sessionContext.listenerPort =
+                snapshot.context.listenerPort;
             RecordDedicatedServerHostedGameRuntimeSessionContext(
                 sessionContext,
                 snapshot.sessionStartMs);
@@ -1727,7 +1733,7 @@ namespace ServerRuntime
             RecordDedicatedServerHostedGameRuntimePersistedSave(
                 !snapshot.persistedSave.savePath.empty()
                     ? snapshot.persistedSave.savePath
-                    : snapshot.savePath,
+                    : snapshot.context.savePath,
                 snapshot.persistedSave.fileTime,
                 snapshot.persistedSave.autosaveCompletions);
         }
@@ -1835,23 +1841,23 @@ namespace ServerRuntime
         const NativeDedicatedServerHostedGameSessionSnapshot snapshot =
             GetNativeDedicatedServerHostedGameSessionSnapshot();
         NativeDedicatedServerSaveStub saveStub = {};
-        saveStub.worldName = snapshot.worldName.empty()
+        saveStub.worldName = snapshot.context.worldName.empty()
             ? worldName
-            : snapshot.worldName;
-        saveStub.levelId = snapshot.worldSaveId.empty()
+            : snapshot.context.worldName;
+        saveStub.levelId = snapshot.context.worldSaveId.empty()
             ? worldSaveId
-            : snapshot.worldSaveId;
-        saveStub.hostName = snapshot.hostName.empty()
+            : snapshot.context.worldSaveId;
+        saveStub.hostName = snapshot.context.hostName.empty()
             ? hostName
-            : snapshot.hostName;
-        saveStub.bindIp = snapshot.bindIp.empty()
+            : snapshot.context.hostName;
+        saveStub.bindIp = snapshot.context.bindIp.empty()
             ? bindIp
-            : snapshot.bindIp;
-        saveStub.configuredPort = snapshot.configuredPort > 0
-            ? snapshot.configuredPort
+            : snapshot.context.bindIp;
+        saveStub.configuredPort = snapshot.context.configuredPort > 0
+            ? snapshot.context.configuredPort
             : configuredPort;
-        saveStub.listenerPort = snapshot.listenerPort > 0
-            ? snapshot.listenerPort
+        saveStub.listenerPort = snapshot.context.listenerPort > 0
+            ? snapshot.context.listenerPort
             : listenerPort;
         saveStub.onlineGame = snapshot.activation.onlineGame;
         saveStub.privateGame = snapshot.activation.privateGame;

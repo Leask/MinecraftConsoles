@@ -102,6 +102,18 @@ namespace ServerRuntime
         std::uint64_t autosaveCompletions = 0;
     };
 
+    struct NativeDedicatedServerHostedGameSessionContextSnapshot
+    {
+        std::string worldName;
+        std::string worldSaveId;
+        std::string savePath;
+        std::string storageRoot;
+        std::string hostName;
+        std::string bindIp;
+        int configuredPort = 0;
+        int listenerPort = 0;
+    };
+
     struct NativeDedicatedServerHostedGameSessionSnapshot
     {
         bool startAttempted = false;
@@ -109,18 +121,10 @@ namespace ServerRuntime
         bool loadedFromSave = false;
         bool threadInvoked = false;
         bool loadedSaveMetadataAvailable = false;
-        std::string worldName;
-        std::string worldSaveId;
-        std::string savePath;
-        std::string storageRoot;
-        std::string hostName;
-        std::string bindIp;
         std::string loadedSavePath;
         std::string previousSessionPhase;
         int runtimePhase = 0;
         int localUsersMask = 0;
-        int configuredPort = 0;
-        int listenerPort = 0;
         std::int64_t resolvedSeed = 0;
         std::uint64_t sessionTicks = 0;
         std::uint64_t acceptedConnections = 0;
@@ -158,6 +162,7 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGamePayloadSnapshot payload = {};
         NativeDedicatedServerHostedGamePersistedSaveSnapshot
             persistedSave = {};
+        NativeDedicatedServerHostedGameSessionContextSnapshot context = {};
         std::uint64_t previousHostedThreadTicks = 0;
         std::uint64_t hostedThreadTicks = 0;
         std::uint64_t stoppedMs = 0;

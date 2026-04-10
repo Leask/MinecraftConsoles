@@ -2079,14 +2079,18 @@ int main(int argc, char* argv[])
         hostedGameSessionSnapshot.lastPersistedAutosaveCompletions == 5 &&
         hostedGameSessionSnapshot.uptimeMs == 100;
     const bool hostedGameSessionObservedIdentityOk =
-        nativeHostedSessionObservedSnapshot.worldName == "Smoke Session" &&
-        nativeHostedSessionObservedSnapshot.worldSaveId == "SMOKE_SESSION" &&
-        nativeHostedSessionObservedSnapshot.savePath ==
+        nativeHostedSessionObservedSnapshot.context.worldName ==
+            "Smoke Session" &&
+        nativeHostedSessionObservedSnapshot.context.worldSaveId ==
+            "SMOKE_SESSION" &&
+        nativeHostedSessionObservedSnapshot.context.savePath ==
             "NativeDesktop/GameHDD/SMOKE_SESSION.save" &&
-        nativeHostedSessionObservedSnapshot.storageRoot ==
+        nativeHostedSessionObservedSnapshot.context.storageRoot ==
             "NativeDesktop/GameHDD" &&
-        nativeHostedSessionObservedSnapshot.hostName == "SmokeHost" &&
-        nativeHostedSessionObservedSnapshot.bindIp == "127.0.0.1" &&
+        nativeHostedSessionObservedSnapshot.context.hostName ==
+            "SmokeHost" &&
+        nativeHostedSessionObservedSnapshot.context.bindIp ==
+            "127.0.0.1" &&
         nativeHostedSessionObservedSnapshot.threadInvoked &&
         nativeHostedSessionObservedSnapshot.startup.result == 0 &&
         nativeHostedSessionObservedSnapshot.localUsersMask == 0 &&
@@ -2097,8 +2101,10 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.activation.privateSlots == 0 &&
         nativeHostedSessionObservedSnapshot
             .activation.fakeLocalPlayerJoined &&
-        nativeHostedSessionObservedSnapshot.configuredPort == 25565 &&
-        nativeHostedSessionObservedSnapshot.listenerPort == 19132 &&
+        nativeHostedSessionObservedSnapshot.context.configuredPort ==
+            25565 &&
+        nativeHostedSessionObservedSnapshot.context.listenerPort ==
+            19132 &&
         nativeHostedSessionObservedSnapshot.sessionStartMs == 1000;
     const bool hostedGameSessionObservedWorkerOk =
         nativeHostedSessionObservedSnapshot.acceptedConnections == 2 &&

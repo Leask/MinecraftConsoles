@@ -127,24 +127,27 @@ namespace
         const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
             sessionSnapshot =
                 ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
-        const char *hostName = sessionSnapshot.hostName.empty()
+        const char *hostName = sessionSnapshot.context.hostName.empty()
             ? context.hostName.c_str()
-            : sessionSnapshot.hostName.c_str();
-        const char *bindIp = sessionSnapshot.bindIp.empty()
+            : sessionSnapshot.context.hostName.c_str();
+        const char *bindIp = sessionSnapshot.context.bindIp.empty()
             ? context.bindIp.c_str()
-            : sessionSnapshot.bindIp.c_str();
-        const int configuredPort = sessionSnapshot.configuredPort > 0
-            ? sessionSnapshot.configuredPort
+            : sessionSnapshot.context.bindIp.c_str();
+        const int configuredPort =
+            sessionSnapshot.context.configuredPort > 0
+            ? sessionSnapshot.context.configuredPort
             : context.multiplayerPort;
-        const int listenerPort = sessionSnapshot.listenerPort > 0
-            ? sessionSnapshot.listenerPort
+        const int listenerPort =
+            sessionSnapshot.context.listenerPort > 0
+            ? sessionSnapshot.context.listenerPort
             : context.listenerPort;
-        const char *worldName = sessionSnapshot.worldName.empty()
+        const char *worldName = sessionSnapshot.context.worldName.empty()
             ? context.worldName.c_str()
-            : sessionSnapshot.worldName.c_str();
-        const char *worldSaveId = sessionSnapshot.worldSaveId.empty()
+            : sessionSnapshot.context.worldName.c_str();
+        const char *worldSaveId =
+            sessionSnapshot.context.worldSaveId.empty()
             ? context.worldSaveId.c_str()
-            : sessionSnapshot.worldSaveId.c_str();
+            : sessionSnapshot.context.worldSaveId.c_str();
         char buffer[512] = {};
         std::snprintf(
             buffer,
@@ -319,7 +322,7 @@ namespace
                 (unsigned long long)sessionSnapshot.gameplayLoopIterations);
             AppendResponseLine(response, buffer);
 
-            if (!sessionSnapshot.savePath.empty() ||
+            if (!sessionSnapshot.context.savePath.empty() ||
                 !sessionSnapshot.persistedSave.savePath.empty())
             {
                 std::snprintf(
@@ -327,7 +330,7 @@ namespace
                     sizeof(buffer),
                     "status save path=%s last-persisted=%s "
                     "saved-at-filetime=%llu persisted-autosaves=%llu",
-                    sessionSnapshot.savePath.c_str(),
+                    sessionSnapshot.context.savePath.c_str(),
                     sessionSnapshot.persistedSave.savePath.c_str(),
                     (unsigned long long)
                         sessionSnapshot.persistedSave.fileTime,
