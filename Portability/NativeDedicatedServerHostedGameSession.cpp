@@ -323,13 +323,13 @@ namespace ServerRuntime
                 state->snapshot.sessionStartMs);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.lastPersistedFileTime);
+                state->snapshot.persistedSave.fileTime);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.lastPersistedAutosaveCompletions);
+                state->snapshot.persistedSave.autosaveCompletions);
             checksum = MixNativeHostedSessionStringHash(
                 checksum,
-                state->snapshot.lastPersistedSavePath);
+                state->snapshot.persistedSave.savePath);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.startup.threadIterations);
@@ -728,10 +728,10 @@ namespace ServerRuntime
                         saveStub.lastProcessedCommandKind;
                 g_nativeHostedSessionState.snapshot.gameplayLoopIterations =
                     saveStub.gameplayLoopIterations;
-                g_nativeHostedSessionState.snapshot.lastPersistedFileTime =
+                g_nativeHostedSessionState.snapshot.persistedSave.fileTime =
                     saveStub.savedAtFileTime;
                 g_nativeHostedSessionState.snapshot
-                    .lastPersistedAutosaveCompletions =
+                    .persistedSave.autosaveCompletions =
                     saveStub.autosaveCompletions;
             }
         }
@@ -1259,13 +1259,13 @@ namespace ServerRuntime
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         if (!savePath.empty())
         {
-            g_nativeHostedSessionState.snapshot.lastPersistedSavePath =
+            g_nativeHostedSessionState.snapshot.persistedSave.savePath =
                 savePath;
         }
-        g_nativeHostedSessionState.snapshot.lastPersistedFileTime =
+        g_nativeHostedSessionState.snapshot.persistedSave.fileTime =
             savedAtFileTime;
         g_nativeHostedSessionState.snapshot
-            .lastPersistedAutosaveCompletions = autosaveCompletions;
+            .persistedSave.autosaveCompletions = autosaveCompletions;
         if (autosaveCompletions >
             g_nativeHostedSessionState.snapshot.observedAutosaveCompletions)
         {
@@ -1720,16 +1720,16 @@ namespace ServerRuntime
             snapshot.gameplayLoopIterations;
         RecordDedicatedServerHostedGameRuntimeSessionSummary(
             sessionSummary);
-        if (!snapshot.lastPersistedSavePath.empty() ||
-            snapshot.lastPersistedFileTime != 0 ||
-            snapshot.lastPersistedAutosaveCompletions != 0)
+        if (!snapshot.persistedSave.savePath.empty() ||
+            snapshot.persistedSave.fileTime != 0 ||
+            snapshot.persistedSave.autosaveCompletions != 0)
         {
             RecordDedicatedServerHostedGameRuntimePersistedSave(
-                !snapshot.lastPersistedSavePath.empty()
-                    ? snapshot.lastPersistedSavePath
+                !snapshot.persistedSave.savePath.empty()
+                    ? snapshot.persistedSave.savePath
                     : snapshot.savePath,
-                snapshot.lastPersistedFileTime,
-                snapshot.lastPersistedAutosaveCompletions);
+                snapshot.persistedSave.fileTime,
+                snapshot.persistedSave.autosaveCompletions);
         }
         if (snapshot.stoppedMs != 0 ||
             snapshot.runtimePhase ==

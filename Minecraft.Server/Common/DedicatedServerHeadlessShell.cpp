@@ -320,7 +320,7 @@ namespace
             AppendResponseLine(response, buffer);
 
             if (!sessionSnapshot.savePath.empty() ||
-                !sessionSnapshot.lastPersistedSavePath.empty())
+                !sessionSnapshot.persistedSave.savePath.empty())
             {
                 std::snprintf(
                     buffer,
@@ -328,11 +328,11 @@ namespace
                     "status save path=%s last-persisted=%s "
                     "saved-at-filetime=%llu persisted-autosaves=%llu",
                     sessionSnapshot.savePath.c_str(),
-                    sessionSnapshot.lastPersistedSavePath.c_str(),
+                    sessionSnapshot.persistedSave.savePath.c_str(),
                     (unsigned long long)
-                        sessionSnapshot.lastPersistedFileTime,
+                        sessionSnapshot.persistedSave.fileTime,
                     (unsigned long long)
-                        sessionSnapshot.lastPersistedAutosaveCompletions);
+                        sessionSnapshot.persistedSave.autosaveCompletions);
                 AppendResponseLine(response, buffer);
             }
 

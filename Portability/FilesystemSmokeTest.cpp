@@ -2126,11 +2126,11 @@ int main(int argc, char* argv[])
             ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop &&
         nativeHostedSessionObservedSnapshot.gameplayLoopIterations == 8 &&
         nativeHostedSessionObservedSnapshot.platformTickCount == 6 &&
-        nativeHostedSessionObservedSnapshot.lastPersistedSavePath ==
+        nativeHostedSessionObservedSnapshot.persistedSave.savePath ==
             "NativeDesktop/GameHDD/SMOKE_SESSION.save" &&
-        nativeHostedSessionObservedSnapshot.lastPersistedFileTime == 77 &&
+        nativeHostedSessionObservedSnapshot.persistedSave.fileTime == 77 &&
         nativeHostedSessionObservedSnapshot
-            .lastPersistedAutosaveCompletions == 5 &&
+            .persistedSave.autosaveCompletions == 5 &&
         !nativeHostedSessionObservedSnapshot.worldActionIdle;
     const bool hostedGameSessionObservedLifecycleOk =
         nativeHostedSessionObservedSnapshot.active &&
@@ -2157,7 +2157,7 @@ int main(int argc, char* argv[])
         nativeHostedSessionStoppedSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
         nativeHostedSessionStoppedSnapshot.stoppedMs == 1200 &&
-        nativeHostedSessionStoppedSnapshot.lastPersistedSavePath ==
+        nativeHostedSessionStoppedSnapshot.persistedSave.savePath ==
             "NativeDesktop/GameHDD/SMOKE_SESSION.save";
     const bool hostedGameSessionOk =
         hostedGameSessionCurrentSnapshotOk &&

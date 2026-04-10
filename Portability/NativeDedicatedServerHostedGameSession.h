@@ -95,6 +95,13 @@ namespace ServerRuntime
         std::uint64_t checksum = 0;
     };
 
+    struct NativeDedicatedServerHostedGamePersistedSaveSnapshot
+    {
+        std::string savePath;
+        std::uint64_t fileTime = 0;
+        std::uint64_t autosaveCompletions = 0;
+    };
+
     struct NativeDedicatedServerHostedGameSessionSnapshot
     {
         bool startAttempted = false;
@@ -134,9 +141,6 @@ namespace ServerRuntime
         std::uint64_t previousSaveGeneration = 0;
         std::uint64_t previousSessionStateChecksum = 0;
         std::uint64_t sessionStartMs = 0;
-        std::uint64_t lastPersistedFileTime = 0;
-        std::uint64_t lastPersistedAutosaveCompletions = 0;
-        std::string lastPersistedSavePath;
         NativeDedicatedServerHostedGamePreviousStartupSnapshot
             previousStartup = {};
         NativeDedicatedServerHostedGameStartupSnapshot startup = {};
@@ -152,6 +156,8 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGamePreviousPayloadSnapshot
             previousPayload = {};
         NativeDedicatedServerHostedGamePayloadSnapshot payload = {};
+        NativeDedicatedServerHostedGamePersistedSaveSnapshot
+            persistedSave = {};
         std::uint64_t previousHostedThreadTicks = 0;
         std::uint64_t hostedThreadTicks = 0;
         std::uint64_t stoppedMs = 0;
