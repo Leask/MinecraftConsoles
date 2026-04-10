@@ -253,43 +253,43 @@ namespace
                 "last-queued=%llu last-processed=%s#%llu "
                 "core-checksum=0x%016llx",
                 (unsigned long long)
-                    sessionSnapshot.workerPendingWorldActionTicks,
+                    sessionSnapshot.worker.pendingWorldActionTicks,
                 (unsigned long long)
-                    sessionSnapshot.workerPendingAutosaveCommands,
+                    sessionSnapshot.worker.pendingAutosaveCommands,
                 (unsigned long long)
-                    sessionSnapshot.workerPendingSaveCommands,
+                    sessionSnapshot.worker.pendingSaveCommands,
                 (unsigned long long)
-                    sessionSnapshot.workerPendingStopCommands,
+                    sessionSnapshot.worker.pendingStopCommands,
                 (unsigned long long)
-                    sessionSnapshot.workerPendingHaltCommands,
+                    sessionSnapshot.worker.pendingHaltCommands,
                 (unsigned long long)
-                    sessionSnapshot.workerTickCount,
+                    sessionSnapshot.worker.workerTickCount,
                 (unsigned long long)
-                    sessionSnapshot.completedWorkerActions,
+                    sessionSnapshot.worker.completedWorldActions,
                 (unsigned long long)
-                    sessionSnapshot.processedAutosaveCommands,
+                    sessionSnapshot.worker.processedAutosaveCommands,
                 (unsigned long long)
-                    sessionSnapshot.processedSaveCommands,
+                    sessionSnapshot.worker.processedSaveCommands,
                 (unsigned long long)
-                    sessionSnapshot.processedStopCommands,
+                    sessionSnapshot.worker.processedStopCommands,
                 (unsigned long long)
-                    sessionSnapshot.processedHaltCommands,
+                    sessionSnapshot.worker.processedHaltCommands,
                 GetNativeDedicatedServerHostedGameWorkerCommandKindName(
                     (ServerRuntime::
                         ENativeDedicatedServerHostedGameWorkerCommandKind)
-                        sessionSnapshot.activeCommandKind),
+                        sessionSnapshot.worker.activeCommandKind),
                 (unsigned long long)
-                    sessionSnapshot.activeCommandId,
+                    sessionSnapshot.worker.activeCommandId,
                 (unsigned long long)
-                    sessionSnapshot.activeCommandTicksRemaining,
+                    sessionSnapshot.worker.activeCommandTicksRemaining,
                 (unsigned long long)
-                    sessionSnapshot.lastQueuedCommandId,
+                    sessionSnapshot.worker.lastQueuedCommandId,
                 GetNativeDedicatedServerHostedGameWorkerCommandKindName(
                     (ServerRuntime::
                         ENativeDedicatedServerHostedGameWorkerCommandKind)
-                        sessionSnapshot.lastProcessedCommandKind),
+                        sessionSnapshot.worker.lastProcessedCommandKind),
                 (unsigned long long)
-                    sessionSnapshot.lastProcessedCommandId,
+                    sessionSnapshot.worker.lastProcessedCommandId,
                 (unsigned long long)sessionSnapshot.stateChecksum);
             AppendResponseLine(response, buffer);
 

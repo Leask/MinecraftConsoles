@@ -249,57 +249,57 @@ namespace ServerRuntime
                 state->snapshot.observedAutosaveCompletions);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.workerPendingWorldActionTicks);
+                state->snapshot.worker.pendingWorldActionTicks);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.workerPendingAutosaveCommands);
+                state->snapshot.worker.pendingAutosaveCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.workerPendingSaveCommands);
+                state->snapshot.worker.pendingSaveCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.workerPendingStopCommands);
+                state->snapshot.worker.pendingStopCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.workerPendingHaltCommands);
+                state->snapshot.worker.pendingHaltCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.workerTickCount);
+                state->snapshot.worker.workerTickCount);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.completedWorkerActions);
+                state->snapshot.worker.completedWorldActions);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.processedAutosaveCommands);
+                state->snapshot.worker.processedAutosaveCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.processedSaveCommands);
+                state->snapshot.worker.processedSaveCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.processedStopCommands);
+                state->snapshot.worker.processedStopCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.processedHaltCommands);
+                state->snapshot.worker.processedHaltCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.lastQueuedCommandId);
+                state->snapshot.worker.lastQueuedCommandId);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.activeCommandId);
+                state->snapshot.worker.activeCommandId);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.activeCommandTicksRemaining);
-            checksum = MixNativeHostedSessionHash(
-                checksum,
-                static_cast<std::uint64_t>(
-                    state->snapshot.activeCommandKind));
-            checksum = MixNativeHostedSessionHash(
-                checksum,
-                state->snapshot.lastProcessedCommandId);
+                state->snapshot.worker.activeCommandTicksRemaining);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 static_cast<std::uint64_t>(
-                    state->snapshot.lastProcessedCommandKind));
+                    state->snapshot.worker.activeCommandKind));
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                state->snapshot.worker.lastProcessedCommandId);
+            checksum = MixNativeHostedSessionHash(
+                checksum,
+                static_cast<std::uint64_t>(
+                    state->snapshot.worker.lastProcessedCommandKind));
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.acceptedConnections);
@@ -408,45 +408,45 @@ namespace ServerRuntime
                 return;
             }
 
-            state->snapshot.workerPendingWorldActionTicks =
+            state->snapshot.worker.pendingWorldActionTicks =
                 workerSnapshot.pendingWorldActionTicks;
-            state->snapshot.workerPendingAutosaveCommands =
+            state->snapshot.worker.pendingAutosaveCommands =
                 workerSnapshot.pendingAutosaveCommands;
-            state->snapshot.workerPendingSaveCommands =
+            state->snapshot.worker.pendingSaveCommands =
                 workerSnapshot.pendingSaveCommands;
-            state->snapshot.workerPendingStopCommands =
+            state->snapshot.worker.pendingStopCommands =
                 workerSnapshot.pendingStopCommands;
-            state->snapshot.workerPendingHaltCommands =
+            state->snapshot.worker.pendingHaltCommands =
                 workerSnapshot.pendingHaltCommands;
-            state->snapshot.workerTickCount =
+            state->snapshot.worker.workerTickCount =
                 state->baseWorkerTickCount +
                 workerSnapshot.workerTickCount;
-            state->snapshot.completedWorkerActions =
+            state->snapshot.worker.completedWorldActions =
                 state->baseCompletedWorkerActions +
                 workerSnapshot.completedWorldActions;
-            state->snapshot.processedAutosaveCommands =
+            state->snapshot.worker.processedAutosaveCommands =
                 state->baseProcessedAutosaveCommands +
                 workerSnapshot.processedAutosaveCommands;
-            state->snapshot.processedSaveCommands =
+            state->snapshot.worker.processedSaveCommands =
                 state->baseProcessedSaveCommands +
                 workerSnapshot.processedSaveCommands;
-            state->snapshot.processedStopCommands =
+            state->snapshot.worker.processedStopCommands =
                 state->baseProcessedStopCommands +
                 workerSnapshot.processedStopCommands;
-            state->snapshot.processedHaltCommands =
+            state->snapshot.worker.processedHaltCommands =
                 state->baseProcessedHaltCommands +
                 workerSnapshot.processedHaltCommands;
-            state->snapshot.lastQueuedCommandId =
+            state->snapshot.worker.lastQueuedCommandId =
                 workerSnapshot.lastQueuedCommandId;
-            state->snapshot.activeCommandId =
+            state->snapshot.worker.activeCommandId =
                 workerSnapshot.activeCommandId;
-            state->snapshot.activeCommandTicksRemaining =
+            state->snapshot.worker.activeCommandTicksRemaining =
                 workerSnapshot.activeCommandTicksRemaining;
-            state->snapshot.activeCommandKind =
+            state->snapshot.worker.activeCommandKind =
                 workerSnapshot.activeCommandKind;
-            state->snapshot.lastProcessedCommandId =
+            state->snapshot.worker.lastProcessedCommandId =
                 workerSnapshot.lastProcessedCommandId;
-            state->snapshot.lastProcessedCommandKind =
+            state->snapshot.worker.lastProcessedCommandKind =
                 workerSnapshot.lastProcessedCommandKind;
             state->snapshot.worldActionIdle =
                 workerSnapshot.pendingWorldActionTicks == 0 &&
@@ -682,37 +682,46 @@ namespace ServerRuntime
                     saveStub.gameplayLoopIterations;
                 g_nativeHostedSessionState.snapshot.sessionTicks =
                     saveStub.hostedThreadTicks;
-                g_nativeHostedSessionState.snapshot.workerTickCount =
+                g_nativeHostedSessionState.snapshot
+                    .worker.pendingWorldActionTicks =
+                        saveStub.workerPendingWorldActionTicks;
+                g_nativeHostedSessionState.snapshot.worker.workerTickCount =
                     saveStub.workerTickCount;
-                g_nativeHostedSessionState.snapshot.completedWorkerActions =
+                g_nativeHostedSessionState.snapshot.worker.completedWorldActions =
                     saveStub.completedWorkerActions;
                 g_nativeHostedSessionState.snapshot
-                    .workerPendingAutosaveCommands =
+                    .worker.pendingAutosaveCommands =
                         saveStub.workerPendingAutosaveCommands;
                 g_nativeHostedSessionState.snapshot
-                    .processedAutosaveCommands =
+                    .worker.pendingSaveCommands =
+                        saveStub.workerPendingSaveCommands;
+                g_nativeHostedSessionState.snapshot
+                    .worker.pendingStopCommands =
+                        saveStub.workerPendingStopCommands;
+                g_nativeHostedSessionState.snapshot
+                    .worker.processedAutosaveCommands =
                         saveStub.processedAutosaveCommands;
-                g_nativeHostedSessionState.snapshot.processedSaveCommands =
+                g_nativeHostedSessionState.snapshot.worker.processedSaveCommands =
                     saveStub.processedSaveCommands;
-                g_nativeHostedSessionState.snapshot.processedStopCommands =
+                g_nativeHostedSessionState.snapshot.worker.processedStopCommands =
                     saveStub.processedStopCommands;
-                g_nativeHostedSessionState.snapshot.workerPendingHaltCommands =
+                g_nativeHostedSessionState.snapshot.worker.pendingHaltCommands =
                     saveStub.workerPendingHaltCommands;
-                g_nativeHostedSessionState.snapshot.processedHaltCommands =
+                g_nativeHostedSessionState.snapshot.worker.processedHaltCommands =
                     saveStub.processedHaltCommands;
-                g_nativeHostedSessionState.snapshot.lastQueuedCommandId =
+                g_nativeHostedSessionState.snapshot.worker.lastQueuedCommandId =
                     saveStub.lastQueuedCommandId;
-                g_nativeHostedSessionState.snapshot.activeCommandId =
+                g_nativeHostedSessionState.snapshot.worker.activeCommandId =
                     saveStub.activeCommandId;
                 g_nativeHostedSessionState.snapshot
-                    .activeCommandTicksRemaining =
+                    .worker.activeCommandTicksRemaining =
                         saveStub.activeCommandTicksRemaining;
-                g_nativeHostedSessionState.snapshot.activeCommandKind =
+                g_nativeHostedSessionState.snapshot.worker.activeCommandKind =
                     (ENativeDedicatedServerHostedGameWorkerCommandKind)
                         saveStub.activeCommandKind;
-                g_nativeHostedSessionState.snapshot.lastProcessedCommandId =
+                g_nativeHostedSessionState.snapshot.worker.lastProcessedCommandId =
                     saveStub.lastProcessedCommandId;
-                g_nativeHostedSessionState.snapshot.lastProcessedCommandKind =
+                g_nativeHostedSessionState.snapshot.worker.lastProcessedCommandKind =
                     (ENativeDedicatedServerHostedGameWorkerCommandKind)
                         saveStub.lastProcessedCommandKind;
                 g_nativeHostedSessionState.snapshot.gameplayLoopIterations =
@@ -1636,23 +1645,23 @@ namespace ServerRuntime
                 nowMs);
         }
         RecordDedicatedServerHostedGameRuntimeWorkerState(
-            snapshot.workerPendingWorldActionTicks,
-            snapshot.workerPendingAutosaveCommands,
-            snapshot.workerPendingSaveCommands,
-            snapshot.workerPendingStopCommands,
-            snapshot.workerPendingHaltCommands,
-            snapshot.workerTickCount,
-            snapshot.completedWorkerActions,
-            snapshot.processedAutosaveCommands,
-            snapshot.processedSaveCommands,
-            snapshot.processedStopCommands,
-            snapshot.processedHaltCommands,
-            snapshot.lastQueuedCommandId,
-            snapshot.activeCommandId,
-            snapshot.activeCommandTicksRemaining,
-            (unsigned int)snapshot.activeCommandKind,
-            snapshot.lastProcessedCommandId,
-            (unsigned int)snapshot.lastProcessedCommandKind);
+            snapshot.worker.pendingWorldActionTicks,
+            snapshot.worker.pendingAutosaveCommands,
+            snapshot.worker.pendingSaveCommands,
+            snapshot.worker.pendingStopCommands,
+            snapshot.worker.pendingHaltCommands,
+            snapshot.worker.workerTickCount,
+            snapshot.worker.completedWorldActions,
+            snapshot.worker.processedAutosaveCommands,
+            snapshot.worker.processedSaveCommands,
+            snapshot.worker.processedStopCommands,
+            snapshot.worker.processedHaltCommands,
+            snapshot.worker.lastQueuedCommandId,
+            snapshot.worker.activeCommandId,
+            snapshot.worker.activeCommandTicksRemaining,
+            (unsigned int)snapshot.worker.activeCommandKind,
+            snapshot.worker.lastProcessedCommandId,
+            (unsigned int)snapshot.worker.lastProcessedCommandKind);
         RecordDedicatedServerHostedGameRuntimeThreadState(
             snapshot.hostedThreadActive,
             snapshot.hostedThreadTicks);
@@ -1839,36 +1848,36 @@ namespace ServerRuntime
         saveStub.autosaveCompletions =
             snapshot.observedAutosaveCompletions;
         saveStub.workerPendingWorldActionTicks =
-            snapshot.workerPendingWorldActionTicks;
+            snapshot.worker.pendingWorldActionTicks;
         saveStub.workerPendingAutosaveCommands =
-            snapshot.workerPendingAutosaveCommands;
+            snapshot.worker.pendingAutosaveCommands;
         saveStub.workerPendingSaveCommands =
-            snapshot.workerPendingSaveCommands;
+            snapshot.worker.pendingSaveCommands;
         saveStub.workerPendingStopCommands =
-            snapshot.workerPendingStopCommands;
+            snapshot.worker.pendingStopCommands;
         saveStub.workerPendingHaltCommands =
-            snapshot.workerPendingHaltCommands;
-        saveStub.workerTickCount = snapshot.workerTickCount;
+            snapshot.worker.pendingHaltCommands;
+        saveStub.workerTickCount = snapshot.worker.workerTickCount;
         saveStub.completedWorkerActions =
-            snapshot.completedWorkerActions;
+            snapshot.worker.completedWorldActions;
         saveStub.processedAutosaveCommands =
-            snapshot.processedAutosaveCommands;
+            snapshot.worker.processedAutosaveCommands;
         saveStub.processedSaveCommands =
-            snapshot.processedSaveCommands;
+            snapshot.worker.processedSaveCommands;
         saveStub.processedStopCommands =
-            snapshot.processedStopCommands;
+            snapshot.worker.processedStopCommands;
         saveStub.processedHaltCommands =
-            snapshot.processedHaltCommands;
+            snapshot.worker.processedHaltCommands;
         saveStub.lastQueuedCommandId =
-            snapshot.lastQueuedCommandId;
-        saveStub.activeCommandId = snapshot.activeCommandId;
+            snapshot.worker.lastQueuedCommandId;
+        saveStub.activeCommandId = snapshot.worker.activeCommandId;
         saveStub.activeCommandTicksRemaining =
-            snapshot.activeCommandTicksRemaining;
-        saveStub.activeCommandKind = snapshot.activeCommandKind;
+            snapshot.worker.activeCommandTicksRemaining;
+        saveStub.activeCommandKind = snapshot.worker.activeCommandKind;
         saveStub.lastProcessedCommandId =
-            snapshot.lastProcessedCommandId;
+            snapshot.worker.lastProcessedCommandId;
         saveStub.lastProcessedCommandKind =
-            snapshot.lastProcessedCommandKind;
+            snapshot.worker.lastProcessedCommandKind;
         saveStub.platformTickCount = snapshot.platformTickCount;
         if (snapshot.sessionStartMs != 0)
         {

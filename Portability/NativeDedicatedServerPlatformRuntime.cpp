@@ -256,7 +256,7 @@ namespace ServerRuntime
         return std::max(
             trackerCompletions,
             GetNativeDedicatedServerHostedGameSessionSnapshot()
-                .processedAutosaveCommands);
+                .worker.processedAutosaveCommands);
     }
 
     void HaltDedicatedServerGameplay()

@@ -96,27 +96,7 @@ namespace ServerRuntime
         std::uint64_t previousActiveCommandId = 0;
         std::uint64_t previousActiveCommandTicksRemaining = 0;
         std::uint64_t previousLastProcessedCommandId = 0;
-        std::uint64_t workerPendingWorldActionTicks = 0;
-        std::uint64_t workerPendingAutosaveCommands = 0;
-        std::uint64_t workerPendingSaveCommands = 0;
-        std::uint64_t workerPendingStopCommands = 0;
-        std::uint64_t workerPendingHaltCommands = 0;
-        std::uint64_t workerTickCount = 0;
-        std::uint64_t completedWorkerActions = 0;
-        std::uint64_t processedAutosaveCommands = 0;
-        std::uint64_t processedSaveCommands = 0;
-        std::uint64_t processedStopCommands = 0;
-        std::uint64_t processedHaltCommands = 0;
-        std::uint64_t lastQueuedCommandId = 0;
-        std::uint64_t activeCommandId = 0;
-        std::uint64_t activeCommandTicksRemaining = 0;
-        ENativeDedicatedServerHostedGameWorkerCommandKind
-            activeCommandKind =
-                eNativeDedicatedServerHostedGameWorkerCommand_None;
-        std::uint64_t lastProcessedCommandId = 0;
-        ENativeDedicatedServerHostedGameWorkerCommandKind
-            lastProcessedCommandKind =
-                eNativeDedicatedServerHostedGameWorkerCommand_None;
+        NativeDedicatedServerHostedGameWorkerSnapshot worker = {};
         std::uint64_t gameplayLoopIterations = 0;
         std::uint64_t platformTickCount = 0;
         std::uint64_t saveGeneration = 0;

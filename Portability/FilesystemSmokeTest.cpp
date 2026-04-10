@@ -2103,25 +2103,25 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.acceptedConnections == 2 &&
         nativeHostedSessionObservedSnapshot.remoteCommands == 3 &&
         nativeHostedSessionObservedSnapshot.autosaveRequests == 4 &&
-        nativeHostedSessionObservedSnapshot.workerPendingWorldActionTicks == 9 &&
-        nativeHostedSessionObservedSnapshot.workerPendingAutosaveCommands == 8 &&
-        nativeHostedSessionObservedSnapshot.workerPendingSaveCommands == 10 &&
-        nativeHostedSessionObservedSnapshot.workerPendingStopCommands == 11 &&
-        nativeHostedSessionObservedSnapshot.workerPendingHaltCommands == 12 &&
-        nativeHostedSessionObservedSnapshot.workerTickCount == 22 &&
-        nativeHostedSessionObservedSnapshot.completedWorkerActions == 32 &&
-        nativeHostedSessionObservedSnapshot.processedAutosaveCommands == 12 &&
-        nativeHostedSessionObservedSnapshot.processedSaveCommands == 42 &&
-        nativeHostedSessionObservedSnapshot.processedStopCommands == 52 &&
-        nativeHostedSessionObservedSnapshot.processedHaltCommands == 62 &&
-        nativeHostedSessionObservedSnapshot.lastQueuedCommandId == 99 &&
-        nativeHostedSessionObservedSnapshot.activeCommandId == 97 &&
-        nativeHostedSessionObservedSnapshot.activeCommandTicksRemaining == 3 &&
-        nativeHostedSessionObservedSnapshot.activeCommandKind ==
+        nativeHostedSessionObservedSnapshot.worker.pendingWorldActionTicks == 9 &&
+        nativeHostedSessionObservedSnapshot.worker.pendingAutosaveCommands == 8 &&
+        nativeHostedSessionObservedSnapshot.worker.pendingSaveCommands == 10 &&
+        nativeHostedSessionObservedSnapshot.worker.pendingStopCommands == 11 &&
+        nativeHostedSessionObservedSnapshot.worker.pendingHaltCommands == 12 &&
+        nativeHostedSessionObservedSnapshot.worker.workerTickCount == 22 &&
+        nativeHostedSessionObservedSnapshot.worker.completedWorldActions == 32 &&
+        nativeHostedSessionObservedSnapshot.worker.processedAutosaveCommands == 12 &&
+        nativeHostedSessionObservedSnapshot.worker.processedSaveCommands == 42 &&
+        nativeHostedSessionObservedSnapshot.worker.processedStopCommands == 52 &&
+        nativeHostedSessionObservedSnapshot.worker.processedHaltCommands == 62 &&
+        nativeHostedSessionObservedSnapshot.worker.lastQueuedCommandId == 99 &&
+        nativeHostedSessionObservedSnapshot.worker.activeCommandId == 97 &&
+        nativeHostedSessionObservedSnapshot.worker.activeCommandTicksRemaining == 3 &&
+        nativeHostedSessionObservedSnapshot.worker.activeCommandKind ==
             ServerRuntime::
                 eNativeDedicatedServerHostedGameWorkerCommand_Autosave &&
-        nativeHostedSessionObservedSnapshot.lastProcessedCommandId == 98 &&
-        nativeHostedSessionObservedSnapshot.lastProcessedCommandKind ==
+        nativeHostedSessionObservedSnapshot.worker.lastProcessedCommandId == 98 &&
+        nativeHostedSessionObservedSnapshot.worker.lastProcessedCommandKind ==
             ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop &&
         nativeHostedSessionObservedSnapshot.gameplayLoopIterations == 8 &&
         nativeHostedSessionObservedSnapshot.platformTickCount == 6 &&
@@ -3186,16 +3186,16 @@ int main(int argc, char* argv[])
             nativeHostedCoreRunResult
                     .observedAutosaveCompletions == 0U &&
             nativeHostedCoreRunResult
-                    .workerPendingWorldActionTicks == 0U &&
+                    .worker.pendingWorldActionTicks == 0U &&
             nativeHostedCoreRunResult
-                    .workerPendingAutosaveCommands == 0U &&
+                    .worker.pendingAutosaveCommands == 0U &&
             nativeHostedCoreRunResult
-                    .workerPendingSaveCommands == 0U &&
+                    .worker.pendingSaveCommands == 0U &&
             nativeHostedCoreRunResult
-                    .workerPendingStopCommands == 0U &&
+                    .worker.pendingStopCommands == 0U &&
             nativeHostedCoreRunResult
-                    .workerPendingHaltCommands == 0U &&
-            nativeHostedCoreRunResult.activeCommandKind ==
+                    .worker.pendingHaltCommands == 0U &&
+            nativeHostedCoreRunResult.worker.activeCommandKind ==
                 ServerRuntime::
                     eNativeDedicatedServerHostedGameWorkerCommand_None &&
             g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
@@ -3213,7 +3213,7 @@ int main(int argc, char* argv[])
             .gameplayLoopIterations,
         (unsigned long long)nativeHostedCoreRunResult
             .observedAutosaveCompletions,
-        nativeHostedCoreRunResult.activeCommandKind ==
+        nativeHostedCoreRunResult.worker.activeCommandKind ==
             ServerRuntime::
                 eNativeDedicatedServerHostedGameWorkerCommand_None,
         g_nativeHostedCoreHookSmokeContext.readyCount,
@@ -3234,16 +3234,16 @@ int main(int argc, char* argv[])
             nativeHostedCoreRunResult
                     .observedAutosaveCompletions == 0U &&
             nativeHostedCoreRunResult
-                    .workerPendingWorldActionTicks == 0U &&
+                    .worker.pendingWorldActionTicks == 0U &&
             nativeHostedCoreRunResult
-                    .workerPendingAutosaveCommands == 0U &&
+                    .worker.pendingAutosaveCommands == 0U &&
             nativeHostedCoreRunResult
-                    .workerPendingSaveCommands == 0U &&
+                    .worker.pendingSaveCommands == 0U &&
             nativeHostedCoreRunResult
-                    .workerPendingStopCommands == 0U &&
+                    .worker.pendingStopCommands == 0U &&
             nativeHostedCoreRunResult
-                    .workerPendingHaltCommands == 0U &&
-            nativeHostedCoreRunResult.activeCommandKind ==
+                    .worker.pendingHaltCommands == 0U &&
+            nativeHostedCoreRunResult.worker.activeCommandKind ==
                 ServerRuntime::
                     eNativeDedicatedServerHostedGameWorkerCommand_None &&
             g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
@@ -3358,17 +3358,17 @@ int main(int argc, char* argv[])
         (unsigned long long)nativeHostedSessionCoreStoppedSnapshot
             .stateChecksum,
         (unsigned long long)
-            nativeHostedSessionCoreSnapshot.workerPendingSaveCommands,
+            nativeHostedSessionCoreSnapshot.worker.pendingSaveCommands,
         (unsigned long long)
-            nativeHostedSessionCoreSnapshot.workerPendingStopCommands,
+            nativeHostedSessionCoreSnapshot.worker.pendingStopCommands,
         (unsigned long long)
-            nativeHostedSessionCoreSnapshot.workerPendingHaltCommands,
+            nativeHostedSessionCoreSnapshot.worker.pendingHaltCommands,
         (unsigned long long)
-            nativeHostedSessionCoreSnapshot.processedSaveCommands,
+            nativeHostedSessionCoreSnapshot.worker.processedSaveCommands,
         (unsigned long long)
-            nativeHostedSessionCoreSnapshot.processedStopCommands,
+            nativeHostedSessionCoreSnapshot.worker.processedStopCommands,
         (unsigned long long)
-            nativeHostedSessionCoreSnapshot.processedHaltCommands);
+            nativeHostedSessionCoreSnapshot.worker.processedHaltCommands);
     printf("native_hosted_stub_contract=%d core=%d/%d runtime=%d/%d\n",
         nativeHostedStubCoreOk && nativeHostedStubRuntimeOk,
         nativeHostedStubCoreContextOk,
@@ -3573,33 +3573,33 @@ int main(int argc, char* argv[])
         (unsigned long long)hostedGameSessionSnapshot.gameplayLoopIterations,
         hostedGameSessionSnapshot.sessionCompleted,
         (unsigned long long)
-            nativeHostedSessionObservedSnapshot.workerPendingWorldActionTicks,
+            nativeHostedSessionObservedSnapshot.worker.pendingWorldActionTicks,
         (unsigned long long)
-            nativeHostedSessionObservedSnapshot.workerPendingAutosaveCommands,
+            nativeHostedSessionObservedSnapshot.worker.pendingAutosaveCommands,
         (unsigned long long)
-            nativeHostedSessionObservedSnapshot.workerPendingSaveCommands,
+            nativeHostedSessionObservedSnapshot.worker.pendingSaveCommands,
         (unsigned long long)
-            nativeHostedSessionObservedSnapshot.workerPendingStopCommands,
+            nativeHostedSessionObservedSnapshot.worker.pendingStopCommands,
         (unsigned long long)
-            nativeHostedSessionObservedSnapshot.workerPendingHaltCommands,
+            nativeHostedSessionObservedSnapshot.worker.pendingHaltCommands,
         (unsigned long long)
-            nativeHostedSessionObservedSnapshot.workerTickCount,
+            nativeHostedSessionObservedSnapshot.worker.workerTickCount,
         (unsigned long long)
-            nativeHostedSessionObservedSnapshot.completedWorkerActions,
+            nativeHostedSessionObservedSnapshot.worker.completedWorldActions,
         (unsigned long long)
-            nativeHostedSessionObservedSnapshot.processedAutosaveCommands,
+            nativeHostedSessionObservedSnapshot.worker.processedAutosaveCommands,
         (unsigned long long)
-            nativeHostedSessionObservedSnapshot.processedSaveCommands,
+            nativeHostedSessionObservedSnapshot.worker.processedSaveCommands,
         (unsigned long long)
-            nativeHostedSessionObservedSnapshot.processedStopCommands,
+            nativeHostedSessionObservedSnapshot.worker.processedStopCommands,
         (unsigned long long)
-            nativeHostedSessionObservedSnapshot.processedHaltCommands,
+            nativeHostedSessionObservedSnapshot.worker.processedHaltCommands,
         GetNativeDedicatedServerHostedGameWorkerCommandKindName(
-            nativeHostedSessionObservedSnapshot.activeCommandKind),
+            nativeHostedSessionObservedSnapshot.worker.activeCommandKind),
         (unsigned long long)
-            nativeHostedSessionObservedSnapshot.activeCommandId,
+            nativeHostedSessionObservedSnapshot.worker.activeCommandId,
         (unsigned long long)
-            nativeHostedSessionObservedSnapshot.activeCommandTicksRemaining,
+            nativeHostedSessionObservedSnapshot.worker.activeCommandTicksRemaining,
         ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
             hostedGameStoppedSnapshot.phase));
     printf("hosted_game_session_contract=%d current=%d observed=%d/%d/%d "
@@ -4216,21 +4216,21 @@ int main(int argc, char* argv[])
         nativeHostedCoreRunResult
                 .observedAutosaveCompletions == 0U &&
         nativeHostedCoreRunResult
-            .workerPendingWorldActionTicks ==
+            .worker.pendingWorldActionTicks ==
             0U &&
         nativeHostedCoreRunResult
-            .workerPendingAutosaveCommands ==
+            .worker.pendingAutosaveCommands ==
             0U &&
         nativeHostedCoreRunResult
-            .workerPendingSaveCommands ==
+            .worker.pendingSaveCommands ==
             0U &&
         nativeHostedCoreRunResult
-            .workerPendingStopCommands ==
+            .worker.pendingStopCommands ==
             0U &&
         nativeHostedCoreRunResult
-            .workerPendingHaltCommands ==
+            .worker.pendingHaltCommands ==
             0U &&
-        nativeHostedCoreRunResult.activeCommandKind ==
+        nativeHostedCoreRunResult.worker.activeCommandKind ==
             ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_None &&
         g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
         g_nativeHostedCoreHookSmokeContext.stoppedCount == 1 &&
