@@ -3277,9 +3277,9 @@ int main(int argc, char* argv[])
             sessionConfig.worldSizeChunks &&
         nativeHostedSessionCoreSnapshot.worldConfig.worldHellScale ==
             sessionConfig.worldHellScale &&
-        nativeHostedSessionCoreSnapshot.savePayloadBytes ==
+        nativeHostedSessionCoreSnapshot.payload.bytes ==
             nativeHostedSaveBytes.size() &&
-        nativeHostedSessionCoreSnapshot.savePayloadName == "world" &&
+        nativeHostedSessionCoreSnapshot.payload.name == "world" &&
         nativeHostedSessionCoreSnapshot.loadedSaveMetadataAvailable &&
         nativeHostedSessionCoreSnapshot.loadedSavePath ==
             "NativeDesktop/GameHDD/SmokeSession.save" &&
@@ -3387,8 +3387,8 @@ int main(int argc, char* argv[])
         nativeHostedSessionCoreSnapshot.worldConfig.dedicatedNoLocalHostPlayer,
         nativeHostedSessionCoreSnapshot.worldConfig.worldSizeChunks,
         nativeHostedSessionCoreSnapshot.worldConfig.worldHellScale,
-        nativeHostedSessionCoreSnapshot.savePayloadName.c_str(),
-        (long long)nativeHostedSessionCoreSnapshot.savePayloadBytes,
+        nativeHostedSessionCoreSnapshot.payload.name.c_str(),
+        (long long)nativeHostedSessionCoreSnapshot.payload.bytes,
         nativeHostedSessionCoreSnapshot.loadedSaveMetadataAvailable,
         nativeHostedSessionCoreSnapshot.loadedSavePath.c_str(),
         nativeHostedSessionCoreSnapshot.previousStartup.mode.c_str());

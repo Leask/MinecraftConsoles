@@ -202,10 +202,10 @@ namespace
                 sessionSnapshot.worldConfig.dedicatedNoLocalHostPlayer
                     ? "true"
                     : "false",
-                (unsigned long long)sessionSnapshot.payloadChecksum,
+                (unsigned long long)sessionSnapshot.payload.checksum,
                 (unsigned long long)sessionSnapshot.saveGeneration,
                 (unsigned long long)sessionSnapshot.stateChecksum,
-                sessionSnapshot.savePayloadBytes > 0 ? "present" : "none",
+                sessionSnapshot.payload.bytes > 0 ? "present" : "none",
                 sessionSnapshot.startup.payloadValidated
                     ? "true"
                     : "false",
@@ -225,10 +225,10 @@ namespace
                 sessionSnapshot.active ? "true" : "false",
                 worldName,
                 worldSaveId,
-                sessionSnapshot.savePayloadName.empty()
+                sessionSnapshot.payload.name.empty()
                     ? "none"
-                    : sessionSnapshot.savePayloadName.c_str(),
-                (long long)sessionSnapshot.savePayloadBytes,
+                    : sessionSnapshot.payload.name.c_str(),
+                (long long)sessionSnapshot.payload.bytes,
                 (unsigned long long)sessionSnapshot.autosaveRequests,
                 (unsigned long long)sessionSnapshot.observedAutosaveCompletions,
                 (unsigned long long)sessionSnapshot.platformTickCount,

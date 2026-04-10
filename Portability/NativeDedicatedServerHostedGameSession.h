@@ -83,6 +83,18 @@ namespace ServerRuntime
         unsigned char worldHellScale = 0;
     };
 
+    struct NativeDedicatedServerHostedGamePayloadSnapshot
+    {
+        std::string name;
+        std::int64_t bytes = 0;
+        std::uint64_t checksum = 0;
+    };
+
+    struct NativeDedicatedServerHostedGamePreviousPayloadSnapshot
+    {
+        std::uint64_t checksum = 0;
+    };
+
     struct NativeDedicatedServerHostedGameSessionSnapshot
     {
         bool startAttempted = false;
@@ -96,7 +108,6 @@ namespace ServerRuntime
         std::string storageRoot;
         std::string hostName;
         std::string bindIp;
-        std::string savePayloadName;
         std::string loadedSavePath;
         std::string previousSessionPhase;
         int runtimePhase = 0;
@@ -104,8 +115,6 @@ namespace ServerRuntime
         int configuredPort = 0;
         int listenerPort = 0;
         std::int64_t resolvedSeed = 0;
-        std::int64_t savePayloadBytes = 0;
-        std::uint64_t payloadChecksum = 0;
         std::uint64_t sessionTicks = 0;
         std::uint64_t acceptedConnections = 0;
         std::uint64_t remoteCommands = 0;
@@ -122,7 +131,6 @@ namespace ServerRuntime
         std::uint64_t previousPlatformTickCount = 0;
         std::uint64_t previousUptimeMs = 0;
         std::uint64_t previousGameplayLoopIterations = 0;
-        std::uint64_t previousSavePayloadChecksum = 0;
         std::uint64_t previousSaveGeneration = 0;
         std::uint64_t previousSessionStateChecksum = 0;
         std::uint64_t sessionStartMs = 0;
@@ -141,6 +149,9 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameWorldConfigSnapshot
             previousWorldConfig = {};
         NativeDedicatedServerHostedGameWorldConfigSnapshot worldConfig = {};
+        NativeDedicatedServerHostedGamePreviousPayloadSnapshot
+            previousPayload = {};
+        NativeDedicatedServerHostedGamePayloadSnapshot payload = {};
         std::uint64_t previousHostedThreadTicks = 0;
         std::uint64_t hostedThreadTicks = 0;
         std::uint64_t stoppedMs = 0;

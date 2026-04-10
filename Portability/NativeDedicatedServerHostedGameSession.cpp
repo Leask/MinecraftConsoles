@@ -240,7 +240,7 @@ namespace ServerRuntime
                 state->snapshot.activation.privateSlots);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.payloadChecksum);
+                state->snapshot.payload.checksum);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.sessionTicks);
@@ -648,7 +648,7 @@ namespace ServerRuntime
         SetNativeHostedSessionStartupValidationState(
             &g_nativeHostedSessionState,
             startupPayloadValidated);
-        g_nativeHostedSessionState.snapshot.payloadChecksum =
+        g_nativeHostedSessionState.snapshot.payload.checksum =
             ComputeNativeHostedSessionBytesChecksum(
                 initData.saveData != nullptr ? initData.saveData->data : nullptr,
                 initData.saveData != nullptr ? initData.saveData->fileSize : 0);
@@ -657,9 +657,9 @@ namespace ServerRuntime
             initData.saveData->data != nullptr &&
             initData.saveData->fileSize > 0)
         {
-            g_nativeHostedSessionState.snapshot.savePayloadBytes =
+            g_nativeHostedSessionState.snapshot.payload.bytes =
                 initData.saveData->fileSize;
-            g_nativeHostedSessionState.snapshot.savePayloadName =
+            g_nativeHostedSessionState.snapshot.payload.name =
                 StringUtils::WideToUtf8(
                     initData.saveData->saveName);
             if (hasParsedSaveStub)
@@ -848,7 +848,7 @@ namespace ServerRuntime
             g_nativeHostedSessionState.snapshot.previousActivation.privateSlots =
                 (unsigned char)loadedSaveMetadata.saveStub.privateSlots;
             g_nativeHostedSessionState.snapshot
-                .previousSavePayloadChecksum =
+                .previousPayload.checksum =
                     loadedSaveMetadata.saveStub.payloadChecksum;
             g_nativeHostedSessionState.snapshot.previousSaveGeneration =
                 loadedSaveMetadata.saveStub.saveGeneration;
@@ -1513,8 +1513,8 @@ namespace ServerRuntime
         planMetadata.fakeLocalPlayerJoined =
             snapshot.activation.fakeLocalPlayerJoined;
         planMetadata.resolvedSeed = snapshot.resolvedSeed;
-        planMetadata.savePayloadBytes = snapshot.savePayloadBytes;
-        planMetadata.savePayloadChecksum = snapshot.payloadChecksum;
+        planMetadata.savePayloadBytes = snapshot.payload.bytes;
+        planMetadata.savePayloadChecksum = snapshot.payload.checksum;
         planMetadata.hostSettings = snapshot.worldConfig.hostSettings;
         planMetadata.dedicatedNoLocalHostPlayer =
             snapshot.worldConfig.dedicatedNoLocalHostPlayer;
@@ -1526,7 +1526,7 @@ namespace ServerRuntime
             (unsigned char)snapshot.activation.publicSlots;
         planMetadata.privateSlots =
             (unsigned char)snapshot.activation.privateSlots;
-        planMetadata.savePayloadName = snapshot.savePayloadName;
+        planMetadata.savePayloadName = snapshot.payload.name;
         planMetadata.loadedSaveMetadataAvailable =
             snapshot.loadedSaveMetadataAvailable;
         planMetadata.loadedSavePath = snapshot.loadedSavePath;
@@ -1594,7 +1594,7 @@ namespace ServerRuntime
         planMetadata.previousPrivateSlots =
             (unsigned char)snapshot.previousActivation.privateSlots;
         planMetadata.previousSavePayloadChecksum =
-            snapshot.previousSavePayloadChecksum;
+            snapshot.previousPayload.checksum;
         planMetadata.previousSaveGeneration =
             snapshot.previousSaveGeneration;
         planMetadata.previousSessionStateChecksum =
@@ -1619,7 +1619,7 @@ namespace ServerRuntime
             snapshot.previousSummary.shutdownHaltedGameplay;
         if (snapshot.startAttempted ||
             snapshot.loadedFromSave ||
-            !snapshot.savePayloadName.empty() ||
+            !snapshot.payload.name.empty() ||
             snapshot.worldConfig.hostSettings != 0 ||
             snapshot.loadedSaveMetadataAvailable ||
             !snapshot.loadedSavePath.empty())
@@ -1937,11 +1937,11 @@ namespace ServerRuntime
                     (EDedicatedServerHostedGameRuntimePhase)
                         snapshot.runtimePhase);
             saveStub.resolvedSeed = snapshot.resolvedSeed;
-            saveStub.payloadBytes = snapshot.savePayloadBytes;
-            saveStub.payloadChecksum = snapshot.payloadChecksum;
+            saveStub.payloadBytes = snapshot.payload.bytes;
+            saveStub.payloadChecksum = snapshot.payload.checksum;
             saveStub.saveGeneration = snapshot.saveGeneration;
             saveStub.stateChecksum = snapshot.stateChecksum;
-            saveStub.payloadName = snapshot.savePayloadName;
+            saveStub.payloadName = snapshot.payload.name;
             saveStub.hostSettings = snapshot.worldConfig.hostSettings;
             saveStub.dedicatedNoLocalHostPlayer =
                 snapshot.worldConfig.dedicatedNoLocalHostPlayer;
@@ -1950,7 +1950,7 @@ namespace ServerRuntime
             saveStub.worldHellScale =
                 snapshot.worldConfig.worldHellScale;
             saveStub.startupPayloadPresent =
-                snapshot.savePayloadBytes > 0;
+                snapshot.payload.bytes > 0;
             saveStub.startupPayloadValidated =
                 snapshot.startup.payloadValidated;
             saveStub.startupThreadIterations =
