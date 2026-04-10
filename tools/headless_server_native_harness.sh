@@ -25,9 +25,11 @@ sync_excludes=(
 current_step=''
 local_build_ok=0
 local_bootstrap_ok=0
+local_live_ok=0
 remote_sync_ok=0
 remote_build_ok=0
 remote_bootstrap_ok=0
+remote_live_ok=0
 
 write_summary_header() {
     local git_head
@@ -119,6 +121,29 @@ run_local_bootstrap() {
     append_summary_line "local.bootstrap=ok"
 }
 
+run_local_live() {
+    local storage_root="$log_root/local-live-storage"
+
+    rm -rf "$storage_root"
+    mkdir -p "$storage_root"
+
+    run_and_log \
+        local-live \
+        "$local_bootstrap_bin" \
+        --shutdown-after-ms \
+        120 \
+        --storage-root \
+        "$storage_root" \
+        -port \
+        0 \
+        -bind \
+        127.0.0.1 \
+        -name \
+        HarnessLocalLive
+    local_live_ok=1
+    append_summary_line "local.live=ok"
+}
+
 sync_remote_tree() {
     run_and_log \
         remote-sync \
@@ -197,6 +222,36 @@ EOF
     append_summary_line "remote.bootstrap=ok"
 }
 
+run_remote_live() {
+    local remote_cmd
+    remote_cmd=$(
+        cat <<EOF
+set -euo pipefail
+storage_root=\$(mktemp -d /tmp/minecraft-native-live.XXXXXX)
+cleanup() {
+    rm -rf "\$storage_root"
+}
+trap cleanup EXIT
+export PATH="\$HOME/.local/bin:\$PATH"
+cd "$remote_root"
+"$remote_bootstrap_bin" \
+    --shutdown-after-ms 120 \
+    --storage-root "\$storage_root" \
+    -port 0 \
+    -bind 127.0.0.1 \
+    -name HarnessLinuxLive
+EOF
+    )
+
+    run_and_log \
+        remote-live \
+        ssh \
+        "$remote_host" \
+        "$remote_cmd"
+    remote_live_ok=1
+    append_summary_line "remote.live=ok"
+}
+
 main() {
     mkdir -p "$log_root"
     trap on_error ERR
@@ -209,20 +264,24 @@ main() {
 
     run_local_build_and_test
     run_local_bootstrap
+    run_local_live
     sync_remote_tree
     run_remote_build_and_test
     run_remote_bootstrap
+    run_remote_live
 
-    if [[ "$local_build_ok" -eq 1 && "$local_bootstrap_ok" -eq 1 ]]; then
+    if [[ "$local_build_ok" -eq 1 && "$local_bootstrap_ok" -eq 1 &&
+        "$local_live_ok" -eq 1 ]]; then
         append_summary_line "platform.local=ok"
     fi
     if [[ "$remote_sync_ok" -eq 1 && "$remote_build_ok" -eq 1 &&
-        "$remote_bootstrap_ok" -eq 1 ]]; then
+        "$remote_bootstrap_ok" -eq 1 && "$remote_live_ok" -eq 1 ]]; then
         append_summary_line "platform.remote=ok"
     fi
     if [[ "$local_build_ok" -eq 1 && "$local_bootstrap_ok" -eq 1 &&
-        "$remote_sync_ok" -eq 1 && "$remote_build_ok" -eq 1 &&
-        "$remote_bootstrap_ok" -eq 1 ]]; then
+        "$local_live_ok" -eq 1 && "$remote_sync_ok" -eq 1 &&
+        "$remote_build_ok" -eq 1 && "$remote_bootstrap_ok" -eq 1 &&
+        "$remote_live_ok" -eq 1 ]]; then
         append_summary_line "goal.headless_server_native_runtime=complete"
     fi
 

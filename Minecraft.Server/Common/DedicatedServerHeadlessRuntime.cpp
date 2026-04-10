@@ -27,6 +27,11 @@ namespace ServerRuntime
     NativeDedicatedServerHostedGameSessionSnapshot
     GetNativeDedicatedServerHostedGameSessionSnapshot();
 
+    bool IsNativeDedicatedServerHostedGameSessionRunning();
+
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameSessionStopCommand(
+        std::uint64_t nowMs = 0);
+
     void FinalizeNativeDedicatedServerHostedGameSessionAndProject(
         bool initialSaveRequested,
         bool initialSaveCompleted,
@@ -90,6 +95,7 @@ namespace
         std::uint64_t shellStartMs = 0;
         std::uint64_t persistedAutosaveCompletions = 0;
         int failureExitCode = 0;
+        bool autoShutdownStopQueued = false;
     };
 
     struct DedicatedServerHeadlessWorldBootstrapResult
@@ -442,6 +448,20 @@ namespace
                 context->listenerPort);
     }
 
+    std::uint64_t RequestDedicatedServerHeadlessStopViaWorker(
+        std::uint64_t nowMs)
+    {
+        if (ServerRuntime::IsNativeDedicatedServerHostedGameSessionRunning())
+        {
+            return ServerRuntime::
+                EnqueueNativeDedicatedServerHostedGameSessionStopCommand(
+                    nowMs);
+        }
+
+        ServerRuntime::RequestDedicatedServerShutdown();
+        return 0;
+    }
+
     void StartDedicatedServerHeadlessShellHook(void *hookContext)
     {
         DedicatedServerHeadlessRunHooksContext *context =
@@ -490,7 +510,17 @@ namespace
                 context->options->shellSelfCommands))
         {
             context->failureExitCode = 9;
-            ServerRuntime::RequestDedicatedServerShutdown();
+            const std::uint64_t stopCommandId =
+                RequestDedicatedServerHeadlessStopViaWorker(
+                    LceGetMonotonicMilliseconds());
+            if (stopCommandId != 0)
+            {
+                ServerRuntime::LogInfof(
+                    "shutdown",
+                    "queued native worker stop command #%llu after "
+                    "shell self-connect failure",
+                    (unsigned long long)stopCommandId);
+            }
             return;
         }
 
@@ -522,16 +552,27 @@ namespace
             &context->shellState);
         const std::uint64_t now = LceGetMonotonicMilliseconds();
 
-        if (context->options->shutdownAfterMs > 0)
+        if (context->options->shutdownAfterMs > 0 &&
+            !context->autoShutdownStopQueued)
         {
             if (now - context->shellStartMs >=
                 context->options->shutdownAfterMs)
             {
+                context->autoShutdownStopQueued = true;
                 ServerRuntime::LogInfof(
                     "shutdown",
                     "native bootstrap auto-shutdown after %llums",
                     (unsigned long long)context->options->shutdownAfterMs);
-                ServerRuntime::RequestDedicatedServerShutdown();
+                const std::uint64_t stopCommandId =
+                    RequestDedicatedServerHeadlessStopViaWorker(now);
+                if (stopCommandId != 0)
+                {
+                    ServerRuntime::LogInfof(
+                        "shutdown",
+                        "queued native worker stop command #%llu for "
+                        "auto-shutdown",
+                        (unsigned long long)stopCommandId);
+                }
                 return;
             }
         }
