@@ -2107,9 +2107,10 @@ int main(int argc, char* argv[])
             19132 &&
         nativeHostedSessionObservedSnapshot.sessionStartMs == 1000;
     const bool hostedGameSessionObservedWorkerOk =
-        nativeHostedSessionObservedSnapshot.acceptedConnections == 2 &&
-        nativeHostedSessionObservedSnapshot.remoteCommands == 3 &&
-        nativeHostedSessionObservedSnapshot.autosaveRequests == 4 &&
+        nativeHostedSessionObservedSnapshot.progress.acceptedConnections ==
+            2 &&
+        nativeHostedSessionObservedSnapshot.progress.remoteCommands == 3 &&
+        nativeHostedSessionObservedSnapshot.progress.autosaveRequests == 4 &&
         nativeHostedSessionObservedSnapshot.worker.pendingWorldActionTicks == 9 &&
         nativeHostedSessionObservedSnapshot.worker.pendingAutosaveCommands == 8 &&
         nativeHostedSessionObservedSnapshot.worker.pendingSaveCommands == 10 &&
@@ -2130,8 +2131,9 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.worker.lastProcessedCommandId == 98 &&
         nativeHostedSessionObservedSnapshot.worker.lastProcessedCommandKind ==
             ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop &&
-        nativeHostedSessionObservedSnapshot.gameplayLoopIterations == 8 &&
-        nativeHostedSessionObservedSnapshot.platformTickCount == 6 &&
+        nativeHostedSessionObservedSnapshot.progress.gameplayLoopIterations ==
+            8 &&
+        nativeHostedSessionObservedSnapshot.progress.platformTickCount == 6 &&
         nativeHostedSessionObservedSnapshot.persistedSave.savePath ==
             "NativeDesktop/GameHDD/SMOKE_SESSION.save" &&
         nativeHostedSessionObservedSnapshot.persistedSave.fileTime == 77 &&
@@ -2148,7 +2150,7 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_ShutdownRequested &&
         nativeHostedSessionObservedSnapshot.stoppedMs == 0 &&
-        nativeHostedSessionObservedSnapshot.stateChecksum != 0U;
+        nativeHostedSessionObservedSnapshot.progress.stateChecksum != 0U;
     const bool hostedGameSessionObservedProjectionOk =
         hostedGameSessionObservedIdentityOk &&
         hostedGameSessionObservedWorkerOk &&
@@ -3147,9 +3149,10 @@ int main(int argc, char* argv[])
                     .pendingWorldActionTicks == 1U &&
             nativeHostedCoreFrameFirst
                     .processedAutosaveCommands == 0U &&
-            nativeHostedCoreFrameFirstSnapshot.sessionTicks == 1U &&
             nativeHostedCoreFrameFirstSnapshot
-                    .gameplayLoopIterations == 1U &&
+                    .progress.sessionTicks == 1U &&
+            nativeHostedCoreFrameFirstSnapshot
+                    .progress.gameplayLoopIterations == 1U &&
             nativeHostedCoreFrameFirstSnapshot.hostedThreadActive &&
             nativeHostedCoreFrameFirstSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
@@ -3159,11 +3162,12 @@ int main(int argc, char* argv[])
                     .pendingWorldActionTicks == 0U &&
             nativeHostedCoreFrameSecond
                     .processedAutosaveCommands == 1U &&
-            nativeHostedCoreFrameSecondSnapshot.sessionTicks == 2U &&
             nativeHostedCoreFrameSecondSnapshot
-                    .gameplayLoopIterations == 2U &&
+                    .progress.sessionTicks == 2U &&
             nativeHostedCoreFrameSecondSnapshot
-                    .observedAutosaveCompletions == 1U &&
+                    .progress.gameplayLoopIterations == 2U &&
+            nativeHostedCoreFrameSecondSnapshot
+                    .progress.observedAutosaveCompletions == 1U &&
             nativeHostedCoreFrameSecondSnapshot.hostedThreadActive &&
             nativeHostedCoreFrameSecondSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
@@ -3174,11 +3178,11 @@ int main(int argc, char* argv[])
         (unsigned long long)nativeHostedCoreFrameFirst
             .pendingWorldActionTicks,
         (unsigned long long)nativeHostedCoreFrameFirstSnapshot
-            .observedAutosaveCompletions,
+            .progress.observedAutosaveCompletions,
         (unsigned long long)nativeHostedCoreFrameSecond
             .pendingWorldActionTicks,
         (unsigned long long)nativeHostedCoreFrameSecondSnapshot
-            .observedAutosaveCompletions,
+            .progress.observedAutosaveCompletions,
         !nativeHostedCoreFrameStoppedSnapshot.active);
     printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
         "loops=%llu autosaves=%llu worker_idle=%d hooks=%d/%d phase=%s\n",
@@ -3188,10 +3192,10 @@ int main(int argc, char* argv[])
                     .startup.threadIterations == 2U &&
             nativeHostedCoreRunResult
                     .startup.threadDurationMs > 0U &&
-            nativeHostedCoreRunResult.gameplayLoopIterations ==
+            nativeHostedCoreRunResult.progress.gameplayLoopIterations ==
                 1U &&
             nativeHostedCoreRunResult
-                    .observedAutosaveCompletions == 0U &&
+                    .progress.observedAutosaveCompletions == 0U &&
             nativeHostedCoreRunResult
                     .worker.pendingWorldActionTicks == 0U &&
             nativeHostedCoreRunResult
@@ -3217,9 +3221,9 @@ int main(int argc, char* argv[])
         (unsigned long long)nativeHostedCoreRunResult
             .startup.threadDurationMs,
         (unsigned long long)nativeHostedCoreRunResult
-            .gameplayLoopIterations,
+            .progress.gameplayLoopIterations,
         (unsigned long long)nativeHostedCoreRunResult
-            .observedAutosaveCompletions,
+            .progress.observedAutosaveCompletions,
         nativeHostedCoreRunResult.worker.activeCommandKind ==
             ServerRuntime::
                 eNativeDedicatedServerHostedGameWorkerCommand_None,
@@ -3236,10 +3240,10 @@ int main(int argc, char* argv[])
                     .startup.threadIterations == 2U &&
             nativeHostedCoreRunResult
                     .startup.threadDurationMs > 0U &&
-            nativeHostedCoreRunResult.gameplayLoopIterations ==
+            nativeHostedCoreRunResult.progress.gameplayLoopIterations ==
                 1U &&
             nativeHostedCoreRunResult
-                    .observedAutosaveCompletions == 0U &&
+                    .progress.observedAutosaveCompletions == 0U &&
             nativeHostedCoreRunResult
                     .worker.pendingWorldActionTicks == 0U &&
             nativeHostedCoreRunResult
@@ -3291,9 +3295,9 @@ int main(int argc, char* argv[])
             "NativeDesktop/GameHDD/SmokeSession.save" &&
         nativeHostedSessionCoreSnapshot.previousStartup.mode == "loaded";
     const bool nativeHostedStubCoreFinalizationOk =
-        nativeHostedSessionCoreStoppedSnapshot.saveGeneration >=
-            nativeHostedSessionCoreSnapshot.saveGeneration &&
-        nativeHostedSessionCoreStoppedSnapshot.stateChecksum != 0U &&
+        nativeHostedSessionCoreStoppedSnapshot.progress.saveGeneration >=
+            nativeHostedSessionCoreSnapshot.progress.saveGeneration &&
+        nativeHostedSessionCoreStoppedSnapshot.progress.stateChecksum != 0U &&
         !nativeHostedSessionCoreStoppedSnapshot.active;
     const bool nativeHostedStubCoreOk =
         nativeHostedStubCoreContextOk &&
@@ -3360,11 +3364,12 @@ int main(int argc, char* argv[])
         nativeHostedStubStopped,
         (unsigned long)nativeHostedStubExitCode,
         (unsigned long long)nativeHostedStubThreadTicks,
-        (unsigned long long)nativeHostedSessionCoreSnapshot.saveGeneration,
+        (unsigned long long)
+            nativeHostedSessionCoreSnapshot.progress.saveGeneration,
         (unsigned long long)nativeHostedSessionCoreStoppedSnapshot
-            .saveGeneration,
+            .progress.saveGeneration,
         (unsigned long long)nativeHostedSessionCoreStoppedSnapshot
-            .stateChecksum,
+            .progress.stateChecksum,
         (unsigned long long)
             nativeHostedSessionCoreSnapshot.worker.pendingSaveCommands,
         (unsigned long long)
@@ -3633,7 +3638,8 @@ int main(int argc, char* argv[])
             (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
                 nativeHostedSessionObservedSnapshot.runtimePhase),
         (unsigned long long)nativeHostedSessionObservedSnapshot.stoppedMs,
-        (unsigned long long)nativeHostedSessionObservedSnapshot.stateChecksum);
+        (unsigned long long)
+            nativeHostedSessionObservedSnapshot.progress.stateChecksum);
     printf("session_execution=%d runtime=%d initial=%d shutdown=%d "
         "iterations=%zu polls=%d\n",
         platformSessionRuntimeResult.ok &&
@@ -4192,8 +4198,8 @@ int main(int argc, char* argv[])
                 .pendingWorldActionTicks == 1U &&
         nativeHostedCoreFrameFirst
                 .processedAutosaveCommands == 0U &&
-        nativeHostedCoreFrameFirstSnapshot.sessionTicks == 1U &&
-        nativeHostedCoreFrameFirstSnapshot.gameplayLoopIterations ==
+        nativeHostedCoreFrameFirstSnapshot.progress.sessionTicks == 1U &&
+        nativeHostedCoreFrameFirstSnapshot.progress.gameplayLoopIterations ==
             1U &&
         nativeHostedCoreFrameFirstSnapshot.hostedThreadActive &&
         nativeHostedCoreFrameFirstSnapshot.runtimePhase ==
@@ -4204,11 +4210,11 @@ int main(int argc, char* argv[])
                 .pendingWorldActionTicks == 0U &&
         nativeHostedCoreFrameSecond
                 .processedAutosaveCommands == 1U &&
-        nativeHostedCoreFrameSecondSnapshot.sessionTicks == 2U &&
-        nativeHostedCoreFrameSecondSnapshot.gameplayLoopIterations ==
+        nativeHostedCoreFrameSecondSnapshot.progress.sessionTicks == 2U &&
+        nativeHostedCoreFrameSecondSnapshot.progress.gameplayLoopIterations ==
             2U &&
         nativeHostedCoreFrameSecondSnapshot
-                .observedAutosaveCompletions == 1U &&
+                .progress.observedAutosaveCompletions == 1U &&
         nativeHostedCoreFrameSecondSnapshot.hostedThreadActive &&
         nativeHostedCoreFrameSecondSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
@@ -4219,10 +4225,10 @@ int main(int argc, char* argv[])
         nativeHostedCoreRunResult.startup.payloadValidated &&
         nativeHostedCoreRunResult.startup.threadIterations == 2U &&
         nativeHostedCoreRunResult.startup.threadDurationMs > 0U &&
-        nativeHostedCoreRunResult.gameplayLoopIterations ==
+        nativeHostedCoreRunResult.progress.gameplayLoopIterations ==
             1U &&
         nativeHostedCoreRunResult
-                .observedAutosaveCompletions == 0U &&
+                .progress.observedAutosaveCompletions == 0U &&
         nativeHostedCoreRunResult
             .worker.pendingWorldActionTicks ==
             0U &&

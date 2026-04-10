@@ -564,7 +564,7 @@ namespace
         }
 
         if (options.requiredRemoteCommands > 0 &&
-            sessionSnapshot.remoteCommands <
+            sessionSnapshot.progress.remoteCommands <
                 options.requiredRemoteCommands)
         {
             ServerRuntime::LogErrorf(
@@ -572,7 +572,8 @@ namespace
                 "native shell expected at least %llu remote "
                 "commands but only observed %llu",
                 (unsigned long long)options.requiredRemoteCommands,
-                (unsigned long long)sessionSnapshot.remoteCommands);
+                (unsigned long long)
+                    sessionSnapshot.progress.remoteCommands);
             return false;
         }
 
@@ -581,7 +582,7 @@ namespace
             return true;
         }
 
-        if (sessionSnapshot.acceptedConnections >=
+        if (sessionSnapshot.progress.acceptedConnections >=
             options.requiredAcceptedConnections)
         {
             return true;
@@ -592,7 +593,8 @@ namespace
             "native shell expected at least %llu accepted "
             "connections but only observed %llu",
             (unsigned long long)options.requiredAcceptedConnections,
-            (unsigned long long)sessionSnapshot.acceptedConnections);
+            (unsigned long long)
+                sessionSnapshot.progress.acceptedConnections);
         return false;
     }
 
@@ -876,9 +878,9 @@ namespace ServerRuntime
         sessionSummary.shutdownHaltedGameplay =
             runExecution.session.shutdown.haltedGameplay;
         sessionSummary.gameplayLoopIterations =
-            finalSessionSnapshot.gameplayLoopIterations >
+            finalSessionSnapshot.progress.gameplayLoopIterations >
                     runExecution.session.gameplayLoop.iterations
-                ? finalSessionSnapshot.gameplayLoopIterations
+                ? finalSessionSnapshot.progress.gameplayLoopIterations
                 : runExecution.session.gameplayLoop.iterations;
         ServerRuntime::FinalizeNativeDedicatedServerHostedGameSessionAndProject(
             sessionSummary.initialSaveRequested,

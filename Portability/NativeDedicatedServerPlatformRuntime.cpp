@@ -90,7 +90,7 @@ namespace
         ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPlatformRuntimeStateAndProject(
             ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
             ServerRuntime::GetDedicatedServerPlatformTickCount(),
-            sessionSnapshot.gameplayLoopIterations,
+            sessionSnapshot.progress.gameplayLoopIterations,
             g_nativeRuntimeState.appShutdownRequested,
             g_nativeRuntimeState.gameplayHalted,
             g_nativeRuntimeState.stopSignalValid,

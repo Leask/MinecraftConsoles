@@ -120,6 +120,19 @@ namespace ServerRuntime
         std::string path;
     };
 
+    struct NativeDedicatedServerHostedGameSessionProgressSnapshot
+    {
+        std::uint64_t sessionTicks = 0;
+        std::uint64_t acceptedConnections = 0;
+        std::uint64_t remoteCommands = 0;
+        std::uint64_t autosaveRequests = 0;
+        std::uint64_t observedAutosaveCompletions = 0;
+        std::uint64_t gameplayLoopIterations = 0;
+        std::uint64_t platformTickCount = 0;
+        std::uint64_t saveGeneration = 0;
+        std::uint64_t stateChecksum = 0;
+    };
+
     struct NativeDedicatedServerHostedGameSessionSnapshot
     {
         bool startAttempted = false;
@@ -130,19 +143,10 @@ namespace ServerRuntime
         int runtimePhase = 0;
         int localUsersMask = 0;
         std::int64_t resolvedSeed = 0;
-        std::uint64_t sessionTicks = 0;
-        std::uint64_t acceptedConnections = 0;
-        std::uint64_t remoteCommands = 0;
-        std::uint64_t autosaveRequests = 0;
-        std::uint64_t observedAutosaveCompletions = 0;
         std::uint64_t previousRemoteCommands = 0;
         std::uint64_t previousAutosaveCompletions = 0;
         NativeDedicatedServerHostedGameWorkerSnapshot previousWorker = {};
         NativeDedicatedServerHostedGameWorkerSnapshot worker = {};
-        std::uint64_t gameplayLoopIterations = 0;
-        std::uint64_t platformTickCount = 0;
-        std::uint64_t saveGeneration = 0;
-        std::uint64_t stateChecksum = 0;
         std::uint64_t previousPlatformTickCount = 0;
         std::uint64_t previousUptimeMs = 0;
         std::uint64_t previousGameplayLoopIterations = 0;
@@ -168,6 +172,7 @@ namespace ServerRuntime
             persistedSave = {};
         NativeDedicatedServerHostedGameSessionContextSnapshot context = {};
         NativeDedicatedServerHostedGameLoadedSaveSnapshot loadedSave = {};
+        NativeDedicatedServerHostedGameSessionProgressSnapshot progress = {};
         std::uint64_t previousHostedThreadTicks = 0;
         std::uint64_t hostedThreadTicks = 0;
         std::uint64_t stoppedMs = 0;

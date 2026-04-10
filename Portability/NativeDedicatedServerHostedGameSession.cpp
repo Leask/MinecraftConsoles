@@ -192,9 +192,9 @@ namespace ServerRuntime
                 return;
             }
 
-            state->snapshot.saveGeneration =
+            state->snapshot.progress.saveGeneration =
                 state->baseSaveGeneration +
-                state->snapshot.observedAutosaveCompletions;
+                state->snapshot.progress.observedAutosaveCompletions;
             std::uint64_t checksum =
                 state->baseStateChecksum != 0
                     ? state->baseStateChecksum
@@ -245,10 +245,10 @@ namespace ServerRuntime
                 state->snapshot.payload.checksum);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.sessionTicks);
+                state->snapshot.progress.sessionTicks);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.observedAutosaveCompletions);
+                state->snapshot.progress.observedAutosaveCompletions);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.worker.pendingWorldActionTicks);
@@ -304,22 +304,22 @@ namespace ServerRuntime
                     state->snapshot.worker.lastProcessedCommandKind));
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.acceptedConnections);
+                state->snapshot.progress.acceptedConnections);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.remoteCommands);
+                state->snapshot.progress.remoteCommands);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.autosaveRequests);
+                state->snapshot.progress.autosaveRequests);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.gameplayLoopIterations);
+                state->snapshot.progress.gameplayLoopIterations);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.platformTickCount);
+                state->snapshot.progress.platformTickCount);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.saveGeneration);
+                state->snapshot.progress.saveGeneration);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.sessionStartMs);
@@ -398,7 +398,7 @@ namespace ServerRuntime
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.summary.shutdownHaltedGameplay ? 1U : 0U);
-            state->snapshot.stateChecksum = checksum;
+            state->snapshot.progress.stateChecksum = checksum;
         }
 
         void ApplyNativeHostedSessionWorkerSnapshot(
@@ -684,7 +684,7 @@ namespace ServerRuntime
                     saveStub.processedHaltCommands;
                 g_nativeHostedSessionState.baseGameplayLoopIterations =
                     saveStub.gameplayLoopIterations;
-                g_nativeHostedSessionState.snapshot.sessionTicks =
+                g_nativeHostedSessionState.snapshot.progress.sessionTicks =
                     saveStub.hostedThreadTicks;
                 g_nativeHostedSessionState.snapshot
                     .worker.pendingWorldActionTicks =
@@ -728,7 +728,8 @@ namespace ServerRuntime
                 g_nativeHostedSessionState.snapshot.worker.lastProcessedCommandKind =
                     (ENativeDedicatedServerHostedGameWorkerCommandKind)
                         saveStub.lastProcessedCommandKind;
-                g_nativeHostedSessionState.snapshot.gameplayLoopIterations =
+                g_nativeHostedSessionState.snapshot
+                    .progress.gameplayLoopIterations =
                     saveStub.gameplayLoopIterations;
                 g_nativeHostedSessionState.snapshot.persistedSave.fileTime =
                     saveStub.savedAtFileTime;
@@ -976,14 +977,15 @@ namespace ServerRuntime
             return;
         }
 
-        ++g_nativeHostedSessionState.snapshot.sessionTicks;
-        ++g_nativeHostedSessionState.snapshot.gameplayLoopIterations;
+        ++g_nativeHostedSessionState.snapshot.progress.sessionTicks;
+        ++g_nativeHostedSessionState.snapshot
+            .progress.gameplayLoopIterations;
         g_nativeHostedSessionState.snapshot.hostedThreadActive =
             hostedThreadActive;
         if (hostedThreadActive)
         {
             g_nativeHostedSessionState.snapshot.hostedThreadTicks =
-                g_nativeHostedSessionState.snapshot.sessionTicks;
+                g_nativeHostedSessionState.snapshot.progress.sessionTicks;
         }
         RefreshNativeHostedSessionActive(&g_nativeHostedSessionState);
         RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
@@ -1003,16 +1005,18 @@ namespace ServerRuntime
         ApplyNativeHostedSessionWorkerSnapshot(
             &g_nativeHostedSessionState,
             frameInput.workerSnapshot);
-        g_nativeHostedSessionState.snapshot.observedAutosaveCompletions =
+        g_nativeHostedSessionState.snapshot
+            .progress.observedAutosaveCompletions =
             GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
-        ++g_nativeHostedSessionState.snapshot.sessionTicks;
-        ++g_nativeHostedSessionState.snapshot.gameplayLoopIterations;
+        ++g_nativeHostedSessionState.snapshot.progress.sessionTicks;
+        ++g_nativeHostedSessionState.snapshot
+            .progress.gameplayLoopIterations;
         g_nativeHostedSessionState.snapshot.hostedThreadActive =
             frameInput.hostedThreadActive;
         if (frameInput.hostedThreadActive)
         {
             g_nativeHostedSessionState.snapshot.hostedThreadTicks =
-                g_nativeHostedSessionState.snapshot.sessionTicks;
+                g_nativeHostedSessionState.snapshot.progress.sessionTicks;
         }
         RefreshNativeHostedSessionActive(&g_nativeHostedSessionState);
         RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
@@ -1045,7 +1049,8 @@ namespace ServerRuntime
         std::uint64_t autosaveCompletions)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        g_nativeHostedSessionState.snapshot.observedAutosaveCompletions =
+        g_nativeHostedSessionState.snapshot
+            .progress.observedAutosaveCompletions =
             autosaveCompletions;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
@@ -1066,9 +1071,9 @@ namespace ServerRuntime
         bool worldActionIdle)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        g_nativeHostedSessionState.snapshot.acceptedConnections =
+        g_nativeHostedSessionState.snapshot.progress.acceptedConnections =
             acceptedConnections;
-        g_nativeHostedSessionState.snapshot.remoteCommands =
+        g_nativeHostedSessionState.snapshot.progress.remoteCommands =
             remoteCommands;
         g_nativeHostedSessionState.snapshot.worldActionIdle =
             worldActionIdle;
@@ -1176,9 +1181,9 @@ namespace ServerRuntime
         std::uint64_t platformTickCount)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        g_nativeHostedSessionState.snapshot.autosaveRequests =
+        g_nativeHostedSessionState.snapshot.progress.autosaveRequests =
             autosaveRequests;
-        g_nativeHostedSessionState.snapshot.platformTickCount =
+        g_nativeHostedSessionState.snapshot.progress.platformTickCount =
             platformTickCount;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
@@ -1223,9 +1228,11 @@ namespace ServerRuntime
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         if (gameplayLoopIterations >=
-            g_nativeHostedSessionState.snapshot.gameplayLoopIterations)
+            g_nativeHostedSessionState.snapshot
+                .progress.gameplayLoopIterations)
         {
-            g_nativeHostedSessionState.snapshot.gameplayLoopIterations =
+            g_nativeHostedSessionState.snapshot
+                .progress.gameplayLoopIterations =
                 g_nativeHostedSessionState.baseGameplayLoopIterations +
                 gameplayLoopIterations;
         }
@@ -1271,9 +1278,11 @@ namespace ServerRuntime
         g_nativeHostedSessionState.snapshot
             .persistedSave.autosaveCompletions = autosaveCompletions;
         if (autosaveCompletions >
-            g_nativeHostedSessionState.snapshot.observedAutosaveCompletions)
+            g_nativeHostedSessionState.snapshot
+                .progress.observedAutosaveCompletions)
         {
-            g_nativeHostedSessionState.snapshot.observedAutosaveCompletions =
+            g_nativeHostedSessionState.snapshot
+                .progress.observedAutosaveCompletions =
                 autosaveCompletions;
         }
         RefreshNativeHostedSessionStateChecksum(
@@ -1344,7 +1353,7 @@ namespace ServerRuntime
             requestedAppShutdown;
         g_nativeHostedSessionState.snapshot.summary.shutdownHaltedGameplay =
             shutdownHaltedGameplay;
-        g_nativeHostedSessionState.snapshot.gameplayLoopIterations =
+        g_nativeHostedSessionState.snapshot.progress.gameplayLoopIterations =
             gameplayLoopIterations;
         g_nativeHostedSessionState.snapshot.appShutdownRequested =
             appShutdownRequested;
@@ -1661,11 +1670,11 @@ namespace ServerRuntime
         if (nowMs != 0)
         {
             UpdateDedicatedServerHostedGameRuntimeSessionState(
-                snapshot.acceptedConnections,
-                snapshot.remoteCommands,
-                snapshot.autosaveRequests,
-                snapshot.observedAutosaveCompletions,
-                snapshot.platformTickCount,
+                snapshot.progress.acceptedConnections,
+                snapshot.progress.remoteCommands,
+                snapshot.progress.autosaveRequests,
+                snapshot.progress.observedAutosaveCompletions,
+                snapshot.progress.platformTickCount,
                 snapshot.worldActionIdle,
                 snapshot.appShutdownRequested,
                 snapshot.gameplayHalted,
@@ -1694,7 +1703,7 @@ namespace ServerRuntime
             snapshot.hostedThreadActive,
             snapshot.hostedThreadTicks);
         RecordDedicatedServerHostedGameRuntimeGameplayLoopIteration(
-            snapshot.gameplayLoopIterations);
+            snapshot.progress.gameplayLoopIterations);
         RecordDedicatedServerHostedGameRuntimeStartupResult(
             snapshot.startup.result,
             snapshot.threadInvoked);
@@ -1704,8 +1713,8 @@ namespace ServerRuntime
             snapshot.startup.threadIterations,
             snapshot.startup.threadDurationMs);
         RecordDedicatedServerHostedGameRuntimeCoreState(
-            snapshot.saveGeneration,
-            snapshot.stateChecksum);
+            snapshot.progress.saveGeneration,
+            snapshot.progress.stateChecksum);
         RecordDedicatedServerHostedGameRuntimeCoreLifecycle(
             snapshot.active,
             (EDedicatedServerHostedGameRuntimePhase)snapshot.runtimePhase);
@@ -1723,7 +1732,7 @@ namespace ServerRuntime
         sessionSummary.shutdownHaltedGameplay =
             snapshot.summary.shutdownHaltedGameplay;
         sessionSummary.gameplayLoopIterations =
-            snapshot.gameplayLoopIterations;
+            snapshot.progress.gameplayLoopIterations;
         RecordDedicatedServerHostedGameRuntimeSessionSummary(
             sessionSummary);
         if (!snapshot.persistedSave.savePath.empty() ||
@@ -1870,11 +1879,11 @@ namespace ServerRuntime
         saveStub.appShutdownRequested =
             snapshot.appShutdownRequested;
         saveStub.gameplayHalted = snapshot.gameplayHalted;
-        saveStub.acceptedConnections = snapshot.acceptedConnections;
-        saveStub.remoteCommands = snapshot.remoteCommands;
-        saveStub.autosaveRequests = snapshot.autosaveRequests;
+        saveStub.acceptedConnections = snapshot.progress.acceptedConnections;
+        saveStub.remoteCommands = snapshot.progress.remoteCommands;
+        saveStub.autosaveRequests = snapshot.progress.autosaveRequests;
         saveStub.autosaveCompletions =
-            snapshot.observedAutosaveCompletions;
+            snapshot.progress.observedAutosaveCompletions;
         saveStub.workerPendingWorldActionTicks =
             snapshot.worker.pendingWorldActionTicks;
         saveStub.workerPendingAutosaveCommands =
@@ -1906,7 +1915,7 @@ namespace ServerRuntime
             snapshot.worker.lastProcessedCommandId;
         saveStub.lastProcessedCommandKind =
             snapshot.worker.lastProcessedCommandKind;
-        saveStub.platformTickCount = snapshot.platformTickCount;
+        saveStub.platformTickCount = snapshot.progress.platformTickCount;
         if (snapshot.sessionStartMs != 0)
         {
             const std::uint64_t stoppedMs =
@@ -1932,7 +1941,7 @@ namespace ServerRuntime
         saveStub.shutdownHaltedGameplay =
             snapshot.summary.shutdownHaltedGameplay;
         saveStub.gameplayLoopIterations =
-            snapshot.gameplayLoopIterations;
+            snapshot.progress.gameplayLoopIterations;
         saveStub.savedAtFileTime = savedAtFileTime;
         if (snapshot.startAttempted)
         {
@@ -1945,8 +1954,8 @@ namespace ServerRuntime
             saveStub.resolvedSeed = snapshot.resolvedSeed;
             saveStub.payloadBytes = snapshot.payload.bytes;
             saveStub.payloadChecksum = snapshot.payload.checksum;
-            saveStub.saveGeneration = snapshot.saveGeneration;
-            saveStub.stateChecksum = snapshot.stateChecksum;
+            saveStub.saveGeneration = snapshot.progress.saveGeneration;
+            saveStub.stateChecksum = snapshot.progress.stateChecksum;
             saveStub.payloadName = snapshot.payload.name;
             saveStub.hostSettings = snapshot.worldConfig.hostSettings;
             saveStub.dedicatedNoLocalHostPlayer =

@@ -158,7 +158,8 @@ namespace
             bindIp,
             configuredPort,
             listenerPort,
-            (unsigned long long)sessionSnapshot.acceptedConnections,
+            (unsigned long long)
+                sessionSnapshot.progress.acceptedConnections,
             worldActionIdle ? "idle" : "busy");
         AppendResponseLine(response, buffer);
 
@@ -206,8 +207,8 @@ namespace
                     ? "true"
                     : "false",
                 (unsigned long long)sessionSnapshot.payload.checksum,
-                (unsigned long long)sessionSnapshot.saveGeneration,
-                (unsigned long long)sessionSnapshot.stateChecksum,
+                (unsigned long long)sessionSnapshot.progress.saveGeneration,
+                (unsigned long long)sessionSnapshot.progress.stateChecksum,
                 sessionSnapshot.payload.bytes > 0 ? "present" : "none",
                 sessionSnapshot.startup.payloadValidated
                     ? "true"
@@ -232,9 +233,11 @@ namespace
                     ? "none"
                     : sessionSnapshot.payload.name.c_str(),
                 (long long)sessionSnapshot.payload.bytes,
-                (unsigned long long)sessionSnapshot.autosaveRequests,
-                (unsigned long long)sessionSnapshot.observedAutosaveCompletions,
-                (unsigned long long)sessionSnapshot.platformTickCount,
+                (unsigned long long)sessionSnapshot.progress.autosaveRequests,
+                (unsigned long long)
+                    sessionSnapshot.progress.observedAutosaveCompletions,
+                (unsigned long long)
+                    sessionSnapshot.progress.platformTickCount,
                 (unsigned long long)
                     (sessionSnapshot.sessionStartMs == 0
                         ? 0
@@ -295,7 +298,7 @@ namespace
                         sessionSnapshot.worker.lastProcessedCommandKind),
                 (unsigned long long)
                     sessionSnapshot.worker.lastProcessedCommandId,
-                (unsigned long long)sessionSnapshot.stateChecksum);
+                (unsigned long long)sessionSnapshot.progress.stateChecksum);
             AppendResponseLine(response, buffer);
 
             std::snprintf(
@@ -319,7 +322,8 @@ namespace
                 sessionSnapshot.summary.shutdownHaltedGameplay
                     ? "true"
                     : "false",
-                (unsigned long long)sessionSnapshot.gameplayLoopIterations);
+                (unsigned long long)
+                    sessionSnapshot.progress.gameplayLoopIterations);
             AppendResponseLine(response, buffer);
 
             if (!sessionSnapshot.context.savePath.empty() ||
