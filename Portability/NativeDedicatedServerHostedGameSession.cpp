@@ -95,8 +95,12 @@ namespace ServerRuntime
         std::uint64_t nowMs = 0);
 
     bool BuildNativeDedicatedServerSaveStubFromSessionSnapshot(
-        const NativeDedicatedServerHostedGameSessionPersistContext
-            &persistContext,
+        const std::string &worldName,
+        const std::string &worldSaveId,
+        const std::string &hostName,
+        const std::string &bindIp,
+        int configuredPort,
+        int listenerPort,
         std::uint64_t nowMs,
         std::uint64_t savedAtFileTime,
         NativeDedicatedServerSaveStub *outSaveStub);
@@ -1840,8 +1844,12 @@ namespace ServerRuntime
     }
 
     bool BuildNativeDedicatedServerSaveStubFromSessionSnapshot(
-        const NativeDedicatedServerHostedGameSessionPersistContext
-            &persistContext,
+        const std::string &worldName,
+        const std::string &worldSaveId,
+        const std::string &hostName,
+        const std::string &bindIp,
+        int configuredPort,
+        int listenerPort,
         std::uint64_t nowMs,
         std::uint64_t savedAtFileTime,
         NativeDedicatedServerSaveStub *outSaveStub)
@@ -1855,23 +1863,23 @@ namespace ServerRuntime
             GetNativeDedicatedServerHostedGameSessionSnapshot();
         NativeDedicatedServerSaveStub saveStub = {};
         saveStub.worldName = snapshot.worldName.empty()
-            ? persistContext.worldName
+            ? worldName
             : snapshot.worldName;
         saveStub.levelId = snapshot.worldSaveId.empty()
-            ? persistContext.worldSaveId
+            ? worldSaveId
             : snapshot.worldSaveId;
         saveStub.hostName = snapshot.hostName.empty()
-            ? persistContext.hostName
+            ? hostName
             : snapshot.hostName;
         saveStub.bindIp = snapshot.bindIp.empty()
-            ? persistContext.bindIp
+            ? bindIp
             : snapshot.bindIp;
         saveStub.configuredPort = snapshot.configuredPort > 0
             ? snapshot.configuredPort
-            : persistContext.configuredPort;
+            : configuredPort;
         saveStub.listenerPort = snapshot.listenerPort > 0
             ? snapshot.listenerPort
-            : persistContext.listenerPort;
+            : listenerPort;
         saveStub.onlineGame = snapshot.onlineGame;
         saveStub.privateGame = snapshot.privateGame;
         saveStub.fakeLocalPlayerJoined =

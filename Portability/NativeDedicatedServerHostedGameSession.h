@@ -172,14 +172,4 @@ namespace ServerRuntime
                 eNativeDedicatedServerHostedGameWorkerCommand_None;
     };
 
-    struct NativeDedicatedServerHostedGameSessionPersistContext
-    {
-        std::string worldName;
-        std::string worldSaveId;
-        std::string hostName;
-        std::string bindIp;
-        int configuredPort = 0;
-        int listenerPort = 0;
-    };
-
 }

@@ -60,8 +60,12 @@ namespace ServerRuntime
         std::uint64_t nowMs = 0);
 
     bool BuildNativeDedicatedServerSaveStubFromSessionSnapshot(
-        const NativeDedicatedServerHostedGameSessionPersistContext
-            &persistContext,
+        const std::string &worldName,
+        const std::string &worldSaveId,
+        const std::string &hostName,
+        const std::string &bindIp,
+        int configuredPort,
+        int listenerPort,
         std::uint64_t nowMs,
         std::uint64_t savedAtFileTime,
         NativeDedicatedServerSaveStub *outSaveStub);
@@ -374,19 +378,14 @@ namespace
         const std::string savePath =
             BuildDedicatedServerHeadlessSavePath(*context);
         const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
-        ServerRuntime::NativeDedicatedServerHostedGameSessionPersistContext
-            persistContext = {};
-        persistContext.worldName = context->shellContext.worldName;
-        persistContext.worldSaveId =
-            GetDedicatedServerHeadlessSaveId(*context);
-        persistContext.hostName = context->shellContext.hostName;
-        persistContext.bindIp = context->shellContext.bindIp;
-        persistContext.configuredPort =
-            context->shellContext.multiplayerPort;
-        persistContext.listenerPort = context->shellContext.listenerPort;
         ServerRuntime::NativeDedicatedServerSaveStub saveStub = {};
         if (!ServerRuntime::BuildNativeDedicatedServerSaveStubFromSessionSnapshot(
-                persistContext,
+                context->shellContext.worldName,
+                GetDedicatedServerHeadlessSaveId(*context),
+                context->shellContext.hostName,
+                context->shellContext.bindIp,
+                context->shellContext.multiplayerPort,
+                context->shellContext.listenerPort,
                 nowMs,
                 ServerRuntime::FileUtils::GetCurrentUtcFileTime(),
                 &saveStub))
