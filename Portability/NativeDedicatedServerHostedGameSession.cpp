@@ -1419,73 +1419,15 @@ namespace ServerRuntime
         ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
     }
 
-    void ObserveNativeDedicatedServerHostedGameSessionWorkerState(
-        std::uint64_t pendingWorldActionTicks,
-        std::uint64_t pendingAutosaveCommands,
-        std::uint64_t pendingSaveCommands,
-        std::uint64_t pendingStopCommands,
-        std::uint64_t pendingHaltCommands,
-        std::uint64_t workerTickCount,
-        std::uint64_t completedWorkerActions,
-        std::uint64_t processedAutosaveCommands,
-        std::uint64_t processedSaveCommands,
-        std::uint64_t processedStopCommands,
-        std::uint64_t processedHaltCommands,
-        std::uint64_t lastQueuedCommandId,
-        std::uint64_t activeCommandId,
-        std::uint64_t activeCommandTicksRemaining,
-        ENativeDedicatedServerHostedGameWorkerCommandKind
-            activeCommandKind,
-        std::uint64_t lastProcessedCommandId,
-        ENativeDedicatedServerHostedGameWorkerCommandKind
-            lastProcessedCommandKind)
+    void ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
+        const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         ApplyNativeHostedSessionWorkerSnapshot(
             &g_nativeHostedSessionState,
-            NativeDedicatedServerHostedGameWorkerSnapshot{
-                pendingWorldActionTicks,
-                pendingAutosaveCommands,
-                pendingSaveCommands,
-                pendingStopCommands,
-                pendingHaltCommands,
-                workerTickCount,
-                completedWorkerActions,
-                processedAutosaveCommands,
-                processedSaveCommands,
-                processedStopCommands,
-                processedHaltCommands,
-                lastQueuedCommandId,
-                activeCommandId,
-                activeCommandTicksRemaining,
-                activeCommandKind,
-                lastProcessedCommandId,
-                lastProcessedCommandKind});
+            workerSnapshot);
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
-    }
-
-    void ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
-        const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot)
-    {
-        ObserveNativeDedicatedServerHostedGameSessionWorkerState(
-            workerSnapshot.pendingWorldActionTicks,
-            workerSnapshot.pendingAutosaveCommands,
-            workerSnapshot.pendingSaveCommands,
-            workerSnapshot.pendingStopCommands,
-            workerSnapshot.pendingHaltCommands,
-            workerSnapshot.workerTickCount,
-            workerSnapshot.completedWorldActions,
-            workerSnapshot.processedAutosaveCommands,
-            workerSnapshot.processedSaveCommands,
-            workerSnapshot.processedStopCommands,
-            workerSnapshot.processedHaltCommands,
-            workerSnapshot.lastQueuedCommandId,
-            workerSnapshot.activeCommandId,
-            workerSnapshot.activeCommandTicksRemaining,
-            workerSnapshot.activeCommandKind,
-            workerSnapshot.lastProcessedCommandId,
-            workerSnapshot.lastProcessedCommandKind);
     }
 
     void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(

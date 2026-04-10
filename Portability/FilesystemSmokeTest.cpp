@@ -137,26 +137,8 @@ namespace ServerRuntime
         bool gameplayHalted,
         bool stopSignalValid);
 
-    void ObserveNativeDedicatedServerHostedGameSessionWorkerState(
-        std::uint64_t pendingWorldActionTicks,
-        std::uint64_t pendingAutosaveCommands,
-        std::uint64_t pendingSaveCommands,
-        std::uint64_t pendingStopCommands,
-        std::uint64_t pendingHaltCommands,
-        std::uint64_t workerTickCount,
-        std::uint64_t completedWorkerActions,
-        std::uint64_t processedAutosaveCommands,
-        std::uint64_t processedSaveCommands,
-        std::uint64_t processedStopCommands,
-        std::uint64_t processedHaltCommands,
-        std::uint64_t lastQueuedCommandId,
-        std::uint64_t activeCommandId,
-        std::uint64_t activeCommandTicksRemaining,
-        ENativeDedicatedServerHostedGameWorkerCommandKind
-            activeCommandKind,
-        std::uint64_t lastProcessedCommandId,
-        ENativeDedicatedServerHostedGameWorkerCommandKind
-            lastProcessedCommandKind);
+    void ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
+        const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot);
 
     void ObserveNativeDedicatedServerHostedGameSessionSummary(
         bool initialSaveRequested,
@@ -1990,24 +1972,25 @@ int main(int argc, char* argv[])
     ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPlatformState(
         4,
         6);
-    ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionWorkerState(
-        9,
-        8,
-        10,
-        11,
-        12,
-        22,
-        32,
-        12,
-        42,
-        52,
-        62,
-        99,
-        97,
-        3,
-        ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Autosave,
-        98,
-        ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop);
+    ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
+        ServerRuntime::NativeDedicatedServerHostedGameWorkerSnapshot{
+            9,
+            8,
+            10,
+            11,
+            12,
+            22,
+            32,
+            12,
+            42,
+            52,
+            62,
+            99,
+            97,
+            3,
+            ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Autosave,
+            98,
+            ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop});
     ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionRuntimeState(
         8,
         true,
