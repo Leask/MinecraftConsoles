@@ -9,6 +9,9 @@ namespace ServerRuntime
 {
     void ResetNativeDedicatedServerHostedGameSessionState();
 
+    bool StartNativeDedicatedServerHostedGameSession(
+        const NativeDedicatedServerHostedGameRuntimeStubInitData &initData);
+
     int StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam,
@@ -61,13 +64,28 @@ namespace ServerRuntime
         int startupResult = 0;
         const bool persistentSession =
             threadProc == GetDedicatedServerHostedGameRuntimeThreadProc();
-        if (!persistentSession &&
-            !BeginDedicatedServerHostedGameRuntimeStartup(
-                hostedGamePlan,
-                threadProc,
-                &startupResult))
+        if (!persistentSession)
         {
-            return startupResult;
+            NativeDedicatedServerHostedGameRuntimeStubInitData
+                sessionInitData = {};
+            ResetNativeDedicatedServerHostedGameSessionState();
+            PopulateDedicatedServerNetworkGameInitData(
+                &sessionInitData,
+                hostedGamePlan.networkInitPlan);
+            PopulateDedicatedServerHostedGameRuntimeStubInitData(
+                &sessionInitData,
+                hostedGamePlan);
+            (void)StartNativeDedicatedServerHostedGameSession(
+                sessionInitData);
+            if (threadProc == nullptr)
+            {
+                startupResult = -1;
+                ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+                    startupResult,
+                    false,
+                    LceGetMonotonicMilliseconds());
+                return startupResult;
+            }
         }
 
         if (persistentSession)
@@ -83,8 +101,10 @@ namespace ServerRuntime
             threadProc,
             threadParam,
             &threadInvoked);
-        return CompleteDedicatedServerHostedGameRuntimeStartup(
+        ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
             exitCode,
-            threadInvoked);
+            threadInvoked,
+            LceGetMonotonicMilliseconds());
+        return exitCode;
     }
 }
