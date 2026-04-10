@@ -4,6 +4,7 @@
 #include <string>
 
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
+#include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerLoadedSaveState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
 #include "Minecraft.Server/Common/StringUtils.h"

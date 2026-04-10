@@ -3,10 +3,6 @@
 #include <cstdint>
 #include <string>
 
-#include <lce_win32/lce_win32.h>
-
-#include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
-#include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "NativeDedicatedServerHostedGameWorker.h"
 
 namespace ServerRuntime
