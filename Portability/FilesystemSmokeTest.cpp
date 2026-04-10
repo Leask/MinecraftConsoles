@@ -56,9 +56,6 @@
 
 namespace ServerRuntime
 {
-    const char *GetNativeDedicatedServerHostedGameWorkerCommandKindName(
-        ENativeDedicatedServerHostedGameWorkerCommandKind kind);
-
     NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameCoreWithResult(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData);
@@ -183,6 +180,24 @@ namespace ServerRuntime
 
 namespace
 {
+    const char *GetNativeDedicatedServerHostedGameWorkerCommandKindName(
+        ServerRuntime::ENativeDedicatedServerHostedGameWorkerCommandKind kind)
+    {
+        switch (kind)
+        {
+        case ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Autosave:
+            return "autosave";
+        case ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Save:
+            return "save";
+        case ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop:
+            return "stop";
+        case ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Halt:
+            return "halt";
+        default:
+            return "none";
+        }
+    }
+
     struct SmokeNetworkGameInitData;
     LoadSaveDataThreadParam *g_expectedHostedGameSaveData = nullptr;
 
@@ -3507,7 +3522,7 @@ int main(int argc, char* argv[])
             hostedGameRuntimeSnapshot.previousProcessedStopCommands,
         (unsigned long long)
             hostedGameRuntimeSnapshot.previousProcessedHaltCommands,
-        ServerRuntime::GetNativeDedicatedServerHostedGameWorkerCommandKindName(
+        GetNativeDedicatedServerHostedGameWorkerCommandKindName(
             (ServerRuntime::ENativeDedicatedServerHostedGameWorkerCommandKind)
                 hostedGameRuntimeSnapshot.previousActiveCommandKind),
         (unsigned long long)
@@ -3558,7 +3573,7 @@ int main(int argc, char* argv[])
             hostedGameSessionSnapshot.processedStopCommands,
         (unsigned long long)
             hostedGameSessionSnapshot.processedHaltCommands,
-        ServerRuntime::GetNativeDedicatedServerHostedGameWorkerCommandKindName(
+        GetNativeDedicatedServerHostedGameWorkerCommandKindName(
             (ServerRuntime::ENativeDedicatedServerHostedGameWorkerCommandKind)
                 hostedGameSessionSnapshot.activeCommandKind),
         (unsigned long long)
@@ -3596,7 +3611,7 @@ int main(int argc, char* argv[])
             nativeHostedSessionObservedSnapshot.processedStopCommands,
         (unsigned long long)
             nativeHostedSessionObservedSnapshot.processedHaltCommands,
-        ServerRuntime::GetNativeDedicatedServerHostedGameWorkerCommandKindName(
+        GetNativeDedicatedServerHostedGameWorkerCommandKindName(
             nativeHostedSessionObservedSnapshot.activeCommandKind),
         (unsigned long long)
             nativeHostedSessionObservedSnapshot.activeCommandId,

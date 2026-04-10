@@ -432,24 +432,6 @@ namespace ServerRuntime
                 eNativeDedicatedServerHostedGameWorkerCommand_None;
     }
 
-    const char *GetNativeDedicatedServerHostedGameWorkerCommandKindName(
-        ENativeDedicatedServerHostedGameWorkerCommandKind kind)
-    {
-        switch (kind)
-        {
-        case eNativeDedicatedServerHostedGameWorkerCommand_Autosave:
-            return "autosave";
-        case eNativeDedicatedServerHostedGameWorkerCommand_Save:
-            return "save";
-        case eNativeDedicatedServerHostedGameWorkerCommand_Stop:
-            return "stop";
-        case eNativeDedicatedServerHostedGameWorkerCommand_Halt:
-            return "halt";
-        default:
-            return "none";
-        }
-    }
-
     NativeDedicatedServerHostedGameWorkerSnapshot
     GetNativeDedicatedServerHostedGameWorkerSnapshot()
     {

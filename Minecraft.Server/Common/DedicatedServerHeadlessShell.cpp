@@ -16,9 +16,6 @@
 
 namespace ServerRuntime
 {
-    const char *GetNativeDedicatedServerHostedGameWorkerCommandKindName(
-        ENativeDedicatedServerHostedGameWorkerCommandKind kind);
-
     bool IsNativeDedicatedServerHostedGameSessionRunning();
 
     NativeDedicatedServerHostedGameSessionSnapshot
@@ -40,6 +37,24 @@ namespace ServerRuntime
 
 namespace
 {
+    const char *GetNativeDedicatedServerHostedGameWorkerCommandKindName(
+        ServerRuntime::ENativeDedicatedServerHostedGameWorkerCommandKind kind)
+    {
+        switch (kind)
+        {
+        case ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Autosave:
+            return "autosave";
+        case ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Save:
+            return "save";
+        case ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop:
+            return "stop";
+        case ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Halt:
+            return "halt";
+        default:
+            return "none";
+        }
+    }
+
     std::string TrimAscii(const std::string &value)
     {
         size_t start = 0;
