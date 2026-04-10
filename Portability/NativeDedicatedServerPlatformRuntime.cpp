@@ -219,6 +219,13 @@ namespace ServerRuntime
             LceGetMonotonicMilliseconds());
     }
 
+    void MarkNativeDedicatedServerGameplayHalted()
+    {
+        g_nativeRuntimeState.gameplayHalted = true;
+        RefreshNativeDedicatedServerRuntimeProjection(
+            LceGetMonotonicMilliseconds());
+    }
+
     bool IsDedicatedServerGameplayHalted()
     {
         return g_nativeRuntimeState.gameplayHalted;
@@ -267,7 +274,6 @@ namespace ServerRuntime
                 g_nativeRuntimeState.saveOnExitEnabled,
                 2,
                 LceGetMonotonicMilliseconds());
-            g_nativeRuntimeState.gameplayHalted = true;
             RefreshNativeDedicatedServerRuntimeProjection(
                 LceGetMonotonicMilliseconds());
             return;

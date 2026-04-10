@@ -46,6 +46,8 @@ namespace
 
 namespace ServerRuntime
 {
+    void MarkNativeDedicatedServerGameplayHalted();
+
     void RequestNativeDedicatedServerHostedGameWorkerAutosave(
         unsigned int workTicks);
 
@@ -144,6 +146,7 @@ namespace ServerRuntime
                 command.kind == eNativeDedicatedServerHostedGameWorkerCommand_Halt)
             {
                 g_nativeHostedWorkerProcessedHaltCommands.fetch_add(1);
+                MarkNativeDedicatedServerGameplayHalted();
             }
 
             g_nativeHostedWorkerLastProcessedCommandId.store(command.id);

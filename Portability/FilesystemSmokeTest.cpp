@@ -90,6 +90,8 @@ namespace ServerRuntime
 
     void ResetNativeDedicatedServerHostedGameSessionState();
 
+    void ResetNativeDedicatedServerHostedGameWorkerState();
+
     void StopNativeDedicatedServerHostedGameSession(
         std::uint64_t stoppedMs = 0);
 
@@ -160,6 +162,9 @@ namespace ServerRuntime
         bool gameplayHalted,
         bool stopSignalValid,
         std::uint64_t stoppedMs = 0,
+        std::uint64_t nowMs = 0);
+
+    void SignalNativeDedicatedServerHostedGameSessionThreadReady(
         std::uint64_t nowMs = 0);
 
     void RequestNativeDedicatedServerHostedGameSessionAutosave(
@@ -1769,6 +1774,7 @@ int main(int argc, char* argv[])
         hostedGamePlan.networkInitPlan);
     nativeHostedStubInitData.saveData = nativeHostedSaveData;
     ServerRuntime::ResetNativeDedicatedServerHostedGameSessionState();
+    ServerRuntime::ResetNativeDedicatedServerHostedGameWorkerState();
     ServerRuntime::ResetDedicatedServerAutosaveTracker();
     ServerRuntime::ResetDedicatedServerShutdownRequest();
     ServerRuntime::SetDedicatedServerAppShutdownRequested(false);
@@ -1877,9 +1883,70 @@ int main(int argc, char* argv[])
         nativeHostedCoreFrameStoppedSnapshot =
             ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
     ServerRuntime::ResetNativeDedicatedServerHostedGameSessionState();
+    ServerRuntime::ResetNativeDedicatedServerHostedGameWorkerState();
     ServerRuntime::ResetDedicatedServerAutosaveTracker();
     ServerRuntime::ResetDedicatedServerShutdownRequest();
     ServerRuntime::SetDedicatedServerAppShutdownRequested(false);
+    ServerRuntime::NativeDedicatedServerHostedGameRuntimeStubInitData
+        nativeHostedCoreHaltInitData = {};
+    ServerRuntime::PopulateDedicatedServerNetworkGameInitData(
+        &nativeHostedCoreHaltInitData,
+        hostedGamePlan.networkInitPlan);
+    ServerRuntime::PopulateDedicatedServerHostedGameRuntimeStubInitData(
+        &nativeHostedCoreHaltInitData,
+        hostedGamePlan);
+    nativeHostedCoreHaltInitData.saveData = nullptr;
+    ServerRuntime::StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
+        &nativeHostedCoreHaltInitData,
+        0,
+        0,
+        LceGetMonotonicMilliseconds());
+    ServerRuntime::SignalNativeDedicatedServerHostedGameSessionThreadReady(
+        LceGetMonotonicMilliseconds());
+    ServerRuntime::EnableDedicatedServerSaveOnExit();
+    ServerRuntime::HaltDedicatedServerGameplay();
+    const bool nativeHostedCoreHaltDeferred =
+        !ServerRuntime::IsDedicatedServerGameplayHalted();
+    std::uint64_t nativeHostedCoreHaltFirstSleepDurationMs = 0;
+    bool nativeHostedCoreHaltFirstShouldStopRunning = false;
+    ServerRuntime::TickNativeDedicatedServerHostedGameCoreFrame(
+        &nativeHostedCoreHaltFirstSleepDurationMs,
+        &nativeHostedCoreHaltFirstShouldStopRunning);
+    std::uint64_t nativeHostedCoreHaltSecondSleepDurationMs = 0;
+    bool nativeHostedCoreHaltSecondShouldStopRunning = false;
+    ServerRuntime::TickNativeDedicatedServerHostedGameCoreFrame(
+        &nativeHostedCoreHaltSecondSleepDurationMs,
+        &nativeHostedCoreHaltSecondShouldStopRunning);
+    std::uint64_t nativeHostedCoreHaltThirdSleepDurationMs = 0;
+    bool nativeHostedCoreHaltThirdShouldStopRunning = false;
+    const ServerRuntime::NativeDedicatedServerHostedGameWorkerSnapshot
+        nativeHostedCoreHaltThird =
+            ServerRuntime::TickNativeDedicatedServerHostedGameCoreFrame(
+                &nativeHostedCoreHaltThirdSleepDurationMs,
+                &nativeHostedCoreHaltThirdShouldStopRunning);
+    const bool nativeHostedCoreHaltProcessed =
+        ServerRuntime::IsDedicatedServerGameplayHalted();
+    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+        nativeHostedCoreHaltSnapshot =
+            ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
+    ServerRuntime::StopNativeDedicatedServerHostedGameSession();
+    ServerRuntime::StopDedicatedServerPlatformRuntime();
+    const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
+        platformAfterCoreHaltRuntimeResult =
+            ServerRuntime::StartDedicatedServerPlatformRuntime(platformState);
+    const bool nativeHostedCoreHaltOk =
+        platformAfterCoreHaltRuntimeResult.ok &&
+        nativeHostedCoreHaltDeferred &&
+        !nativeHostedCoreHaltFirstShouldStopRunning &&
+        !nativeHostedCoreHaltSecondShouldStopRunning &&
+        nativeHostedCoreHaltThirdShouldStopRunning &&
+        nativeHostedCoreHaltThirdSleepDurationMs == 0U &&
+        nativeHostedCoreHaltProcessed &&
+        nativeHostedCoreHaltThird.processedAutosaveCommands == 1U &&
+        nativeHostedCoreHaltThird.processedHaltCommands == 1U &&
+        nativeHostedCoreHaltThird.idle &&
+        nativeHostedCoreHaltSnapshot.control.gameplayHalted &&
+        nativeHostedCoreHaltSnapshot.worker.processedHaltCommands == 1U;
     ServerRuntime::ResetNativeDedicatedServerHostedGameSessionState();
     ServerRuntime::ResetDedicatedServerAutosaveTracker();
     ServerRuntime::ResetDedicatedServerShutdownRequest();
@@ -3232,6 +3299,17 @@ int main(int argc, char* argv[])
         (unsigned long long)nativeHostedCoreFrameSecondSnapshot
             .progress.observedAutosaveCompletions,
         !nativeHostedCoreFrameStoppedSnapshot.lifecycle.active);
+    printf("hosted_game_core_halt=%d deferred=%d processed=%d "
+        "third-stop=%d ops=%llu/%llu halted=%d\n",
+        nativeHostedCoreHaltOk,
+        nativeHostedCoreHaltDeferred,
+        nativeHostedCoreHaltProcessed,
+        nativeHostedCoreHaltThirdShouldStopRunning,
+        (unsigned long long)
+            nativeHostedCoreHaltThird.processedAutosaveCommands,
+        (unsigned long long)
+            nativeHostedCoreHaltThird.processedHaltCommands,
+        nativeHostedCoreHaltSnapshot.control.gameplayHalted);
     printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
         "loops=%llu autosaves=%llu worker_idle=%d hooks=%d/%d phase=%s\n",
         nativeHostedCoreRunResult.startup.result == 0 &&
@@ -4281,6 +4359,7 @@ int main(int argc, char* argv[])
         !nativeHostedCoreFrameStoppedSnapshot.lifecycle.active &&
         nativeHostedCoreFrameStoppedSnapshot.lifecycle.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
+        nativeHostedCoreHaltOk &&
         nativeHostedCoreRunResult.startup.result == 0 &&
         nativeHostedCoreRunResult.startup.payloadValidated &&
         nativeHostedCoreRunResult.startup.threadIterations == 2U &&
