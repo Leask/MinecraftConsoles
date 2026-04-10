@@ -754,10 +754,11 @@ namespace ServerRuntime
                 loadedSaveMetadata.saveStub.startupMode;
             g_nativeHostedSessionState.snapshot.previousSessionPhase =
                 loadedSaveMetadata.saveStub.sessionPhase;
-            g_nativeHostedSessionState.snapshot.previousRemoteCommands =
+            g_nativeHostedSessionState.snapshot
+                .previousProgress.remoteCommands =
                 loadedSaveMetadata.saveStub.remoteCommands;
             g_nativeHostedSessionState.snapshot
-                .previousAutosaveCompletions =
+                .previousProgress.autosaveCompletions =
                     loadedSaveMetadata.saveStub.autosaveCompletions;
             g_nativeHostedSessionState.snapshot
                 .previousWorker.pendingWorldActionTicks =
@@ -818,12 +819,12 @@ namespace ServerRuntime
                         loadedSaveMetadata.saveStub
                             .lastProcessedCommandKind;
             g_nativeHostedSessionState.snapshot
-                .previousPlatformTickCount =
+                .previousProgress.platformTickCount =
                     loadedSaveMetadata.saveStub.platformTickCount;
-            g_nativeHostedSessionState.snapshot.previousUptimeMs =
+            g_nativeHostedSessionState.snapshot.previousProgress.uptimeMs =
                 loadedSaveMetadata.saveStub.uptimeMs;
             g_nativeHostedSessionState.snapshot
-                .previousGameplayLoopIterations =
+                .previousProgress.gameplayLoopIterations =
                     loadedSaveMetadata.saveStub
                         .gameplayLoopIterations;
             g_nativeHostedSessionState.snapshot.previousWorldConfig.hostSettings =
@@ -853,10 +854,11 @@ namespace ServerRuntime
             g_nativeHostedSessionState.snapshot
                 .previousPayload.checksum =
                     loadedSaveMetadata.saveStub.payloadChecksum;
-            g_nativeHostedSessionState.snapshot.previousSaveGeneration =
+            g_nativeHostedSessionState.snapshot
+                .previousProgress.saveGeneration =
                 loadedSaveMetadata.saveStub.saveGeneration;
             g_nativeHostedSessionState.snapshot
-                .previousSessionStateChecksum =
+                .previousProgress.sessionStateChecksum =
                     loadedSaveMetadata.saveStub.stateChecksum;
             g_nativeHostedSessionState.snapshot
                 .previousStartup.payloadPresent =
@@ -1546,9 +1548,9 @@ namespace ServerRuntime
         planMetadata.previousStartupMode = snapshot.previousStartup.mode;
         planMetadata.previousSessionPhase = snapshot.previousSessionPhase;
         planMetadata.previousRemoteCommands =
-            snapshot.previousRemoteCommands;
+            snapshot.previousProgress.remoteCommands;
         planMetadata.previousAutosaveCompletions =
-            snapshot.previousAutosaveCompletions;
+            snapshot.previousProgress.autosaveCompletions;
         planMetadata.previousWorkerPendingWorldActionTicks =
             snapshot.previousWorker.pendingWorldActionTicks;
         planMetadata.previousWorkerPendingAutosaveCommands =
@@ -1584,10 +1586,10 @@ namespace ServerRuntime
         planMetadata.previousLastProcessedCommandKind =
             (unsigned int)snapshot.previousWorker.lastProcessedCommandKind;
         planMetadata.previousPlatformTickCount =
-            snapshot.previousPlatformTickCount;
-        planMetadata.previousUptimeMs = snapshot.previousUptimeMs;
+            snapshot.previousProgress.platformTickCount;
+        planMetadata.previousUptimeMs = snapshot.previousProgress.uptimeMs;
         planMetadata.previousGameplayLoopIterations =
-            snapshot.previousGameplayLoopIterations;
+            snapshot.previousProgress.gameplayLoopIterations;
         planMetadata.previousHostSettings =
             snapshot.previousWorldConfig.hostSettings;
         planMetadata.previousDedicatedNoLocalHostPlayer =
@@ -1609,9 +1611,9 @@ namespace ServerRuntime
         planMetadata.previousSavePayloadChecksum =
             snapshot.previousPayload.checksum;
         planMetadata.previousSaveGeneration =
-            snapshot.previousSaveGeneration;
+            snapshot.previousProgress.saveGeneration;
         planMetadata.previousSessionStateChecksum =
-            snapshot.previousSessionStateChecksum;
+            snapshot.previousProgress.sessionStateChecksum;
         planMetadata.previousStartupPayloadPresent =
             snapshot.previousStartup.payloadPresent;
         planMetadata.previousStartupPayloadValidated =

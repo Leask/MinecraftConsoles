@@ -133,6 +133,17 @@ namespace ServerRuntime
         std::uint64_t stateChecksum = 0;
     };
 
+    struct NativeDedicatedServerHostedGamePreviousProgressSnapshot
+    {
+        std::uint64_t remoteCommands = 0;
+        std::uint64_t autosaveCompletions = 0;
+        std::uint64_t platformTickCount = 0;
+        std::uint64_t uptimeMs = 0;
+        std::uint64_t gameplayLoopIterations = 0;
+        std::uint64_t saveGeneration = 0;
+        std::uint64_t sessionStateChecksum = 0;
+    };
+
     struct NativeDedicatedServerHostedGameSessionSnapshot
     {
         bool startAttempted = false;
@@ -143,15 +154,8 @@ namespace ServerRuntime
         int runtimePhase = 0;
         int localUsersMask = 0;
         std::int64_t resolvedSeed = 0;
-        std::uint64_t previousRemoteCommands = 0;
-        std::uint64_t previousAutosaveCompletions = 0;
         NativeDedicatedServerHostedGameWorkerSnapshot previousWorker = {};
         NativeDedicatedServerHostedGameWorkerSnapshot worker = {};
-        std::uint64_t previousPlatformTickCount = 0;
-        std::uint64_t previousUptimeMs = 0;
-        std::uint64_t previousGameplayLoopIterations = 0;
-        std::uint64_t previousSaveGeneration = 0;
-        std::uint64_t previousSessionStateChecksum = 0;
         std::uint64_t sessionStartMs = 0;
         NativeDedicatedServerHostedGamePreviousStartupSnapshot
             previousStartup = {};
@@ -173,6 +177,8 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameSessionContextSnapshot context = {};
         NativeDedicatedServerHostedGameLoadedSaveSnapshot loadedSave = {};
         NativeDedicatedServerHostedGameSessionProgressSnapshot progress = {};
+        NativeDedicatedServerHostedGamePreviousProgressSnapshot
+            previousProgress = {};
         std::uint64_t previousHostedThreadTicks = 0;
         std::uint64_t hostedThreadTicks = 0;
         std::uint64_t stoppedMs = 0;
