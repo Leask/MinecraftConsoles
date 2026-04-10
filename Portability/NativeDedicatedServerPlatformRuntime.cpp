@@ -161,7 +161,7 @@ namespace ServerRuntime
         if (IsNativeDedicatedServerHostedGameSessionRunning())
         {
             return GetNativeDedicatedServerHostedGameSessionSnapshot()
-                .worldActionIdle;
+                .control.worldActionIdle;
         }
 
         return g_nativeRuntimeState.fallbackWorldActionTicks == 0;

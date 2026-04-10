@@ -1622,9 +1622,9 @@ int main(int argc, char* argv[])
         platformFlagsRuntimeSnapshot =
             ServerRuntime::GetDedicatedServerHostedGameRuntimeSnapshot();
     const bool platformFlagsProjected =
-        platformFlagsSessionSnapshot.appShutdownRequested &&
-        !platformFlagsSessionSnapshot.gameplayHalted &&
-        platformFlagsSessionSnapshot.stopSignalValid &&
+        platformFlagsSessionSnapshot.control.appShutdownRequested &&
+        !platformFlagsSessionSnapshot.control.gameplayHalted &&
+        platformFlagsSessionSnapshot.control.stopSignalValid &&
         platformFlagsRuntimeSnapshot.appShutdownRequested &&
         !platformFlagsRuntimeSnapshot.gameplayHalted &&
         platformFlagsRuntimeSnapshot.stopSignalValid;
@@ -2139,12 +2139,12 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.persistedSave.fileTime == 77 &&
         nativeHostedSessionObservedSnapshot
             .persistedSave.autosaveCompletions == 5 &&
-        !nativeHostedSessionObservedSnapshot.worldActionIdle;
+        !nativeHostedSessionObservedSnapshot.control.worldActionIdle;
     const bool hostedGameSessionObservedLifecycleOk =
         nativeHostedSessionObservedSnapshot.active &&
-        !nativeHostedSessionObservedSnapshot.worldActionIdle &&
-        nativeHostedSessionObservedSnapshot.appShutdownRequested &&
-        nativeHostedSessionObservedSnapshot.stopSignalValid &&
+        !nativeHostedSessionObservedSnapshot.control.worldActionIdle &&
+        nativeHostedSessionObservedSnapshot.control.appShutdownRequested &&
+        nativeHostedSessionObservedSnapshot.control.stopSignalValid &&
         nativeHostedSessionObservedSnapshot.summary.sessionCompleted &&
         nativeHostedSessionObservedSnapshot.summary.requestedAppShutdown &&
         nativeHostedSessionObservedSnapshot.runtimePhase ==
@@ -3626,8 +3626,8 @@ int main(int argc, char* argv[])
     printf("hosted_game_session_lifecycle shutdown=%d stop=%d initial=%d/%d/%d "
         "completed=%d requested=%d halted=%d phase=%s stopped_ms=%llu "
         "checksum=0x%016llx\n",
-        nativeHostedSessionObservedSnapshot.appShutdownRequested,
-        nativeHostedSessionObservedSnapshot.stopSignalValid,
+        nativeHostedSessionObservedSnapshot.control.appShutdownRequested,
+        nativeHostedSessionObservedSnapshot.control.stopSignalValid,
         nativeHostedSessionObservedSnapshot.summary.initialSaveRequested,
         nativeHostedSessionObservedSnapshot.summary.initialSaveCompleted,
         nativeHostedSessionObservedSnapshot.summary.initialSaveTimedOut,

@@ -367,16 +367,16 @@ namespace ServerRuntime
                 state->snapshot.active ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.worldActionIdle ? 1U : 0U);
+                state->snapshot.control.worldActionIdle ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.appShutdownRequested ? 1U : 0U);
+                state->snapshot.control.appShutdownRequested ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.gameplayHalted ? 1U : 0U);
+                state->snapshot.control.gameplayHalted ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.stopSignalValid ? 1U : 0U);
+                state->snapshot.control.stopSignalValid ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.thread.active ? 1U : 0U);
@@ -450,7 +450,7 @@ namespace ServerRuntime
                 workerSnapshot.lastProcessedCommandId;
             state->snapshot.worker.lastProcessedCommandKind =
                 workerSnapshot.lastProcessedCommandKind;
-            state->snapshot.worldActionIdle =
+            state->snapshot.control.worldActionIdle =
                 workerSnapshot.pendingWorldActionTicks == 0 &&
                 workerSnapshot.pendingAutosaveCommands == 0 &&
                 workerSnapshot.pendingSaveCommands == 0 &&
@@ -500,8 +500,8 @@ namespace ServerRuntime
                 return;
             }
 
-            if (state->snapshot.appShutdownRequested ||
-                state->snapshot.gameplayHalted)
+            if (state->snapshot.control.appShutdownRequested ||
+                state->snapshot.control.gameplayHalted)
             {
                 state->snapshot.runtimePhase =
                     eDedicatedServerHostedGameRuntimePhase_ShutdownRequested;
@@ -1077,7 +1077,7 @@ namespace ServerRuntime
             acceptedConnections;
         g_nativeHostedSessionState.snapshot.progress.remoteCommands =
             remoteCommands;
-        g_nativeHostedSessionState.snapshot.worldActionIdle =
+        g_nativeHostedSessionState.snapshot.control.worldActionIdle =
             worldActionIdle;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
@@ -1238,11 +1238,11 @@ namespace ServerRuntime
                 g_nativeHostedSessionState.baseGameplayLoopIterations +
                 gameplayLoopIterations;
         }
-        g_nativeHostedSessionState.snapshot.appShutdownRequested =
+        g_nativeHostedSessionState.snapshot.control.appShutdownRequested =
             appShutdownRequested;
-        g_nativeHostedSessionState.snapshot.gameplayHalted =
+        g_nativeHostedSessionState.snapshot.control.gameplayHalted =
             gameplayHalted;
-        g_nativeHostedSessionState.snapshot.stopSignalValid =
+        g_nativeHostedSessionState.snapshot.control.stopSignalValid =
             stopSignalValid;
         RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
         RefreshNativeHostedSessionStateChecksum(
@@ -1357,11 +1357,11 @@ namespace ServerRuntime
             shutdownHaltedGameplay;
         g_nativeHostedSessionState.snapshot.progress.gameplayLoopIterations =
             gameplayLoopIterations;
-        g_nativeHostedSessionState.snapshot.appShutdownRequested =
+        g_nativeHostedSessionState.snapshot.control.appShutdownRequested =
             appShutdownRequested;
-        g_nativeHostedSessionState.snapshot.gameplayHalted =
+        g_nativeHostedSessionState.snapshot.control.gameplayHalted =
             gameplayHalted;
-        g_nativeHostedSessionState.snapshot.stopSignalValid =
+        g_nativeHostedSessionState.snapshot.control.stopSignalValid =
             stopSignalValid;
         SetNativeHostedSessionStoppedState(
             &g_nativeHostedSessionState,
@@ -1677,10 +1677,10 @@ namespace ServerRuntime
                 snapshot.progress.autosaveRequests,
                 snapshot.progress.observedAutosaveCompletions,
                 snapshot.progress.platformTickCount,
-                snapshot.worldActionIdle,
-                snapshot.appShutdownRequested,
-                snapshot.gameplayHalted,
-                snapshot.stopSignalValid,
+                snapshot.control.worldActionIdle,
+                snapshot.control.appShutdownRequested,
+                snapshot.control.gameplayHalted,
+                snapshot.control.stopSignalValid,
                 nowMs);
         }
         RecordDedicatedServerHostedGameRuntimeWorkerState(
@@ -1877,10 +1877,10 @@ namespace ServerRuntime
         saveStub.publicSlots = snapshot.activation.publicSlots;
         saveStub.privateSlots = snapshot.activation.privateSlots;
         saveStub.sessionActive = snapshot.active;
-        saveStub.worldActionIdle = snapshot.worldActionIdle;
+        saveStub.worldActionIdle = snapshot.control.worldActionIdle;
         saveStub.appShutdownRequested =
-            snapshot.appShutdownRequested;
-        saveStub.gameplayHalted = snapshot.gameplayHalted;
+            snapshot.control.appShutdownRequested;
+        saveStub.gameplayHalted = snapshot.control.gameplayHalted;
         saveStub.acceptedConnections = snapshot.progress.acceptedConnections;
         saveStub.remoteCommands = snapshot.progress.remoteCommands;
         saveStub.autosaveRequests = snapshot.progress.autosaveRequests;

@@ -150,6 +150,14 @@ namespace ServerRuntime
         std::uint64_t ticks = 0;
     };
 
+    struct NativeDedicatedServerHostedGameControlSnapshot
+    {
+        bool worldActionIdle = true;
+        bool appShutdownRequested = false;
+        bool gameplayHalted = false;
+        bool stopSignalValid = false;
+    };
+
     struct NativeDedicatedServerHostedGameSessionSnapshot
     {
         bool startAttempted = false;
@@ -187,11 +195,8 @@ namespace ServerRuntime
             previousProgress = {};
         NativeDedicatedServerHostedGameThreadSnapshot previousThread = {};
         NativeDedicatedServerHostedGameThreadSnapshot thread = {};
+        NativeDedicatedServerHostedGameControlSnapshot control = {};
         std::uint64_t stoppedMs = 0;
-        bool worldActionIdle = true;
-        bool appShutdownRequested = false;
-        bool gameplayHalted = false;
-        bool stopSignalValid = false;
     };
 
 }
