@@ -20,7 +20,6 @@
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerLoadedSaveState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
-#include "NativeDedicatedServerHostedGameCore.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformState.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
@@ -57,6 +56,14 @@
 
 namespace ServerRuntime
 {
+    struct NativeDedicatedServerHostedGameCoreHooks
+    {
+        void (*onThreadReady)(std::uint64_t nowMs) = nullptr;
+        void (*onThreadStopped)(
+            std::uint64_t hostedThreadTicks,
+            std::uint64_t nowMs) = nullptr;
+    };
+
     NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameCoreWithResult(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData);
@@ -64,6 +71,11 @@ namespace ServerRuntime
     NativeDedicatedServerHostedGameWorkerFrameResult
     TickNativeDedicatedServerHostedGameCoreFrameWithResult(
         bool hostedThreadActive = true);
+
+    NativeDedicatedServerHostedGameSessionSnapshot
+    RunNativeDedicatedServerHostedGameCoreWithResult(
+        NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
+        const NativeDedicatedServerHostedGameCoreHooks &hooks);
 
     NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(

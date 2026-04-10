@@ -1,12 +1,24 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
-#include "NativeDedicatedServerHostedGameCore.h"
 #include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 
 namespace ServerRuntime
 {
+    struct NativeDedicatedServerHostedGameCoreHooks
+    {
+        void (*onThreadReady)(std::uint64_t nowMs) = nullptr;
+        void (*onThreadStopped)(
+            std::uint64_t hostedThreadTicks,
+            std::uint64_t nowMs) = nullptr;
+    };
+
+    NativeDedicatedServerHostedGameSessionSnapshot
+    RunNativeDedicatedServerHostedGameCoreWithResult(
+        NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
+        const NativeDedicatedServerHostedGameCoreHooks &hooks);
+
     bool SignalNativeDedicatedServerHostedGameHostReady();
     void SignalNativeDedicatedServerHostedGameSessionThreadReady(
         std::uint64_t nowMs = 0);
