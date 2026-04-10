@@ -472,6 +472,7 @@ namespace ServerRuntime
         snapshot.lastProcessedCommandKind =
             (ENativeDedicatedServerHostedGameWorkerCommandKind)
                 g_nativeHostedWorkerLastProcessedCommandKind.load();
+        RefreshNativeDedicatedServerHostedGameWorkerFrameState(&snapshot);
         return snapshot;
     }
 

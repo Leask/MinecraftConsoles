@@ -261,13 +261,17 @@ namespace
             std::snprintf(
                 buffer,
                 sizeof(buffer),
-                "status worker pending=%llu autoq=%llu saveq=%llu stopq=%llu haltq=%llu "
-                "ticks=%llu completed=%llu auto-ops=%llu save-ops=%llu "
+                "status worker pending=%llu state=%s pending-commands=%llu "
+                "autoq=%llu saveq=%llu stopq=%llu haltq=%llu ticks=%llu "
+                "completed=%llu auto-ops=%llu save-ops=%llu "
                 "stop-ops=%llu halt-ops=%llu active=%s#%llu/%llu "
                 "last-queued=%llu last-processed=%s#%llu "
                 "core-checksum=0x%016llx",
                 (unsigned long long)
                     sessionSnapshot.worker.pendingWorldActionTicks,
+                sessionSnapshot.worker.busy ? "busy" : "idle",
+                (unsigned long long)
+                    sessionSnapshot.worker.pendingCommandCount,
                 (unsigned long long)
                     sessionSnapshot.worker.pendingAutosaveCommands,
                 (unsigned long long)
@@ -750,13 +754,20 @@ namespace ServerRuntime
 
                 LogInfof(
                     "console",
-                    "status worker pending=%llu autoq=%llu saveq=%llu stopq=%llu haltq=%llu "
-                    "ticks=%llu completed=%llu auto-ops=%llu save-ops=%llu "
+                    "status worker pending=%llu state=%s pending-commands=%llu "
+                    "autoq=%llu saveq=%llu stopq=%llu haltq=%llu ticks=%llu "
+                    "completed=%llu auto-ops=%llu save-ops=%llu "
                     "stop-ops=%llu halt-ops=%llu active=%s#%llu/%llu "
                     "last-queued=%llu last-processed=%s#%llu "
                     "core-checksum=0x%016llx",
                     (unsigned long long)
                         runtimeSnapshot.workerPendingWorldActionTicks,
+                    runtimeSnapshot.worldActionIdle ? "idle" : "busy",
+                    (unsigned long long)(
+                        runtimeSnapshot.workerPendingAutosaveCommands +
+                        runtimeSnapshot.workerPendingSaveCommands +
+                        runtimeSnapshot.workerPendingStopCommands +
+                        runtimeSnapshot.workerPendingHaltCommands),
                     (unsigned long long)
                         runtimeSnapshot.workerPendingAutosaveCommands,
                     (unsigned long long)

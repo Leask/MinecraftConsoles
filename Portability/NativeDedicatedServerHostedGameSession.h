@@ -37,7 +37,46 @@ namespace ServerRuntime
         ENativeDedicatedServerHostedGameWorkerCommandKind
             lastProcessedCommandKind =
                 eNativeDedicatedServerHostedGameWorkerCommand_None;
+        std::uint64_t pendingCommandCount = 0;
+        bool idle = true;
+        bool busy = false;
     };
+
+    inline std::uint64_t
+    GetNativeDedicatedServerHostedGameWorkerPendingCommandCount(
+        const NativeDedicatedServerHostedGameWorkerSnapshot &snapshot)
+    {
+        return snapshot.pendingAutosaveCommands +
+            snapshot.pendingSaveCommands +
+            snapshot.pendingStopCommands +
+            snapshot.pendingHaltCommands;
+    }
+
+    inline bool IsNativeDedicatedServerHostedGameWorkerSnapshotIdle(
+        const NativeDedicatedServerHostedGameWorkerSnapshot &snapshot)
+    {
+        return snapshot.pendingWorldActionTicks == 0 &&
+            GetNativeDedicatedServerHostedGameWorkerPendingCommandCount(
+                snapshot) == 0 &&
+            snapshot.activeCommandKind ==
+                eNativeDedicatedServerHostedGameWorkerCommand_None;
+    }
+
+    inline void RefreshNativeDedicatedServerHostedGameWorkerFrameState(
+        NativeDedicatedServerHostedGameWorkerSnapshot *snapshot)
+    {
+        if (snapshot == nullptr)
+        {
+            return;
+        }
+
+        snapshot->pendingCommandCount =
+            GetNativeDedicatedServerHostedGameWorkerPendingCommandCount(
+                *snapshot);
+        snapshot->idle =
+            IsNativeDedicatedServerHostedGameWorkerSnapshotIdle(*snapshot);
+        snapshot->busy = !snapshot->idle;
+    }
 
     struct NativeDedicatedServerHostedGameStartupSnapshot
     {

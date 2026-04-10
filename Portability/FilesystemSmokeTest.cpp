@@ -2131,6 +2131,9 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.worker.lastProcessedCommandId == 98 &&
         nativeHostedSessionObservedSnapshot.worker.lastProcessedCommandKind ==
             ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_Stop &&
+        nativeHostedSessionObservedSnapshot.worker.pendingCommandCount == 41 &&
+        nativeHostedSessionObservedSnapshot.worker.busy &&
+        !nativeHostedSessionObservedSnapshot.worker.idle &&
         nativeHostedSessionObservedSnapshot.progress.gameplayLoopIterations ==
             8 &&
         nativeHostedSessionObservedSnapshot.progress.platformTickCount == 6 &&
@@ -3153,6 +3156,9 @@ int main(int argc, char* argv[])
                     .progress.sessionTicks == 1U &&
             nativeHostedCoreFrameFirstSnapshot
                     .progress.gameplayLoopIterations == 1U &&
+            nativeHostedCoreFrameFirst.pendingCommandCount == 0U &&
+            nativeHostedCoreFrameFirst.busy &&
+            !nativeHostedCoreFrameFirst.idle &&
             nativeHostedCoreFrameFirstSnapshot.thread.active &&
             nativeHostedCoreFrameFirstSnapshot.lifecycle.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
@@ -3168,6 +3174,9 @@ int main(int argc, char* argv[])
                     .progress.gameplayLoopIterations == 2U &&
             nativeHostedCoreFrameSecondSnapshot
                     .progress.observedAutosaveCompletions == 1U &&
+            nativeHostedCoreFrameSecond.pendingCommandCount == 0U &&
+            nativeHostedCoreFrameSecond.idle &&
+            !nativeHostedCoreFrameSecond.busy &&
             nativeHostedCoreFrameSecondSnapshot.thread.active &&
             nativeHostedCoreFrameSecondSnapshot.lifecycle.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
@@ -3293,7 +3302,11 @@ int main(int argc, char* argv[])
         nativeHostedSessionCoreSnapshot.loadedSave.metadataAvailable &&
         nativeHostedSessionCoreSnapshot.loadedSave.path ==
             "NativeDesktop/GameHDD/SmokeSession.save" &&
-        nativeHostedSessionCoreSnapshot.previousStartup.mode == "loaded";
+        nativeHostedSessionCoreSnapshot.previousStartup.mode == "loaded" &&
+        nativeHostedSessionCoreSnapshot
+            .previousWorker.pendingCommandCount == 10U &&
+        nativeHostedSessionCoreSnapshot.previousWorker.busy &&
+        !nativeHostedSessionCoreSnapshot.previousWorker.idle;
     const bool nativeHostedStubCoreFinalizationOk =
         nativeHostedSessionCoreStoppedSnapshot.progress.saveGeneration >=
             nativeHostedSessionCoreSnapshot.progress.saveGeneration &&
@@ -4202,6 +4215,9 @@ int main(int argc, char* argv[])
         nativeHostedCoreFrameFirstSnapshot.progress.sessionTicks == 1U &&
         nativeHostedCoreFrameFirstSnapshot.progress.gameplayLoopIterations ==
             1U &&
+        nativeHostedCoreFrameFirst.pendingCommandCount == 0U &&
+        nativeHostedCoreFrameFirst.busy &&
+        !nativeHostedCoreFrameFirst.idle &&
         nativeHostedCoreFrameFirstSnapshot.thread.active &&
         nativeHostedCoreFrameFirstSnapshot.lifecycle.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
@@ -4216,6 +4232,9 @@ int main(int argc, char* argv[])
             2U &&
         nativeHostedCoreFrameSecondSnapshot
                 .progress.observedAutosaveCompletions == 1U &&
+        nativeHostedCoreFrameSecond.pendingCommandCount == 0U &&
+        nativeHostedCoreFrameSecond.idle &&
+        !nativeHostedCoreFrameSecond.busy &&
         nativeHostedCoreFrameSecondSnapshot.thread.active &&
         nativeHostedCoreFrameSecondSnapshot.lifecycle.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
