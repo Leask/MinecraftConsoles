@@ -46,6 +46,12 @@ namespace
 
 namespace ServerRuntime
 {
+    void RequestNativeDedicatedServerHostedGameWorkerAutosave(
+        unsigned int workTicks);
+
+    NativeDedicatedServerHostedGameWorkerSnapshot
+    GetNativeDedicatedServerHostedGameWorkerSnapshot();
+
     bool IsNativeDedicatedServerHostedGameWorkerIdle();
 
     std::uint64_t GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();

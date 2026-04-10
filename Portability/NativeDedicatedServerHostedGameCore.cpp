@@ -10,6 +10,9 @@
 
 namespace ServerRuntime
 {
+    NativeDedicatedServerHostedGameWorkerFrameResult
+    TickNativeDedicatedServerHostedGameWorkerFrame();
+
     NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
         const NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
@@ -123,7 +126,7 @@ namespace ServerRuntime
         while (true)
         {
             const NativeDedicatedServerHostedGameWorkerFrameResult lastFrame =
-                TickNativeDedicatedServerHostedGameCoreFrameWithResult();
+                TickNativeDedicatedServerHostedGameCoreFrameWithResult(true);
             if (lastFrame.shouldStopRunning)
             {
                 break;

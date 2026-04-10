@@ -49,27 +49,6 @@ namespace ServerRuntime
 
     void ClearNativeDedicatedServerHostedGameWorkerState();
 
-    void RequestNativeDedicatedServerHostedGameWorkerAutosave(
-        unsigned int workTicks);
-
-    std::uint64_t EnqueueNativeDedicatedServerHostedGameWorkerSaveCommand();
-
-    std::uint64_t EnqueueNativeDedicatedServerHostedGameWorkerStopCommand();
-
-    std::uint64_t EnqueueNativeDedicatedServerHostedGameWorkerHaltCommand();
-
-    std::uint64_t EnqueueNativeDedicatedServerHostedGameWorkerHaltSequence(
-        bool requestAutosaveFirst,
-        unsigned int autosaveWorkTicks);
-
-    void TickNativeDedicatedServerHostedGameWorker();
-
-    NativeDedicatedServerHostedGameWorkerFrameResult
-    TickNativeDedicatedServerHostedGameWorkerFrame();
-
     const char *GetNativeDedicatedServerHostedGameWorkerCommandKindName(
         ENativeDedicatedServerHostedGameWorkerCommandKind kind);
-
-    NativeDedicatedServerHostedGameWorkerSnapshot
-        GetNativeDedicatedServerHostedGameWorkerSnapshot();
 }

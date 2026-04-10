@@ -15,14 +15,6 @@ namespace ServerRuntime
     };
 
     NativeDedicatedServerHostedGameSessionSnapshot
-    StartNativeDedicatedServerHostedGameCoreWithResult(
-        NativeDedicatedServerHostedGameRuntimeStubInitData *initData);
-
-    NativeDedicatedServerHostedGameWorkerFrameResult
-    TickNativeDedicatedServerHostedGameCoreFrameWithResult(
-        bool hostedThreadActive = true);
-
-    NativeDedicatedServerHostedGameSessionSnapshot
     RunNativeDedicatedServerHostedGameCoreWithResult(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
         const NativeDedicatedServerHostedGameCoreHooks &hooks);

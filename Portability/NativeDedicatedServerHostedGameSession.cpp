@@ -26,7 +26,21 @@ namespace ServerRuntime
     NativeDedicatedServerHostedGameSessionSnapshot
     GetNativeDedicatedServerHostedGameSessionSnapshot();
 
+    NativeDedicatedServerHostedGameWorkerSnapshot
+    GetNativeDedicatedServerHostedGameWorkerSnapshot();
+
     std::uint64_t GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions();
+
+    void RequestNativeDedicatedServerHostedGameWorkerAutosave(
+        unsigned int workTicks);
+
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameWorkerSaveCommand();
+
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameWorkerStopCommand();
+
+    std::uint64_t EnqueueNativeDedicatedServerHostedGameWorkerHaltSequence(
+        bool requestAutosaveFirst,
+        unsigned int autosaveWorkTicks);
 
     void ObserveNativeDedicatedServerHostedGameSessionStartupTelemetryAndProject(
         std::uint64_t startupThreadIterations,
