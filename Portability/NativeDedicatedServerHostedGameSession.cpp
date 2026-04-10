@@ -1355,19 +1355,36 @@ namespace ServerRuntime
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState.snapshot.summary.initialSaveRequested =
+            g_nativeHostedSessionState.snapshot.summary
+                .initialSaveRequested ||
             initialSaveRequested;
         g_nativeHostedSessionState.snapshot.summary.initialSaveCompleted =
+            g_nativeHostedSessionState.snapshot.summary
+                .initialSaveCompleted ||
             initialSaveCompleted;
         g_nativeHostedSessionState.snapshot.summary.initialSaveTimedOut =
+            g_nativeHostedSessionState.snapshot.summary
+                .initialSaveTimedOut ||
             initialSaveTimedOut;
         g_nativeHostedSessionState.snapshot.summary.sessionCompleted =
+            g_nativeHostedSessionState.snapshot.summary.sessionCompleted ||
             sessionCompleted;
         g_nativeHostedSessionState.snapshot.summary.requestedAppShutdown =
+            g_nativeHostedSessionState.snapshot.summary
+                .requestedAppShutdown ||
             requestedAppShutdown;
         g_nativeHostedSessionState.snapshot.summary.shutdownHaltedGameplay =
+            g_nativeHostedSessionState.snapshot.summary
+                .shutdownHaltedGameplay ||
             shutdownHaltedGameplay;
-        g_nativeHostedSessionState.snapshot.progress.gameplayLoopIterations =
-            gameplayLoopIterations;
+        if (gameplayLoopIterations >=
+            g_nativeHostedSessionState.snapshot
+                .progress.gameplayLoopIterations)
+        {
+            g_nativeHostedSessionState.snapshot
+                .progress.gameplayLoopIterations =
+                    gameplayLoopIterations;
+        }
         g_nativeHostedSessionState.snapshot.control.appShutdownRequested =
             appShutdownRequested;
         g_nativeHostedSessionState.snapshot.control.gameplayHalted =

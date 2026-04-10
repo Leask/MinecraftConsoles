@@ -148,6 +148,20 @@ namespace ServerRuntime
         bool requestedAppShutdown,
         bool shutdownHaltedGameplay);
 
+    void FinalizeNativeDedicatedServerHostedGameSessionAndProject(
+        bool initialSaveRequested,
+        bool initialSaveCompleted,
+        bool initialSaveTimedOut,
+        bool sessionCompleted,
+        bool requestedAppShutdown,
+        bool shutdownHaltedGameplay,
+        std::uint64_t gameplayLoopIterations,
+        bool appShutdownRequested,
+        bool gameplayHalted,
+        bool stopSignalValid,
+        std::uint64_t stoppedMs = 0,
+        std::uint64_t nowMs = 0);
+
     void RequestNativeDedicatedServerHostedGameSessionAutosave(
         unsigned int workTicks,
         std::uint64_t nowMs = 0);
@@ -2174,6 +2188,31 @@ int main(int argc, char* argv[])
         hostedGameSessionCurrentSnapshotOk &&
         hostedGameSessionObservedProjectionOk &&
         hostedGameSessionStoppedOk;
+    ServerRuntime::FinalizeNativeDedicatedServerHostedGameSessionAndProject(
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        4,
+        false,
+        false,
+        true,
+        1300,
+        1300);
+    const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+        nativeHostedFinalizeClampSnapshot =
+            ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
+    const bool nativeHostedFinalizeClampOk =
+        nativeHostedFinalizeClampSnapshot.summary.initialSaveRequested &&
+        nativeHostedFinalizeClampSnapshot.summary.initialSaveCompleted &&
+        nativeHostedFinalizeClampSnapshot.summary.sessionCompleted &&
+        nativeHostedFinalizeClampSnapshot.summary.requestedAppShutdown &&
+        nativeHostedFinalizeClampSnapshot.summary.shutdownHaltedGameplay &&
+        nativeHostedFinalizeClampSnapshot.progress.gameplayLoopIterations ==
+            8 &&
+        nativeHostedFinalizeClampSnapshot.timing.stoppedMs == 1300;
     ServerRuntime::StopDedicatedServerPlatformRuntime();
     ServerRuntime::ResetDedicatedServerShutdownRequest();
     const ServerRuntime::DedicatedServerPlatformRuntimeStartResult
@@ -3629,13 +3668,14 @@ int main(int argc, char* argv[])
         ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
             hostedGameStoppedSnapshot.phase));
     printf("hosted_game_session_contract=%d current=%d observed=%d/%d/%d "
-        "stopped=%d\n",
-        hostedGameSessionOk,
+        "stopped=%d finalize=%d\n",
+        hostedGameSessionOk && nativeHostedFinalizeClampOk,
         hostedGameSessionCurrentSnapshotOk,
         hostedGameSessionObservedIdentityOk,
         hostedGameSessionObservedWorkerOk,
         hostedGameSessionObservedLifecycleOk,
-        hostedGameSessionStoppedOk);
+        hostedGameSessionStoppedOk,
+        nativeHostedFinalizeClampOk);
     printf("hosted_game_session_lifecycle shutdown=%d stop=%d initial=%d/%d/%d "
         "completed=%d requested=%d halted=%d phase=%s stopped_ms=%llu "
         "checksum=0x%016llx\n",
@@ -4321,6 +4361,7 @@ int main(int argc, char* argv[])
         hostedGameStartupInitData.hellScale ==
             sessionConfig.worldHellScale &&
         hostedGameSessionOk &&
+        nativeHostedFinalizeClampOk &&
         platformSessionRuntimeResult.ok &&
         sessionExecution.initialSave.requested &&
         sessionExecution.initialSave.completed &&
