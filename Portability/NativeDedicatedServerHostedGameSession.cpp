@@ -380,22 +380,22 @@ namespace ServerRuntime
                 state->snapshot.hostedThreadActive ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.initialSaveRequested ? 1U : 0U);
+                state->snapshot.summary.initialSaveRequested ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.initialSaveCompleted ? 1U : 0U);
+                state->snapshot.summary.initialSaveCompleted ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.initialSaveTimedOut ? 1U : 0U);
+                state->snapshot.summary.initialSaveTimedOut ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.sessionCompleted ? 1U : 0U);
+                state->snapshot.summary.sessionCompleted ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.requestedAppShutdown ? 1U : 0U);
+                state->snapshot.summary.requestedAppShutdown ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.shutdownHaltedGameplay ? 1U : 0U);
+                state->snapshot.summary.shutdownHaltedGameplay ? 1U : 0U);
             state->snapshot.stateChecksum = checksum;
         }
 
@@ -875,15 +875,23 @@ namespace ServerRuntime
             g_nativeHostedSessionState.snapshot.previousHostedThreadTicks =
                 loadedSaveMetadata.saveStub.hostedThreadTicks;
             g_nativeHostedSessionState.snapshot
-                .previousSessionCompleted =
+                .previousSummary.initialSaveRequested =
+                    loadedSaveMetadata.saveStub.initialSaveRequested;
+            g_nativeHostedSessionState.snapshot
+                .previousSummary.initialSaveCompleted =
+                    loadedSaveMetadata.saveStub.initialSaveCompleted;
+            g_nativeHostedSessionState.snapshot
+                .previousSummary.initialSaveTimedOut =
+                    loadedSaveMetadata.saveStub.initialSaveTimedOut;
+            g_nativeHostedSessionState.snapshot
+                .previousSummary.sessionCompleted =
                     loadedSaveMetadata.saveStub.sessionCompleted;
             g_nativeHostedSessionState.snapshot
-                .previousRequestedAppShutdown =
+                .previousSummary.requestedAppShutdown =
                     loadedSaveMetadata.saveStub.requestedAppShutdown;
             g_nativeHostedSessionState.snapshot
-                .previousShutdownHaltedGameplay =
-                    loadedSaveMetadata.saveStub
-                        .shutdownHaltedGameplay;
+                .previousSummary.shutdownHaltedGameplay =
+                    loadedSaveMetadata.saveStub.shutdownHaltedGameplay;
         }
 
         RefreshNativeHostedSessionActive(&g_nativeHostedSessionState);
@@ -1284,17 +1292,17 @@ namespace ServerRuntime
         bool shutdownHaltedGameplay)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        g_nativeHostedSessionState.snapshot.initialSaveRequested =
+        g_nativeHostedSessionState.snapshot.summary.initialSaveRequested =
             initialSaveRequested;
-        g_nativeHostedSessionState.snapshot.initialSaveCompleted =
+        g_nativeHostedSessionState.snapshot.summary.initialSaveCompleted =
             initialSaveCompleted;
-        g_nativeHostedSessionState.snapshot.initialSaveTimedOut =
+        g_nativeHostedSessionState.snapshot.summary.initialSaveTimedOut =
             initialSaveTimedOut;
-        g_nativeHostedSessionState.snapshot.sessionCompleted =
+        g_nativeHostedSessionState.snapshot.summary.sessionCompleted =
             sessionCompleted;
-        g_nativeHostedSessionState.snapshot.requestedAppShutdown =
+        g_nativeHostedSessionState.snapshot.summary.requestedAppShutdown =
             requestedAppShutdown;
-        g_nativeHostedSessionState.snapshot.shutdownHaltedGameplay =
+        g_nativeHostedSessionState.snapshot.summary.shutdownHaltedGameplay =
             shutdownHaltedGameplay;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
@@ -1314,17 +1322,17 @@ namespace ServerRuntime
         std::uint64_t stoppedMs)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        g_nativeHostedSessionState.snapshot.initialSaveRequested =
+        g_nativeHostedSessionState.snapshot.summary.initialSaveRequested =
             initialSaveRequested;
-        g_nativeHostedSessionState.snapshot.initialSaveCompleted =
+        g_nativeHostedSessionState.snapshot.summary.initialSaveCompleted =
             initialSaveCompleted;
-        g_nativeHostedSessionState.snapshot.initialSaveTimedOut =
+        g_nativeHostedSessionState.snapshot.summary.initialSaveTimedOut =
             initialSaveTimedOut;
-        g_nativeHostedSessionState.snapshot.sessionCompleted =
+        g_nativeHostedSessionState.snapshot.summary.sessionCompleted =
             sessionCompleted;
-        g_nativeHostedSessionState.snapshot.requestedAppShutdown =
+        g_nativeHostedSessionState.snapshot.summary.requestedAppShutdown =
             requestedAppShutdown;
-        g_nativeHostedSessionState.snapshot.shutdownHaltedGameplay =
+        g_nativeHostedSessionState.snapshot.summary.shutdownHaltedGameplay =
             shutdownHaltedGameplay;
         g_nativeHostedSessionState.snapshot.gameplayLoopIterations =
             gameplayLoopIterations;
@@ -1591,11 +1599,11 @@ namespace ServerRuntime
         planMetadata.previousHostedThreadTicks =
             snapshot.previousHostedThreadTicks;
         planMetadata.previousSessionCompleted =
-            snapshot.previousSessionCompleted;
+            snapshot.previousSummary.sessionCompleted;
         planMetadata.previousRequestedAppShutdown =
-            snapshot.previousRequestedAppShutdown;
+            snapshot.previousSummary.requestedAppShutdown;
         planMetadata.previousShutdownHaltedGameplay =
-            snapshot.previousShutdownHaltedGameplay;
+            snapshot.previousSummary.shutdownHaltedGameplay;
         if (snapshot.startAttempted ||
             snapshot.loadedFromSave ||
             !snapshot.savePayloadName.empty() ||
@@ -1684,17 +1692,17 @@ namespace ServerRuntime
             (EDedicatedServerHostedGameRuntimePhase)snapshot.runtimePhase);
         DedicatedServerHostedGameRuntimeSessionSummary sessionSummary = {};
         sessionSummary.initialSaveRequested =
-            snapshot.initialSaveRequested;
+            snapshot.summary.initialSaveRequested;
         sessionSummary.initialSaveCompleted =
-            snapshot.initialSaveCompleted;
+            snapshot.summary.initialSaveCompleted;
         sessionSummary.initialSaveTimedOut =
-            snapshot.initialSaveTimedOut;
+            snapshot.summary.initialSaveTimedOut;
         sessionSummary.sessionCompleted =
-            snapshot.sessionCompleted;
+            snapshot.summary.sessionCompleted;
         sessionSummary.requestedAppShutdown =
-            snapshot.requestedAppShutdown;
+            snapshot.summary.requestedAppShutdown;
         sessionSummary.shutdownHaltedGameplay =
-            snapshot.shutdownHaltedGameplay;
+            snapshot.summary.shutdownHaltedGameplay;
         sessionSummary.gameplayLoopIterations =
             snapshot.gameplayLoopIterations;
         RecordDedicatedServerHostedGameRuntimeSessionSummary(
@@ -1892,14 +1900,18 @@ namespace ServerRuntime
                     stoppedMs - snapshot.sessionStartMs;
             }
         }
-        saveStub.initialSaveRequested = snapshot.initialSaveRequested;
-        saveStub.initialSaveCompleted = snapshot.initialSaveCompleted;
-        saveStub.initialSaveTimedOut = snapshot.initialSaveTimedOut;
-        saveStub.sessionCompleted = snapshot.sessionCompleted;
+        saveStub.initialSaveRequested =
+            snapshot.summary.initialSaveRequested;
+        saveStub.initialSaveCompleted =
+            snapshot.summary.initialSaveCompleted;
+        saveStub.initialSaveTimedOut =
+            snapshot.summary.initialSaveTimedOut;
+        saveStub.sessionCompleted =
+            snapshot.summary.sessionCompleted;
         saveStub.requestedAppShutdown =
-            snapshot.requestedAppShutdown;
+            snapshot.summary.requestedAppShutdown;
         saveStub.shutdownHaltedGameplay =
-            snapshot.shutdownHaltedGameplay;
+            snapshot.summary.shutdownHaltedGameplay;
         saveStub.gameplayLoopIterations =
             snapshot.gameplayLoopIterations;
         saveStub.savedAtFileTime = savedAtFileTime;

@@ -56,6 +56,16 @@ namespace ServerRuntime
         std::uint64_t threadDurationMs = 0;
     };
 
+    struct NativeDedicatedServerHostedGameSessionSummarySnapshot
+    {
+        bool initialSaveRequested = false;
+        bool initialSaveCompleted = false;
+        bool initialSaveTimedOut = false;
+        bool sessionCompleted = false;
+        bool requestedAppShutdown = false;
+        bool shutdownHaltedGameplay = false;
+    };
+
     struct NativeDedicatedServerHostedGameSessionSnapshot
     {
         bool startAttempted = false;
@@ -114,6 +124,9 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGamePreviousStartupSnapshot
             previousStartup = {};
         NativeDedicatedServerHostedGameStartupSnapshot startup = {};
+        NativeDedicatedServerHostedGameSessionSummarySnapshot
+            previousSummary = {};
+        NativeDedicatedServerHostedGameSessionSummarySnapshot summary = {};
         std::uint64_t previousHostedThreadTicks = 0;
         std::uint64_t hostedThreadTicks = 0;
         std::uint64_t stoppedMs = 0;
@@ -132,15 +145,6 @@ namespace ServerRuntime
         bool previousFakeLocalPlayerJoined = false;
         bool previousDedicatedNoLocalHostPlayer = true;
         bool previousHostedThreadActive = false;
-        bool initialSaveRequested = false;
-        bool initialSaveCompleted = false;
-        bool initialSaveTimedOut = false;
-        bool sessionCompleted = false;
-        bool requestedAppShutdown = false;
-        bool shutdownHaltedGameplay = false;
-        bool previousSessionCompleted = false;
-        bool previousRequestedAppShutdown = false;
-        bool previousShutdownHaltedGameplay = false;
     };
 
 }

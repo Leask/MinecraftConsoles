@@ -300,12 +300,22 @@ namespace
                 sizeof(buffer),
                 "status run initial-save=%s/%s/%s session-completed=%s "
                 "app-shutdown=%s shutdown-halted=%s gameplay-iterations=%llu",
-                sessionSnapshot.initialSaveRequested ? "requested" : "skipped",
-                sessionSnapshot.initialSaveCompleted ? "completed" : "pending",
-                sessionSnapshot.initialSaveTimedOut ? "timed-out" : "ok",
-                sessionSnapshot.sessionCompleted ? "true" : "false",
-                sessionSnapshot.requestedAppShutdown ? "true" : "false",
-                sessionSnapshot.shutdownHaltedGameplay ? "true" : "false",
+                sessionSnapshot.summary.initialSaveRequested
+                    ? "requested"
+                    : "skipped",
+                sessionSnapshot.summary.initialSaveCompleted
+                    ? "completed"
+                    : "pending",
+                sessionSnapshot.summary.initialSaveTimedOut
+                    ? "timed-out"
+                    : "ok",
+                sessionSnapshot.summary.sessionCompleted ? "true" : "false",
+                sessionSnapshot.summary.requestedAppShutdown
+                    ? "true"
+                    : "false",
+                sessionSnapshot.summary.shutdownHaltedGameplay
+                    ? "true"
+                    : "false",
                 (unsigned long long)sessionSnapshot.gameplayLoopIterations);
             AppendResponseLine(response, buffer);
 

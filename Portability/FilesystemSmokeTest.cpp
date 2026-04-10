@@ -2136,8 +2136,8 @@ int main(int argc, char* argv[])
         !nativeHostedSessionObservedSnapshot.worldActionIdle &&
         nativeHostedSessionObservedSnapshot.appShutdownRequested &&
         nativeHostedSessionObservedSnapshot.stopSignalValid &&
-        nativeHostedSessionObservedSnapshot.sessionCompleted &&
-        nativeHostedSessionObservedSnapshot.requestedAppShutdown &&
+        nativeHostedSessionObservedSnapshot.summary.sessionCompleted &&
+        nativeHostedSessionObservedSnapshot.summary.requestedAppShutdown &&
         nativeHostedSessionObservedSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_ShutdownRequested &&
         nativeHostedSessionObservedSnapshot.stoppedMs == 0 &&
@@ -3615,12 +3615,12 @@ int main(int argc, char* argv[])
         "checksum=0x%016llx\n",
         nativeHostedSessionObservedSnapshot.appShutdownRequested,
         nativeHostedSessionObservedSnapshot.stopSignalValid,
-        nativeHostedSessionObservedSnapshot.initialSaveRequested,
-        nativeHostedSessionObservedSnapshot.initialSaveCompleted,
-        nativeHostedSessionObservedSnapshot.initialSaveTimedOut,
-        nativeHostedSessionObservedSnapshot.sessionCompleted,
-        nativeHostedSessionObservedSnapshot.requestedAppShutdown,
-        nativeHostedSessionObservedSnapshot.shutdownHaltedGameplay,
+        nativeHostedSessionObservedSnapshot.summary.initialSaveRequested,
+        nativeHostedSessionObservedSnapshot.summary.initialSaveCompleted,
+        nativeHostedSessionObservedSnapshot.summary.initialSaveTimedOut,
+        nativeHostedSessionObservedSnapshot.summary.sessionCompleted,
+        nativeHostedSessionObservedSnapshot.summary.requestedAppShutdown,
+        nativeHostedSessionObservedSnapshot.summary.shutdownHaltedGameplay,
         ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
             (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
                 nativeHostedSessionObservedSnapshot.runtimePhase),
