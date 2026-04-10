@@ -7,7 +7,6 @@
 
 #include "DedicatedServerHostedGameRuntimeState.h"
 #include "Portability/NativeDedicatedServerHostedGameSession.h"
-#include "Portability/NativeDedicatedServerHostedGameWorker.h"
 #include "DedicatedServerPlatformRuntime.h"
 #include "../ServerLogger.h"
 #include "DedicatedServerSignalState.h"

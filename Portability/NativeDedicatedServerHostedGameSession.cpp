@@ -9,7 +9,6 @@
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
 #include "Minecraft.Server/Common/StringUtils.h"
 #include "NativeDedicatedServerHostedGameHost.h"
-#include "NativeDedicatedServerHostedGameWorker.h"
 #include "lce_time/lce_time.h"
 
 namespace ServerRuntime

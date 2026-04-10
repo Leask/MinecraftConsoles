@@ -1,7 +1,6 @@
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerAutosaveTracker.h"
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
-#include "NativeDedicatedServerHostedGameWorker.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 #include "lce_time/lce_time.h"
 

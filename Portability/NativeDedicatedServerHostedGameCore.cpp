@@ -1,7 +1,6 @@
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "NativeDedicatedServerHostedGameSession.h"
-#include "NativeDedicatedServerHostedGameWorker.h"
 
 #include "lce_time/lce_time.h"
 

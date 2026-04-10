@@ -1,4 +1,4 @@
-#include "NativeDedicatedServerHostedGameWorker.h"
+#include "NativeDedicatedServerHostedGameSession.h"
 
 #include <algorithm>
 #include <atomic>
