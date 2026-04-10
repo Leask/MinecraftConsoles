@@ -39,12 +39,28 @@ namespace ServerRuntime
                 eNativeDedicatedServerHostedGameWorkerCommand_None;
     };
 
+    struct NativeDedicatedServerHostedGameStartupSnapshot
+    {
+        int result = 0;
+        bool payloadValidated = false;
+        std::uint64_t threadIterations = 0;
+        std::uint64_t threadDurationMs = 0;
+    };
+
+    struct NativeDedicatedServerHostedGamePreviousStartupSnapshot
+    {
+        std::string mode;
+        bool payloadPresent = false;
+        bool payloadValidated = false;
+        std::uint64_t threadIterations = 0;
+        std::uint64_t threadDurationMs = 0;
+    };
+
     struct NativeDedicatedServerHostedGameSessionSnapshot
     {
         bool startAttempted = false;
         bool active = false;
         bool loadedFromSave = false;
-        bool payloadValidated = false;
         bool threadInvoked = false;
         bool onlineGame = false;
         bool privateGame = false;
@@ -59,9 +75,7 @@ namespace ServerRuntime
         std::string bindIp;
         std::string savePayloadName;
         std::string loadedSavePath;
-        std::string previousStartupMode;
         std::string previousSessionPhase;
-        int startupResult = 0;
         int runtimePhase = 0;
         int localUsersMask = 0;
         int configuredPort = 0;
@@ -97,10 +111,9 @@ namespace ServerRuntime
         std::uint64_t lastPersistedFileTime = 0;
         std::uint64_t lastPersistedAutosaveCompletions = 0;
         std::string lastPersistedSavePath;
-        std::uint64_t previousStartupThreadIterations = 0;
-        std::uint64_t previousStartupThreadDurationMs = 0;
-        std::uint64_t startupThreadIterations = 0;
-        std::uint64_t startupThreadDurationMs = 0;
+        NativeDedicatedServerHostedGamePreviousStartupSnapshot
+            previousStartup = {};
+        NativeDedicatedServerHostedGameStartupSnapshot startup = {};
         std::uint64_t previousHostedThreadTicks = 0;
         std::uint64_t hostedThreadTicks = 0;
         std::uint64_t stoppedMs = 0;
@@ -118,8 +131,6 @@ namespace ServerRuntime
         bool previousPrivateGame = false;
         bool previousFakeLocalPlayerJoined = false;
         bool previousDedicatedNoLocalHostPlayer = true;
-        bool previousStartupPayloadPresent = false;
-        bool previousStartupPayloadValidated = false;
         bool previousHostedThreadActive = false;
         bool initialSaveRequested = false;
         bool initialSaveCompleted = false;

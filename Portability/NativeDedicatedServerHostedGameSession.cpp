@@ -219,7 +219,7 @@ namespace ServerRuntime
                 state->snapshot.bindIp);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                static_cast<std::uint64_t>(state->snapshot.startupResult));
+                static_cast<std::uint64_t>(state->snapshot.startup.result));
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 static_cast<std::uint64_t>(state->snapshot.runtimePhase));
@@ -332,10 +332,10 @@ namespace ServerRuntime
                 state->snapshot.lastPersistedSavePath);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.startupThreadIterations);
+                state->snapshot.startup.threadIterations);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.startupThreadDurationMs);
+                state->snapshot.startup.threadDurationMs);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.hostedThreadTicks);
@@ -347,7 +347,7 @@ namespace ServerRuntime
                 state->snapshot.loadedFromSave ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.payloadValidated ? 1U : 0U);
+                state->snapshot.startup.payloadValidated ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.threadInvoked ? 1U : 0U);
@@ -468,7 +468,8 @@ namespace ServerRuntime
             }
 
             state->snapshot.active = startupPayloadValidated;
-            state->snapshot.payloadValidated = startupPayloadValidated;
+            state->snapshot.startup.payloadValidated =
+                startupPayloadValidated;
             state->snapshot.runtimePhase =
                 startupPayloadValidated
                     ? eDedicatedServerHostedGameRuntimePhase_Startup
@@ -490,7 +491,7 @@ namespace ServerRuntime
                 return;
             }
 
-            if (state->snapshot.startupResult != 0)
+            if (state->snapshot.startup.result != 0)
             {
                 state->snapshot.runtimePhase =
                     eDedicatedServerHostedGameRuntimePhase_Failed;
@@ -514,8 +515,8 @@ namespace ServerRuntime
             }
 
             if (state->snapshot.active ||
-                state->snapshot.payloadValidated ||
-                state->snapshot.startupResult == 0)
+                state->snapshot.startup.payloadValidated ||
+                state->snapshot.startup.result == 0)
             {
                 state->snapshot.runtimePhase =
                     eDedicatedServerHostedGameRuntimePhase_Startup;
@@ -537,7 +538,7 @@ namespace ServerRuntime
                 return;
             }
 
-            if (state->snapshot.startupResult != 0)
+            if (state->snapshot.startup.result != 0)
             {
                 state->snapshot.active = false;
                 return;
@@ -545,8 +546,8 @@ namespace ServerRuntime
 
             if (state->snapshot.hostedThreadActive ||
                 state->snapshot.threadInvoked ||
-                state->snapshot.payloadValidated ||
-                state->snapshot.startupResult == 0)
+                state->snapshot.startup.payloadValidated ||
+                state->snapshot.startup.result == 0)
             {
                 state->snapshot.active = true;
             }
@@ -745,7 +746,7 @@ namespace ServerRuntime
         {
             g_nativeHostedSessionState.snapshot
                 .loadedSaveMetadataAvailable = true;
-            g_nativeHostedSessionState.snapshot.previousStartupMode =
+            g_nativeHostedSessionState.snapshot.previousStartup.mode =
                 loadedSaveMetadata.saveStub.startupMode;
             g_nativeHostedSessionState.snapshot.previousSessionPhase =
                 loadedSaveMetadata.saveStub.sessionPhase;
@@ -853,19 +854,19 @@ namespace ServerRuntime
                 .previousSessionStateChecksum =
                     loadedSaveMetadata.saveStub.stateChecksum;
             g_nativeHostedSessionState.snapshot
-                .previousStartupPayloadPresent =
+                .previousStartup.payloadPresent =
                     loadedSaveMetadata.saveStub
                         .startupPayloadPresent;
             g_nativeHostedSessionState.snapshot
-                .previousStartupPayloadValidated =
+                .previousStartup.payloadValidated =
                     loadedSaveMetadata.saveStub
                         .startupPayloadValidated;
             g_nativeHostedSessionState.snapshot
-                .previousStartupThreadIterations =
+                .previousStartup.threadIterations =
                     loadedSaveMetadata.saveStub
                         .startupThreadIterations;
             g_nativeHostedSessionState.snapshot
-                .previousStartupThreadDurationMs =
+                .previousStartup.threadDurationMs =
                     loadedSaveMetadata.saveStub
                         .startupThreadDurationMs;
             g_nativeHostedSessionState.snapshot
@@ -935,7 +936,7 @@ namespace ServerRuntime
         bool threadInvoked)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        g_nativeHostedSessionState.snapshot.startupResult = startupResult;
+        g_nativeHostedSessionState.snapshot.startup.result = startupResult;
         g_nativeHostedSessionState.snapshot.threadInvoked = threadInvoked;
         RefreshNativeHostedSessionActive(&g_nativeHostedSessionState);
         RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
@@ -1409,9 +1410,9 @@ namespace ServerRuntime
         std::uint64_t startupThreadDurationMs)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        g_nativeHostedSessionState.snapshot.startupThreadIterations =
+        g_nativeHostedSessionState.snapshot.startup.threadIterations =
             startupThreadIterations;
-        g_nativeHostedSessionState.snapshot.startupThreadDurationMs =
+        g_nativeHostedSessionState.snapshot.startup.threadDurationMs =
             startupThreadDurationMs;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
@@ -1511,7 +1512,7 @@ namespace ServerRuntime
         planMetadata.loadedSaveMetadataAvailable =
             snapshot.loadedSaveMetadataAvailable;
         planMetadata.loadedSavePath = snapshot.loadedSavePath;
-        planMetadata.previousStartupMode = snapshot.previousStartupMode;
+        planMetadata.previousStartupMode = snapshot.previousStartup.mode;
         planMetadata.previousSessionPhase = snapshot.previousSessionPhase;
         planMetadata.previousRemoteCommands =
             snapshot.previousRemoteCommands;
@@ -1578,13 +1579,13 @@ namespace ServerRuntime
         planMetadata.previousSessionStateChecksum =
             snapshot.previousSessionStateChecksum;
         planMetadata.previousStartupPayloadPresent =
-            snapshot.previousStartupPayloadPresent;
+            snapshot.previousStartup.payloadPresent;
         planMetadata.previousStartupPayloadValidated =
-            snapshot.previousStartupPayloadValidated;
+            snapshot.previousStartup.payloadValidated;
         planMetadata.previousStartupThreadIterations =
-            snapshot.previousStartupThreadIterations;
+            snapshot.previousStartup.threadIterations;
         planMetadata.previousStartupThreadDurationMs =
-            snapshot.previousStartupThreadDurationMs;
+            snapshot.previousStartup.threadDurationMs;
         planMetadata.previousHostedThreadActive =
             snapshot.previousHostedThreadActive;
         planMetadata.previousHostedThreadTicks =
@@ -1668,13 +1669,13 @@ namespace ServerRuntime
         RecordDedicatedServerHostedGameRuntimeGameplayLoopIteration(
             snapshot.gameplayLoopIterations);
         RecordDedicatedServerHostedGameRuntimeStartupResult(
-            snapshot.startupResult,
+            snapshot.startup.result,
             snapshot.threadInvoked);
         RecordDedicatedServerHostedGameRuntimeStartupTelemetry(
             snapshot.loadedFromSave,
-            snapshot.payloadValidated,
-            snapshot.startupThreadIterations,
-            snapshot.startupThreadDurationMs);
+            snapshot.startup.payloadValidated,
+            snapshot.startup.threadIterations,
+            snapshot.startup.threadDurationMs);
         RecordDedicatedServerHostedGameRuntimeCoreState(
             snapshot.saveGeneration,
             snapshot.stateChecksum);
@@ -1924,11 +1925,11 @@ namespace ServerRuntime
             saveStub.startupPayloadPresent =
                 snapshot.savePayloadBytes > 0;
             saveStub.startupPayloadValidated =
-                snapshot.payloadValidated;
+                snapshot.startup.payloadValidated;
             saveStub.startupThreadIterations =
-                snapshot.startupThreadIterations;
+                snapshot.startup.threadIterations;
             saveStub.startupThreadDurationMs =
-                snapshot.startupThreadDurationMs;
+                snapshot.startup.threadDurationMs;
             saveStub.hostedThreadActive =
                 snapshot.hostedThreadActive;
             saveStub.hostedThreadTicks =

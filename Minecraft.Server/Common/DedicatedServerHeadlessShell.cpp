@@ -184,7 +184,7 @@ namespace
                 (unsigned int)sessionSnapshot.worldHellScale,
                 (unsigned int)sessionSnapshot.publicSlots,
                 (unsigned int)sessionSnapshot.privateSlots,
-                sessionSnapshot.startupResult,
+                sessionSnapshot.startup.result,
                 sessionSnapshot.threadInvoked ? "invoked" : "skipped",
                 ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
                     (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
@@ -206,11 +206,13 @@ namespace
                 (unsigned long long)sessionSnapshot.saveGeneration,
                 (unsigned long long)sessionSnapshot.stateChecksum,
                 sessionSnapshot.savePayloadBytes > 0 ? "present" : "none",
-                sessionSnapshot.payloadValidated ? "true" : "false",
+                sessionSnapshot.startup.payloadValidated
+                    ? "true"
+                    : "false",
                 (unsigned long long)
-                    sessionSnapshot.startupThreadIterations,
+                    sessionSnapshot.startup.threadIterations,
                 (unsigned long long)
-                    sessionSnapshot.startupThreadDurationMs);
+                    sessionSnapshot.startup.threadDurationMs);
             AppendResponseLine(response, buffer);
 
             std::snprintf(

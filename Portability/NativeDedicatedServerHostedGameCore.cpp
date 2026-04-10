@@ -115,7 +115,7 @@ namespace ServerRuntime
     {
         const NativeDedicatedServerHostedGameSessionSnapshot startupSnapshot =
             StartNativeDedicatedServerHostedGameCore(initData);
-        if (startupSnapshot.startupResult != 0)
+        if (startupSnapshot.startup.result != 0)
         {
             const NativeDedicatedServerHostedGameSessionSnapshot finalState =
                 CaptureNativeDedicatedServerHostedGameSessionState();

@@ -1834,7 +1834,7 @@ int main(int argc, char* argv[])
                 0,
                 LceGetMonotonicMilliseconds());
     const bool nativeHostedCoreFrameStarted =
-        nativeHostedCoreFrameStartupSnapshot.payloadValidated;
+        nativeHostedCoreFrameStartupSnapshot.startup.payloadValidated;
     ServerRuntime::RequestNativeDedicatedServerHostedGameSessionAutosave(
         2,
         LceGetMonotonicMilliseconds());
@@ -2088,7 +2088,7 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.hostName == "SmokeHost" &&
         nativeHostedSessionObservedSnapshot.bindIp == "127.0.0.1" &&
         nativeHostedSessionObservedSnapshot.threadInvoked &&
-        nativeHostedSessionObservedSnapshot.startupResult == 0 &&
+        nativeHostedSessionObservedSnapshot.startup.result == 0 &&
         nativeHostedSessionObservedSnapshot.localUsersMask == 0 &&
         nativeHostedSessionObservedSnapshot.onlineGame &&
         !nativeHostedSessionObservedSnapshot.privateGame &&
@@ -3108,25 +3108,25 @@ int main(int argc, char* argv[])
         gameplayLoopRunResult.requestedAppShutdown);
     printf("hosted_game_core_startup=%d exit=%d present=%d validated=%d "
         "startup=%llu/%llu phase=%s active=%d\n",
-        nativeHostedCoreStartupResult.startupResult == 0 &&
+        nativeHostedCoreStartupResult.startup.result == 0 &&
             !nativeHostedCoreStartupResult.loadedFromSave &&
-            nativeHostedCoreStartupResult.payloadValidated &&
+            nativeHostedCoreStartupResult.startup.payloadValidated &&
             nativeHostedCoreStartupResult
-                    .startupThreadIterations == 2U &&
+                    .startup.threadIterations == 2U &&
             nativeHostedCoreStartupResult
-                    .startupThreadDurationMs > 0U &&
+                    .startup.threadDurationMs > 0U &&
             nativeHostedCoreStartupResult.active &&
             nativeHostedCoreStartupResult.hostedThreadActive ==
                 false &&
             nativeHostedCoreStartupResult.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Startup,
-        nativeHostedCoreStartupResult.startupResult,
+        nativeHostedCoreStartupResult.startup.result,
         nativeHostedCoreStartupResult.loadedFromSave,
-        nativeHostedCoreStartupResult.payloadValidated,
+        nativeHostedCoreStartupResult.startup.payloadValidated,
         (unsigned long long)nativeHostedCoreStartupResult
-            .startupThreadIterations,
+            .startup.threadIterations,
         (unsigned long long)nativeHostedCoreStartupResult
-            .startupThreadDurationMs,
+            .startup.threadDurationMs,
         ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
             (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
                 nativeHostedCoreStartupResult.runtimePhase),
@@ -3175,12 +3175,12 @@ int main(int argc, char* argv[])
         !nativeHostedCoreFrameStoppedSnapshot.active);
     printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
         "loops=%llu autosaves=%llu worker_idle=%d hooks=%d/%d phase=%s\n",
-        nativeHostedCoreRunResult.startupResult == 0 &&
-            nativeHostedCoreRunResult.payloadValidated &&
+        nativeHostedCoreRunResult.startup.result == 0 &&
+            nativeHostedCoreRunResult.startup.payloadValidated &&
             nativeHostedCoreRunResult
-                    .startupThreadIterations == 2U &&
+                    .startup.threadIterations == 2U &&
             nativeHostedCoreRunResult
-                    .startupThreadDurationMs > 0U &&
+                    .startup.threadDurationMs > 0U &&
             nativeHostedCoreRunResult.gameplayLoopIterations ==
                 1U &&
             nativeHostedCoreRunResult
@@ -3203,12 +3203,12 @@ int main(int argc, char* argv[])
             !nativeHostedCoreSnapshot.active &&
             nativeHostedCoreSnapshot.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped,
-        nativeHostedCoreRunResult.startupResult,
-        nativeHostedCoreRunResult.payloadValidated,
+        nativeHostedCoreRunResult.startup.result,
+        nativeHostedCoreRunResult.startup.payloadValidated,
         (unsigned long long)nativeHostedCoreRunResult
-            .startupThreadIterations,
+            .startup.threadIterations,
         (unsigned long long)nativeHostedCoreRunResult
-            .startupThreadDurationMs,
+            .startup.threadDurationMs,
         (unsigned long long)nativeHostedCoreRunResult
             .gameplayLoopIterations,
         (unsigned long long)nativeHostedCoreRunResult
@@ -3223,12 +3223,12 @@ int main(int argc, char* argv[])
                 nativeHostedCoreSnapshot.runtimePhase));
     printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
         restartedHostedRuntimeResult.ok &&
-            nativeHostedCoreRunResult.startupResult == 0 &&
-            nativeHostedCoreRunResult.payloadValidated &&
+            nativeHostedCoreRunResult.startup.result == 0 &&
+            nativeHostedCoreRunResult.startup.payloadValidated &&
             nativeHostedCoreRunResult
-                    .startupThreadIterations == 2U &&
+                    .startup.threadIterations == 2U &&
             nativeHostedCoreRunResult
-                    .startupThreadDurationMs > 0U &&
+                    .startup.threadDurationMs > 0U &&
             nativeHostedCoreRunResult.gameplayLoopIterations ==
                 1U &&
             nativeHostedCoreRunResult
@@ -3281,7 +3281,7 @@ int main(int argc, char* argv[])
         nativeHostedSessionCoreSnapshot.loadedSaveMetadataAvailable &&
         nativeHostedSessionCoreSnapshot.loadedSavePath ==
             "NativeDesktop/GameHDD/SmokeSession.save" &&
-        nativeHostedSessionCoreSnapshot.previousStartupMode == "loaded";
+        nativeHostedSessionCoreSnapshot.previousStartup.mode == "loaded";
     const bool nativeHostedStubCoreFinalizationOk =
         nativeHostedSessionCoreStoppedSnapshot.saveGeneration >=
             nativeHostedSessionCoreSnapshot.saveGeneration &&
@@ -3389,7 +3389,7 @@ int main(int argc, char* argv[])
         (long long)nativeHostedSessionCoreSnapshot.savePayloadBytes,
         nativeHostedSessionCoreSnapshot.loadedSaveMetadataAvailable,
         nativeHostedSessionCoreSnapshot.loadedSavePath.c_str(),
-        nativeHostedSessionCoreSnapshot.previousStartupMode.c_str());
+        nativeHostedSessionCoreSnapshot.previousStartup.mode.c_str());
     printf("hosted_game_startup=%d result=%d abort=%d code=%d\n",
         hostedGameStartupExecution.startupResult == 0 &&
             !hostedGameStartupExecution.startupPlan.shouldAbortStartup &&
@@ -4166,13 +4166,13 @@ int main(int argc, char* argv[])
         gameplayLoopRunPollContext.pollCount == 3 &&
         gameplayLoopRunResult.requestedAppShutdown &&
         gameplayLoopRunResult.lastIteration.shouldExit &&
-        nativeHostedCoreStartupResult.startupResult == 0 &&
+        nativeHostedCoreStartupResult.startup.result == 0 &&
         !nativeHostedCoreStartupResult.loadedFromSave &&
-        nativeHostedCoreStartupResult.payloadValidated &&
+        nativeHostedCoreStartupResult.startup.payloadValidated &&
         nativeHostedCoreStartupResult
-                .startupThreadIterations == 2U &&
+                .startup.threadIterations == 2U &&
         nativeHostedCoreStartupResult
-                .startupThreadDurationMs > 0U &&
+                .startup.threadDurationMs > 0U &&
         nativeHostedCoreStartupResult.active &&
         !nativeHostedCoreStartupResult.hostedThreadActive &&
         nativeHostedCoreStartupResult.runtimePhase ==
@@ -4207,10 +4207,10 @@ int main(int argc, char* argv[])
         !nativeHostedCoreFrameStoppedSnapshot.active &&
         nativeHostedCoreFrameStoppedSnapshot.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
-        nativeHostedCoreRunResult.startupResult == 0 &&
-        nativeHostedCoreRunResult.payloadValidated &&
-        nativeHostedCoreRunResult.startupThreadIterations == 2U &&
-        nativeHostedCoreRunResult.startupThreadDurationMs > 0U &&
+        nativeHostedCoreRunResult.startup.result == 0 &&
+        nativeHostedCoreRunResult.startup.payloadValidated &&
+        nativeHostedCoreRunResult.startup.threadIterations == 2U &&
+        nativeHostedCoreRunResult.startup.threadDurationMs > 0U &&
         nativeHostedCoreRunResult.gameplayLoopIterations ==
             1U &&
         nativeHostedCoreRunResult

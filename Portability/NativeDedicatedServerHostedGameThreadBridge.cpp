@@ -50,9 +50,9 @@ namespace ServerRuntime
                             threadParam),
                     &SignalNativeDedicatedServerHostedGameThreadReady,
                     &SignalNativeDedicatedServerHostedGameThreadStopped);
-            if (finalState.startupResult != 0)
+            if (finalState.startup.result != 0)
             {
-                return finalState.startupResult;
+                return finalState.startup.result;
             }
 
             return 0;
