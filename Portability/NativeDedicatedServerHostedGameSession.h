@@ -75,13 +75,20 @@ namespace ServerRuntime
         unsigned int privateSlots = 0;
     };
 
+    struct NativeDedicatedServerHostedGameWorldConfigSnapshot
+    {
+        std::uint32_t hostSettings = 0;
+        bool dedicatedNoLocalHostPlayer = true;
+        unsigned int worldSizeChunks = 0;
+        unsigned char worldHellScale = 0;
+    };
+
     struct NativeDedicatedServerHostedGameSessionSnapshot
     {
         bool startAttempted = false;
         bool active = false;
         bool loadedFromSave = false;
         bool threadInvoked = false;
-        bool dedicatedNoLocalHostPlayer = true;
         bool loadedSaveMetadataAvailable = false;
         std::string worldName;
         std::string worldSaveId;
@@ -98,9 +105,6 @@ namespace ServerRuntime
         int listenerPort = 0;
         std::int64_t resolvedSeed = 0;
         std::int64_t savePayloadBytes = 0;
-        std::uint32_t hostSettings = 0;
-        unsigned int worldSizeChunks = 0;
-        unsigned char worldHellScale = 0;
         std::uint64_t payloadChecksum = 0;
         std::uint64_t sessionTicks = 0;
         std::uint64_t acceptedConnections = 0;
@@ -134,18 +138,17 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameActivationSnapshot
             previousActivation = {};
         NativeDedicatedServerHostedGameActivationSnapshot activation = {};
+        NativeDedicatedServerHostedGameWorldConfigSnapshot
+            previousWorldConfig = {};
+        NativeDedicatedServerHostedGameWorldConfigSnapshot worldConfig = {};
         std::uint64_t previousHostedThreadTicks = 0;
         std::uint64_t hostedThreadTicks = 0;
         std::uint64_t stoppedMs = 0;
-        std::uint32_t previousHostSettings = 0;
-        unsigned int previousWorldSizeChunks = 0;
-        unsigned char previousWorldHellScale = 0;
         bool worldActionIdle = true;
         bool appShutdownRequested = false;
         bool gameplayHalted = false;
         bool stopSignalValid = false;
         bool hostedThreadActive = false;
-        bool previousDedicatedNoLocalHostPlayer = true;
         bool previousHostedThreadActive = false;
     };
 

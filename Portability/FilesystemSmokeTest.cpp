@@ -3269,12 +3269,13 @@ int main(int argc, char* argv[])
         nativeHostedSessionCoreSnapshot.loadedFromSave &&
         nativeHostedSessionCoreSnapshot.resolvedSeed ==
             hostedGamePlan.resolvedSeed &&
-        nativeHostedSessionCoreSnapshot.hostSettings ==
+        nativeHostedSessionCoreSnapshot.worldConfig.hostSettings ==
             sessionConfig.hostSettings &&
-        nativeHostedSessionCoreSnapshot.dedicatedNoLocalHostPlayer &&
-        nativeHostedSessionCoreSnapshot.worldSizeChunks ==
+        nativeHostedSessionCoreSnapshot
+            .worldConfig.dedicatedNoLocalHostPlayer &&
+        nativeHostedSessionCoreSnapshot.worldConfig.worldSizeChunks ==
             sessionConfig.worldSizeChunks &&
-        nativeHostedSessionCoreSnapshot.worldHellScale ==
+        nativeHostedSessionCoreSnapshot.worldConfig.worldHellScale ==
             sessionConfig.worldHellScale &&
         nativeHostedSessionCoreSnapshot.savePayloadBytes ==
             nativeHostedSaveBytes.size() &&
@@ -3382,10 +3383,10 @@ int main(int argc, char* argv[])
         nativeHostedSessionCoreSnapshot.loadedFromSave,
         nativeHostedSessionCoreSnapshot.startAttempted,
         (long long)nativeHostedSessionCoreSnapshot.resolvedSeed,
-        nativeHostedSessionCoreSnapshot.hostSettings,
-        nativeHostedSessionCoreSnapshot.dedicatedNoLocalHostPlayer,
-        nativeHostedSessionCoreSnapshot.worldSizeChunks,
-        nativeHostedSessionCoreSnapshot.worldHellScale,
+        nativeHostedSessionCoreSnapshot.worldConfig.hostSettings,
+        nativeHostedSessionCoreSnapshot.worldConfig.dedicatedNoLocalHostPlayer,
+        nativeHostedSessionCoreSnapshot.worldConfig.worldSizeChunks,
+        nativeHostedSessionCoreSnapshot.worldConfig.worldHellScale,
         nativeHostedSessionCoreSnapshot.savePayloadName.c_str(),
         (long long)nativeHostedSessionCoreSnapshot.savePayloadBytes,
         nativeHostedSessionCoreSnapshot.loadedSaveMetadataAvailable,

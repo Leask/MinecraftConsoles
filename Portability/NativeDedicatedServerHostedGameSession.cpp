@@ -624,7 +624,7 @@ namespace ServerRuntime
         g_nativeHostedSessionState.snapshot.loadedFromSave =
             initData.saveData != nullptr;
         g_nativeHostedSessionState.snapshot.resolvedSeed = initData.seed;
-        g_nativeHostedSessionState.snapshot.hostSettings =
+        g_nativeHostedSessionState.snapshot.worldConfig.hostSettings =
             initData.settings;
         g_nativeHostedSessionState.snapshot.localUsersMask =
             initData.localUsersMask;
@@ -638,11 +638,12 @@ namespace ServerRuntime
             initData.privateSlots;
         g_nativeHostedSessionState.snapshot.activation.fakeLocalPlayerJoined =
             initData.fakeLocalPlayerJoined;
-        g_nativeHostedSessionState.snapshot.dedicatedNoLocalHostPlayer =
+        g_nativeHostedSessionState.snapshot
+            .worldConfig.dedicatedNoLocalHostPlayer =
             initData.dedicatedNoLocalHostPlayer;
-        g_nativeHostedSessionState.snapshot.worldSizeChunks =
+        g_nativeHostedSessionState.snapshot.worldConfig.worldSizeChunks =
             initData.xzSize;
-        g_nativeHostedSessionState.snapshot.worldHellScale =
+        g_nativeHostedSessionState.snapshot.worldConfig.worldHellScale =
             initData.hellScale;
         SetNativeHostedSessionStartupValidationState(
             &g_nativeHostedSessionState,
@@ -822,16 +823,17 @@ namespace ServerRuntime
                 .previousGameplayLoopIterations =
                     loadedSaveMetadata.saveStub
                         .gameplayLoopIterations;
-            g_nativeHostedSessionState.snapshot.previousHostSettings =
+            g_nativeHostedSessionState.snapshot.previousWorldConfig.hostSettings =
                 loadedSaveMetadata.saveStub.hostSettings;
             g_nativeHostedSessionState.snapshot
-                .previousDedicatedNoLocalHostPlayer =
+                .previousWorldConfig.dedicatedNoLocalHostPlayer =
                     loadedSaveMetadata.saveStub
                         .dedicatedNoLocalHostPlayer;
             g_nativeHostedSessionState.snapshot
-                .previousWorldSizeChunks =
+                .previousWorldConfig.worldSizeChunks =
                     loadedSaveMetadata.saveStub.worldSizeChunks;
-            g_nativeHostedSessionState.snapshot.previousWorldHellScale =
+            g_nativeHostedSessionState.snapshot
+                .previousWorldConfig.worldHellScale =
                 (unsigned char)
                     loadedSaveMetadata.saveStub.worldHellScale;
             g_nativeHostedSessionState.snapshot.previousActivation.onlineGame =
@@ -1513,11 +1515,13 @@ namespace ServerRuntime
         planMetadata.resolvedSeed = snapshot.resolvedSeed;
         planMetadata.savePayloadBytes = snapshot.savePayloadBytes;
         planMetadata.savePayloadChecksum = snapshot.payloadChecksum;
-        planMetadata.hostSettings = snapshot.hostSettings;
+        planMetadata.hostSettings = snapshot.worldConfig.hostSettings;
         planMetadata.dedicatedNoLocalHostPlayer =
-            snapshot.dedicatedNoLocalHostPlayer;
-        planMetadata.worldSizeChunks = snapshot.worldSizeChunks;
-        planMetadata.worldHellScale = snapshot.worldHellScale;
+            snapshot.worldConfig.dedicatedNoLocalHostPlayer;
+        planMetadata.worldSizeChunks =
+            snapshot.worldConfig.worldSizeChunks;
+        planMetadata.worldHellScale =
+            snapshot.worldConfig.worldHellScale;
         planMetadata.publicSlots =
             (unsigned char)snapshot.activation.publicSlots;
         planMetadata.privateSlots =
@@ -1571,13 +1575,14 @@ namespace ServerRuntime
         planMetadata.previousUptimeMs = snapshot.previousUptimeMs;
         planMetadata.previousGameplayLoopIterations =
             snapshot.previousGameplayLoopIterations;
-        planMetadata.previousHostSettings = snapshot.previousHostSettings;
+        planMetadata.previousHostSettings =
+            snapshot.previousWorldConfig.hostSettings;
         planMetadata.previousDedicatedNoLocalHostPlayer =
-            snapshot.previousDedicatedNoLocalHostPlayer;
+            snapshot.previousWorldConfig.dedicatedNoLocalHostPlayer;
         planMetadata.previousWorldSizeChunks =
-            snapshot.previousWorldSizeChunks;
+            snapshot.previousWorldConfig.worldSizeChunks;
         planMetadata.previousWorldHellScale =
-            snapshot.previousWorldHellScale;
+            snapshot.previousWorldConfig.worldHellScale;
         planMetadata.previousOnlineGame =
             snapshot.previousActivation.onlineGame;
         planMetadata.previousPrivateGame =
@@ -1615,7 +1620,7 @@ namespace ServerRuntime
         if (snapshot.startAttempted ||
             snapshot.loadedFromSave ||
             !snapshot.savePayloadName.empty() ||
-            snapshot.hostSettings != 0 ||
+            snapshot.worldConfig.hostSettings != 0 ||
             snapshot.loadedSaveMetadataAvailable ||
             !snapshot.loadedSavePath.empty())
         {
@@ -1937,11 +1942,13 @@ namespace ServerRuntime
             saveStub.saveGeneration = snapshot.saveGeneration;
             saveStub.stateChecksum = snapshot.stateChecksum;
             saveStub.payloadName = snapshot.savePayloadName;
-            saveStub.hostSettings = snapshot.hostSettings;
+            saveStub.hostSettings = snapshot.worldConfig.hostSettings;
             saveStub.dedicatedNoLocalHostPlayer =
-                snapshot.dedicatedNoLocalHostPlayer;
-            saveStub.worldSizeChunks = snapshot.worldSizeChunks;
-            saveStub.worldHellScale = snapshot.worldHellScale;
+                snapshot.worldConfig.dedicatedNoLocalHostPlayer;
+            saveStub.worldSizeChunks =
+                snapshot.worldConfig.worldSizeChunks;
+            saveStub.worldHellScale =
+                snapshot.worldConfig.worldHellScale;
             saveStub.startupPayloadPresent =
                 snapshot.savePayloadBytes > 0;
             saveStub.startupPayloadValidated =

@@ -180,8 +180,8 @@ namespace
                 "phase=%s",
                 sessionSnapshot.loadedFromSave ? "loaded" : "created-new",
                 (long long)sessionSnapshot.resolvedSeed,
-                sessionSnapshot.worldSizeChunks,
-                (unsigned int)sessionSnapshot.worldHellScale,
+                sessionSnapshot.worldConfig.worldSizeChunks,
+                (unsigned int)sessionSnapshot.worldConfig.worldHellScale,
                 (unsigned int)sessionSnapshot.activation.publicSlots,
                 (unsigned int)sessionSnapshot.activation.privateSlots,
                 sessionSnapshot.startup.result,
@@ -198,8 +198,8 @@ namespace
                 "checksum=0x%016llx save-generation=%llu "
                 "state-checksum=0x%016llx startup-payload=%s "
                 "validated=%s startup-steps=%llu startup-ms=%llu",
-                (unsigned int)sessionSnapshot.hostSettings,
-                sessionSnapshot.dedicatedNoLocalHostPlayer
+                (unsigned int)sessionSnapshot.worldConfig.hostSettings,
+                sessionSnapshot.worldConfig.dedicatedNoLocalHostPlayer
                     ? "true"
                     : "false",
                 (unsigned long long)sessionSnapshot.payloadChecksum,
