@@ -57,17 +57,17 @@
 namespace ServerRuntime
 {
     NativeDedicatedServerHostedGameSessionSnapshot
-    StartNativeDedicatedServerHostedGameCoreWithResult(
+    StartNativeDedicatedServerHostedGameCore(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData);
 
     NativeDedicatedServerHostedGameWorkerSnapshot
-    TickNativeDedicatedServerHostedGameCoreFrameWithResult(
+    TickNativeDedicatedServerHostedGameCoreFrame(
         std::uint64_t *outNextSleepDurationMs,
         bool *outShouldStopRunning,
         bool hostedThreadActive = true);
 
     NativeDedicatedServerHostedGameSessionSnapshot
-    RunNativeDedicatedServerHostedGameCoreWithResult(
+    RunNativeDedicatedServerHostedGameCore(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
         void (*onThreadReady)(std::uint64_t nowMs),
         void (*onThreadStopped)(
@@ -1828,7 +1828,7 @@ int main(int argc, char* argv[])
     nativeHostedCoreStartupInitData.saveData = nullptr;
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
         nativeHostedCoreStartupResult =
-            ServerRuntime::StartNativeDedicatedServerHostedGameCoreWithResult(
+            ServerRuntime::StartNativeDedicatedServerHostedGameCore(
                 &nativeHostedCoreStartupInitData);
     ServerRuntime::StopNativeDedicatedServerHostedGameSession();
     ServerRuntime::ResetNativeDedicatedServerHostedGameSessionState();
@@ -1860,7 +1860,7 @@ int main(int argc, char* argv[])
     bool nativeHostedCoreFrameFirstShouldStopRunning = false;
     const ServerRuntime::NativeDedicatedServerHostedGameWorkerSnapshot
         nativeHostedCoreFrameFirst =
-            ServerRuntime::TickNativeDedicatedServerHostedGameCoreFrameWithResult(
+            ServerRuntime::TickNativeDedicatedServerHostedGameCoreFrame(
                 &nativeHostedCoreFrameFirstSleepDurationMs,
                 &nativeHostedCoreFrameFirstShouldStopRunning);
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
@@ -1870,7 +1870,7 @@ int main(int argc, char* argv[])
     bool nativeHostedCoreFrameSecondShouldStopRunning = false;
     const ServerRuntime::NativeDedicatedServerHostedGameWorkerSnapshot
         nativeHostedCoreFrameSecond =
-            ServerRuntime::TickNativeDedicatedServerHostedGameCoreFrameWithResult(
+            ServerRuntime::TickNativeDedicatedServerHostedGameCoreFrame(
                 &nativeHostedCoreFrameSecondSleepDurationMs,
                 &nativeHostedCoreFrameSecondShouldStopRunning);
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
@@ -1898,7 +1898,7 @@ int main(int argc, char* argv[])
     nativeHostedCoreInitData.saveData = nullptr;
     const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
         nativeHostedCoreRunResult =
-            ServerRuntime::RunNativeDedicatedServerHostedGameCoreWithResult(
+            ServerRuntime::RunNativeDedicatedServerHostedGameCore(
                 &nativeHostedCoreInitData,
                 &NativeHostedCoreReadyHook,
                 &NativeHostedCoreStoppedHook);

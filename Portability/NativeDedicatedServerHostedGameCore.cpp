@@ -62,7 +62,7 @@ namespace ServerRuntime
     }
 
     NativeDedicatedServerHostedGameWorkerSnapshot
-    TickNativeDedicatedServerHostedGameCoreFrameWithResult(
+    TickNativeDedicatedServerHostedGameCoreFrame(
         std::uint64_t *outNextSleepDurationMs,
         bool *outShouldStopRunning,
         bool hostedThreadActive)
@@ -80,7 +80,7 @@ namespace ServerRuntime
     }
 
     NativeDedicatedServerHostedGameSessionSnapshot
-    StartNativeDedicatedServerHostedGameCoreWithResult(
+    StartNativeDedicatedServerHostedGameCore(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData)
     {
         const std::uint64_t startMs = LceGetMonotonicMilliseconds();
@@ -106,7 +106,7 @@ namespace ServerRuntime
     }
 
     NativeDedicatedServerHostedGameSessionSnapshot
-    RunNativeDedicatedServerHostedGameCoreWithResult(
+    RunNativeDedicatedServerHostedGameCore(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
         void (*onThreadReady)(std::uint64_t nowMs),
         void (*onThreadStopped)(
@@ -114,7 +114,7 @@ namespace ServerRuntime
             std::uint64_t nowMs))
     {
         const NativeDedicatedServerHostedGameSessionSnapshot startupSnapshot =
-            StartNativeDedicatedServerHostedGameCoreWithResult(initData);
+            StartNativeDedicatedServerHostedGameCore(initData);
         if (startupSnapshot.startupResult != 0)
         {
             const NativeDedicatedServerHostedGameSessionSnapshot finalState =
@@ -133,7 +133,7 @@ namespace ServerRuntime
         {
             std::uint64_t nextSleepDurationMs = 0;
             bool shouldStopRunning = false;
-            TickNativeDedicatedServerHostedGameCoreFrameWithResult(
+            TickNativeDedicatedServerHostedGameCoreFrame(
                 &nextSleepDurationMs,
                 &shouldStopRunning,
                 true);

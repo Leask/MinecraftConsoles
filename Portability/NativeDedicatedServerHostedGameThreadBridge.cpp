@@ -7,7 +7,7 @@
 namespace ServerRuntime
 {
     NativeDedicatedServerHostedGameSessionSnapshot
-    RunNativeDedicatedServerHostedGameCoreWithResult(
+    RunNativeDedicatedServerHostedGameCore(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
         void (*onThreadReady)(std::uint64_t nowMs),
         void (*onThreadStopped)(
@@ -44,7 +44,7 @@ namespace ServerRuntime
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)
         {
             const NativeDedicatedServerHostedGameSessionSnapshot finalState =
-                RunNativeDedicatedServerHostedGameCoreWithResult(
+                RunNativeDedicatedServerHostedGameCore(
                     static_cast<
                         NativeDedicatedServerHostedGameRuntimeStubInitData *>(
                             threadParam),
