@@ -234,10 +234,10 @@ namespace ServerRuntime
                 static_cast<std::uint64_t>(state->snapshot.listenerPort));
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.publicSlots);
+                state->snapshot.activation.publicSlots);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.privateSlots);
+                state->snapshot.activation.privateSlots);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.payloadChecksum);
@@ -353,13 +353,13 @@ namespace ServerRuntime
                 state->snapshot.threadInvoked ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.onlineGame ? 1U : 0U);
+                state->snapshot.activation.onlineGame ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.privateGame ? 1U : 0U);
+                state->snapshot.activation.privateGame ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.fakeLocalPlayerJoined ? 1U : 0U);
+                state->snapshot.activation.fakeLocalPlayerJoined ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.active ? 1U : 0U);
@@ -628,15 +628,15 @@ namespace ServerRuntime
             initData.settings;
         g_nativeHostedSessionState.snapshot.localUsersMask =
             initData.localUsersMask;
-        g_nativeHostedSessionState.snapshot.onlineGame =
+        g_nativeHostedSessionState.snapshot.activation.onlineGame =
             initData.onlineGame;
-        g_nativeHostedSessionState.snapshot.privateGame =
+        g_nativeHostedSessionState.snapshot.activation.privateGame =
             initData.privateGame;
-        g_nativeHostedSessionState.snapshot.publicSlots =
+        g_nativeHostedSessionState.snapshot.activation.publicSlots =
             initData.publicSlots;
-        g_nativeHostedSessionState.snapshot.privateSlots =
+        g_nativeHostedSessionState.snapshot.activation.privateSlots =
             initData.privateSlots;
-        g_nativeHostedSessionState.snapshot.fakeLocalPlayerJoined =
+        g_nativeHostedSessionState.snapshot.activation.fakeLocalPlayerJoined =
             initData.fakeLocalPlayerJoined;
         g_nativeHostedSessionState.snapshot.dedicatedNoLocalHostPlayer =
             initData.dedicatedNoLocalHostPlayer;
@@ -834,16 +834,16 @@ namespace ServerRuntime
             g_nativeHostedSessionState.snapshot.previousWorldHellScale =
                 (unsigned char)
                     loadedSaveMetadata.saveStub.worldHellScale;
-            g_nativeHostedSessionState.snapshot.previousOnlineGame =
+            g_nativeHostedSessionState.snapshot.previousActivation.onlineGame =
                 loadedSaveMetadata.saveStub.onlineGame;
-            g_nativeHostedSessionState.snapshot.previousPrivateGame =
+            g_nativeHostedSessionState.snapshot.previousActivation.privateGame =
                 loadedSaveMetadata.saveStub.privateGame;
             g_nativeHostedSessionState.snapshot
-                .previousFakeLocalPlayerJoined =
+                .previousActivation.fakeLocalPlayerJoined =
                     loadedSaveMetadata.saveStub.fakeLocalPlayerJoined;
-            g_nativeHostedSessionState.snapshot.previousPublicSlots =
+            g_nativeHostedSessionState.snapshot.previousActivation.publicSlots =
                 (unsigned char)loadedSaveMetadata.saveStub.publicSlots;
-            g_nativeHostedSessionState.snapshot.previousPrivateSlots =
+            g_nativeHostedSessionState.snapshot.previousActivation.privateSlots =
                 (unsigned char)loadedSaveMetadata.saveStub.privateSlots;
             g_nativeHostedSessionState.snapshot
                 .previousSavePayloadChecksum =
@@ -1151,11 +1151,15 @@ namespace ServerRuntime
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState.snapshot.localUsersMask =
             localUsersMask;
-        g_nativeHostedSessionState.snapshot.onlineGame = onlineGame;
-        g_nativeHostedSessionState.snapshot.privateGame = privateGame;
-        g_nativeHostedSessionState.snapshot.publicSlots = publicSlots;
-        g_nativeHostedSessionState.snapshot.privateSlots = privateSlots;
-        g_nativeHostedSessionState.snapshot.fakeLocalPlayerJoined =
+        g_nativeHostedSessionState.snapshot.activation.onlineGame =
+            onlineGame;
+        g_nativeHostedSessionState.snapshot.activation.privateGame =
+            privateGame;
+        g_nativeHostedSessionState.snapshot.activation.publicSlots =
+            publicSlots;
+        g_nativeHostedSessionState.snapshot.activation.privateSlots =
+            privateSlots;
+        g_nativeHostedSessionState.snapshot.activation.fakeLocalPlayerJoined =
             fakeLocalPlayerJoined;
         RefreshNativeHostedSessionStateChecksum(
             &g_nativeHostedSessionState);
@@ -1502,10 +1506,10 @@ namespace ServerRuntime
         DedicatedServerHostedGameRuntimePlanMetadata planMetadata = {};
         planMetadata.startAttempted = snapshot.startAttempted;
         planMetadata.loadedFromSave = snapshot.loadedFromSave;
-        planMetadata.onlineGame = snapshot.onlineGame;
-        planMetadata.privateGame = snapshot.privateGame;
+        planMetadata.onlineGame = snapshot.activation.onlineGame;
+        planMetadata.privateGame = snapshot.activation.privateGame;
         planMetadata.fakeLocalPlayerJoined =
-            snapshot.fakeLocalPlayerJoined;
+            snapshot.activation.fakeLocalPlayerJoined;
         planMetadata.resolvedSeed = snapshot.resolvedSeed;
         planMetadata.savePayloadBytes = snapshot.savePayloadBytes;
         planMetadata.savePayloadChecksum = snapshot.payloadChecksum;
@@ -1514,8 +1518,10 @@ namespace ServerRuntime
             snapshot.dedicatedNoLocalHostPlayer;
         planMetadata.worldSizeChunks = snapshot.worldSizeChunks;
         planMetadata.worldHellScale = snapshot.worldHellScale;
-        planMetadata.publicSlots = (unsigned char)snapshot.publicSlots;
-        planMetadata.privateSlots = (unsigned char)snapshot.privateSlots;
+        planMetadata.publicSlots =
+            (unsigned char)snapshot.activation.publicSlots;
+        planMetadata.privateSlots =
+            (unsigned char)snapshot.activation.privateSlots;
         planMetadata.savePayloadName = snapshot.savePayloadName;
         planMetadata.loadedSaveMetadataAvailable =
             snapshot.loadedSaveMetadataAvailable;
@@ -1572,14 +1578,16 @@ namespace ServerRuntime
             snapshot.previousWorldSizeChunks;
         planMetadata.previousWorldHellScale =
             snapshot.previousWorldHellScale;
-        planMetadata.previousOnlineGame = snapshot.previousOnlineGame;
-        planMetadata.previousPrivateGame = snapshot.previousPrivateGame;
+        planMetadata.previousOnlineGame =
+            snapshot.previousActivation.onlineGame;
+        planMetadata.previousPrivateGame =
+            snapshot.previousActivation.privateGame;
         planMetadata.previousFakeLocalPlayerJoined =
-            snapshot.previousFakeLocalPlayerJoined;
+            snapshot.previousActivation.fakeLocalPlayerJoined;
         planMetadata.previousPublicSlots =
-            snapshot.previousPublicSlots;
+            (unsigned char)snapshot.previousActivation.publicSlots;
         planMetadata.previousPrivateSlots =
-            snapshot.previousPrivateSlots;
+            (unsigned char)snapshot.previousActivation.privateSlots;
         planMetadata.previousSavePayloadChecksum =
             snapshot.previousSavePayloadChecksum;
         planMetadata.previousSaveGeneration =
@@ -1840,12 +1848,12 @@ namespace ServerRuntime
         saveStub.listenerPort = snapshot.listenerPort > 0
             ? snapshot.listenerPort
             : listenerPort;
-        saveStub.onlineGame = snapshot.onlineGame;
-        saveStub.privateGame = snapshot.privateGame;
+        saveStub.onlineGame = snapshot.activation.onlineGame;
+        saveStub.privateGame = snapshot.activation.privateGame;
         saveStub.fakeLocalPlayerJoined =
-            snapshot.fakeLocalPlayerJoined;
-        saveStub.publicSlots = snapshot.publicSlots;
-        saveStub.privateSlots = snapshot.privateSlots;
+            snapshot.activation.fakeLocalPlayerJoined;
+        saveStub.publicSlots = snapshot.activation.publicSlots;
+        saveStub.privateSlots = snapshot.activation.privateSlots;
         saveStub.sessionActive = snapshot.active;
         saveStub.worldActionIdle = snapshot.worldActionIdle;
         saveStub.appShutdownRequested =

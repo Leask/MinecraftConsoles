@@ -182,8 +182,8 @@ namespace
                 (long long)sessionSnapshot.resolvedSeed,
                 sessionSnapshot.worldSizeChunks,
                 (unsigned int)sessionSnapshot.worldHellScale,
-                (unsigned int)sessionSnapshot.publicSlots,
-                (unsigned int)sessionSnapshot.privateSlots,
+                (unsigned int)sessionSnapshot.activation.publicSlots,
+                (unsigned int)sessionSnapshot.activation.privateSlots,
                 sessionSnapshot.startup.result,
                 sessionSnapshot.threadInvoked ? "invoked" : "skipped",
                 ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(

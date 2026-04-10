@@ -66,15 +66,21 @@ namespace ServerRuntime
         bool shutdownHaltedGameplay = false;
     };
 
+    struct NativeDedicatedServerHostedGameActivationSnapshot
+    {
+        bool onlineGame = false;
+        bool privateGame = false;
+        bool fakeLocalPlayerJoined = false;
+        unsigned int publicSlots = 0;
+        unsigned int privateSlots = 0;
+    };
+
     struct NativeDedicatedServerHostedGameSessionSnapshot
     {
         bool startAttempted = false;
         bool active = false;
         bool loadedFromSave = false;
         bool threadInvoked = false;
-        bool onlineGame = false;
-        bool privateGame = false;
-        bool fakeLocalPlayerJoined = false;
         bool dedicatedNoLocalHostPlayer = true;
         bool loadedSaveMetadataAvailable = false;
         std::string worldName;
@@ -95,8 +101,6 @@ namespace ServerRuntime
         std::uint32_t hostSettings = 0;
         unsigned int worldSizeChunks = 0;
         unsigned char worldHellScale = 0;
-        unsigned int publicSlots = 0;
-        unsigned int privateSlots = 0;
         std::uint64_t payloadChecksum = 0;
         std::uint64_t sessionTicks = 0;
         std::uint64_t acceptedConnections = 0;
@@ -127,22 +131,20 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameSessionSummarySnapshot
             previousSummary = {};
         NativeDedicatedServerHostedGameSessionSummarySnapshot summary = {};
+        NativeDedicatedServerHostedGameActivationSnapshot
+            previousActivation = {};
+        NativeDedicatedServerHostedGameActivationSnapshot activation = {};
         std::uint64_t previousHostedThreadTicks = 0;
         std::uint64_t hostedThreadTicks = 0;
         std::uint64_t stoppedMs = 0;
         std::uint32_t previousHostSettings = 0;
         unsigned int previousWorldSizeChunks = 0;
         unsigned char previousWorldHellScale = 0;
-        unsigned char previousPublicSlots = 0;
-        unsigned char previousPrivateSlots = 0;
         bool worldActionIdle = true;
         bool appShutdownRequested = false;
         bool gameplayHalted = false;
         bool stopSignalValid = false;
         bool hostedThreadActive = false;
-        bool previousOnlineGame = false;
-        bool previousPrivateGame = false;
-        bool previousFakeLocalPlayerJoined = false;
         bool previousDedicatedNoLocalHostPlayer = true;
         bool previousHostedThreadActive = false;
     };

@@ -2090,12 +2090,13 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.threadInvoked &&
         nativeHostedSessionObservedSnapshot.startup.result == 0 &&
         nativeHostedSessionObservedSnapshot.localUsersMask == 0 &&
-        nativeHostedSessionObservedSnapshot.onlineGame &&
-        !nativeHostedSessionObservedSnapshot.privateGame &&
-        nativeHostedSessionObservedSnapshot.publicSlots ==
+        nativeHostedSessionObservedSnapshot.activation.onlineGame &&
+        !nativeHostedSessionObservedSnapshot.activation.privateGame &&
+        nativeHostedSessionObservedSnapshot.activation.publicSlots ==
             sessionConfig.networkMaxPlayers &&
-        nativeHostedSessionObservedSnapshot.privateSlots == 0 &&
-        nativeHostedSessionObservedSnapshot.fakeLocalPlayerJoined &&
+        nativeHostedSessionObservedSnapshot.activation.privateSlots == 0 &&
+        nativeHostedSessionObservedSnapshot
+            .activation.fakeLocalPlayerJoined &&
         nativeHostedSessionObservedSnapshot.configuredPort == 25565 &&
         nativeHostedSessionObservedSnapshot.listenerPort == 19132 &&
         nativeHostedSessionObservedSnapshot.sessionStartMs == 1000;
