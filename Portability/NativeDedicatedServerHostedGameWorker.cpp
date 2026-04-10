@@ -395,20 +395,29 @@ namespace ServerRuntime
         }
     }
 
-    NativeDedicatedServerHostedGameWorkerFrameResult
-    TickNativeDedicatedServerHostedGameWorkerFrame()
+    NativeDedicatedServerHostedGameWorkerSnapshot
+    TickNativeDedicatedServerHostedGameWorkerFrame(
+        std::uint64_t *outNextSleepDurationMs,
+        bool *outShouldStopRunning)
     {
         TickNativeDedicatedServerHostedGameWorker();
-        NativeDedicatedServerHostedGameWorkerFrameResult result = {};
-        result.snapshot = GetNativeDedicatedServerHostedGameWorkerSnapshot();
+        const NativeDedicatedServerHostedGameWorkerSnapshot snapshot =
+            GetNativeDedicatedServerHostedGameWorkerSnapshot();
         const bool idle = IsNativeDedicatedServerHostedGameWorkerIdle();
-        result.shouldStopRunning =
+        const bool shouldStopRunning =
             IsNativeDedicatedServerHostedGameWorkerShutdownRequested() &&
             idle;
-        result.nextSleepDurationMs =
-            result.shouldStopRunning ? 0U : kNativeHostedGameWorkerFrameDelayMs;
+        if (outShouldStopRunning != nullptr)
+        {
+            *outShouldStopRunning = shouldStopRunning;
+        }
+        if (outNextSleepDurationMs != nullptr)
+        {
+            *outNextSleepDurationMs =
+                shouldStopRunning ? 0U : kNativeHostedGameWorkerFrameDelayMs;
+        }
         UpdateDedicatedServerAutosaveTracker(idle);
-        return result;
+        return snapshot;
     }
 
     bool IsNativeDedicatedServerHostedGameWorkerIdle()

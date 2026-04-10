@@ -1002,14 +1002,13 @@ namespace ServerRuntime
         ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
     }
 
-    void
-    TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
-        const NativeDedicatedServerHostedGameWorkerFrameResult &workerFrame,
+    void TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
+        const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot,
         bool hostedThreadActive,
         std::uint64_t nowMs)
     {
         NativeDedicatedServerHostedGameSessionFrameInput frameInput = {};
-        frameInput.workerSnapshot = workerFrame.snapshot;
+        frameInput.workerSnapshot = workerSnapshot;
         frameInput.hostedThreadActive = hostedThreadActive;
         TickNativeDedicatedServerHostedGameSessionFrameAndProject(
             frameInput,

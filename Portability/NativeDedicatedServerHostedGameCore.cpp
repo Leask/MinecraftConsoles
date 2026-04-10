@@ -17,8 +17,10 @@ namespace ServerRuntime
             std::uint64_t nowMs) = nullptr;
     };
 
-    NativeDedicatedServerHostedGameWorkerFrameResult
-    TickNativeDedicatedServerHostedGameWorkerFrame();
+    NativeDedicatedServerHostedGameWorkerSnapshot
+    TickNativeDedicatedServerHostedGameWorkerFrame(
+        std::uint64_t *outNextSleepDurationMs,
+        bool *outShouldStopRunning);
 
     NativeDedicatedServerHostedGameSessionSnapshot
     StartNativeDedicatedServerHostedGameSessionAndProjectStartupWithResult(
@@ -27,9 +29,8 @@ namespace ServerRuntime
         std::uint64_t startupThreadDurationMs,
         std::uint64_t nowMs = 0);
 
-    void
-    TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
-        const NativeDedicatedServerHostedGameWorkerFrameResult &workerFrame,
+    void TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
+        const NativeDedicatedServerHostedGameWorkerSnapshot &workerSnapshot,
         bool hostedThreadActive,
         std::uint64_t nowMs);
 
@@ -69,18 +70,22 @@ namespace ServerRuntime
         }
     }
 
-    NativeDedicatedServerHostedGameWorkerFrameResult
+    NativeDedicatedServerHostedGameWorkerSnapshot
     TickNativeDedicatedServerHostedGameCoreFrameWithResult(
+        std::uint64_t *outNextSleepDurationMs,
+        bool *outShouldStopRunning,
         bool hostedThreadActive)
     {
-        const NativeDedicatedServerHostedGameWorkerFrameResult workerFrame =
-            TickNativeDedicatedServerHostedGameWorkerFrame();
+        const NativeDedicatedServerHostedGameWorkerSnapshot workerSnapshot =
+            TickNativeDedicatedServerHostedGameWorkerFrame(
+                outNextSleepDurationMs,
+                outShouldStopRunning);
         const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
         TickNativeDedicatedServerHostedGameSessionWorkerFrameAndProject(
-            workerFrame,
+            workerSnapshot,
             hostedThreadActive,
             nowMs);
-        return workerFrame;
+        return workerSnapshot;
     }
 
     NativeDedicatedServerHostedGameSessionSnapshot
@@ -132,16 +137,19 @@ namespace ServerRuntime
             LceGetMonotonicMilliseconds());
         while (true)
         {
-            const NativeDedicatedServerHostedGameWorkerFrameResult lastFrame =
-                TickNativeDedicatedServerHostedGameCoreFrameWithResult(true);
-            if (lastFrame.shouldStopRunning)
+            std::uint64_t nextSleepDurationMs = 0;
+            bool shouldStopRunning = false;
+            TickNativeDedicatedServerHostedGameCoreFrameWithResult(
+                &nextSleepDurationMs,
+                &shouldStopRunning,
+                true);
+            if (shouldStopRunning)
             {
                 break;
             }
-            if (lastFrame.nextSleepDurationMs > 0U)
+            if (nextSleepDurationMs > 0U)
             {
-                LceSleepMilliseconds(
-                    lastFrame.nextSleepDurationMs);
+                LceSleepMilliseconds(nextSleepDurationMs);
             }
         }
 

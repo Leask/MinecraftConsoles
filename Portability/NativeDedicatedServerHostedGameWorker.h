@@ -38,11 +38,4 @@ namespace ServerRuntime
                 eNativeDedicatedServerHostedGameWorkerCommand_None;
     };
 
-    struct NativeDedicatedServerHostedGameWorkerFrameResult
-    {
-        NativeDedicatedServerHostedGameWorkerSnapshot snapshot = {};
-        std::uint64_t nextSleepDurationMs = 0;
-        bool shouldStopRunning = false;
-    };
-
 }
