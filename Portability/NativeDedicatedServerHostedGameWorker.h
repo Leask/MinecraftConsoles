@@ -45,6 +45,4 @@ namespace ServerRuntime
         bool shouldStopRunning = false;
     };
 
-    const char *GetNativeDedicatedServerHostedGameWorkerCommandKindName(
-        ENativeDedicatedServerHostedGameWorkerCommandKind kind);
 }

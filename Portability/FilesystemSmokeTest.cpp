@@ -56,6 +56,9 @@
 
 namespace ServerRuntime
 {
+    const char *GetNativeDedicatedServerHostedGameWorkerCommandKindName(
+        ENativeDedicatedServerHostedGameWorkerCommandKind kind);
+
     struct NativeDedicatedServerHostedGameCoreHooks
     {
         void (*onThreadReady)(std::uint64_t nowMs) = nullptr;

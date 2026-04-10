@@ -16,6 +16,9 @@
 
 namespace ServerRuntime
 {
+    const char *GetNativeDedicatedServerHostedGameWorkerCommandKindName(
+        ENativeDedicatedServerHostedGameWorkerCommandKind kind);
+
     bool IsNativeDedicatedServerHostedGameSessionRunning();
 
     NativeDedicatedServerHostedGameSessionSnapshot
