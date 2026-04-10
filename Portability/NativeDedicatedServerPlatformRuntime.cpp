@@ -9,6 +9,10 @@
 
 namespace ServerRuntime
 {
+    void ResetNativeDedicatedServerHostedGameWorkerState();
+
+    void ClearNativeDedicatedServerHostedGameWorkerState();
+
     bool IsNativeDedicatedServerHostedGameSessionRunning();
 
     NativeDedicatedServerHostedGameSessionSnapshot

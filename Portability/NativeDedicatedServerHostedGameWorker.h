@@ -45,10 +45,6 @@ namespace ServerRuntime
         bool shouldStopRunning = false;
     };
 
-    void ResetNativeDedicatedServerHostedGameWorkerState();
-
-    void ClearNativeDedicatedServerHostedGameWorkerState();
-
     const char *GetNativeDedicatedServerHostedGameWorkerCommandKindName(
         ENativeDedicatedServerHostedGameWorkerCommandKind kind);
 }

@@ -13,6 +13,8 @@
 
 namespace ServerRuntime
 {
+    void ResetNativeDedicatedServerHostedGameWorkerState();
+
     struct NativeDedicatedServerHostedGameSessionFrameInput
     {
         NativeDedicatedServerHostedGameWorkerSnapshot workerSnapshot = {};
