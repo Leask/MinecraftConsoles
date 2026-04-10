@@ -81,21 +81,7 @@ namespace ServerRuntime
         std::uint64_t observedAutosaveCompletions = 0;
         std::uint64_t previousRemoteCommands = 0;
         std::uint64_t previousAutosaveCompletions = 0;
-        std::uint64_t previousWorkerPendingWorldActionTicks = 0;
-        std::uint64_t previousWorkerPendingAutosaveCommands = 0;
-        std::uint64_t previousWorkerPendingSaveCommands = 0;
-        std::uint64_t previousWorkerPendingStopCommands = 0;
-        std::uint64_t previousWorkerPendingHaltCommands = 0;
-        std::uint64_t previousWorkerTickCount = 0;
-        std::uint64_t previousCompletedWorkerActions = 0;
-        std::uint64_t previousProcessedAutosaveCommands = 0;
-        std::uint64_t previousProcessedSaveCommands = 0;
-        std::uint64_t previousProcessedStopCommands = 0;
-        std::uint64_t previousProcessedHaltCommands = 0;
-        std::uint64_t previousLastQueuedCommandId = 0;
-        std::uint64_t previousActiveCommandId = 0;
-        std::uint64_t previousActiveCommandTicksRemaining = 0;
-        std::uint64_t previousLastProcessedCommandId = 0;
+        NativeDedicatedServerHostedGameWorkerSnapshot previousWorker = {};
         NativeDedicatedServerHostedGameWorkerSnapshot worker = {};
         std::uint64_t gameplayLoopIterations = 0;
         std::uint64_t platformTickCount = 0;
@@ -144,12 +130,6 @@ namespace ServerRuntime
         bool previousSessionCompleted = false;
         bool previousRequestedAppShutdown = false;
         bool previousShutdownHaltedGameplay = false;
-        ENativeDedicatedServerHostedGameWorkerCommandKind
-            previousActiveCommandKind =
-                eNativeDedicatedServerHostedGameWorkerCommand_None;
-        ENativeDedicatedServerHostedGameWorkerCommandKind
-            previousLastProcessedCommandKind =
-                eNativeDedicatedServerHostedGameWorkerCommand_None;
     };
 
 }

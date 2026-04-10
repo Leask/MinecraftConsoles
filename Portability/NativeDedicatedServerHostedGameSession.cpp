@@ -755,60 +755,60 @@ namespace ServerRuntime
                 .previousAutosaveCompletions =
                     loadedSaveMetadata.saveStub.autosaveCompletions;
             g_nativeHostedSessionState.snapshot
-                .previousWorkerPendingWorldActionTicks =
+                .previousWorker.pendingWorldActionTicks =
                     loadedSaveMetadata.saveStub
                         .workerPendingWorldActionTicks;
             g_nativeHostedSessionState.snapshot
-                .previousWorkerPendingAutosaveCommands =
+                .previousWorker.pendingAutosaveCommands =
                     loadedSaveMetadata.saveStub
                         .workerPendingAutosaveCommands;
             g_nativeHostedSessionState.snapshot
-                .previousWorkerPendingSaveCommands =
+                .previousWorker.pendingSaveCommands =
                     loadedSaveMetadata.saveStub
                         .workerPendingSaveCommands;
             g_nativeHostedSessionState.snapshot
-                .previousWorkerPendingStopCommands =
+                .previousWorker.pendingStopCommands =
                     loadedSaveMetadata.saveStub
                         .workerPendingStopCommands;
             g_nativeHostedSessionState.snapshot
-                .previousWorkerPendingHaltCommands =
+                .previousWorker.pendingHaltCommands =
                     loadedSaveMetadata.saveStub
                         .workerPendingHaltCommands;
-            g_nativeHostedSessionState.snapshot.previousWorkerTickCount =
+            g_nativeHostedSessionState.snapshot.previousWorker.workerTickCount =
                 loadedSaveMetadata.saveStub.workerTickCount;
             g_nativeHostedSessionState.snapshot
-                .previousCompletedWorkerActions =
+                .previousWorker.completedWorldActions =
                     loadedSaveMetadata.saveStub.completedWorkerActions;
             g_nativeHostedSessionState.snapshot
-                .previousProcessedAutosaveCommands =
+                .previousWorker.processedAutosaveCommands =
                     loadedSaveMetadata.saveStub
                         .processedAutosaveCommands;
             g_nativeHostedSessionState.snapshot
-                .previousProcessedSaveCommands =
+                .previousWorker.processedSaveCommands =
                     loadedSaveMetadata.saveStub.processedSaveCommands;
             g_nativeHostedSessionState.snapshot
-                .previousProcessedStopCommands =
+                .previousWorker.processedStopCommands =
                     loadedSaveMetadata.saveStub.processedStopCommands;
             g_nativeHostedSessionState.snapshot
-                .previousProcessedHaltCommands =
+                .previousWorker.processedHaltCommands =
                     loadedSaveMetadata.saveStub.processedHaltCommands;
             g_nativeHostedSessionState.snapshot
-                .previousLastQueuedCommandId =
+                .previousWorker.lastQueuedCommandId =
                     loadedSaveMetadata.saveStub.lastQueuedCommandId;
-            g_nativeHostedSessionState.snapshot.previousActiveCommandId =
+            g_nativeHostedSessionState.snapshot.previousWorker.activeCommandId =
                 loadedSaveMetadata.saveStub.activeCommandId;
             g_nativeHostedSessionState.snapshot
-                .previousActiveCommandTicksRemaining =
+                .previousWorker.activeCommandTicksRemaining =
                     loadedSaveMetadata.saveStub
                         .activeCommandTicksRemaining;
-            g_nativeHostedSessionState.snapshot.previousActiveCommandKind =
+            g_nativeHostedSessionState.snapshot.previousWorker.activeCommandKind =
                 (ENativeDedicatedServerHostedGameWorkerCommandKind)
                     loadedSaveMetadata.saveStub.activeCommandKind;
             g_nativeHostedSessionState.snapshot
-                .previousLastProcessedCommandId =
+                .previousWorker.lastProcessedCommandId =
                     loadedSaveMetadata.saveStub.lastProcessedCommandId;
             g_nativeHostedSessionState.snapshot
-                .previousLastProcessedCommandKind =
+                .previousWorker.lastProcessedCommandKind =
                     (ENativeDedicatedServerHostedGameWorkerCommandKind)
                         loadedSaveMetadata.saveStub
                             .lastProcessedCommandKind;
@@ -1518,39 +1518,39 @@ namespace ServerRuntime
         planMetadata.previousAutosaveCompletions =
             snapshot.previousAutosaveCompletions;
         planMetadata.previousWorkerPendingWorldActionTicks =
-            snapshot.previousWorkerPendingWorldActionTicks;
+            snapshot.previousWorker.pendingWorldActionTicks;
         planMetadata.previousWorkerPendingAutosaveCommands =
-            snapshot.previousWorkerPendingAutosaveCommands;
+            snapshot.previousWorker.pendingAutosaveCommands;
         planMetadata.previousWorkerPendingSaveCommands =
-            snapshot.previousWorkerPendingSaveCommands;
+            snapshot.previousWorker.pendingSaveCommands;
         planMetadata.previousWorkerPendingStopCommands =
-            snapshot.previousWorkerPendingStopCommands;
+            snapshot.previousWorker.pendingStopCommands;
         planMetadata.previousWorkerPendingHaltCommands =
-            snapshot.previousWorkerPendingHaltCommands;
+            snapshot.previousWorker.pendingHaltCommands;
         planMetadata.previousWorkerTickCount =
-            snapshot.previousWorkerTickCount;
+            snapshot.previousWorker.workerTickCount;
         planMetadata.previousCompletedWorkerActions =
-            snapshot.previousCompletedWorkerActions;
+            snapshot.previousWorker.completedWorldActions;
         planMetadata.previousProcessedAutosaveCommands =
-            snapshot.previousProcessedAutosaveCommands;
+            snapshot.previousWorker.processedAutosaveCommands;
         planMetadata.previousProcessedSaveCommands =
-            snapshot.previousProcessedSaveCommands;
+            snapshot.previousWorker.processedSaveCommands;
         planMetadata.previousProcessedStopCommands =
-            snapshot.previousProcessedStopCommands;
+            snapshot.previousWorker.processedStopCommands;
         planMetadata.previousProcessedHaltCommands =
-            snapshot.previousProcessedHaltCommands;
+            snapshot.previousWorker.processedHaltCommands;
         planMetadata.previousLastQueuedCommandId =
-            snapshot.previousLastQueuedCommandId;
+            snapshot.previousWorker.lastQueuedCommandId;
         planMetadata.previousActiveCommandId =
-            snapshot.previousActiveCommandId;
+            snapshot.previousWorker.activeCommandId;
         planMetadata.previousActiveCommandTicksRemaining =
-            snapshot.previousActiveCommandTicksRemaining;
+            snapshot.previousWorker.activeCommandTicksRemaining;
         planMetadata.previousActiveCommandKind =
-            (unsigned int)snapshot.previousActiveCommandKind;
+            (unsigned int)snapshot.previousWorker.activeCommandKind;
         planMetadata.previousLastProcessedCommandId =
-            snapshot.previousLastProcessedCommandId;
+            snapshot.previousWorker.lastProcessedCommandId;
         planMetadata.previousLastProcessedCommandKind =
-            (unsigned int)snapshot.previousLastProcessedCommandKind;
+            (unsigned int)snapshot.previousWorker.lastProcessedCommandKind;
         planMetadata.previousPlatformTickCount =
             snapshot.previousPlatformTickCount;
         planMetadata.previousUptimeMs = snapshot.previousUptimeMs;
