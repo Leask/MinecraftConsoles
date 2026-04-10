@@ -742,13 +742,13 @@ namespace ServerRuntime
             GetNativeDedicatedServerLoadedSaveMetadata();
         if (loadedSaveMetadata.available)
         {
-            g_nativeHostedSessionState.snapshot.loadedSavePath =
+            g_nativeHostedSessionState.snapshot.loadedSave.path =
                 loadedSaveMetadata.savePath;
         }
         if (loadedSaveMetadata.hasSaveStub)
         {
             g_nativeHostedSessionState.snapshot
-                .loadedSaveMetadataAvailable = true;
+                .loadedSave.metadataAvailable = true;
             g_nativeHostedSessionState.snapshot.previousStartup.mode =
                 loadedSaveMetadata.saveStub.startupMode;
             g_nativeHostedSessionState.snapshot.previousSessionPhase =
@@ -1532,8 +1532,8 @@ namespace ServerRuntime
             (unsigned char)snapshot.activation.privateSlots;
         planMetadata.savePayloadName = snapshot.payload.name;
         planMetadata.loadedSaveMetadataAvailable =
-            snapshot.loadedSaveMetadataAvailable;
-        planMetadata.loadedSavePath = snapshot.loadedSavePath;
+            snapshot.loadedSave.metadataAvailable;
+        planMetadata.loadedSavePath = snapshot.loadedSave.path;
         planMetadata.previousStartupMode = snapshot.previousStartup.mode;
         planMetadata.previousSessionPhase = snapshot.previousSessionPhase;
         planMetadata.previousRemoteCommands =
@@ -1625,8 +1625,8 @@ namespace ServerRuntime
             snapshot.loadedFromSave ||
             !snapshot.payload.name.empty() ||
             snapshot.worldConfig.hostSettings != 0 ||
-            snapshot.loadedSaveMetadataAvailable ||
-            !snapshot.loadedSavePath.empty())
+            snapshot.loadedSave.metadataAvailable ||
+            !snapshot.loadedSave.path.empty())
         {
             RecordDedicatedServerHostedGameRuntimePlanMetadata(
                 planMetadata);

@@ -114,14 +114,18 @@ namespace ServerRuntime
         int listenerPort = 0;
     };
 
+    struct NativeDedicatedServerHostedGameLoadedSaveSnapshot
+    {
+        bool metadataAvailable = false;
+        std::string path;
+    };
+
     struct NativeDedicatedServerHostedGameSessionSnapshot
     {
         bool startAttempted = false;
         bool active = false;
         bool loadedFromSave = false;
         bool threadInvoked = false;
-        bool loadedSaveMetadataAvailable = false;
-        std::string loadedSavePath;
         std::string previousSessionPhase;
         int runtimePhase = 0;
         int localUsersMask = 0;
@@ -163,6 +167,7 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGamePersistedSaveSnapshot
             persistedSave = {};
         NativeDedicatedServerHostedGameSessionContextSnapshot context = {};
+        NativeDedicatedServerHostedGameLoadedSaveSnapshot loadedSave = {};
         std::uint64_t previousHostedThreadTicks = 0;
         std::uint64_t hostedThreadTicks = 0;
         std::uint64_t stoppedMs = 0;

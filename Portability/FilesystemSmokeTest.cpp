@@ -3286,8 +3286,8 @@ int main(int argc, char* argv[])
         nativeHostedSessionCoreSnapshot.payload.bytes ==
             nativeHostedSaveBytes.size() &&
         nativeHostedSessionCoreSnapshot.payload.name == "world" &&
-        nativeHostedSessionCoreSnapshot.loadedSaveMetadataAvailable &&
-        nativeHostedSessionCoreSnapshot.loadedSavePath ==
+        nativeHostedSessionCoreSnapshot.loadedSave.metadataAvailable &&
+        nativeHostedSessionCoreSnapshot.loadedSave.path ==
             "NativeDesktop/GameHDD/SmokeSession.save" &&
         nativeHostedSessionCoreSnapshot.previousStartup.mode == "loaded";
     const bool nativeHostedStubCoreFinalizationOk =
@@ -3395,8 +3395,8 @@ int main(int argc, char* argv[])
         nativeHostedSessionCoreSnapshot.worldConfig.worldHellScale,
         nativeHostedSessionCoreSnapshot.payload.name.c_str(),
         (long long)nativeHostedSessionCoreSnapshot.payload.bytes,
-        nativeHostedSessionCoreSnapshot.loadedSaveMetadataAvailable,
-        nativeHostedSessionCoreSnapshot.loadedSavePath.c_str(),
+        nativeHostedSessionCoreSnapshot.loadedSave.metadataAvailable,
+        nativeHostedSessionCoreSnapshot.loadedSave.path.c_str(),
         nativeHostedSessionCoreSnapshot.previousStartup.mode.c_str());
     printf("hosted_game_startup=%d result=%d abort=%d code=%d\n",
         hostedGameStartupExecution.startupResult == 0 &&
