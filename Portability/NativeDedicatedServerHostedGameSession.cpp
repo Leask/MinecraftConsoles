@@ -222,10 +222,12 @@ namespace ServerRuntime
                 static_cast<std::uint64_t>(state->snapshot.startup.result));
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                static_cast<std::uint64_t>(state->snapshot.runtimePhase));
+                static_cast<std::uint64_t>(
+                    state->snapshot.lifecycle.runtimePhase));
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                static_cast<std::uint64_t>(state->snapshot.localUsersMask));
+                static_cast<std::uint64_t>(
+                    state->snapshot.lifecycle.localUsersMask));
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 static_cast<std::uint64_t>(
@@ -346,13 +348,13 @@ namespace ServerRuntime
                 state->snapshot.timing.stoppedMs);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.loadedFromSave ? 1U : 0U);
+                state->snapshot.lifecycle.loadedFromSave ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.startup.payloadValidated ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.threadInvoked ? 1U : 0U);
+                state->snapshot.lifecycle.threadInvoked ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.activation.onlineGame ? 1U : 0U);
@@ -364,7 +366,7 @@ namespace ServerRuntime
                 state->snapshot.activation.fakeLocalPlayerJoined ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
-                state->snapshot.active ? 1U : 0U);
+                state->snapshot.lifecycle.active ? 1U : 0U);
             checksum = MixNativeHostedSessionHash(
                 checksum,
                 state->snapshot.control.worldActionIdle ? 1U : 0U);
@@ -469,10 +471,10 @@ namespace ServerRuntime
                 return;
             }
 
-            state->snapshot.active = startupPayloadValidated;
+            state->snapshot.lifecycle.active = startupPayloadValidated;
             state->snapshot.startup.payloadValidated =
                 startupPayloadValidated;
-            state->snapshot.runtimePhase =
+            state->snapshot.lifecycle.runtimePhase =
                 startupPayloadValidated
                     ? eDedicatedServerHostedGameRuntimePhase_Startup
                     : eDedicatedServerHostedGameRuntimePhase_Failed;
@@ -486,8 +488,8 @@ namespace ServerRuntime
                 return;
             }
 
-            if (!state->snapshot.active &&
-                state->snapshot.runtimePhase ==
+            if (!state->snapshot.lifecycle.active &&
+                state->snapshot.lifecycle.runtimePhase ==
                     eDedicatedServerHostedGameRuntimePhase_Stopped)
             {
                 return;
@@ -495,7 +497,7 @@ namespace ServerRuntime
 
             if (state->snapshot.startup.result != 0)
             {
-                state->snapshot.runtimePhase =
+                state->snapshot.lifecycle.runtimePhase =
                     eDedicatedServerHostedGameRuntimePhase_Failed;
                 return;
             }
@@ -503,24 +505,24 @@ namespace ServerRuntime
             if (state->snapshot.control.appShutdownRequested ||
                 state->snapshot.control.gameplayHalted)
             {
-                state->snapshot.runtimePhase =
+                state->snapshot.lifecycle.runtimePhase =
                     eDedicatedServerHostedGameRuntimePhase_ShutdownRequested;
                 return;
             }
 
             if (state->snapshot.thread.active ||
-                state->snapshot.threadInvoked)
+                state->snapshot.lifecycle.threadInvoked)
             {
-                state->snapshot.runtimePhase =
+                state->snapshot.lifecycle.runtimePhase =
                     eDedicatedServerHostedGameRuntimePhase_Running;
                 return;
             }
 
-            if (state->snapshot.active ||
+            if (state->snapshot.lifecycle.active ||
                 state->snapshot.startup.payloadValidated ||
                 state->snapshot.startup.result == 0)
             {
-                state->snapshot.runtimePhase =
+                state->snapshot.lifecycle.runtimePhase =
                     eDedicatedServerHostedGameRuntimePhase_Startup;
             }
         }
@@ -533,25 +535,25 @@ namespace ServerRuntime
                 return;
             }
 
-            if (state->snapshot.runtimePhase ==
+            if (state->snapshot.lifecycle.runtimePhase ==
                 eDedicatedServerHostedGameRuntimePhase_Stopped)
             {
-                state->snapshot.active = false;
+                state->snapshot.lifecycle.active = false;
                 return;
             }
 
             if (state->snapshot.startup.result != 0)
             {
-                state->snapshot.active = false;
+                state->snapshot.lifecycle.active = false;
                 return;
             }
 
             if (state->snapshot.thread.active ||
-                state->snapshot.threadInvoked ||
+                state->snapshot.lifecycle.threadInvoked ||
                 state->snapshot.startup.payloadValidated ||
                 state->snapshot.startup.result == 0)
             {
-                state->snapshot.active = true;
+                state->snapshot.lifecycle.active = true;
             }
         }
 
@@ -564,8 +566,8 @@ namespace ServerRuntime
                 return;
             }
 
-            state->snapshot.active = false;
-            state->snapshot.runtimePhase =
+            state->snapshot.lifecycle.active = false;
+            state->snapshot.lifecycle.runtimePhase =
                 eDedicatedServerHostedGameRuntimePhase_Stopped;
             if (stoppedMs != 0)
             {
@@ -622,13 +624,14 @@ namespace ServerRuntime
 
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState = NativeDedicatedServerHostedGameSessionState{};
-        g_nativeHostedSessionState.snapshot.startAttempted = true;
-        g_nativeHostedSessionState.snapshot.loadedFromSave =
+        g_nativeHostedSessionState.snapshot.lifecycle.startAttempted = true;
+        g_nativeHostedSessionState.snapshot.lifecycle.loadedFromSave =
             initData.saveData != nullptr;
-        g_nativeHostedSessionState.snapshot.resolvedSeed = initData.seed;
+        g_nativeHostedSessionState.snapshot.lifecycle.resolvedSeed =
+            initData.seed;
         g_nativeHostedSessionState.snapshot.worldConfig.hostSettings =
             initData.settings;
-        g_nativeHostedSessionState.snapshot.localUsersMask =
+        g_nativeHostedSessionState.snapshot.lifecycle.localUsersMask =
             initData.localUsersMask;
         g_nativeHostedSessionState.snapshot.activation.onlineGame =
             initData.onlineGame;
@@ -752,7 +755,8 @@ namespace ServerRuntime
                 .loadedSave.metadataAvailable = true;
             g_nativeHostedSessionState.snapshot.previousStartup.mode =
                 loadedSaveMetadata.saveStub.startupMode;
-            g_nativeHostedSessionState.snapshot.previousSessionPhase =
+            g_nativeHostedSessionState.snapshot
+                .previousLifecycle.sessionPhase =
                 loadedSaveMetadata.saveStub.sessionPhase;
             g_nativeHostedSessionState.snapshot
                 .previousProgress.remoteCommands =
@@ -952,7 +956,8 @@ namespace ServerRuntime
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
         g_nativeHostedSessionState.snapshot.startup.result = startupResult;
-        g_nativeHostedSessionState.snapshot.threadInvoked = threadInvoked;
+        g_nativeHostedSessionState.snapshot.lifecycle.threadInvoked =
+            threadInvoked;
         RefreshNativeHostedSessionActive(&g_nativeHostedSessionState);
         RefreshNativeHostedSessionPhase(&g_nativeHostedSessionState);
         RefreshNativeHostedSessionStateChecksum(
@@ -974,7 +979,7 @@ namespace ServerRuntime
         bool hostedThreadActive)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        if (!g_nativeHostedSessionState.snapshot.active)
+        if (!g_nativeHostedSessionState.snapshot.lifecycle.active)
         {
             return;
         }
@@ -999,7 +1004,7 @@ namespace ServerRuntime
         const NativeDedicatedServerHostedGameSessionFrameInput &frameInput)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        if (!g_nativeHostedSessionState.snapshot.active)
+        if (!g_nativeHostedSessionState.snapshot.lifecycle.active)
         {
             return;
         }
@@ -1162,7 +1167,7 @@ namespace ServerRuntime
         bool fakeLocalPlayerJoined)
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        g_nativeHostedSessionState.snapshot.localUsersMask =
+        g_nativeHostedSessionState.snapshot.lifecycle.localUsersMask =
             localUsersMask;
         g_nativeHostedSessionState.snapshot.activation.onlineGame =
             onlineGame;
@@ -1521,13 +1526,13 @@ namespace ServerRuntime
         std::uint64_t nowMs)
     {
         DedicatedServerHostedGameRuntimePlanMetadata planMetadata = {};
-        planMetadata.startAttempted = snapshot.startAttempted;
-        planMetadata.loadedFromSave = snapshot.loadedFromSave;
+        planMetadata.startAttempted = snapshot.lifecycle.startAttempted;
+        planMetadata.loadedFromSave = snapshot.lifecycle.loadedFromSave;
         planMetadata.onlineGame = snapshot.activation.onlineGame;
         planMetadata.privateGame = snapshot.activation.privateGame;
         planMetadata.fakeLocalPlayerJoined =
             snapshot.activation.fakeLocalPlayerJoined;
-        planMetadata.resolvedSeed = snapshot.resolvedSeed;
+        planMetadata.resolvedSeed = snapshot.lifecycle.resolvedSeed;
         planMetadata.savePayloadBytes = snapshot.payload.bytes;
         planMetadata.savePayloadChecksum = snapshot.payload.checksum;
         planMetadata.hostSettings = snapshot.worldConfig.hostSettings;
@@ -1546,7 +1551,8 @@ namespace ServerRuntime
             snapshot.loadedSave.metadataAvailable;
         planMetadata.loadedSavePath = snapshot.loadedSave.path;
         planMetadata.previousStartupMode = snapshot.previousStartup.mode;
-        planMetadata.previousSessionPhase = snapshot.previousSessionPhase;
+        planMetadata.previousSessionPhase =
+            snapshot.previousLifecycle.sessionPhase;
         planMetadata.previousRemoteCommands =
             snapshot.previousProgress.remoteCommands;
         planMetadata.previousAutosaveCompletions =
@@ -1632,8 +1638,8 @@ namespace ServerRuntime
             snapshot.previousSummary.requestedAppShutdown;
         planMetadata.previousShutdownHaltedGameplay =
             snapshot.previousSummary.shutdownHaltedGameplay;
-        if (snapshot.startAttempted ||
-            snapshot.loadedFromSave ||
+        if (snapshot.lifecycle.startAttempted ||
+            snapshot.lifecycle.loadedFromSave ||
             !snapshot.payload.name.empty() ||
             snapshot.worldConfig.hostSettings != 0 ||
             snapshot.loadedSave.metadataAvailable ||
@@ -1708,9 +1714,9 @@ namespace ServerRuntime
             snapshot.progress.gameplayLoopIterations);
         RecordDedicatedServerHostedGameRuntimeStartupResult(
             snapshot.startup.result,
-            snapshot.threadInvoked);
+            snapshot.lifecycle.threadInvoked);
         RecordDedicatedServerHostedGameRuntimeStartupTelemetry(
-            snapshot.loadedFromSave,
+            snapshot.lifecycle.loadedFromSave,
             snapshot.startup.payloadValidated,
             snapshot.startup.threadIterations,
             snapshot.startup.threadDurationMs);
@@ -1718,8 +1724,9 @@ namespace ServerRuntime
             snapshot.progress.saveGeneration,
             snapshot.progress.stateChecksum);
         RecordDedicatedServerHostedGameRuntimeCoreLifecycle(
-            snapshot.active,
-            (EDedicatedServerHostedGameRuntimePhase)snapshot.runtimePhase);
+            snapshot.lifecycle.active,
+            (EDedicatedServerHostedGameRuntimePhase)
+                snapshot.lifecycle.runtimePhase);
         DedicatedServerHostedGameRuntimeSessionSummary sessionSummary = {};
         sessionSummary.initialSaveRequested =
             snapshot.summary.initialSaveRequested;
@@ -1749,7 +1756,7 @@ namespace ServerRuntime
                 snapshot.persistedSave.autosaveCompletions);
         }
         if (snapshot.timing.stoppedMs != 0 ||
-            snapshot.runtimePhase ==
+            snapshot.lifecycle.runtimePhase ==
                 eDedicatedServerHostedGameRuntimePhase_Stopped)
         {
             MarkDedicatedServerHostedGameRuntimeSessionStopped(
@@ -1816,7 +1823,7 @@ namespace ServerRuntime
     bool IsNativeDedicatedServerHostedGameSessionRunning()
     {
         std::lock_guard<std::mutex> lock(g_nativeHostedSessionMutex);
-        return g_nativeHostedSessionState.snapshot.active &&
+        return g_nativeHostedSessionState.snapshot.lifecycle.active &&
             g_nativeHostedSessionState.snapshot.thread.active;
     }
 
@@ -1876,7 +1883,7 @@ namespace ServerRuntime
             snapshot.activation.fakeLocalPlayerJoined;
         saveStub.publicSlots = snapshot.activation.publicSlots;
         saveStub.privateSlots = snapshot.activation.privateSlots;
-        saveStub.sessionActive = snapshot.active;
+        saveStub.sessionActive = snapshot.lifecycle.active;
         saveStub.worldActionIdle = snapshot.control.worldActionIdle;
         saveStub.appShutdownRequested =
             snapshot.control.appShutdownRequested;
@@ -1945,15 +1952,17 @@ namespace ServerRuntime
         saveStub.gameplayLoopIterations =
             snapshot.progress.gameplayLoopIterations;
         saveStub.savedAtFileTime = savedAtFileTime;
-        if (snapshot.startAttempted)
+        if (snapshot.lifecycle.startAttempted)
         {
             saveStub.startupMode =
-                snapshot.loadedFromSave ? "loaded" : "created-new";
+                snapshot.lifecycle.loadedFromSave
+                    ? "loaded"
+                    : "created-new";
             saveStub.sessionPhase =
                 GetDedicatedServerHostedGameRuntimePhaseName(
                     (EDedicatedServerHostedGameRuntimePhase)
-                        snapshot.runtimePhase);
-            saveStub.resolvedSeed = snapshot.resolvedSeed;
+                        snapshot.lifecycle.runtimePhase);
+            saveStub.resolvedSeed = snapshot.lifecycle.resolvedSeed;
             saveStub.payloadBytes = snapshot.payload.bytes;
             saveStub.payloadChecksum = snapshot.payload.checksum;
             saveStub.saveGeneration = snapshot.progress.saveGeneration;

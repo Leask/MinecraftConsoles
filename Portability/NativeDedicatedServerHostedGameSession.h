@@ -164,16 +164,24 @@ namespace ServerRuntime
         std::uint64_t stoppedMs = 0;
     };
 
-    struct NativeDedicatedServerHostedGameSessionSnapshot
+    struct NativeDedicatedServerHostedGameLifecycleSnapshot
     {
         bool startAttempted = false;
         bool active = false;
         bool loadedFromSave = false;
         bool threadInvoked = false;
-        std::string previousSessionPhase;
         int runtimePhase = 0;
         int localUsersMask = 0;
         std::int64_t resolvedSeed = 0;
+    };
+
+    struct NativeDedicatedServerHostedGamePreviousLifecycleSnapshot
+    {
+        std::string sessionPhase;
+    };
+
+    struct NativeDedicatedServerHostedGameSessionSnapshot
+    {
         NativeDedicatedServerHostedGameWorkerSnapshot previousWorker = {};
         NativeDedicatedServerHostedGameWorkerSnapshot worker = {};
         NativeDedicatedServerHostedGamePreviousStartupSnapshot
@@ -202,6 +210,9 @@ namespace ServerRuntime
         NativeDedicatedServerHostedGameThreadSnapshot thread = {};
         NativeDedicatedServerHostedGameControlSnapshot control = {};
         NativeDedicatedServerHostedGameTimingSnapshot timing = {};
+        NativeDedicatedServerHostedGamePreviousLifecycleSnapshot
+            previousLifecycle = {};
+        NativeDedicatedServerHostedGameLifecycleSnapshot lifecycle = {};
     };
 
 }

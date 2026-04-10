@@ -174,7 +174,7 @@ namespace
             context.lanAdvertise ? "enabled" : "disabled");
         AppendResponseLine(response, buffer);
 
-        if (sessionSnapshot.startAttempted)
+        if (sessionSnapshot.lifecycle.startAttempted)
         {
             std::snprintf(
                 buffer,
@@ -182,17 +182,21 @@ namespace
                 "status runtime=%s seed=%lld world-size=%u hell-scale=%u "
                 "public-slots=%u private-slots=%u startup=%d thread=%s "
                 "phase=%s",
-                sessionSnapshot.loadedFromSave ? "loaded" : "created-new",
-                (long long)sessionSnapshot.resolvedSeed,
+                sessionSnapshot.lifecycle.loadedFromSave
+                    ? "loaded"
+                    : "created-new",
+                (long long)sessionSnapshot.lifecycle.resolvedSeed,
                 sessionSnapshot.worldConfig.worldSizeChunks,
                 (unsigned int)sessionSnapshot.worldConfig.worldHellScale,
                 (unsigned int)sessionSnapshot.activation.publicSlots,
                 (unsigned int)sessionSnapshot.activation.privateSlots,
                 sessionSnapshot.startup.result,
-                sessionSnapshot.threadInvoked ? "invoked" : "skipped",
+                sessionSnapshot.lifecycle.threadInvoked
+                    ? "invoked"
+                    : "skipped",
                 ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
                     (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
-                        sessionSnapshot.runtimePhase));
+                        sessionSnapshot.lifecycle.runtimePhase));
             AppendResponseLine(response, buffer);
 
             std::snprintf(
@@ -226,7 +230,7 @@ namespace
                 "payload-bytes=%lld autosaves=%llu/%llu ticks=%llu "
                 "uptime-ms=%llu action=%s shutdown=%s halted=%s "
                 "hosted-thread=%s thread-ticks=%llu",
-                sessionSnapshot.active ? "true" : "false",
+                sessionSnapshot.lifecycle.active ? "true" : "false",
                 worldName,
                 worldSaveId,
                 sessionSnapshot.payload.name.empty()

@@ -2091,9 +2091,9 @@ int main(int argc, char* argv[])
             "SmokeHost" &&
         nativeHostedSessionObservedSnapshot.context.bindIp ==
             "127.0.0.1" &&
-        nativeHostedSessionObservedSnapshot.threadInvoked &&
+        nativeHostedSessionObservedSnapshot.lifecycle.threadInvoked &&
         nativeHostedSessionObservedSnapshot.startup.result == 0 &&
-        nativeHostedSessionObservedSnapshot.localUsersMask == 0 &&
+        nativeHostedSessionObservedSnapshot.lifecycle.localUsersMask == 0 &&
         nativeHostedSessionObservedSnapshot.activation.onlineGame &&
         !nativeHostedSessionObservedSnapshot.activation.privateGame &&
         nativeHostedSessionObservedSnapshot.activation.publicSlots ==
@@ -2141,13 +2141,13 @@ int main(int argc, char* argv[])
             .persistedSave.autosaveCompletions == 5 &&
         !nativeHostedSessionObservedSnapshot.control.worldActionIdle;
     const bool hostedGameSessionObservedLifecycleOk =
-        nativeHostedSessionObservedSnapshot.active &&
+        nativeHostedSessionObservedSnapshot.lifecycle.active &&
         !nativeHostedSessionObservedSnapshot.control.worldActionIdle &&
         nativeHostedSessionObservedSnapshot.control.appShutdownRequested &&
         nativeHostedSessionObservedSnapshot.control.stopSignalValid &&
         nativeHostedSessionObservedSnapshot.summary.sessionCompleted &&
         nativeHostedSessionObservedSnapshot.summary.requestedAppShutdown &&
-        nativeHostedSessionObservedSnapshot.runtimePhase ==
+        nativeHostedSessionObservedSnapshot.lifecycle.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_ShutdownRequested &&
         nativeHostedSessionObservedSnapshot.timing.stoppedMs == 0 &&
         nativeHostedSessionObservedSnapshot.progress.stateChecksum != 0U;
@@ -2161,8 +2161,8 @@ int main(int argc, char* argv[])
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
         hostedGameStoppedSnapshot.stoppedMs == 1200 &&
         hostedGameStoppedSnapshot.uptimeMs == 200 &&
-        !nativeHostedSessionStoppedSnapshot.active &&
-        nativeHostedSessionStoppedSnapshot.runtimePhase ==
+        !nativeHostedSessionStoppedSnapshot.lifecycle.active &&
+        nativeHostedSessionStoppedSnapshot.lifecycle.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
         nativeHostedSessionStoppedSnapshot.timing.stoppedMs == 1200 &&
         nativeHostedSessionStoppedSnapshot.persistedSave.savePath ==
@@ -3118,19 +3118,19 @@ int main(int argc, char* argv[])
     printf("hosted_game_core_startup=%d exit=%d present=%d validated=%d "
         "startup=%llu/%llu phase=%s active=%d\n",
         nativeHostedCoreStartupResult.startup.result == 0 &&
-            !nativeHostedCoreStartupResult.loadedFromSave &&
+            !nativeHostedCoreStartupResult.lifecycle.loadedFromSave &&
             nativeHostedCoreStartupResult.startup.payloadValidated &&
             nativeHostedCoreStartupResult
                     .startup.threadIterations == 2U &&
             nativeHostedCoreStartupResult
                     .startup.threadDurationMs > 0U &&
-            nativeHostedCoreStartupResult.active &&
+            nativeHostedCoreStartupResult.lifecycle.active &&
             nativeHostedCoreStartupResult.thread.active ==
                 false &&
-            nativeHostedCoreStartupResult.runtimePhase ==
+            nativeHostedCoreStartupResult.lifecycle.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Startup,
         nativeHostedCoreStartupResult.startup.result,
-        nativeHostedCoreStartupResult.loadedFromSave,
+        nativeHostedCoreStartupResult.lifecycle.loadedFromSave,
         nativeHostedCoreStartupResult.startup.payloadValidated,
         (unsigned long long)nativeHostedCoreStartupResult
             .startup.threadIterations,
@@ -3138,8 +3138,8 @@ int main(int argc, char* argv[])
             .startup.threadDurationMs,
         ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
             (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
-                nativeHostedCoreStartupResult.runtimePhase),
-        nativeHostedCoreStartupResult.active);
+                nativeHostedCoreStartupResult.lifecycle.runtimePhase),
+        nativeHostedCoreStartupResult.lifecycle.active);
     printf("hosted_game_core_frame=%d start=%d first=%llu/%llu "
         "second=%llu/%llu stopped=%d\n",
             nativeHostedCoreFrameStarted &&
@@ -3154,7 +3154,7 @@ int main(int argc, char* argv[])
             nativeHostedCoreFrameFirstSnapshot
                     .progress.gameplayLoopIterations == 1U &&
             nativeHostedCoreFrameFirstSnapshot.thread.active &&
-            nativeHostedCoreFrameFirstSnapshot.runtimePhase ==
+            nativeHostedCoreFrameFirstSnapshot.lifecycle.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
             nativeHostedCoreFrameSecondSleepDurationMs == 10U &&
             !nativeHostedCoreFrameSecondShouldStopRunning &&
@@ -3169,10 +3169,10 @@ int main(int argc, char* argv[])
             nativeHostedCoreFrameSecondSnapshot
                     .progress.observedAutosaveCompletions == 1U &&
             nativeHostedCoreFrameSecondSnapshot.thread.active &&
-            nativeHostedCoreFrameSecondSnapshot.runtimePhase ==
+            nativeHostedCoreFrameSecondSnapshot.lifecycle.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
-            !nativeHostedCoreFrameStoppedSnapshot.active &&
-            nativeHostedCoreFrameStoppedSnapshot.runtimePhase ==
+            !nativeHostedCoreFrameStoppedSnapshot.lifecycle.active &&
+            nativeHostedCoreFrameStoppedSnapshot.lifecycle.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped,
         nativeHostedCoreFrameStarted,
         (unsigned long long)nativeHostedCoreFrameFirst
@@ -3183,7 +3183,7 @@ int main(int argc, char* argv[])
             .pendingWorldActionTicks,
         (unsigned long long)nativeHostedCoreFrameSecondSnapshot
             .progress.observedAutosaveCompletions,
-        !nativeHostedCoreFrameStoppedSnapshot.active);
+        !nativeHostedCoreFrameStoppedSnapshot.lifecycle.active);
     printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
         "loops=%llu autosaves=%llu worker_idle=%d hooks=%d/%d phase=%s\n",
         nativeHostedCoreRunResult.startup.result == 0 &&
@@ -3211,8 +3211,8 @@ int main(int argc, char* argv[])
                     eNativeDedicatedServerHostedGameWorkerCommand_None &&
             g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
             g_nativeHostedCoreHookSmokeContext.stoppedCount == 1 &&
-            !nativeHostedCoreSnapshot.active &&
-            nativeHostedCoreSnapshot.runtimePhase ==
+            !nativeHostedCoreSnapshot.lifecycle.active &&
+            nativeHostedCoreSnapshot.lifecycle.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped,
         nativeHostedCoreRunResult.startup.result,
         nativeHostedCoreRunResult.startup.payloadValidated,
@@ -3231,7 +3231,7 @@ int main(int argc, char* argv[])
         g_nativeHostedCoreHookSmokeContext.stoppedCount,
         ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
             (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
-                nativeHostedCoreSnapshot.runtimePhase));
+                nativeHostedCoreSnapshot.lifecycle.runtimePhase));
     printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
         restartedHostedRuntimeResult.ok &&
             nativeHostedCoreRunResult.startup.result == 0 &&
@@ -3259,8 +3259,8 @@ int main(int argc, char* argv[])
                     eNativeDedicatedServerHostedGameWorkerCommand_None &&
             g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
             g_nativeHostedCoreHookSmokeContext.stoppedCount == 1 &&
-            !nativeHostedCoreSnapshot.active &&
-            nativeHostedCoreSnapshot.runtimePhase ==
+            !nativeHostedCoreSnapshot.lifecycle.active &&
+            nativeHostedCoreSnapshot.lifecycle.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
             hostedGameRuntimeSleepResult == 13 &&
             hostedGameRuntimeSleepThreadValue == 2 &&
@@ -3275,9 +3275,9 @@ int main(int argc, char* argv[])
         hostedGameRuntimeResult,
         hostedGameRuntimeThreadValue);
     const bool nativeHostedStubCoreContextOk =
-        nativeHostedSessionCoreSnapshot.startAttempted &&
-        nativeHostedSessionCoreSnapshot.loadedFromSave &&
-        nativeHostedSessionCoreSnapshot.resolvedSeed ==
+        nativeHostedSessionCoreSnapshot.lifecycle.startAttempted &&
+        nativeHostedSessionCoreSnapshot.lifecycle.loadedFromSave &&
+        nativeHostedSessionCoreSnapshot.lifecycle.resolvedSeed ==
             hostedGamePlan.resolvedSeed &&
         nativeHostedSessionCoreSnapshot.worldConfig.hostSettings ==
             sessionConfig.hostSettings &&
@@ -3298,7 +3298,7 @@ int main(int argc, char* argv[])
         nativeHostedSessionCoreStoppedSnapshot.progress.saveGeneration >=
             nativeHostedSessionCoreSnapshot.progress.saveGeneration &&
         nativeHostedSessionCoreStoppedSnapshot.progress.stateChecksum != 0U &&
-        !nativeHostedSessionCoreStoppedSnapshot.active;
+        !nativeHostedSessionCoreStoppedSnapshot.lifecycle.active;
     const bool nativeHostedStubCoreOk =
         nativeHostedStubCoreContextOk &&
         nativeHostedStubCoreFinalizationOk;
@@ -3391,9 +3391,9 @@ int main(int argc, char* argv[])
     printf("native_hosted_stub_core_context loaded=%d start=%d seed=%lld "
         "host=0x%x nolocal=%d size=%u hell=%u payload=%s/%lld meta=%d "
         "path=%s mode=%s\n",
-        nativeHostedSessionCoreSnapshot.loadedFromSave,
-        nativeHostedSessionCoreSnapshot.startAttempted,
-        (long long)nativeHostedSessionCoreSnapshot.resolvedSeed,
+        nativeHostedSessionCoreSnapshot.lifecycle.loadedFromSave,
+        nativeHostedSessionCoreSnapshot.lifecycle.startAttempted,
+        (long long)nativeHostedSessionCoreSnapshot.lifecycle.resolvedSeed,
         nativeHostedSessionCoreSnapshot.worldConfig.hostSettings,
         nativeHostedSessionCoreSnapshot.worldConfig.dedicatedNoLocalHostPlayer,
         nativeHostedSessionCoreSnapshot.worldConfig.worldSizeChunks,
@@ -3636,7 +3636,7 @@ int main(int argc, char* argv[])
         nativeHostedSessionObservedSnapshot.summary.shutdownHaltedGameplay,
         ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
             (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
-                nativeHostedSessionObservedSnapshot.runtimePhase),
+                nativeHostedSessionObservedSnapshot.lifecycle.runtimePhase),
         (unsigned long long)
             nativeHostedSessionObservedSnapshot.timing.stoppedMs,
         (unsigned long long)
@@ -4182,15 +4182,15 @@ int main(int argc, char* argv[])
         gameplayLoopRunResult.requestedAppShutdown &&
         gameplayLoopRunResult.lastIteration.shouldExit &&
         nativeHostedCoreStartupResult.startup.result == 0 &&
-        !nativeHostedCoreStartupResult.loadedFromSave &&
+        !nativeHostedCoreStartupResult.lifecycle.loadedFromSave &&
         nativeHostedCoreStartupResult.startup.payloadValidated &&
         nativeHostedCoreStartupResult
                 .startup.threadIterations == 2U &&
             nativeHostedCoreStartupResult
                     .startup.threadDurationMs > 0U &&
-            nativeHostedCoreStartupResult.active &&
+            nativeHostedCoreStartupResult.lifecycle.active &&
         !nativeHostedCoreStartupResult.thread.active &&
-        nativeHostedCoreStartupResult.runtimePhase ==
+        nativeHostedCoreStartupResult.lifecycle.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Startup &&
         nativeHostedCoreFrameStarted &&
         nativeHostedCoreFrameFirstSleepDurationMs == 10U &&
@@ -4203,7 +4203,7 @@ int main(int argc, char* argv[])
         nativeHostedCoreFrameFirstSnapshot.progress.gameplayLoopIterations ==
             1U &&
         nativeHostedCoreFrameFirstSnapshot.thread.active &&
-        nativeHostedCoreFrameFirstSnapshot.runtimePhase ==
+        nativeHostedCoreFrameFirstSnapshot.lifecycle.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
         nativeHostedCoreFrameSecondSleepDurationMs == 10U &&
         !nativeHostedCoreFrameSecondShouldStopRunning &&
@@ -4217,10 +4217,10 @@ int main(int argc, char* argv[])
         nativeHostedCoreFrameSecondSnapshot
                 .progress.observedAutosaveCompletions == 1U &&
         nativeHostedCoreFrameSecondSnapshot.thread.active &&
-        nativeHostedCoreFrameSecondSnapshot.runtimePhase ==
+        nativeHostedCoreFrameSecondSnapshot.lifecycle.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Running &&
-        !nativeHostedCoreFrameStoppedSnapshot.active &&
-        nativeHostedCoreFrameStoppedSnapshot.runtimePhase ==
+        !nativeHostedCoreFrameStoppedSnapshot.lifecycle.active &&
+        nativeHostedCoreFrameStoppedSnapshot.lifecycle.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
         nativeHostedCoreRunResult.startup.result == 0 &&
         nativeHostedCoreRunResult.startup.payloadValidated &&
@@ -4249,8 +4249,8 @@ int main(int argc, char* argv[])
             ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_None &&
         g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
         g_nativeHostedCoreHookSmokeContext.stoppedCount == 1 &&
-        !nativeHostedCoreSnapshot.active &&
-        nativeHostedCoreSnapshot.runtimePhase ==
+        !nativeHostedCoreSnapshot.lifecycle.active &&
+        nativeHostedCoreSnapshot.lifecycle.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
         hostedGameRuntimeNullThreadResult == -1 &&
         hostedGameRuntimeNullThreadSnapshot.startAttempted &&
