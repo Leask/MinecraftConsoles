@@ -191,3 +191,5 @@ Checkpoint status:
 - persistent startup result projection now comes from `core` once the hosted
   thread is invoked; `runtime` only records a failure when the thread never
   starts
+- wait-stop glue is join-only; stopped lifecycle projection is no longer
+  repeated after `core` returns

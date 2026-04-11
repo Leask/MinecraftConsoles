@@ -9,7 +9,6 @@
 #include "Minecraft.Server/Common/NativeDedicatedServerSaveStub.h"
 #include "Minecraft.Server/Common/StringUtils.h"
 #include "NativeDedicatedServerHostedGameHost.h"
-#include "lce_time/lce_time.h"
 
 namespace ServerRuntime
 {
@@ -2036,17 +2035,9 @@ namespace ServerRuntime
             *outExitCode = 0;
         }
 
-        const bool stopped = WaitForNativeDedicatedServerHostedGameHostStop(
+        // Core owns stopped lifecycle projection; this layer only joins.
+        return WaitForNativeDedicatedServerHostedGameHostStop(
             timeoutMs,
             outExitCode);
-        if (stopped)
-        {
-            const NativeDedicatedServerHostedGameSessionSnapshot snapshot =
-                GetNativeDedicatedServerHostedGameSessionSnapshot();
-            SignalNativeDedicatedServerHostedGameSessionThreadStopped(
-                snapshot.thread.ticks,
-                LceGetMonotonicMilliseconds());
-        }
-        return stopped;
     }
 }
