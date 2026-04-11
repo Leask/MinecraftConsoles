@@ -15,6 +15,7 @@ add_executable(Minecraft.Server ${MINECRAFT_SERVER_SOURCES})
 
 target_include_directories(Minecraft.Server PRIVATE
   "${CMAKE_BINARY_DIR}/generated/" # This is for the generated BuildVer.h
+  "${CMAKE_SOURCE_DIR}"
   "${CMAKE_SOURCE_DIR}/Minecraft.Client/"
   "${CMAKE_SOURCE_DIR}/Minecraft.Client/${PLATFORM_NAME}/Iggy/include"
   "${CMAKE_CURRENT_SOURCE_DIR}"
