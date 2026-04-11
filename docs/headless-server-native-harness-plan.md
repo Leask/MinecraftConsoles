@@ -181,3 +181,10 @@ Immediate deliverables:
 1. route `ready/stopped` lifecycle callbacks directly through `core`
 2. keep `bridge` as a thin adapter over thread entry only
 3. keep dual-platform harness validation mandatory for each checkpoint
+
+Checkpoint status:
+
+- `core` owns hosted thread ready/stopped session projection and host-ready
+  signaling
+- `thread bridge` only adapts the native hosted thread proc to the core entry
+- smoke coverage asserts direct core ready/stopped observers see session state

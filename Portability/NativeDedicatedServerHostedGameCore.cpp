@@ -1,5 +1,6 @@
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
+#include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 
 #include "lce_time/lce_time.h"
@@ -32,28 +33,40 @@ namespace ServerRuntime
     StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState(
         std::uint64_t stoppedMs = 0);
 
+    void SignalNativeDedicatedServerHostedGameSessionThreadReady(
+        std::uint64_t nowMs = 0);
+
+    void SignalNativeDedicatedServerHostedGameSessionThreadStopped(
+        std::uint64_t hostedThreadTicks,
+        std::uint64_t nowMs = 0);
+
     namespace
     {
         constexpr std::uint64_t kNativeHostedStartupStepDelayMs = 5;
         constexpr std::uint64_t kNativeHostedStartupBaseIterations = 2;
 
-        void InvokeNativeDedicatedServerHostedGameCoreReadyHook(
+        void SignalNativeDedicatedServerHostedGameCoreReady(
             void (*hook)(std::uint64_t nowMs),
             std::uint64_t nowMs)
         {
+            SignalNativeDedicatedServerHostedGameSessionThreadReady(nowMs);
+            (void)SignalNativeDedicatedServerHostedGameHostReady();
             if (hook != nullptr)
             {
                 hook(nowMs);
             }
         }
 
-        void InvokeNativeDedicatedServerHostedGameCoreStoppedHook(
+        void SignalNativeDedicatedServerHostedGameCoreStopped(
             void (*hook)(
                 std::uint64_t hostedThreadTicks,
                 std::uint64_t nowMs),
             std::uint64_t hostedThreadTicks,
             std::uint64_t nowMs)
         {
+            SignalNativeDedicatedServerHostedGameSessionThreadStopped(
+                hostedThreadTicks,
+                nowMs);
             if (hook != nullptr)
             {
                 hook(hostedThreadTicks, nowMs);
@@ -119,14 +132,14 @@ namespace ServerRuntime
         {
             const NativeDedicatedServerHostedGameSessionSnapshot finalState =
                 CaptureNativeDedicatedServerHostedGameSessionState();
-            InvokeNativeDedicatedServerHostedGameCoreStoppedHook(
+            SignalNativeDedicatedServerHostedGameCoreStopped(
                 onThreadStopped,
                 finalState.thread.ticks,
                 LceGetMonotonicMilliseconds());
             return finalState;
         }
 
-        InvokeNativeDedicatedServerHostedGameCoreReadyHook(
+        SignalNativeDedicatedServerHostedGameCoreReady(
             onThreadReady,
             LceGetMonotonicMilliseconds());
         while (true)
@@ -149,10 +162,20 @@ namespace ServerRuntime
 
         const NativeDedicatedServerHostedGameSessionSnapshot finalState =
             StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState();
-        InvokeNativeDedicatedServerHostedGameCoreStoppedHook(
+        SignalNativeDedicatedServerHostedGameCoreStopped(
             onThreadStopped,
             finalState.thread.ticks,
             LceGetMonotonicMilliseconds());
         return finalState;
+    }
+
+    NativeDedicatedServerHostedGameSessionSnapshot
+    RunNativeDedicatedServerHostedGameCore(
+        NativeDedicatedServerHostedGameRuntimeStubInitData *initData)
+    {
+        return RunNativeDedicatedServerHostedGameCore(
+            initData,
+            nullptr,
+            nullptr);
     }
 }

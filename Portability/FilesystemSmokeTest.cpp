@@ -415,6 +415,8 @@ namespace
     {
         int readyCount = 0;
         int stoppedCount = 0;
+        bool readyObservedSession = false;
+        bool stoppedObservedSession = false;
         bool requestShutdownOnReady = false;
     };
 
@@ -448,15 +450,31 @@ namespace
     void NativeHostedCoreReadyHook(std::uint64_t)
     {
         ++g_nativeHostedCoreHookSmokeContext.readyCount;
+        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+            snapshot =
+                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
+        g_nativeHostedCoreHookSmokeContext.readyObservedSession =
+            ServerRuntime::IsNativeDedicatedServerHostedGameSessionRunning() &&
+            snapshot.thread.active;
         if (g_nativeHostedCoreHookSmokeContext.requestShutdownOnReady)
         {
             ServerRuntime::RequestDedicatedServerShutdown();
         }
     }
 
-    void NativeHostedCoreStoppedHook(std::uint64_t, std::uint64_t)
+    void NativeHostedCoreStoppedHook(
+        std::uint64_t hostedThreadTicks,
+        std::uint64_t)
     {
         ++g_nativeHostedCoreHookSmokeContext.stoppedCount;
+        const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
+            snapshot =
+                ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
+        g_nativeHostedCoreHookSmokeContext.stoppedObservedSession =
+            !snapshot.thread.active &&
+            snapshot.thread.ticks == hostedThreadTicks &&
+            snapshot.lifecycle.runtimePhase ==
+                ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped;
     }
 
     bool WaitHookIdleProc(int, void* context)
@@ -3311,7 +3329,8 @@ int main(int argc, char* argv[])
             nativeHostedCoreHaltThird.processedHaltCommands,
         nativeHostedCoreHaltSnapshot.control.gameplayHalted);
     printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
-        "loops=%llu autosaves=%llu worker_idle=%d hooks=%d/%d phase=%s\n",
+        "loops=%llu autosaves=%llu worker_idle=%d hooks=%d/%d "
+        "observed=%d/%d phase=%s\n",
         nativeHostedCoreRunResult.startup.result == 0 &&
             nativeHostedCoreRunResult.startup.payloadValidated &&
             nativeHostedCoreRunResult
@@ -3339,6 +3358,8 @@ int main(int argc, char* argv[])
                     eNativeDedicatedServerHostedGameWorkerCommand_None &&
             g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
             g_nativeHostedCoreHookSmokeContext.stoppedCount == 1 &&
+            g_nativeHostedCoreHookSmokeContext.readyObservedSession &&
+            g_nativeHostedCoreHookSmokeContext.stoppedObservedSession &&
             !nativeHostedCoreSnapshot.lifecycle.active &&
             nativeHostedCoreSnapshot.lifecycle.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped,
@@ -3357,6 +3378,8 @@ int main(int argc, char* argv[])
                 eNativeDedicatedServerHostedGameWorkerCommand_None,
         g_nativeHostedCoreHookSmokeContext.readyCount,
         g_nativeHostedCoreHookSmokeContext.stoppedCount,
+        g_nativeHostedCoreHookSmokeContext.readyObservedSession,
+        g_nativeHostedCoreHookSmokeContext.stoppedObservedSession,
         ServerRuntime::GetDedicatedServerHostedGameRuntimePhaseName(
             (ServerRuntime::EDedicatedServerHostedGameRuntimePhase)
                 nativeHostedCoreSnapshot.lifecycle.runtimePhase));
@@ -3389,6 +3412,8 @@ int main(int argc, char* argv[])
                     eNativeDedicatedServerHostedGameWorkerCommand_None &&
             g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
             g_nativeHostedCoreHookSmokeContext.stoppedCount == 1 &&
+            g_nativeHostedCoreHookSmokeContext.readyObservedSession &&
+            g_nativeHostedCoreHookSmokeContext.stoppedObservedSession &&
             !nativeHostedCoreSnapshot.lifecycle.active &&
             nativeHostedCoreSnapshot.lifecycle.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
@@ -4392,6 +4417,8 @@ int main(int argc, char* argv[])
             ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_None &&
         g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&
         g_nativeHostedCoreHookSmokeContext.stoppedCount == 1 &&
+        g_nativeHostedCoreHookSmokeContext.readyObservedSession &&
+        g_nativeHostedCoreHookSmokeContext.stoppedObservedSession &&
         !nativeHostedCoreSnapshot.lifecycle.active &&
         nativeHostedCoreSnapshot.lifecycle.runtimePhase ==
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&

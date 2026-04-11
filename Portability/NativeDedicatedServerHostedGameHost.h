@@ -6,6 +6,8 @@ namespace ServerRuntime
 {
     void ResetNativeDedicatedServerHostedGameHostState();
 
+    bool SignalNativeDedicatedServerHostedGameHostReady();
+
     bool WaitForNativeDedicatedServerHostedGameHostStop(
         DWORD timeoutMs,
         DWORD *outExitCode);

@@ -1,45 +1,16 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
-#include "Minecraft.Server/Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
-#include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 
 namespace ServerRuntime
 {
     NativeDedicatedServerHostedGameSessionSnapshot
     RunNativeDedicatedServerHostedGameCore(
-        NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
-        void (*onThreadReady)(std::uint64_t nowMs),
-        void (*onThreadStopped)(
-            std::uint64_t hostedThreadTicks,
-            std::uint64_t nowMs));
-
-    bool SignalNativeDedicatedServerHostedGameHostReady();
-    void SignalNativeDedicatedServerHostedGameSessionThreadReady(
-        std::uint64_t nowMs = 0);
-    void SignalNativeDedicatedServerHostedGameSessionThreadStopped(
-        std::uint64_t hostedThreadTicks,
-        std::uint64_t nowMs = 0);
+        NativeDedicatedServerHostedGameRuntimeStubInitData *initData);
 
     namespace
     {
         int RunNativeDedicatedServerHostedGameThread(void *threadParam);
-
-        void SignalNativeDedicatedServerHostedGameThreadReady(
-            std::uint64_t nowMs)
-        {
-            SignalNativeDedicatedServerHostedGameSessionThreadReady(nowMs);
-            (void)SignalNativeDedicatedServerHostedGameHostReady();
-        }
-
-        void SignalNativeDedicatedServerHostedGameThreadStopped(
-            std::uint64_t hostedThreadTicks,
-            std::uint64_t nowMs)
-        {
-            SignalNativeDedicatedServerHostedGameSessionThreadStopped(
-                hostedThreadTicks,
-                nowMs);
-        }
 
         int RunNativeDedicatedServerHostedGameThread(void *threadParam)
         {
@@ -47,9 +18,7 @@ namespace ServerRuntime
                 RunNativeDedicatedServerHostedGameCore(
                     static_cast<
                         NativeDedicatedServerHostedGameRuntimeStubInitData *>(
-                            threadParam),
-                    &SignalNativeDedicatedServerHostedGameThreadReady,
-                    &SignalNativeDedicatedServerHostedGameThreadStopped);
+                            threadParam));
             if (finalState.startup.result != 0)
             {
                 return finalState.startup.result;
