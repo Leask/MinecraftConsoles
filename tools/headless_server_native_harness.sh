@@ -148,9 +148,11 @@ assert_save_contains() {
 
 run_source_contract_checks() {
     local shell_source
+    local platform_source
     local log_file
 
     shell_source="$repo_root/Minecraft.Server/Common/DedicatedServerHeadlessShell.cpp"
+    platform_source="$repo_root/Portability/NativeDedicatedServerPlatformRuntime.cpp"
     log_file="$log_root/source-contract.log"
     current_step="source-contract"
 
@@ -163,6 +165,24 @@ run_source_contract_checks() {
             "$shell_source"; then
             echo \
                 "DedicatedServerHeadlessShell must use session projection APIs" \
+                >&2
+            return 1
+        fi
+
+        if grep -Fq \
+            "ObserveNativeDedicatedServerHostedGameSessionAutosavesAndProject" \
+            "$platform_source"; then
+            echo \
+                "NativeDedicatedServerPlatformRuntime must use session frame APIs" \
+                >&2
+            return 1
+        fi
+
+        if grep -Fq \
+            "ObserveNativeDedicatedServerHostedGameSessionPlatformRuntimeStateAndProject" \
+            "$platform_source"; then
+            echo \
+                "NativeDedicatedServerPlatformRuntime must use session frame APIs" \
                 >&2
             return 1
         fi

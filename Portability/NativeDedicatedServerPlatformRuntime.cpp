@@ -31,12 +31,9 @@ namespace ServerRuntime
         DWORD timeoutMs,
         DWORD *outExitCode = nullptr);
 
-    void ObserveNativeDedicatedServerHostedGameSessionAutosavesAndProject(
-        std::uint64_t autosaveCompletions,
-        std::uint64_t nowMs = 0);
-
-    void ObserveNativeDedicatedServerHostedGameSessionPlatformRuntimeStateAndProject(
+    void AdvanceNativeDedicatedServerHostedGameSessionPlatformFrameAndProject(
         std::uint64_t autosaveRequests,
+        std::uint64_t autosaveCompletions,
         std::uint64_t platformTickCount,
         std::uint64_t gameplayLoopIterations,
         bool appShutdownRequested,
@@ -86,8 +83,10 @@ namespace
         const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
             sessionSnapshot =
                 ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPlatformRuntimeStateAndProject(
+        ServerRuntime::
+            AdvanceNativeDedicatedServerHostedGameSessionPlatformFrameAndProject(
             ServerRuntime::GetDedicatedServerAutosaveRequestCount(),
+            ServerRuntime::GetDedicatedServerAutosaveCompletionCount(),
             ServerRuntime::GetDedicatedServerPlatformTickCount(),
             sessionSnapshot.progress.gameplayLoopIterations,
             g_nativeRuntimeState.appShutdownRequested,
@@ -143,9 +142,6 @@ namespace ServerRuntime
         {
             UpdateDedicatedServerAutosaveTracker(
                 IsDedicatedServerWorldActionIdle(0));
-            ObserveNativeDedicatedServerHostedGameSessionAutosavesAndProject(
-                GetDedicatedServerAutosaveCompletionCount(),
-                LceGetMonotonicMilliseconds());
         }
         RefreshNativeDedicatedServerRuntimeProjection(
             LceGetMonotonicMilliseconds());

@@ -198,3 +198,6 @@ Checkpoint status:
 - shell status refresh now routes worker projection through a session-owned
   helper, and the dual-platform harness guards against shell direct worker
   projection calls
+- platform runtime refresh now submits a single session platform frame for
+  autosave/platform/runtime state instead of composing separate projection
+  calls itself
