@@ -80,6 +80,7 @@ foreach(expected_marker IN ITEMS
     "remote shell command #1: status"
     "remote shell command #2: save"
     "remote shell command #3: stop"
+    "shell response #"
     "status runtime=created-new"
     "status payload settings=0x"
     "startup-payload=none"
@@ -101,7 +102,9 @@ foreach(expected_marker IN ITEMS
     "action="
     "payload=none"
     "manual save requested via worker command #"
+    "ok manual save requested command="
     "stop requested via worker command #"
+    "ok stop requested command="
     "persisted native save stub #")
   string(FIND "${combined_output}" "${expected_marker}" marker_index)
   if(marker_index LESS 0)

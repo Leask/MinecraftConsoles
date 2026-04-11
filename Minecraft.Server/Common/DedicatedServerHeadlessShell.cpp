@@ -95,6 +95,39 @@ namespace
         response->push_back('\n');
     }
 
+    void LogShellResponseLines(const std::string &response)
+    {
+        size_t lineStart = 0;
+        std::uint64_t lineNumber = 0;
+        while (lineStart <= response.size())
+        {
+            const size_t lineEnd = response.find('\n', lineStart);
+            std::string line = lineEnd == std::string::npos
+                ? response.substr(lineStart)
+                : response.substr(lineStart, lineEnd - lineStart);
+            if (!line.empty() && line.back() == '\r')
+            {
+                line.pop_back();
+            }
+
+            if (!line.empty())
+            {
+                ++lineNumber;
+                ServerRuntime::LogInfof(
+                    "network",
+                    "shell response #%llu: %s",
+                    (unsigned long long)lineNumber,
+                    line.c_str());
+            }
+
+            if (lineEnd == std::string::npos)
+            {
+                break;
+            }
+            lineStart = lineEnd + 1;
+        }
+    }
+
     bool RefreshNativeDedicatedServerActivityProjection(
         const ServerRuntime::DedicatedServerHeadlessShellState &state,
         std::uint64_t nowMs = 0)
@@ -625,6 +658,7 @@ namespace ServerRuntime
 
             if (!response.empty())
             {
+                LogShellResponseLines(response);
                 LceNetSendAll(
                     acceptedSocket,
                     response.data(),
