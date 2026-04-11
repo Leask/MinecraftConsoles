@@ -203,3 +203,5 @@ Checkpoint status:
   calls itself
 - headless runtime now records shell context and persisted save lineage through
   session lifecycle helpers instead of direct observer/projection calls
+- hosted runtime now delegates persistent thread start/wait-ready ownership to
+  core and records startup results through a session startup helper

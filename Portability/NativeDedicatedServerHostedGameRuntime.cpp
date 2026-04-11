@@ -1,6 +1,5 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
-#include "NativeDedicatedServerHostedGameHost.h"
 #include "NativeDedicatedServerHostedGameSession.h"
 
 #include "lce_time/lce_time.h"
@@ -12,52 +11,20 @@ namespace ServerRuntime
     bool StartNativeDedicatedServerHostedGameSession(
         const NativeDedicatedServerHostedGameRuntimeStubInitData &initData);
 
-    int StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
-        DedicatedServerHostedGameThreadProc *threadProc,
-        void *threadParam,
-        bool *outThreadInvoked);
-
     int RunNativeDedicatedServerHostedGameTransientThread(
         DedicatedServerHostedGameThreadProc *threadProc,
         void *threadParam,
         bool *outThreadInvoked);
 
-    void ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+    int StartNativeDedicatedServerHostedGameCoreRuntime(
+        const DedicatedServerHostedGamePlan &hostedGamePlan,
+        DedicatedServerHostedGameThreadProc *threadProc,
+        void *threadParam);
+
+    void CompleteNativeDedicatedServerHostedGameStartupResultAndProject(
         int startupResult,
         bool threadInvoked,
         std::uint64_t nowMs = 0);
-
-    namespace
-    {
-        int StartPersistentNativeDedicatedServerHostedGameRuntime(
-            const DedicatedServerHostedGamePlan &hostedGamePlan,
-            DedicatedServerHostedGameThreadProc *threadProc,
-            void *threadParam)
-        {
-            bool threadInvoked = false;
-
-            ResetNativeDedicatedServerHostedGameSessionState();
-            PopulateDedicatedServerHostedGameRuntimeStubInitData(
-                static_cast<
-                    NativeDedicatedServerHostedGameRuntimeStubInitData *>(
-                        threadParam),
-                hostedGamePlan);
-            const int startupResult =
-                StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
-                threadProc,
-                threadParam,
-                &threadInvoked);
-
-            if (!threadInvoked)
-            {
-                ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
-                    startupResult,
-                    false,
-                    LceGetMonotonicMilliseconds());
-            }
-            return startupResult;
-        }
-    }
 
     int StartDedicatedServerHostedGameRuntime(
         const DedicatedServerHostedGamePlan &hostedGamePlan,
@@ -83,7 +50,7 @@ namespace ServerRuntime
             if (threadProc == nullptr)
             {
                 startupResult = -1;
-                ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+                CompleteNativeDedicatedServerHostedGameStartupResultAndProject(
                     startupResult,
                     false,
                     LceGetMonotonicMilliseconds());
@@ -93,7 +60,7 @@ namespace ServerRuntime
 
         if (persistentSession)
         {
-            return StartPersistentNativeDedicatedServerHostedGameRuntime(
+            return StartNativeDedicatedServerHostedGameCoreRuntime(
                 hostedGamePlan,
                 threadProc,
                 threadParam);
@@ -104,7 +71,7 @@ namespace ServerRuntime
             threadProc,
             threadParam,
             &threadInvoked);
-        ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+        CompleteNativeDedicatedServerHostedGameStartupResultAndProject(
             exitCode,
             threadInvoked,
             LceGetMonotonicMilliseconds());

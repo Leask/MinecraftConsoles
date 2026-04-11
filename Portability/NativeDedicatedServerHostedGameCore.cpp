@@ -1,3 +1,4 @@
+#include "Minecraft.Server/Common/DedicatedServerHostedGameRuntime.h"
 #include "Minecraft.Server/Common/DedicatedServerPlatformRuntime.h"
 #include "Minecraft.Server/Common/NativeDedicatedServerHostedGameRuntimeStub.h"
 #include "NativeDedicatedServerHostedGameHost.h"
@@ -33,7 +34,14 @@ namespace ServerRuntime
     StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState(
         std::uint64_t stoppedMs = 0);
 
-    void ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+    void ResetNativeDedicatedServerHostedGameSessionState();
+
+    int StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
+        DedicatedServerHostedGameThreadProc *threadProc,
+        void *threadParam,
+        bool *outThreadInvoked);
+
+    void CompleteNativeDedicatedServerHostedGameStartupResultAndProject(
         int startupResult,
         bool threadInvoked,
         std::uint64_t nowMs = 0);
@@ -123,6 +131,35 @@ namespace ServerRuntime
             LceGetMonotonicMilliseconds());
     }
 
+    int StartNativeDedicatedServerHostedGameCoreRuntime(
+        const DedicatedServerHostedGamePlan &hostedGamePlan,
+        DedicatedServerHostedGameThreadProc *threadProc,
+        void *threadParam)
+    {
+        bool threadInvoked = false;
+
+        ResetNativeDedicatedServerHostedGameSessionState();
+        PopulateDedicatedServerHostedGameRuntimeStubInitData(
+            static_cast<NativeDedicatedServerHostedGameRuntimeStubInitData *>(
+                threadParam),
+            hostedGamePlan);
+        const int startupResult =
+            StartNativeDedicatedServerHostedGameHostThreadAndWaitReady(
+                threadProc,
+                threadParam,
+                &threadInvoked);
+
+        if (!threadInvoked)
+        {
+            CompleteNativeDedicatedServerHostedGameStartupResultAndProject(
+                startupResult,
+                false,
+                LceGetMonotonicMilliseconds());
+        }
+
+        return startupResult;
+    }
+
     NativeDedicatedServerHostedGameSessionSnapshot
     RunNativeDedicatedServerHostedGameCore(
         NativeDedicatedServerHostedGameRuntimeStubInitData *initData,
@@ -133,7 +170,7 @@ namespace ServerRuntime
     {
         const NativeDedicatedServerHostedGameSessionSnapshot startupSnapshot =
             StartNativeDedicatedServerHostedGameCore(initData);
-        ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+        CompleteNativeDedicatedServerHostedGameStartupResultAndProject(
             startupSnapshot.startup.result,
             true,
             LceGetMonotonicMilliseconds());

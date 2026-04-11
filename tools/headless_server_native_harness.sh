@@ -149,11 +149,13 @@ assert_save_contains() {
 run_source_contract_checks() {
     local shell_source
     local headless_runtime_source
+    local hosted_runtime_source
     local platform_source
     local log_file
 
     shell_source="$repo_root/Minecraft.Server/Common/DedicatedServerHeadlessShell.cpp"
     headless_runtime_source="$repo_root/Minecraft.Server/Common/DedicatedServerHeadlessRuntime.cpp"
+    hosted_runtime_source="$repo_root/Portability/NativeDedicatedServerHostedGameRuntime.cpp"
     platform_source="$repo_root/Portability/NativeDedicatedServerPlatformRuntime.cpp"
     log_file="$log_root/source-contract.log"
     current_step="source-contract"
@@ -203,6 +205,24 @@ run_source_contract_checks() {
             "$headless_runtime_source"; then
             echo \
                 "DedicatedServerHeadlessRuntime must use session lifecycle APIs" \
+                >&2
+            return 1
+        fi
+
+        if grep -Fq \
+            "ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject" \
+            "$hosted_runtime_source"; then
+            echo \
+                "NativeDedicatedServerHostedGameRuntime must use core/session startup APIs" \
+                >&2
+            return 1
+        fi
+
+        if grep -Fq \
+            "StartNativeDedicatedServerHostedGameHostThreadAndWaitReady" \
+            "$hosted_runtime_source"; then
+            echo \
+                "NativeDedicatedServerHostedGameRuntime must delegate host startup to core" \
                 >&2
             return 1
         fi

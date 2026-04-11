@@ -55,6 +55,11 @@ namespace ServerRuntime
         bool threadInvoked,
         std::uint64_t nowMs);
 
+    void CompleteNativeDedicatedServerHostedGameStartupResultAndProject(
+        int startupResult,
+        bool threadInvoked,
+        std::uint64_t nowMs = 0);
+
     void ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(
         std::uint64_t nowMs = 0);
 
@@ -1018,6 +1023,17 @@ namespace ServerRuntime
             startupResult,
             threadInvoked);
         ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
+    }
+
+    void CompleteNativeDedicatedServerHostedGameStartupResultAndProject(
+        int startupResult,
+        bool threadInvoked,
+        std::uint64_t nowMs)
+    {
+        ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+            startupResult,
+            threadInvoked,
+            nowMs);
     }
 
     void TickNativeDedicatedServerHostedGameSession(
