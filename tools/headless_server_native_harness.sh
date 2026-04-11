@@ -32,6 +32,7 @@ remote_build_ok=0
 remote_bootstrap_ok=0
 remote_live_ok=0
 remote_signal_ok=0
+source_contract_ok=0
 
 write_summary_header() {
     local git_head
@@ -143,6 +144,35 @@ assert_save_contains() {
         cat "$save_file" >&2
         return 1
     fi
+}
+
+run_source_contract_checks() {
+    local shell_source
+    local log_file
+
+    shell_source="$repo_root/Minecraft.Server/Common/DedicatedServerHeadlessShell.cpp"
+    log_file="$log_root/source-contract.log"
+    current_step="source-contract"
+
+    echo "==> source-contract"
+    append_summary_line "step.source-contract.log=$log_file"
+
+    {
+        if grep -Fq \
+            "ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot" \
+            "$shell_source"; then
+            echo \
+                "DedicatedServerHeadlessShell must use session projection APIs" \
+                >&2
+            return 1
+        fi
+
+        echo "source contract checks passed"
+    } > >(tee "$log_file") 2>&1
+
+    append_summary_line "step.source-contract=ok"
+    source_contract_ok=1
+    append_summary_line "source.contract=ok"
 }
 
 run_local_build_and_test() {
@@ -460,6 +490,7 @@ main() {
     echo "Remote host: $remote_host"
     echo "Remote root: $remote_root"
 
+    run_source_contract_checks
     run_local_build_and_test
     run_local_bootstrap
     run_local_live

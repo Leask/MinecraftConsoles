@@ -65,6 +65,9 @@ namespace ServerRuntime
     void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
         std::uint64_t nowMs = 0);
 
+    void RefreshNativeDedicatedServerHostedGameSessionWorkerStateAndProject(
+        std::uint64_t nowMs = 0);
+
     void ClearNativeDedicatedServerHostedGameSessionWorkerQueueAndProject(
         std::uint64_t nowMs = 0);
 
@@ -1518,6 +1521,12 @@ namespace ServerRuntime
         ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
             GetNativeDedicatedServerHostedGameWorkerSnapshot());
         ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
+    }
+
+    void RefreshNativeDedicatedServerHostedGameSessionWorkerStateAndProject(
+        std::uint64_t nowMs)
+    {
+        ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(nowMs);
     }
 
     void ClearNativeDedicatedServerHostedGameSessionWorkerQueueAndProject(

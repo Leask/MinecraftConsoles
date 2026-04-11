@@ -195,3 +195,6 @@ Checkpoint status:
   repeated after `core` returns
 - platform shutdown cleanup now routes worker queue clearing through the
   session projection helper instead of calling worker/project glue directly
+- shell status refresh now routes worker projection through a session-owned
+  helper, and the dual-platform harness guards against shell direct worker
+  projection calls

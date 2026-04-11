@@ -34,6 +34,11 @@ namespace ServerRuntime
     {
     }
 
+    void RefreshNativeDedicatedServerHostedGameSessionWorkerStateAndProject(
+        std::uint64_t)
+    {
+    }
+
     void ObserveNativeDedicatedServerHostedGameSessionActivityAndProject(
         std::uint64_t,
         std::uint64_t,

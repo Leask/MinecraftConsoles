@@ -24,7 +24,7 @@ namespace ServerRuntime
         std::uint64_t nowMs = 0);
     std::uint64_t EnqueueNativeDedicatedServerHostedGameSessionStopCommand(
         std::uint64_t nowMs = 0);
-    void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
+    void RefreshNativeDedicatedServerHostedGameSessionWorkerStateAndProject(
         std::uint64_t nowMs = 0);
 
     void ObserveNativeDedicatedServerHostedGameSessionActivityAndProject(
@@ -152,11 +152,14 @@ namespace
             return;
         }
 
-        ServerRuntime::ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot();
+        const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
+        ServerRuntime::
+            RefreshNativeDedicatedServerHostedGameSessionWorkerStateAndProject(
+                nowMs);
         const bool worldActionIdle =
             RefreshNativeDedicatedServerActivityProjection(
                 state,
-                LceGetMonotonicMilliseconds());
+                nowMs);
         const ServerRuntime::NativeDedicatedServerHostedGameSessionSnapshot
             sessionSnapshot =
                 ServerRuntime::GetNativeDedicatedServerHostedGameSessionSnapshot();
@@ -692,12 +695,13 @@ namespace ServerRuntime
 
         if (command == "status")
         {
-            ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
-                LceGetMonotonicMilliseconds());
+            const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
+            RefreshNativeDedicatedServerHostedGameSessionWorkerStateAndProject(
+                nowMs);
             const bool worldActionIdle =
                 RefreshNativeDedicatedServerActivityProjection(
                     state,
-                    LceGetMonotonicMilliseconds());
+                    nowMs);
             LogInfof(
                 "console",
                 "status host=%s bind=%s configured-port=%d listener-port=%d accepted=%llu world-action=%s",
