@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <cstring>
 #include <cwchar>
-#include <limits>
 
 namespace
 {
@@ -71,7 +70,7 @@ namespace
 
     std::uint8_t ClampToByte(unsigned int value)
     {
-        const unsigned int maxByte = std::numeric_limits<std::uint8_t>::max();
+        const unsigned int maxByte = 0xffu;
         return static_cast<std::uint8_t>(value > maxByte ? maxByte : value);
     }
 }
