@@ -3319,7 +3319,7 @@ int main(int argc, char* argv[])
             nativeHostedCoreRunResult
                     .startup.threadDurationMs > 0U &&
             nativeHostedCoreRunResult.progress.gameplayLoopIterations ==
-                1U &&
+                2U &&
             nativeHostedCoreRunResult
                     .progress.observedAutosaveCompletions == 0U &&
             nativeHostedCoreRunResult
@@ -3332,6 +3332,8 @@ int main(int argc, char* argv[])
                     .worker.pendingStopCommands == 0U &&
             nativeHostedCoreRunResult
                     .worker.pendingHaltCommands == 0U &&
+            nativeHostedCoreRunResult
+                    .worker.processedHaltCommands == 1U &&
             nativeHostedCoreRunResult.worker.activeCommandKind ==
                 ServerRuntime::
                     eNativeDedicatedServerHostedGameWorkerCommand_None &&
@@ -3367,7 +3369,7 @@ int main(int argc, char* argv[])
             nativeHostedCoreRunResult
                     .startup.threadDurationMs > 0U &&
             nativeHostedCoreRunResult.progress.gameplayLoopIterations ==
-                1U &&
+                2U &&
             nativeHostedCoreRunResult
                     .progress.observedAutosaveCompletions == 0U &&
             nativeHostedCoreRunResult
@@ -3380,6 +3382,8 @@ int main(int argc, char* argv[])
                     .worker.pendingStopCommands == 0U &&
             nativeHostedCoreRunResult
                     .worker.pendingHaltCommands == 0U &&
+            nativeHostedCoreRunResult
+                    .worker.processedHaltCommands == 1U &&
             nativeHostedCoreRunResult.worker.activeCommandKind ==
                 ServerRuntime::
                     eNativeDedicatedServerHostedGameWorkerCommand_None &&
@@ -4365,7 +4369,7 @@ int main(int argc, char* argv[])
         nativeHostedCoreRunResult.startup.threadIterations == 2U &&
         nativeHostedCoreRunResult.startup.threadDurationMs > 0U &&
         nativeHostedCoreRunResult.progress.gameplayLoopIterations ==
-            1U &&
+            2U &&
         nativeHostedCoreRunResult
                 .progress.observedAutosaveCompletions == 0U &&
         nativeHostedCoreRunResult
@@ -4383,6 +4387,7 @@ int main(int argc, char* argv[])
         nativeHostedCoreRunResult
             .worker.pendingHaltCommands ==
             0U &&
+        nativeHostedCoreRunResult.worker.processedHaltCommands == 1U &&
         nativeHostedCoreRunResult.worker.activeCommandKind ==
             ServerRuntime::eNativeDedicatedServerHostedGameWorkerCommand_None &&
         g_nativeHostedCoreHookSmokeContext.readyCount == 1 &&

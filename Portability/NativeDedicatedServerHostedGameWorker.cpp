@@ -43,6 +43,7 @@ namespace
     std::atomic<std::uint64_t> g_nativeHostedWorkerActiveCommandKind(0);
     std::atomic<std::uint64_t> g_nativeHostedWorkerLastProcessedCommandId(0);
     std::atomic<std::uint64_t> g_nativeHostedWorkerLastProcessedCommandKind(0);
+    std::atomic<bool> g_nativeHostedWorkerShutdownCommandQueued(false);
 }
 
 namespace ServerRuntime
@@ -247,6 +248,7 @@ namespace ServerRuntime
         g_nativeHostedWorkerProcessedHaltCommands.store(0);
         g_nativeHostedWorkerNextCommandId.store(1);
         g_nativeHostedWorkerLastQueuedCommandId.store(0);
+        g_nativeHostedWorkerShutdownCommandQueued.store(false);
         ClearNativeDedicatedServerHostedGameWorkerActiveCommand();
         g_nativeHostedWorkerLastProcessedCommandId.store(0);
         g_nativeHostedWorkerLastProcessedCommandKind.store(0);
@@ -337,6 +339,7 @@ namespace ServerRuntime
                     eNativeDedicatedServerHostedGameWorkerCommand_Stop});
         }
         g_nativeHostedWorkerPendingStopCommands.fetch_add(1);
+        g_nativeHostedWorkerShutdownCommandQueued.store(true);
         g_nativeHostedWorkerLastQueuedCommandId.store(commandId);
         return commandId;
     }
@@ -353,6 +356,7 @@ namespace ServerRuntime
                     eNativeDedicatedServerHostedGameWorkerCommand_Halt});
         }
         g_nativeHostedWorkerPendingHaltCommands.fetch_add(1);
+        g_nativeHostedWorkerShutdownCommandQueued.store(true);
         g_nativeHostedWorkerLastQueuedCommandId.store(commandId);
         return commandId;
     }
@@ -432,8 +436,15 @@ namespace ServerRuntime
         bool *outShouldStopRunning)
     {
         TickNativeDedicatedServerHostedGameWorker();
-        const NativeDedicatedServerHostedGameWorkerSnapshot snapshot =
+        NativeDedicatedServerHostedGameWorkerSnapshot snapshot =
             GetNativeDedicatedServerHostedGameWorkerSnapshot();
+        if (ServerRuntime::IsDedicatedServerShutdownRequested() &&
+            !g_nativeHostedWorkerShutdownCommandQueued.load() &&
+            snapshot.idle)
+        {
+            (void)EnqueueNativeDedicatedServerHostedGameWorkerHaltCommand();
+            snapshot = GetNativeDedicatedServerHostedGameWorkerSnapshot();
+        }
         const bool idle = IsNativeDedicatedServerHostedGameWorkerIdle();
         const bool shouldStopRunning =
             IsNativeDedicatedServerHostedGameWorkerShutdownRequested() &&
