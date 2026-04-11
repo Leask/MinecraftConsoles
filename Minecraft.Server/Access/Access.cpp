@@ -1,7 +1,7 @@
 #include "Access.h"
 
-#include "Minecraft.Server/Common/StringUtils.h"
-#include "Minecraft.Server/ServerLogger.h"
+#include "../Common/StringUtils.h"
+#include "../ServerLogger.h"
 
 #include <memory>
 #include <mutex>
