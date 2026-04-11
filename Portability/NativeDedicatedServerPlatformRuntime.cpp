@@ -10,8 +10,6 @@ namespace ServerRuntime
 {
     void ResetNativeDedicatedServerHostedGameWorkerState();
 
-    void ClearNativeDedicatedServerHostedGameWorkerState();
-
     bool IsNativeDedicatedServerHostedGameSessionRunning();
 
     NativeDedicatedServerHostedGameSessionSnapshot
@@ -19,8 +17,9 @@ namespace ServerRuntime
 
     void ResetNativeDedicatedServerHostedGameSessionState();
 
-    void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
+    void ClearNativeDedicatedServerHostedGameSessionWorkerQueueAndProject(
         std::uint64_t nowMs = 0);
+
     void RequestNativeDedicatedServerHostedGameSessionAutosave(
         unsigned int workTicks,
         std::uint64_t nowMs = 0);
@@ -291,14 +290,12 @@ namespace ServerRuntime
     void WaitForDedicatedServerStopSignal()
     {
         WaitForNativeDedicatedServerHostedGameSessionStop(INFINITE);
+        const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
         g_nativeRuntimeState.gameplayInstance = false;
         g_nativeRuntimeState.stopSignalValid = false;
         g_nativeRuntimeState.fallbackWorldActionTicks = 0;
-        ClearNativeDedicatedServerHostedGameWorkerState();
-        ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
-            LceGetMonotonicMilliseconds());
-        RefreshNativeDedicatedServerRuntimeProjection(
-            LceGetMonotonicMilliseconds());
+        ClearNativeDedicatedServerHostedGameSessionWorkerQueueAndProject(nowMs);
+        RefreshNativeDedicatedServerRuntimeProjection(nowMs);
     }
 
     void StopDedicatedServerPlatformRuntime()
@@ -310,8 +307,7 @@ namespace ServerRuntime
                 LceGetMonotonicMilliseconds());
             WaitForNativeDedicatedServerHostedGameSessionStop(INFINITE);
         }
-        ClearNativeDedicatedServerHostedGameWorkerState();
-        ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
+        ClearNativeDedicatedServerHostedGameSessionWorkerQueueAndProject(
             LceGetMonotonicMilliseconds());
         ResetDedicatedServerAutosaveTracker();
         g_nativeRuntimeState = {};

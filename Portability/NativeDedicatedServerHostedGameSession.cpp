@@ -14,6 +14,8 @@ namespace ServerRuntime
 {
     void ResetNativeDedicatedServerHostedGameWorkerState();
 
+    void ClearNativeDedicatedServerHostedGameWorkerState();
+
     struct NativeDedicatedServerHostedGameSessionFrameInput
     {
         NativeDedicatedServerHostedGameWorkerSnapshot workerSnapshot = {};
@@ -61,6 +63,9 @@ namespace ServerRuntime
         std::uint64_t nowMs = 0);
 
     void ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(
+        std::uint64_t nowMs = 0);
+
+    void ClearNativeDedicatedServerHostedGameSessionWorkerQueueAndProject(
         std::uint64_t nowMs = 0);
 
     void ObserveNativeDedicatedServerHostedGameSessionPlatformState(
@@ -1513,6 +1518,13 @@ namespace ServerRuntime
         ObserveNativeDedicatedServerHostedGameSessionWorkerSnapshot(
             GetNativeDedicatedServerHostedGameWorkerSnapshot());
         ProjectNativeDedicatedServerHostedGameSessionToRuntimeSnapshot(nowMs);
+    }
+
+    void ClearNativeDedicatedServerHostedGameSessionWorkerQueueAndProject(
+        std::uint64_t nowMs)
+    {
+        ClearNativeDedicatedServerHostedGameWorkerState();
+        ProjectNativeDedicatedServerHostedGameWorkerToRuntimeSnapshot(nowMs);
     }
 
     void RequestNativeDedicatedServerHostedGameSessionAutosave(

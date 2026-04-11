@@ -193,3 +193,5 @@ Checkpoint status:
   starts
 - wait-stop glue is join-only; stopped lifecycle projection is no longer
   repeated after `core` returns
+- platform shutdown cleanup now routes worker queue clearing through the
+  session projection helper instead of calling worker/project glue directly
