@@ -71,9 +71,8 @@ namespace
 
     std::uint8_t ClampToByte(unsigned int value)
     {
-        return static_cast<std::uint8_t>(std::min<unsigned int>(
-            value,
-            std::numeric_limits<std::uint8_t>::max()));
+        const unsigned int maxByte = std::numeric_limits<std::uint8_t>::max();
+        return static_cast<std::uint8_t>(value > maxByte ? maxByte : value);
     }
 }
 

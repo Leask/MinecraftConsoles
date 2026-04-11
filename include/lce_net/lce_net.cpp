@@ -311,12 +311,12 @@ bool LceNetBindIpv4(LceSocketHandle socketHandle, const char* bindIp, int port)
     }
 
 #if defined(_WINDOWS64) || defined(_WIN32)
-    return bind(
+    return ::bind(
         static_cast<SOCKET>(socketHandle),
         reinterpret_cast<const sockaddr*>(&address),
         sizeof(address)) == 0;
 #else
-    return bind(
+    return ::bind(
         static_cast<int>(socketHandle),
         reinterpret_cast<const sockaddr*>(&address),
         sizeof(address)) == 0;
