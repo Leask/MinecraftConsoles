@@ -4,6 +4,7 @@
 #include <atomic>
 #include <cstdint>
 #include <deque>
+#include <limits>
 #include <mutex>
 
 #include "Minecraft.Server/Common/DedicatedServerAutosaveTracker.h"
@@ -261,6 +262,33 @@ namespace ServerRuntime
         g_nativeHostedWorkerPendingStopCommands.store(0);
         g_nativeHostedWorkerPendingHaltCommands.store(0);
         ClearNativeDedicatedServerHostedGameWorkerActiveCommand();
+    }
+
+    void SeedNativeDedicatedServerHostedGameWorkerCommandLineage(
+        std::uint64_t lastQueuedCommandId,
+        std::uint64_t lastProcessedCommandId,
+        ENativeDedicatedServerHostedGameWorkerCommandKind
+            lastProcessedCommandKind)
+    {
+        std::lock_guard<std::mutex> lock(g_nativeHostedWorkerQueueMutex);
+        if (!g_nativeHostedWorkerCommandQueue.empty())
+        {
+            return;
+        }
+
+        const std::uint64_t lastCommandId =
+            std::max(lastQueuedCommandId, lastProcessedCommandId);
+        const std::uint64_t nextCommandId =
+            lastCommandId == std::numeric_limits<std::uint64_t>::max()
+                ? std::numeric_limits<std::uint64_t>::max()
+                : lastCommandId + 1;
+        g_nativeHostedWorkerNextCommandId.store(
+            nextCommandId == 0 ? 1 : nextCommandId);
+        g_nativeHostedWorkerLastQueuedCommandId.store(lastQueuedCommandId);
+        g_nativeHostedWorkerLastProcessedCommandId.store(
+            lastProcessedCommandId);
+        g_nativeHostedWorkerLastProcessedCommandKind.store(
+            lastProcessedCommandKind);
     }
 
     void RequestNativeDedicatedServerHostedGameWorkerAutosave(

@@ -2,6 +2,27 @@ if(NOT DEFINED EXECUTABLE OR EXECUTABLE STREQUAL "")
   message(FATAL_ERROR "EXECUTABLE is required")
 endif()
 
+function(read_save_uint save_text key out_var context)
+  string(REGEX MATCH "(^|\n)${key}=([0-9]+)(\n|$)" save_match
+    "${save_text}")
+  if(NOT save_match)
+    message(FATAL_ERROR
+      "${context} did not contain parsable ${key}\n"
+      "save file:\n${save_text}\n")
+  endif()
+  set(${out_var} "${CMAKE_MATCH_2}" PARENT_SCOPE)
+endfunction()
+
+function(assert_save_uint_at_least save_text key minimum_value context)
+  read_save_uint("${save_text}" "${key}" actual_value "${context}")
+  if(actual_value LESS minimum_value)
+    message(FATAL_ERROR
+      "${context} expected ${key} >= ${minimum_value}, got "
+      "${actual_value}\n"
+      "save file:\n${save_text}\n")
+  endif()
+endfunction()
+
 get_filename_component(EXECUTABLE_DIR "${EXECUTABLE}" DIRECTORY)
 
 if(NOT DEFINED TEST_DIR OR TEST_DIR STREQUAL "")
@@ -74,12 +95,32 @@ foreach(expected_save_marker IN ITEMS
     "startup-thread-duration-ms="
     "hosted-thread-active=false"
     "hosted-thread-ticks="
+    "accepted-connections=0"
+    "remote-commands=0"
     "session-active=false"
     "session-completed=true"
     "world-action=idle"
+    "app-shutdown=true"
+    "gameplay-halted="
+    "requested-app-shutdown=true"
+    "shutdown-halted=true"
     "worker-pending-ticks="
+    "worker-pending-autosave-commands=0"
+    "worker-pending-save-commands=0"
+    "worker-pending-stop-commands=0"
+    "worker-pending-halt-commands=0"
     "worker-ticks="
     "worker-completions="
+    "worker-autosave-commands="
+    "worker-save-commands="
+    "worker-stop-commands="
+    "worker-halt-commands="
+    "worker-last-queued-command="
+    "worker-active-command=0"
+    "worker-active-kind=0"
+    "worker-active-ticks=0"
+    "worker-last-processed-command="
+    "worker-last-processed-kind="
     "tick-count="
     "gameplay-iterations="
     "autosave-completions=")
@@ -145,6 +186,50 @@ if(NOT create_gameplay_iterations_match)
     "save file:\n${saved_world_text}\n")
 endif()
 set(create_gameplay_iterations "${CMAKE_MATCH_1}")
+
+read_save_uint(
+  "${saved_world_text}"
+  "worker-save-commands"
+  create_worker_save_commands
+  "Create-save file")
+if(create_worker_save_commands LESS 1)
+  message(FATAL_ERROR
+    "Create-save file expected at least one processed save command\n"
+    "save file:\n${saved_world_text}\n")
+endif()
+
+read_save_uint(
+  "${saved_world_text}"
+  "worker-stop-commands"
+  create_worker_stop_commands
+  "Create-save file")
+if(create_worker_stop_commands LESS 1)
+  message(FATAL_ERROR
+    "Create-save file expected at least one processed stop command\n"
+    "save file:\n${saved_world_text}\n")
+endif()
+
+read_save_uint(
+  "${saved_world_text}"
+  "worker-autosave-commands"
+  create_worker_autosave_commands
+  "Create-save file")
+if(create_worker_autosave_commands LESS 2)
+  message(FATAL_ERROR
+    "Create-save file expected at least two processed autosave commands\n"
+    "save file:\n${saved_world_text}\n")
+endif()
+
+read_save_uint(
+  "${saved_world_text}"
+  "worker-last-queued-command"
+  create_worker_last_queued_command
+  "Create-save file")
+read_save_uint(
+  "${saved_world_text}"
+  "worker-last-processed-command"
+  create_worker_last_processed_command
+  "Create-save file")
 
 file(RENAME
   "${STORAGE_ROOT}/world.save"
@@ -274,9 +359,29 @@ foreach(expected_reloaded_save_marker IN ITEMS
     "startup-thread-duration-ms="
     "hosted-thread-active=false"
     "hosted-thread-ticks="
+    "accepted-connections=0"
+    "remote-commands=0"
+    "app-shutdown=true"
+    "gameplay-halted="
+    "requested-app-shutdown=true"
+    "shutdown-halted=true"
     "worker-pending-ticks="
+    "worker-pending-autosave-commands=0"
+    "worker-pending-save-commands=0"
+    "worker-pending-stop-commands=0"
+    "worker-pending-halt-commands=0"
     "worker-ticks="
     "worker-completions="
+    "worker-autosave-commands="
+    "worker-save-commands="
+    "worker-stop-commands="
+    "worker-halt-commands="
+    "worker-last-queued-command="
+    "worker-active-command=0"
+    "worker-active-kind=0"
+    "worker-active-ticks=0"
+    "worker-last-processed-command="
+    "worker-last-processed-kind="
     "session-completed=true")
   string(FIND
     "${reloaded_saved_world_text}"
@@ -334,6 +439,69 @@ if(reload_worker_completions LESS create_worker_completions)
   message(FATAL_ERROR
     "Reloaded save regressed worker completion count: "
     "${reload_worker_completions} < ${create_worker_completions}\n"
+    "save file:\n${reloaded_saved_world_text}\n")
+endif()
+
+read_save_uint(
+  "${reloaded_saved_world_text}"
+  "worker-autosave-commands"
+  reload_worker_autosave_commands
+  "Reloaded save")
+if(reload_worker_autosave_commands LESS create_worker_autosave_commands)
+  message(FATAL_ERROR
+    "Reloaded save regressed worker autosave command count: "
+    "${reload_worker_autosave_commands} < "
+    "${create_worker_autosave_commands}\n"
+    "save file:\n${reloaded_saved_world_text}\n")
+endif()
+
+read_save_uint(
+  "${reloaded_saved_world_text}"
+  "worker-save-commands"
+  reload_worker_save_commands
+  "Reloaded save")
+if(reload_worker_save_commands LESS create_worker_save_commands)
+  message(FATAL_ERROR
+    "Reloaded save regressed worker save command count: "
+    "${reload_worker_save_commands} < ${create_worker_save_commands}\n"
+    "save file:\n${reloaded_saved_world_text}\n")
+endif()
+
+read_save_uint(
+  "${reloaded_saved_world_text}"
+  "worker-stop-commands"
+  reload_worker_stop_commands
+  "Reloaded save")
+if(reload_worker_stop_commands LESS create_worker_stop_commands)
+  message(FATAL_ERROR
+    "Reloaded save regressed worker stop command count: "
+    "${reload_worker_stop_commands} < ${create_worker_stop_commands}\n"
+    "save file:\n${reloaded_saved_world_text}\n")
+endif()
+
+read_save_uint(
+  "${reloaded_saved_world_text}"
+  "worker-last-queued-command"
+  reload_worker_last_queued_command
+  "Reloaded save")
+if(reload_worker_last_queued_command LESS create_worker_last_queued_command)
+  message(FATAL_ERROR
+    "Reloaded save regressed worker last queued command id: "
+    "${reload_worker_last_queued_command} < "
+    "${create_worker_last_queued_command}\n"
+    "save file:\n${reloaded_saved_world_text}\n")
+endif()
+
+read_save_uint(
+  "${reloaded_saved_world_text}"
+  "worker-last-processed-command"
+  reload_worker_last_processed_command
+  "Reloaded save")
+if(reload_worker_last_processed_command LESS create_worker_last_processed_command)
+  message(FATAL_ERROR
+    "Reloaded save regressed worker last processed command id: "
+    "${reload_worker_last_processed_command} < "
+    "${create_worker_last_processed_command}\n"
     "save file:\n${reloaded_saved_world_text}\n")
 endif()
 

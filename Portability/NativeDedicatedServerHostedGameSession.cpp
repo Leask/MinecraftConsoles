@@ -94,6 +94,12 @@ namespace ServerRuntime
         unsigned int autosaveWorkTicks,
         std::uint64_t nowMs = 0);
 
+    void SeedNativeDedicatedServerHostedGameWorkerCommandLineage(
+        std::uint64_t lastQueuedCommandId,
+        std::uint64_t lastProcessedCommandId,
+        ENativeDedicatedServerHostedGameWorkerCommandKind
+            lastProcessedCommandKind);
+
     bool BuildNativeDedicatedServerSaveStubFromSessionSnapshot(
         const std::string &worldName,
         const std::string &worldSaveId,
@@ -687,6 +693,11 @@ namespace ServerRuntime
                     saveStub.processedStopCommands;
                 g_nativeHostedSessionState.baseProcessedHaltCommands =
                     saveStub.processedHaltCommands;
+                SeedNativeDedicatedServerHostedGameWorkerCommandLineage(
+                    saveStub.lastQueuedCommandId,
+                    saveStub.lastProcessedCommandId,
+                    (ENativeDedicatedServerHostedGameWorkerCommandKind)
+                        saveStub.lastProcessedCommandKind);
                 g_nativeHostedSessionState.baseGameplayLoopIterations =
                     saveStub.gameplayLoopIterations;
                 g_nativeHostedSessionState.snapshot.progress.sessionTicks =

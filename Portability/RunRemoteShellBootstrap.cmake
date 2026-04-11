@@ -2,6 +2,40 @@ if(NOT DEFINED EXECUTABLE OR EXECUTABLE STREQUAL "")
   message(FATAL_ERROR "EXECUTABLE is required")
 endif()
 
+function(assert_save_uint_equals save_text key expected_value context)
+  string(REGEX MATCH "(^|\n)${key}=([0-9]+)(\n|$)" save_match
+    "${save_text}")
+  if(NOT save_match)
+    message(FATAL_ERROR
+      "${context} did not contain parsable ${key}\n"
+      "save file:\n${save_text}\n")
+  endif()
+  set(actual_value "${CMAKE_MATCH_2}")
+  if(NOT actual_value STREQUAL "${expected_value}")
+    message(FATAL_ERROR
+      "${context} expected ${key}=${expected_value}, got "
+      "${actual_value}\n"
+      "save file:\n${save_text}\n")
+  endif()
+endfunction()
+
+function(assert_save_uint_at_least save_text key minimum_value context)
+  string(REGEX MATCH "(^|\n)${key}=([0-9]+)(\n|$)" save_match
+    "${save_text}")
+  if(NOT save_match)
+    message(FATAL_ERROR
+      "${context} did not contain parsable ${key}\n"
+      "save file:\n${save_text}\n")
+  endif()
+  set(actual_value "${CMAKE_MATCH_2}")
+  if(actual_value LESS minimum_value)
+    message(FATAL_ERROR
+      "${context} expected ${key} >= ${minimum_value}, got "
+      "${actual_value}\n"
+      "save file:\n${save_text}\n")
+  endif()
+endfunction()
+
 get_filename_component(EXECUTABLE_DIR "${EXECUTABLE}" DIRECTORY)
 
 if(NOT DEFINED TEST_DIR OR TEST_DIR STREQUAL "")
@@ -57,12 +91,17 @@ foreach(expected_marker IN ITEMS
     "status session active=true"
     "hosted-thread=active"
     "status worker pending="
+    "state="
+    "pending-commands="
+    "last-queued="
+    "last-processed="
     "status run initial-save="
     "status save path="
     "ticks="
     "action="
     "payload=none"
-    "manual save requested"
+    "manual save requested via worker command #"
+    "stop requested via worker command #"
     "persisted native save stub #")
   string(FIND "${combined_output}" "${expected_marker}" marker_index)
   if(marker_index LESS 0)
@@ -92,12 +131,31 @@ foreach(expected_save_marker IN ITEMS
     "startup-thread-duration-ms="
     "hosted-thread-active=false"
     "hosted-thread-ticks="
+    "accepted-connections=1"
     "session-active=false"
     "session-completed=true"
     "world-action=idle"
+    "app-shutdown=true"
+    "gameplay-halted="
+    "requested-app-shutdown=true"
+    "shutdown-halted=true"
     "worker-pending-ticks="
+    "worker-pending-autosave-commands=0"
+    "worker-pending-save-commands=0"
+    "worker-pending-stop-commands=0"
+    "worker-pending-halt-commands=0"
     "worker-ticks="
     "worker-completions="
+    "worker-autosave-commands="
+    "worker-save-commands="
+    "worker-stop-commands="
+    "worker-halt-commands="
+    "worker-last-queued-command="
+    "worker-active-command=0"
+    "worker-active-kind=0"
+    "worker-active-ticks=0"
+    "worker-last-processed-command="
+    "worker-last-processed-kind="
     "tick-count="
     "gameplay-iterations="
     "saved-at-filetime="
@@ -126,5 +184,41 @@ if(remote_autosave_completions LESS 2)
     "${remote_autosave_completions}\n"
     "save file:\n${saved_world_text}\n")
 endif()
+
+assert_save_uint_equals(
+  "${saved_world_text}"
+  "accepted-connections"
+  "1"
+  "Remote shell save file")
+assert_save_uint_equals(
+  "${saved_world_text}"
+  "remote-commands"
+  "3"
+  "Remote shell save file")
+assert_save_uint_at_least(
+  "${saved_world_text}"
+  "worker-autosave-commands"
+  "2"
+  "Remote shell save file")
+assert_save_uint_at_least(
+  "${saved_world_text}"
+  "worker-save-commands"
+  "1"
+  "Remote shell save file")
+assert_save_uint_at_least(
+  "${saved_world_text}"
+  "worker-stop-commands"
+  "1"
+  "Remote shell save file")
+assert_save_uint_at_least(
+  "${saved_world_text}"
+  "worker-last-queued-command"
+  "4"
+  "Remote shell save file")
+assert_save_uint_at_least(
+  "${saved_world_text}"
+  "worker-last-processed-command"
+  "3"
+  "Remote shell save file")
 
 file(REMOVE "${STORAGE_ROOT}/world.save")
