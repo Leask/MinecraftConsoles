@@ -48,10 +48,13 @@ namespace ServerRuntime
                 threadParam,
                 &threadInvoked);
 
-            ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
-                startupResult,
-                threadInvoked,
-                LceGetMonotonicMilliseconds());
+            if (!threadInvoked)
+            {
+                ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+                    startupResult,
+                    false,
+                    LceGetMonotonicMilliseconds());
+            }
             return startupResult;
         }
     }

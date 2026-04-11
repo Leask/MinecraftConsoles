@@ -188,3 +188,6 @@ Checkpoint status:
   signaling
 - `thread bridge` only adapts the native hosted thread proc to the core entry
 - smoke coverage asserts direct core ready/stopped observers see session state
+- persistent startup result projection now comes from `core` once the hosted
+  thread is invoked; `runtime` only records a failure when the thread never
+  starts

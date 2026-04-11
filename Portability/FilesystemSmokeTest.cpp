@@ -3328,10 +3328,12 @@ int main(int argc, char* argv[])
         (unsigned long long)
             nativeHostedCoreHaltThird.processedHaltCommands,
         nativeHostedCoreHaltSnapshot.control.gameplayHalted);
-    printf("hosted_game_core=%d exit=%d validated=%d startup=%llu/%llu "
+    printf("hosted_game_core=%d exit=%d invoked=%d validated=%d "
+        "startup=%llu/%llu "
         "loops=%llu autosaves=%llu worker_idle=%d hooks=%d/%d "
         "observed=%d/%d phase=%s\n",
         nativeHostedCoreRunResult.startup.result == 0 &&
+            nativeHostedCoreRunResult.lifecycle.threadInvoked &&
             nativeHostedCoreRunResult.startup.payloadValidated &&
             nativeHostedCoreRunResult
                     .startup.threadIterations == 2U &&
@@ -3364,6 +3366,7 @@ int main(int argc, char* argv[])
             nativeHostedCoreSnapshot.lifecycle.runtimePhase ==
                 ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped,
         nativeHostedCoreRunResult.startup.result,
+        nativeHostedCoreRunResult.lifecycle.threadInvoked,
         nativeHostedCoreRunResult.startup.payloadValidated,
         (unsigned long long)nativeHostedCoreRunResult
             .startup.threadIterations,
@@ -3386,6 +3389,7 @@ int main(int argc, char* argv[])
     printf("hosted_game_runtime=%d result=%d thread_value=%d\n",
         restartedHostedRuntimeResult.ok &&
             nativeHostedCoreRunResult.startup.result == 0 &&
+            nativeHostedCoreRunResult.lifecycle.threadInvoked &&
             nativeHostedCoreRunResult.startup.payloadValidated &&
             nativeHostedCoreRunResult
                     .startup.threadIterations == 2U &&
@@ -3431,6 +3435,7 @@ int main(int argc, char* argv[])
         hostedGameRuntimeThreadValue);
     const bool nativeHostedStubCoreContextOk =
         nativeHostedSessionCoreSnapshot.lifecycle.startAttempted &&
+        nativeHostedSessionCoreSnapshot.lifecycle.threadInvoked &&
         nativeHostedSessionCoreSnapshot.lifecycle.loadedFromSave &&
         nativeHostedSessionCoreSnapshot.lifecycle.resolvedSeed ==
             hostedGamePlan.resolvedSeed &&
@@ -4390,6 +4395,7 @@ int main(int argc, char* argv[])
             ServerRuntime::eDedicatedServerHostedGameRuntimePhase_Stopped &&
         nativeHostedCoreHaltOk &&
         nativeHostedCoreRunResult.startup.result == 0 &&
+        nativeHostedCoreRunResult.lifecycle.threadInvoked &&
         nativeHostedCoreRunResult.startup.payloadValidated &&
         nativeHostedCoreRunResult.startup.threadIterations == 2U &&
         nativeHostedCoreRunResult.startup.threadDurationMs > 0U &&

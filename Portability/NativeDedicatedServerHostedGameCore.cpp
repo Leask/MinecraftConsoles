@@ -33,6 +33,11 @@ namespace ServerRuntime
     StopNativeDedicatedServerHostedGameSessionAndCaptureFinalState(
         std::uint64_t stoppedMs = 0);
 
+    void ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+        int startupResult,
+        bool threadInvoked,
+        std::uint64_t nowMs = 0);
+
     void SignalNativeDedicatedServerHostedGameSessionThreadReady(
         std::uint64_t nowMs = 0);
 
@@ -128,6 +133,10 @@ namespace ServerRuntime
     {
         const NativeDedicatedServerHostedGameSessionSnapshot startupSnapshot =
             StartNativeDedicatedServerHostedGameCore(initData);
+        ObserveNativeDedicatedServerHostedGameSessionStartupResultAndProject(
+            startupSnapshot.startup.result,
+            true,
+            LceGetMonotonicMilliseconds());
         if (startupSnapshot.startup.result != 0)
         {
             const NativeDedicatedServerHostedGameSessionSnapshot finalState =
