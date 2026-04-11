@@ -46,19 +46,12 @@ namespace ServerRuntime
         std::uint64_t stoppedMs = 0,
         std::uint64_t nowMs = 0);
 
-    void ObserveNativeDedicatedServerHostedGameSessionContextAndProject(
-        const std::string &worldName,
-        const std::string &worldSaveId,
-        const std::string &savePath,
-        const std::string &storageRoot,
-        const std::string &hostName,
-        const std::string &bindIp,
-        int configuredPort,
-        int listenerPort,
+    void BeginNativeDedicatedServerHostedGameSessionContextAndProject(
+        const DedicatedServerHostedGameRuntimeSessionContext &sessionContext,
         std::uint64_t sessionStartMs = 0,
         std::uint64_t nowMs = 0);
 
-    void ObserveNativeDedicatedServerHostedGameSessionPersistedSaveAndProject(
+    void CommitNativeDedicatedServerHostedGameSessionPersistedSaveAndProject(
         const std::string &savePath,
         std::uint64_t savedAtFileTime,
         std::uint64_t autosaveCompletions,
@@ -418,7 +411,8 @@ namespace
         }
 
         context->persistedAutosaveCompletions = completedAutosaves;
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionPersistedSaveAndProject(
+        ServerRuntime::
+            CommitNativeDedicatedServerHostedGameSessionPersistedSaveAndProject(
             savePath,
             saveStub.savedAtFileTime,
             completedAutosaves,
@@ -476,15 +470,8 @@ namespace
         const ServerRuntime::DedicatedServerHostedGameRuntimeSessionContext
             sessionContext =
                 BuildDedicatedServerHostedGameRuntimeSessionContext(*context);
-        ServerRuntime::ObserveNativeDedicatedServerHostedGameSessionContextAndProject(
-            sessionContext.worldName,
-            sessionContext.worldSaveId,
-            sessionContext.savePath,
-            sessionContext.storageRoot,
-            sessionContext.hostName,
-            sessionContext.bindIp,
-            sessionContext.configuredPort,
-            sessionContext.listenerPort,
+        ServerRuntime::BeginNativeDedicatedServerHostedGameSessionContextAndProject(
+            sessionContext,
             context->shellStartMs,
             context->shellStartMs);
         ServerRuntime::LogInfo(

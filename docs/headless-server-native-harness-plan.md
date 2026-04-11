@@ -201,3 +201,5 @@ Checkpoint status:
 - platform runtime refresh now submits a single session platform frame for
   autosave/platform/runtime state instead of composing separate projection
   calls itself
+- headless runtime now records shell context and persisted save lineage through
+  session lifecycle helpers instead of direct observer/projection calls

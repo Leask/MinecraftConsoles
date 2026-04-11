@@ -1,3 +1,4 @@
+#include "Common/DedicatedServerHostedGameRuntimeState.h"
 #include "Common/NativeDedicatedServerSaveStub.h"
 #include "Portability/NativeDedicatedServerHostedGameSession.h"
 
@@ -61,7 +62,22 @@ namespace ServerRuntime
     {
     }
 
+    void BeginNativeDedicatedServerHostedGameSessionContextAndProject(
+        const DedicatedServerHostedGameRuntimeSessionContext &,
+        std::uint64_t,
+        std::uint64_t)
+    {
+    }
+
     void ObserveNativeDedicatedServerHostedGameSessionPersistedSaveAndProject(
+        const std::string &,
+        std::uint64_t,
+        std::uint64_t,
+        std::uint64_t)
+    {
+    }
+
+    void CommitNativeDedicatedServerHostedGameSessionPersistedSaveAndProject(
         const std::string &,
         std::uint64_t,
         std::uint64_t,
