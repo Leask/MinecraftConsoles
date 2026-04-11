@@ -48,4 +48,24 @@ foreach(expected_marker IN ITEMS
   endif()
 endforeach()
 
+foreach(forbidden_marker IN ITEMS
+    "native bootstrap bound dedicated listener"
+    "native bootstrap shell running"
+    "persisted native save stub"
+    "native bootstrap completed in bootstrap-only mode")
+  string(FIND "${combined_output}" "${forbidden_marker}" marker_index)
+  if(NOT marker_index LESS 0)
+    message(FATAL_ERROR
+      "Corrupt loaded bootstrap unexpectedly reached post-load marker: "
+      "${forbidden_marker}\noutput:\n${combined_output}\n")
+  endif()
+endforeach()
+
+file(READ "${STORAGE_ROOT}/world.save" corrupt_save_text)
+if(NOT corrupt_save_text STREQUAL "corrupt-loaded-world")
+  message(FATAL_ERROR
+    "Corrupt loaded bootstrap rewrote the corrupt save before failing\n"
+    "save file:\n${corrupt_save_text}\n")
+endif()
+
 file(REMOVE "${STORAGE_ROOT}/world.save")
