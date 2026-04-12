@@ -9,7 +9,7 @@
 
 namespace
 {
-#if defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP) || defined(MINECRAFT_PORTABILITY_STANDALONE)
 	void FileHeaderDebugPrintf(const char *format, ...)
 	{
 		va_list args;

@@ -16,7 +16,7 @@
 
 namespace
 {
-#if defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP) || defined(MINECRAFT_PORTABILITY_STANDALONE)
     void CompressionDebugPrintf(const char *format, ...)
     {
         va_list args;
@@ -502,7 +502,8 @@ HRESULT Compression::DecompressWithType(void *pDestination, unsigned int *pDestS
 		return S_OK;
 	case eCompressionType_LZXRLE:
 		{
-#if (defined _XBOX || defined _DURANGO || defined _WIN64)
+#if (defined _XBOX || defined _DURANGO || defined _WIN64) && \
+    !defined(MINECRAFT_PORTABILITY_STANDALONE)
 			SIZE_T destSize = (SIZE_T)(*pDestSize);
 			const HRESULT res = XMemDecompress(decompressionContext, pDestination, (SIZE_T *)&destSize, pSource, SrcSize);
 			*pDestSize = static_cast<unsigned int>(destSize);
@@ -589,7 +590,8 @@ HRESULT Compression::DecompressWithType(void *pDestination, unsigned int *pDestS
 Compression::Compression()
 {
 	// Using zlib for x64 compression - 360 is using native 360 compression and PS3 a stubbed non-compressing version of this
-#if !(defined __ORBIS__ || defined __PS3__ || defined(_NATIVE_DESKTOP))
+#if !(defined __ORBIS__ || defined __PS3__ || defined(_NATIVE_DESKTOP) || \
+    defined(MINECRAFT_PORTABILITY_STANDALONE))
 	// The default parameters for compression context allocated about 6.5MB, reducing the partition size here from the default 512KB to 128KB
 	// brings this down to about 3MB
 	XMEMCODEC_PARAMETERS_LZX params;
@@ -616,7 +618,8 @@ Compression::Compression()
 
 Compression::~Compression()
 {
-#if !(defined __ORBIS__ || defined __PS3__ || defined __PSVITA__ || defined(_NATIVE_DESKTOP))
+#if !(defined __ORBIS__ || defined __PS3__ || defined __PSVITA__ || \
+    defined(_NATIVE_DESKTOP) || defined(MINECRAFT_PORTABILITY_STANDALONE))
 
 	XMemDestroyCompressionContext(compressionContext);
 	XMemDestroyDecompressionContext(decompressionContext);

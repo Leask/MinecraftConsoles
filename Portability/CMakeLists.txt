@@ -44,6 +44,10 @@ target_include_directories(Minecraft.Portability
 
 target_link_libraries(Minecraft.Portability PUBLIC Threads::Threads)
 
+if(WIN32)
+  target_link_libraries(Minecraft.Portability PUBLIC ws2_32)
+endif()
+
 target_compile_definitions(Minecraft.Portability PRIVATE
   ${MINECRAFT_SHARED_DEFINES}
 )
@@ -114,6 +118,7 @@ target_link_libraries(Minecraft.Portability.SmokeTest PRIVATE
 
 target_compile_definitions(Minecraft.Portability.SmokeTest PRIVATE
   ${MINECRAFT_SHARED_DEFINES}
+  MINECRAFT_PORTABILITY_STANDALONE
 )
 
 target_include_directories(Minecraft.Portability.SmokeTest PRIVATE
