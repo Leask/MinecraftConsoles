@@ -11,7 +11,7 @@
 
 #define MULTITHREAD_ENABLE
 
-#ifdef _NATIVE_DESKTOP
+#if defined(_NATIVE_DESKTOP) || defined(_WINDOWS64)
 #ifndef MINECRAFT_NATIVE_BYTE_DEFINED
 typedef unsigned char mc_byte;
 #define MINECRAFT_NATIVE_BYTE_DEFINED
