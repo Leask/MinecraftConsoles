@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include "Biome.h"
 #include "StringHelpers.h"
 #include "net.minecraft.world.level.levelgen.flat.h"
 #include "net.minecraft.world.level.tile.h"
@@ -238,7 +239,7 @@ FlatGeneratorInfo *FlatGeneratorInfo::getDefault()
 {
 	FlatGeneratorInfo *result = new FlatGeneratorInfo();
 
-	result->setBiome(Biome::plains->id);
+	result->setBiome(1);
 	result->getLayers()->push_back(new FlatLayerInfo(1, Tile::unbreakable_Id));
 	result->getLayers()->push_back(new FlatLayerInfo(2, Tile::dirt_Id));
 	result->getLayers()->push_back(new FlatLayerInfo(1, Tile::grass_Id));

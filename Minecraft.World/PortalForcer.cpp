@@ -3,7 +3,9 @@
 #include "net.minecraft.world.level.h"
 #include "net.minecraft.world.level.tile.h"
 #include "net.minecraft.world.level.dimension.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\ServerLevel.h"
+#endif
 #include "PortalForcer.h"
 
 PortalForcer::PortalPosition::PortalPosition(int x, int y, int z, int64_t time) : Pos(x, y, z)
@@ -11,7 +13,11 @@ PortalForcer::PortalPosition::PortalPosition(int x, int y, int z, int64_t time) 
 	lastUsed = time;
 }
 
+#if defined(_NATIVE_DESKTOP)
+PortalForcer::PortalForcer(Level *level)
+#else
 PortalForcer::PortalForcer(ServerLevel *level)
+#endif
 {
 	this->level = level;
 	random = new Random(level->getSeed());

@@ -44,7 +44,7 @@ void ConsoleSoundEngine::tick()
 
 	for (auto it = scheduledSounds.begin(); it != scheduledSounds.end();)
 	{
-		SoundEngine::ScheduledSound *next = *it;
+		ConsoleSoundEngine::ScheduledSound *next = *it;
 		next->delay--;
 
 		if (next->delay <= 0)
@@ -62,7 +62,7 @@ void ConsoleSoundEngine::tick()
 
 void ConsoleSoundEngine::schedule(int iSound, float x, float y, float z, float volume, float pitch, int delayTicks)
 {
-	scheduledSounds.push_back(new SoundEngine::ScheduledSound(iSound, x, y, z, volume, pitch, delayTicks));
+	scheduledSounds.push_back(new ConsoleSoundEngine::ScheduledSound(iSound, x, y, z, volume, pitch, delayTicks));
 }
 
 ConsoleSoundEngine::ScheduledSound::ScheduledSound(int iSound, float x, float y, float z, float volume, float pitch, int delay)

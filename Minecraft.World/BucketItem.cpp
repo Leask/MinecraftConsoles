@@ -12,10 +12,12 @@
 #include "Material.h"
 #include "ItemInstance.h"
 #include "BucketItem.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\LocalPlayer.h"
 #include "..\Minecraft.Client\ServerPlayer.h"
 #include "..\Minecraft.Client\PlayerConnection.h"
-#include "..\Minecraft.World\ChatPacket.h"
+#endif
+#include "ChatPacket.h"
 #include "SoundTypes.h"
 
 BucketItem::BucketItem(int id, int content) : Item( id )
@@ -113,19 +115,21 @@ shared_ptr<ItemInstance> BucketItem::use(shared_ptr<ItemInstance> itemInstance, 
 		int yt = hr->y;
 		int zt = hr->z;
 
-		if (!level->mayInteract(player, xt, yt, zt,content))
-		{
-			app.DebugPrintf("!!!!!!!!!!! Can't place that here\n");
-			shared_ptr<ServerPlayer> servPlayer = dynamic_pointer_cast<ServerPlayer>(player);
-			if( servPlayer != nullptr )
+			if (!level->mayInteract(player, xt, yt, zt,content))
 			{
-				app.DebugPrintf("Sending ChatPacket::e_ChatCannotPlaceLava to player\n");
-				servPlayer->connection->send(std::make_shared<ChatPacket>(L"", ChatPacket::e_ChatCannotPlaceLava));
-			}
+				app.DebugPrintf("!!!!!!!!!!! Can't place that here\n");
+#if !defined(_NATIVE_DESKTOP)
+				shared_ptr<ServerPlayer> servPlayer = dynamic_pointer_cast<ServerPlayer>(player);
+				if( servPlayer != nullptr )
+				{
+					app.DebugPrintf("Sending ChatPacket::e_ChatCannotPlaceLava to player\n");
+					servPlayer->connection->send(std::make_shared<ChatPacket>(L"", ChatPacket::e_ChatCannotPlaceLava));
+				}
+#endif
 
-			delete hr;
-			return itemInstance;
-		}
+				delete hr;
+				return itemInstance;
+			}
 
 		if (content == 0)
 		{		

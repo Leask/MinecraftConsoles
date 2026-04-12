@@ -2,8 +2,10 @@
 #include <xrnm.h>
 #include <queue>
 #include <qnet.h>
+#include "C4JThread.h"
 #include "InputStream.h"
 #include "OutputStream.h"
+#include "../Minecraft.Client/Common/Network/NetworkPlayerInterface.h"
 
 #define SOCKET_CLIENT_END 0
 #define SOCKET_SERVER_END 1

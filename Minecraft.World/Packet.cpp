@@ -7,9 +7,9 @@
 #include "Packet.h"
 #include "com.mojang.nbt.h"
 
-#ifndef _CONTENT_PACKAGE
-#include "..\Minecraft.Client\Minecraft.h"
-#include "..\Minecraft.Client\Gui.h"
+#if !defined(_CONTENT_PACKAGE) && !defined(_NATIVE_DESKTOP)
+#include "../Minecraft.Client/Minecraft.h"
+#include "../Minecraft.Client/Gui.h"
 #endif
 
 void Packet::staticCtor()

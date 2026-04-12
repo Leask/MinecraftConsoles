@@ -36,45 +36,45 @@
 #include "FrustumCuller.h"
 #include "Camera.h"
 
-#include "..\Minecraft.World\MobEffect.h"
-#include "..\Minecraft.World\Difficulty.h"
-#include "..\Minecraft.World\net.minecraft.world.level.h"
-#include "..\Minecraft.World\net.minecraft.world.entity.h"
-#include "..\Minecraft.World\net.minecraft.world.entity.player.h"
-#include "..\Minecraft.World\net.minecraft.world.entity.item.h"
-#include "..\Minecraft.World\net.minecraft.world.phys.h"
-#include "..\Minecraft.World\File.h"
-#include "..\Minecraft.World\net.minecraft.world.level.storage.h"
-#include "..\Minecraft.World\net.minecraft.h"
-#include "..\Minecraft.World\net.minecraft.stats.h"
-#include "..\Minecraft.World\System.h"
-#include "..\Minecraft.World\ByteBuffer.h"
-#include "..\Minecraft.World\net.minecraft.world.level.tile.h"
-#include "..\Minecraft.World\net.minecraft.world.level.chunk.h"
-#include "..\Minecraft.World\net.minecraft.world.level.dimension.h"
-#include "..\Minecraft.World\net.minecraft.world.item.h"
-#include "..\Minecraft.World\Minecraft.World.h"
-#include "Windows64\Windows64_Xuid.h"
+#include "../Minecraft.World/MobEffect.h"
+#include "../Minecraft.World/Difficulty.h"
+#include "../Minecraft.World/net.minecraft.world.level.h"
+#include "../Minecraft.World/net.minecraft.world.entity.h"
+#include "../Minecraft.World/net.minecraft.world.entity.player.h"
+#include "../Minecraft.World/net.minecraft.world.entity.item.h"
+#include "../Minecraft.World/net.minecraft.world.phys.h"
+#include "../Minecraft.World/File.h"
+#include "../Minecraft.World/net.minecraft.world.level.storage.h"
+#include "../Minecraft.World/net.minecraft.h"
+#include "../Minecraft.World/net.minecraft.stats.h"
+#include "../Minecraft.World/System.h"
+#include "../Minecraft.World/ByteBuffer.h"
+#include "../Minecraft.World/net.minecraft.world.level.tile.h"
+#include "../Minecraft.World/net.minecraft.world.level.chunk.h"
+#include "../Minecraft.World/net.minecraft.world.level.dimension.h"
+#include "../Minecraft.World/net.minecraft.world.item.h"
+#include "../Minecraft.World/Minecraft.World.h"
+#include "Windows64/Windows64_Xuid.h"
 #include "ClientConnection.h"
-#include "..\Minecraft.World\HellRandomLevelSource.h"
-#include "..\Minecraft.World\net.minecraft.world.entity.animal.h"
-#include "..\Minecraft.World\net.minecraft.world.entity.monster.h"
-#include "..\Minecraft.World\StrongholdFeature.h"
-#include "..\Minecraft.World\IntCache.h"
-#include "..\Minecraft.World\Villager.h"
-#include "..\Minecraft.World\SparseLightStorage.h"
-#include "..\Minecraft.World\SparseDataStorage.h"
-#include "..\Minecraft.World\ChestTileEntity.h"
+#include "../Minecraft.World/HellRandomLevelSource.h"
+#include "../Minecraft.World/net.minecraft.world.entity.animal.h"
+#include "../Minecraft.World/net.minecraft.world.entity.monster.h"
+#include "../Minecraft.World/StrongholdFeature.h"
+#include "../Minecraft.World/IntCache.h"
+#include "../Minecraft.World/Villager.h"
+#include "../Minecraft.World/SparseLightStorage.h"
+#include "../Minecraft.World/SparseDataStorage.h"
+#include "../Minecraft.World/ChestTileEntity.h"
 #include "TextureManager.h"
 #ifdef _XBOX
-#include "Xbox\Network\NetworkPlayerXbox.h"
+#include "Xbox/Network/NetworkPlayerXbox.h"
 #endif
-#include "Common\UI\IUIScene_CreativeMenu.h"
-#include "Common\UI\UIFontData.h"
+#include "Common/UI/IUIScene_CreativeMenu.h"
+#include "Common/UI/UIFontData.h"
 #include "DLCTexturePack.h"
 
 #ifdef __ORBIS__
-#include "Orbis\Network\PsPlusUpsellWrapper_Orbis.h"
+#include "Orbis/Network/PsPlusUpsellWrapper_Orbis.h"
 #endif
 
 // #define DISABLE_SPU_CODE
@@ -122,9 +122,18 @@ ResourceLocation Minecraft::ALT_FONT_LOCATION = ResourceLocation(TN_ALT_FONT);
 
 Minecraft::Minecraft(Component *mouseComponent, Canvas *parent, MinecraftApplet *minecraftApplet, int width, int height, bool fullscreen)
 {
+#ifdef _NATIVE_DESKTOP
+#define NATIVE_DESKTOP_MINECRAFT_CTOR_TRACE(name) \
+	fprintf(stderr, "NativeDesktop Minecraft::ctor: %s\n", name)
+#else
+#define NATIVE_DESKTOP_MINECRAFT_CTOR_TRACE(name) ((void)0)
+#endif
+
+	NATIVE_DESKTOP_MINECRAFT_CTOR_TRACE("begin");
 	// 4J - added this block of initialisers
 	gameMode = nullptr;
 	hasCrashed = false;
+	NATIVE_DESKTOP_MINECRAFT_CTOR_TRACE("timer begin");
 	timer = new Timer(SharedConstants::TICKS_PER_SECOND);
 	oldLevel = nullptr; //4J Stu added
 	level = nullptr;
@@ -159,12 +168,15 @@ Minecraft::Minecraft(Component *mouseComponent, Canvas *parent, MinecraftApplet 
 	// 4J-PB - end
 
 	orgWidth = orgHeight = 0;
+	NATIVE_DESKTOP_MINECRAFT_CTOR_TRACE("achievement popup begin");
 	achievementPopup = new AchievementPopup(this);
 	gui = nullptr;
 	noRender = false;
+	NATIVE_DESKTOP_MINECRAFT_CTOR_TRACE("humanoid model begin");
 	humanoidModel = new HumanoidModel(0);
 	hitResult = nullptr;
 	options = nullptr;
+	NATIVE_DESKTOP_MINECRAFT_CTOR_TRACE("sound engine construct begin");
 	soundEngine = new SoundEngine();
 	mouseHandler = nullptr;
 	skins = nullptr;
@@ -187,6 +199,7 @@ Minecraft::Minecraft(Component *mouseComponent, Canvas *parent, MinecraftApplet 
 	unoccupiedQuadrant = -1;
 
 	Stats::init();
+	NATIVE_DESKTOP_MINECRAFT_CTOR_TRACE("stats init complete");
 
 	orgHeight = height;
 	this->fullscreen = fullscreen;
@@ -213,6 +226,7 @@ Minecraft::Minecraft(Component *mouseComponent, Canvas *parent, MinecraftApplet 
 	appletMode = false;
 
 	Minecraft::m_instance = this;
+	NATIVE_DESKTOP_MINECRAFT_CTOR_TRACE("texture manager singleton begin");
 	TextureManager::createInstance();
 
 	for(int i=0;i<XUSER_MAX_COUNT;i++)
@@ -232,7 +246,9 @@ Minecraft::Minecraft(Component *mouseComponent, Canvas *parent, MinecraftApplet 
 	// 4J-PB - Removed it from here on Orbis due to it causing a crash with the network init.
 	// We should work out why...
 #ifndef __ORBIS__
+	NATIVE_DESKTOP_MINECRAFT_CTOR_TRACE("sound engine init begin");
 	this->soundEngine->init(nullptr);
+	NATIVE_DESKTOP_MINECRAFT_CTOR_TRACE("sound engine init complete");
 #endif
 
 #ifndef DISABLE_LEVELTICK_THREAD
@@ -240,6 +256,9 @@ Minecraft::Minecraft(Component *mouseComponent, Canvas *parent, MinecraftApplet 
 	levelTickEventQueue->setProcessor(3);
 	levelTickEventQueue->setPriority(THREAD_PRIORITY_NORMAL);
 #endif // DISABLE_LEVELTICK_THREAD
+
+	NATIVE_DESKTOP_MINECRAFT_CTOR_TRACE("complete");
+#undef NATIVE_DESKTOP_MINECRAFT_CTOR_TRACE
 }
 
 void Minecraft::clearConnectionFailed()
@@ -260,6 +279,13 @@ void Minecraft::connectTo(const wstring& server, int port)
 
 void Minecraft::init()
 {
+#ifdef _NATIVE_DESKTOP
+#define NATIVE_DESKTOP_MINECRAFT_INIT_TRACE(name) \
+	fprintf(stderr, "NativeDesktop Minecraft::init: %s\n", name)
+#else
+#define NATIVE_DESKTOP_MINECRAFT_INIT_TRACE(name) ((void)0)
+#endif
+
 #if 0 // 4J - removed
 	if (parent != null)
 	{
@@ -327,6 +353,7 @@ void Minecraft::init()
 
 	// glClearColor(0.2f, 0.2f, 0.2f, 1);
 
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("storage/options begin");
 	workingDirectory = File(L"");//getWorkingDirectory();
 	levelSource = new McRegionLevelStorageSource(File(workingDirectory, L"saves"));
 	//        levelSource = new MemoryLevelStorageSource();
@@ -336,6 +363,7 @@ void Minecraft::init()
 	textures = new Textures(skins, options);
 	//renderLoadingScreen();
 
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("fonts begin");
 	font = new Font(options, L"font/Default.png", textures, false, &DEFAULT_FONT_LOCATION, 23, 20, 8, 8, SFontData::Codepoints);
 	altFont = new Font(options, L"font/alternate.png", textures, false, &ALT_FONT_LOCATION, 16, 16, 8, 8);
 
@@ -351,9 +379,11 @@ void Minecraft::init()
 	//GrassColor::init(textures->loadTexturePixels(L"misc/grasscolor.png"));
 	//FoliageColor::init(textures->loadTexturePixels(L"misc/foliagecolor.png"));
 
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("game renderer begin");
 	gameRenderer = new GameRenderer(this);
 	EntityRenderDispatcher::instance->itemInHandRenderer = new ItemInHandRenderer(this,false);
 
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("stats begin");
 	for( int i=0 ; i<4 ; ++i )
 		stats[i] = new StatsCounter();
 
@@ -370,6 +400,7 @@ void Minecraft::init()
 	//renderLoadingScreen();
 
 	//Keyboard::create();
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("mouse begin");
 	Mouse::create();
 #if 0	// 4J - removed
 	mouseHandler = new MouseHandler(parent);
@@ -381,12 +412,14 @@ void Minecraft::init()
 #endif
 
 	MemSect(31);
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("pre startup gl begin");
 	checkGlError(L"Pre startup");
 	MemSect(0);
 
 	// width = Display.getDisplayMode().getWidth();
 	// height = Display.getDisplayMode().getHeight();
 
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("gl state begin");
 	glEnable(GL_TEXTURE_2D);
 	glShadeModel(GL_SMOOTH);
 	glClearDepth(1.0);
@@ -400,23 +433,30 @@ void Minecraft::init()
 	glLoadIdentity();
 	glMatrixMode(GL_MODELVIEW);
 	MemSect(31);
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("startup gl check begin");
 	checkGlError(L"Startup");
 	MemSect(0);
 
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("level renderer begin");
 	//    openGLCapabilities = new OpenGLCapabilities();	// 4J - removed
 
 	levelRenderer = new LevelRenderer(this, textures);
 	//textures->register(&TextureAtlas::LOCATION_BLOCKS, new TextureAtlas(Icon::TYPE_TERRAIN, TN_TERRAIN));
 	//textures->register(&TextureAtlas::LOCATION_ITEMS, new TextureAtlas(Icon::TYPE_ITEM, TN_GUI_ITEMS));
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("texture stitch begin");
 	textures->stitch();
 
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("viewport begin");
 	glViewport(0, 0, width, height);
 
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("particle engine begin");
 	particleEngine = new ParticleEngine(level, textures);
 
 	MemSect(31);
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("post startup gl check begin");
 	checkGlError(L"Post startup");
 	MemSect(0);
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("gui begin");
 	gui = new Gui(this);
 
 	if (connectToIp != L"")	// 4J - was nullptr comparison
@@ -427,9 +467,14 @@ void Minecraft::init()
 	{
 		setScreen(new TitleScreen());
 	}
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("progress renderer begin");
 	progressRenderer = new ProgressRenderer(this);
 
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("render manager static creations begin");
 	RenderManager.CBuffLockStaticCreations();
+	NATIVE_DESKTOP_MINECRAFT_INIT_TRACE("complete");
+
+#undef NATIVE_DESKTOP_MINECRAFT_INIT_TRACE
 }
 
 void Minecraft::renderLoadingScreen()
@@ -4660,6 +4705,14 @@ void Minecraft::start(const wstring& name, const wstring& sid)
 
 void Minecraft::startAndConnectTo(const wstring& name, const wstring& sid, const wstring& url)
 {
+#ifdef _NATIVE_DESKTOP
+#define NATIVE_DESKTOP_MINECRAFT_START_TRACE(name) \
+	fprintf(stderr, "NativeDesktop Minecraft::start: %s\n", name)
+#else
+#define NATIVE_DESKTOP_MINECRAFT_START_TRACE(name) ((void)0)
+#endif
+
+	NATIVE_DESKTOP_MINECRAFT_START_TRACE("begin");
 	const bool fullScreen = false;
 	const wstring userName = name;
 
@@ -4688,7 +4741,9 @@ void Minecraft::startAndConnectTo(const wstring& name, const wstring& sid, const
 	constexpr int logicalH = 720;
 	const int logicalW = logicalH * g_iScreenWidth / g_iScreenHeight;
 
+	NATIVE_DESKTOP_MINECRAFT_START_TRACE("new Minecraft begin");
 	minecraft = new Minecraft(nullptr, nullptr, nullptr, logicalW, logicalH, fullScreen);
+	NATIVE_DESKTOP_MINECRAFT_START_TRACE("new Minecraft complete");
 	/* - 4J - removed
 	{
 	@Override
@@ -4710,10 +4765,12 @@ void Minecraft::startAndConnectTo(const wstring& name, const wstring& sid, const
 	{
 		if (userName != L"" && sid != L"")	// 4J - username & side were compared with nullptr rather than empty strings
 		{
+			NATIVE_DESKTOP_MINECRAFT_START_TRACE("user begin");
 			minecraft->user = new User(userName, sid);
 		}
 		else
 		{
+			NATIVE_DESKTOP_MINECRAFT_START_TRACE("fallback user begin");
 			minecraft->user = new User(L"Player" + std::to_wstring(System::currentTimeMillis() % 1000), L"");
 		}
 	}
@@ -4745,7 +4802,11 @@ void Minecraft::startAndConnectTo(const wstring& name, const wstring& sid, const
 	});
 	*/
 	// 4J - TODO - consider whether we need to actually create a thread here
+	NATIVE_DESKTOP_MINECRAFT_START_TRACE("run begin");
 	minecraft->run();
+	NATIVE_DESKTOP_MINECRAFT_START_TRACE("run complete");
+
+#undef NATIVE_DESKTOP_MINECRAFT_START_TRACE
 }
 
 ClientConnection *Minecraft::getConnection(int iPad)
@@ -4765,6 +4826,13 @@ int g_iMainThreadId;
 
 void Minecraft::main()
 {
+#ifdef _NATIVE_DESKTOP
+#define NATIVE_DESKTOP_MINECRAFT_MAIN_TRACE(name) \
+	fprintf(stderr, "NativeDesktop Minecraft::main: %s\n", name)
+#else
+#define NATIVE_DESKTOP_MINECRAFT_MAIN_TRACE(name) ((void)0)
+#endif
+
 	wstring name;
 	wstring sessionId;
 
@@ -4772,15 +4840,23 @@ void Minecraft::main()
 
 	useLomp = true;
 
+	NATIVE_DESKTOP_MINECRAFT_MAIN_TRACE("world static ctors begin");
 	MinecraftWorld_RunStaticCtors();
+	NATIVE_DESKTOP_MINECRAFT_MAIN_TRACE("entity render static ctor begin");
 	EntityRenderDispatcher::staticCtor();
+	NATIVE_DESKTOP_MINECRAFT_MAIN_TRACE("tile entity render static ctor begin");
 	TileEntityRenderDispatcher::staticCtor();
+	NATIVE_DESKTOP_MINECRAFT_MAIN_TRACE("user static ctor begin");
 	User::staticCtor();
+	NATIVE_DESKTOP_MINECRAFT_MAIN_TRACE("tutorial static ctor begin");
 	Tutorial::staticCtor();
+	NATIVE_DESKTOP_MINECRAFT_MAIN_TRACE("colour table static ctor begin");
 	ColourTable::staticCtor();
+	NATIVE_DESKTOP_MINECRAFT_MAIN_TRACE("default game rules begin");
 	app.loadDefaultGameRules();
 
 #ifdef _LARGE_WORLDS
+	NATIVE_DESKTOP_MINECRAFT_MAIN_TRACE("level renderer static ctor begin");
 	LevelRenderer::staticCtor();
 #endif
 
@@ -4819,13 +4895,18 @@ void Minecraft::main()
 	}
 
 	// Common for all platforms
+	NATIVE_DESKTOP_MINECRAFT_MAIN_TRACE("creative menu static ctor begin");
 	IUIScene_CreativeMenu::staticCtor();
 
 	// On PS4, we call Minecraft::Start from another thread, as this has been timed taking ~2.5 seconds and we need to do some basic
 	// rendering stuff so that we don't break the TRCs on SubmitDone calls
 #ifndef __ORBIS__
+	NATIVE_DESKTOP_MINECRAFT_MAIN_TRACE("start begin");
 	Minecraft::start(name, sessionId);
+	NATIVE_DESKTOP_MINECRAFT_MAIN_TRACE("start complete");
 #endif
+
+#undef NATIVE_DESKTOP_MINECRAFT_MAIN_TRACE
 }
 
 bool Minecraft::renderNames()
@@ -5260,4 +5341,3 @@ int Minecraft::MustSignInReturnedPSN(void *pParam, int iPad, C4JStorage::EMessag
 	return 0;
 }
 #endif
-

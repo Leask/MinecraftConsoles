@@ -22,7 +22,7 @@ void ZoneIo::write(byteArray bb, int size)
 void ZoneIo::write(ByteBuffer *bb, int size)
 {
 	DWORD numberOfBytesWritten;
-	SetFilePointer(channel,static_cast<int>(pos),nullptr,nullptr);
+	SetFilePointer(channel,static_cast<int>(pos),nullptr,FILE_BEGIN);
 	WriteFile(channel,bb->getBuffer(), bb->getSize(),&numberOfBytesWritten,nullptr);
     pos += size;
 }
@@ -31,7 +31,7 @@ ByteBuffer *ZoneIo::read(int size)
 {
 	DWORD numberOfBytesRead;
     byteArray bb = byteArray(size);
-	SetFilePointer(channel,static_cast<int>(pos),nullptr,nullptr);
+	SetFilePointer(channel,static_cast<int>(pos),nullptr,FILE_BEGIN);
     ByteBuffer *buff = ByteBuffer::wrap(bb);
 	// 4J - to investigate - why is this buffer flipped before anything goes in it?
     buff->order(ZonedChunkStorage::BYTEORDER);

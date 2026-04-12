@@ -2,4 +2,6 @@
 
 class Behavior
 {
+public:
+	virtual ~Behavior() = default;
 };

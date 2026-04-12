@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Texture.h"
-#include "..\Minecraft.World\StringHelpers.h"
+#include "../Minecraft.World/StringHelpers.h"
 #include "ClockTexture.h"
 #include "CompassTexture.h"
 #include "StitchedTexture.h"
@@ -59,17 +59,15 @@ void StitchedTexture::freeFrameTextures()
 			}
 		}
 		delete frames;
+		frames = nullptr;
 	}
 }
 
 StitchedTexture::~StitchedTexture()
 {
-	for(auto& frame : *frames)
-	{
-		if ( frame )
-			delete frame;
-	}
-	delete frames;
+	freeFrameTextures();
+	delete frameOverride;
+	frameOverride = nullptr;
 }
 
 void StitchedTexture::initUVs(float U0, float V0, float U1, float V1)

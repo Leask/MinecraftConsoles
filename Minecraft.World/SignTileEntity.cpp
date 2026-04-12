@@ -9,10 +9,12 @@
 #include "net.minecraft.network.packet.h"
 #include "SignTileEntity.h"
 #include <xuiapp.h>
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\ClientConnection.h"
 #include "..\Minecraft.Client\Minecraft.h"
 #include "..\Minecraft.Client\ServerLevel.h"
-#include "..\Minecraft.World\Level.h"
+#endif
+#include "Level.h"
 
 
 
@@ -49,7 +51,7 @@ void SignTileEntity::save(CompoundTag *tag)
 	tag->putString(L"Text2", m_wsmessages[1] );
 	tag->putString(L"Text3", m_wsmessages[2] );
 	tag->putString(L"Text4", m_wsmessages[3] );
-#ifndef _CONTENT_PACKAGE
+#if !defined(_CONTENT_PACKAGE) && !defined(_NATIVE_DESKTOP)
 	OutputDebugStringW(L"### - Saving a sign with text - \n");
 	for(int i=0;i<4;i++)
 	{
@@ -70,7 +72,7 @@ void SignTileEntity::load(CompoundTag *tag)
 		m_wsmessages[i] = tag->getString( buf );
 		if (m_wsmessages[i].length() > MAX_LINE_LENGTH) m_wsmessages[i] = m_wsmessages[i].substr(0, MAX_LINE_LENGTH);
 	}
-#ifndef _CONTENT_PACKAGE
+#if !defined(_CONTENT_PACKAGE) && !defined(_NATIVE_DESKTOP)
 	OutputDebugStringW(L"### - Loaded a sign with text - \n");
 	for(int i=0;i<4;i++)
 	{
@@ -170,7 +172,7 @@ void SignTileEntity::SetMessage(int iIndex,wstring &wsText)
 	if (wsText.length() > MAX_LINE_LENGTH)  // MAX_LINE_LENGTH == 15
     {
         wsText = wsText.substr(0, MAX_LINE_LENGTH);
-#ifdef _DEBUG
+#if defined(_DEBUG) && !defined(_NATIVE_DESKTOP)
         OutputDebugStringW(L"Sign text truncated to 15 characters\n");
 #endif
     }
@@ -185,6 +187,13 @@ int SignTileEntity::StringVerifyCallback(LPVOID lpParam,STRING_VERIFY_RESPONSE *
 
 	pClass->m_bVerified=true;
 	pClass->m_bCensored=false;
+
+#if defined(_NATIVE_DESKTOP)
+	(void)pResults;
+	return 0;
+#endif
+
+#if !defined(_NATIVE_DESKTOP)
 	for(int i=0;i<pResults->wNumStrings;i++)
 	{
 		if(pResults->pStringResult[i]!=ERROR_SUCCESS)
@@ -202,6 +211,7 @@ int SignTileEntity::StringVerifyCallback(LPVOID lpParam,STRING_VERIFY_RESPONSE *
 	}
 
 	return 0;
+#endif
 }
 
 // 4J Added

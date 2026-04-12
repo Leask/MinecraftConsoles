@@ -1,5 +1,7 @@
 #include "stdafx.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Minecraft.h"
+#endif
 #include "FoliageColor.h"
 
 // 4J Stu - Don't use this any more

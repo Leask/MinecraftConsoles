@@ -28,6 +28,7 @@ class TripWireSourceTile;
 class BeaconTile;
 class ComparatorTile;
 class DaylightDetectorTile;
+class Explosion;
 class Random;
 class HitResult;
 class Level;

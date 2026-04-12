@@ -2,7 +2,7 @@
 class Mob;
 class Options;
 using namespace std;
-#include "..\..\Minecraft.World\SoundTypes.h"
+#include "../../Minecraft.World/SoundTypes.h"
 
 #include "miniaudio.h"
 
@@ -98,7 +98,7 @@ typedef struct
 }
 AUDIO_INFO;
 
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 struct MiniAudioSound
 {
     ma_sound sound;
@@ -154,6 +154,7 @@ private:
 	ma_engine_config m_engineConfig;
 	ma_sound m_musicStream;
 	bool m_musicStreamActive;
+	bool m_audioBackendReady;
 
 	static char m_szSoundPath[];
 	static char m_szMusicPath[];
@@ -190,4 +191,4 @@ private:
 #ifdef __ORBIS__
 	int32_t m_hBGMAudio;
 #endif
-}; 
+};

@@ -58,8 +58,10 @@ ServerPropertiesSmokeResult RunServerPropertiesSmoke()
         return result;
     }
 
-    std::filesystem::remove("server.properties");
-    std::filesystem::remove("whitelist.json");
+    std::error_code cleanupError;
+    std::filesystem::remove("server.properties", cleanupError);
+    cleanupError.clear();
+    std::filesystem::remove("whitelist.json", cleanupError);
 
     const ServerRuntime::ServerPropertiesConfig defaults =
         ServerRuntime::LoadServerPropertiesConfig();

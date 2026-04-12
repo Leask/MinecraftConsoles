@@ -2,20 +2,20 @@
 #include "UI.h"
 #include "UIScene_LoadOrJoinMenu.h"
 
-#include "..\..\..\Minecraft.World\StringHelpers.h"
-#include "..\..\..\Minecraft.World\net.minecraft.world.item.h"
-#include "..\..\..\Minecraft.World\net.minecraft.world.level.h"
-#include "..\..\..\Minecraft.World\net.minecraft.world.level.chunk.storage.h"
-#include "..\..\..\Minecraft.World\ConsoleSaveFile.h"
-#include "..\..\..\Minecraft.World\ConsoleSaveFileOriginal.h"
-#include "..\..\ProgressRenderer.h"
-#include "..\..\MinecraftServer.h"
-#include "..\..\TexturePackRepository.h"
-#include "..\..\TexturePack.h"
-#include "..\Network\SessionInfo.h"
+#include "../../../Minecraft.World/StringHelpers.h"
+#include "../../../Minecraft.World/net.minecraft.world.item.h"
+#include "../../../Minecraft.World/net.minecraft.world.level.h"
+#include "../../../Minecraft.World/net.minecraft.world.level.chunk.storage.h"
+#include "../../../Minecraft.World/ConsoleSaveFile.h"
+#include "../../../Minecraft.World/ConsoleSaveFileOriginal.h"
+#include "../../ProgressRenderer.h"
+#include "../../MinecraftServer.h"
+#include "../../TexturePackRepository.h"
+#include "../../TexturePack.h"
+#include "../Network/SessionInfo.h"
 #if defined(__PS3__) || defined(__ORBIS__) || defined(__PSVITA__)
-#include "Common\Network\Sony\SonyHttp.h"
-#include "Common\Network\Sony\SonyRemoteStorage.h"
+#include "Common/Network/Sony/SonyHttp.h"
+#include "Common/Network/Sony/SonyRemoteStorage.h"
 #include "DLCTexturePack.h"
 #endif
 #if defined(__ORBIS__) || defined(__PSVITA__)
@@ -26,8 +26,8 @@
 #endif
 
 #ifdef _WINDOWS64
-#include "..\..\..\Minecraft.World\NbtIo.h"
-#include "..\..\..\Minecraft.World\compression.h"
+#include "../../../Minecraft.World/NbtIo.h"
+#include "../../../Minecraft.World/compression.h"
 
 static wstring ReadLevelNameFromSaveFile(const wstring& filePath)
 {
@@ -3191,7 +3191,7 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
                 pClass->m_eSaveTransferState = eSaveTransfer_Converting;
 				pMinecraft->progressRenderer->progressStage(IDS_SAVETRANSFER_STAGE_CONVERTING);
 #endif
-                delete ba.data;
+                delete [] ba.data;
             }
 			break;
         case eSaveTransfer_Converting:
@@ -3697,7 +3697,7 @@ int UIScene_LoadOrJoinMenu::DownloadXbox360SaveThreadProc( LPVOID lpParameter )
 						// set the icon and save image
 						StorageManager.SetSaveImages(ba.data, ba.length, nullptr, 0, bTextMetadata, iTextMetadataBytes);
 
-                        delete ba.data;
+                        delete [] ba.data;
                     }
 
                     UIScene_LoadOrJoinMenu::s_transferData = byteArray();
@@ -3722,7 +3722,7 @@ int UIScene_LoadOrJoinMenu::DownloadXbox360SaveThreadProc( LPVOID lpParameter )
                     pSave = new ConsoleSaveFileOriginal( wSaveName, m_transferData.data, m_transferData.length, false, SAVE_FILE_PLATFORM_X360 );
                     pStateContainer->m_eSaveTransferState=C4JStorage::eSaveTransfer_Converting;
 #endif
-                    delete UIScene_LoadOrJoinMenu::s_transferData.data;
+                    delete [] UIScene_LoadOrJoinMenu::s_transferData.data;
                     UIScene_LoadOrJoinMenu::s_transferData = byteArray();
                 }
                 break;
@@ -3898,7 +3898,7 @@ int UIScene_LoadOrJoinMenu::SaveTransferReturned(LPVOID lpParam,C4JStorage::SAVE
     }
     else
     {
-        delete UIScene_LoadOrJoinMenu::s_transferData.data;
+        delete [] UIScene_LoadOrJoinMenu::s_transferData.data;
         UIScene_LoadOrJoinMenu::s_transferData = byteArray(pSaveTransferDetails->pbData, UIScene_LoadOrJoinMenu::s_ulFileSize);
         pClass->m_eSaveTransferState=C4JStorage::eSaveTransfer_FileDataRetrieved;
     }

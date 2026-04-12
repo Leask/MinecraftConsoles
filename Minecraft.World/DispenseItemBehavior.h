@@ -8,6 +8,8 @@ class BlockSource;
 class DispenseItemBehavior : public Behavior
 {
 public:
+	virtual ~DispenseItemBehavior() = default;
+
 	/**
 	* The 'do nothing' behavior.
 	*/

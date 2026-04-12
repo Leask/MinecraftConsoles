@@ -14,7 +14,9 @@
 #include "Level.h"
 #include "ChunkPos.h"
 #include "TilePos.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\ServerLevel.h"
+#endif
 #include "MobSpawner.h"
 #include "Dimension.h"
 
@@ -39,7 +41,11 @@ TilePos MobSpawner::getRandomPosWithin(Level *level, int cx, int cz)
 	unordered_map<ChunkPos,bool,ChunkPosKeyHash,ChunkPosKeyEq> MobSpawner::chunksToPoll;
 #endif
 
+#if defined(_NATIVE_DESKTOP)
+const int MobSpawner::tick(Level *level, bool spawnEnemies, bool spawnFriendlies, bool spawnPersistent)
+#else
 const int MobSpawner::tick(ServerLevel *level, bool spawnEnemies, bool spawnFriendlies, bool spawnPersistent)
+#endif
 {
 #ifndef _CONTENT_PACKAGE
 
@@ -287,7 +293,23 @@ const int MobSpawner::tick(ServerLevel *level, bool spawnEnemies, bool spawnFrie
 
                             if (currentMobType == nullptr)
 							{
+#if defined(_NATIVE_DESKTOP)
+                                Biome *biome = level->getBiome(x, z);
+                                vector<Biome::MobSpawnerData *> *mobs =
+                                    biome != nullptr ? biome->getMobs(mobCategory)
+                                                     : nullptr;
+                                if (mobs == nullptr || mobs->empty())
+                                {
+                                    break;
+                                }
+                                currentMobType =
+                                    static_cast<Biome::MobSpawnerData *>(
+                                        WeighedRandom::getRandomItem(
+                                            level->random,
+                                            mobs));
+#else
                                 currentMobType = level->getRandomMobSpawnAt(mobCategory, x, y, z);
+#endif
                                 if (currentMobType == nullptr)
 								{
                                     break;

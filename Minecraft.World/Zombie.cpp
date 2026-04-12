@@ -14,7 +14,9 @@
 #include "net.minecraft.world.entity.player.h"
 #include "Zombie.h"
 #include "GenericStats.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "net.minecraft.world.entity.h"
 #include "JavaMath.h"
 #include "SoundTypes.h"

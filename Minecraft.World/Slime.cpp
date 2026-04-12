@@ -13,7 +13,9 @@
 #include "net.minecraft.world.damagesource.h"
 #include "com.mojang.nbt.h"
 #include "Slime.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "SoundTypes.h"
 
 

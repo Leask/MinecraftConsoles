@@ -9,7 +9,9 @@
 #include "net.minecraft.world.entity.monster.h"
 #include "SharedConstants.h"
 #include "Squid.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 
 void Squid::_init()
 {

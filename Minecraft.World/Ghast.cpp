@@ -11,7 +11,9 @@
 #include "net.minecraft.world.damagesource.h"
 #include "net.minecraft.stats.h"
 #include "Ghast.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "LevelEvent.h"
 #include "SoundTypes.h"
 

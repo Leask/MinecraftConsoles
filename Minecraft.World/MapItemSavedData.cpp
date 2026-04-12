@@ -3,12 +3,16 @@
 #include "net.minecraft.world.entity.player.h"
 #include "net.minecraft.world.item.h"
 #include "MapItemSavedData.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\PlayerList.h"
 #include "..\Minecraft.Client\MinecraftServer.h"
 #include "..\Minecraft.Client\ServerPlayer.h"
+#endif
 #include "net.minecraft.world.level.h"
 #include "net.minecraft.world.level.storage.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\PlayerConnection.h"
+#endif
 
 const int MapItemSavedData::END_PORTAL_DECORATION_KEY = -1;
 
@@ -67,9 +71,9 @@ MapItemSavedData::HoldingPlayer::HoldingPlayer(shared_ptr<Player> player, const 
 
 MapItemSavedData::HoldingPlayer::~HoldingPlayer()
 {
-	delete rowsDirtyMin.data;
-	delete rowsDirtyMax.data;
-	delete lastSentDecorations.data;
+	delete [] rowsDirtyMin.data;
+	delete [] rowsDirtyMax.data;
+	delete [] lastSentDecorations.data;
 }
 
 charArray MapItemSavedData::HoldingPlayer::nextUpdatePacket(shared_ptr<ItemInstance> itemInstance)
@@ -156,11 +160,10 @@ charArray MapItemSavedData::HoldingPlayer::nextUpdatePacket(shared_ptr<ItemInsta
 			memcpy(lastSentDecorations.data, data.data, data.length);
 			return data;
 		}
-		delete data.data;
+		delete [] data.data;
 	}
-	shared_ptr<ServerPlayer> servPlayer = dynamic_pointer_cast<ServerPlayer>(player);
-	for (int d = 0; d < 10; d++)
-	{
+		for (int d = 0; d < 10; d++)
+		{
 		int column = (tick++ * 11) % (MapItem::IMAGE_WIDTH);
 
 		if (rowsDirtyMin[column] >= 0)
@@ -195,7 +198,7 @@ MapItemSavedData::MapItemSavedData(const wstring& id) : SavedData( id )
 
 MapItemSavedData::~MapItemSavedData()
 {
-	delete colors.data;
+	delete [] colors.data;
 	for( unsigned int i = 0; i < decorations.size(); i++ )
 	{
 		delete decorations[i];
@@ -292,11 +295,12 @@ void MapItemSavedData::tickCarriedBy(shared_ptr<Player> player, shared_ptr<ItemI
 		{
 			++it;
 
-			Level *playerLevel = hp->player->level;
-			if(!playerLevel->isClientSide && hp->player->dimension == 0 && (playerLevel->getLevelData()->getHasStrongholdEndPortal() || playerLevel->getLevelData()->getHasStronghold() ) )
-			{
-				bool atLeastOnePlayerInTheEnd = false;
-				PlayerList *players = MinecraftServer::getInstance()->getPlayerList();
+				Level *playerLevel = hp->player->level;
+#if !defined(_NATIVE_DESKTOP)
+				if(!playerLevel->isClientSide && hp->player->dimension == 0 && (playerLevel->getLevelData()->getHasStrongholdEndPortal() || playerLevel->getLevelData()->getHasStronghold() ) )
+				{
+					bool atLeastOnePlayerInTheEnd = false;
+					PlayerList *players = MinecraftServer::getInstance()->getPlayerList();
 				for( const auto& serverPlayer : players->players)
 				{
 					if(serverPlayer->dimension == 1)
@@ -344,12 +348,13 @@ void MapItemSavedData::tickCarriedBy(shared_ptr<Player> player, shared_ptr<ItemI
 				else if ( currentPortalDecoration != nonPlayerDecorations.end() && !atLeastOnePlayerInTheEnd )
 				{
 					delete currentPortalDecoration->second;
-					nonPlayerDecorations.erase( currentPortalDecoration );
+						nonPlayerDecorations.erase( currentPortalDecoration );
+					}
 				}
-			}
+#endif
 
-			if (item->isFramed())
-			{
+				if (item->isFramed())
+				{
 				//addDecoration(1, player.level, "frame-" + item.getFrame().entityId, item.getFrame().xTile, item.getFrame().zTile, item.getFrame().dir * 90);
 
 				if( nonPlayerDecorations.find( item->getFrame()->entityId ) == nonPlayerDecorations.end() )
@@ -414,13 +419,62 @@ void MapItemSavedData::tickCarriedBy(shared_ptr<Player> player, shared_ptr<ItemI
 
 			// 4J-PB - display all the players in the map
 			// For the xbox, x and z are 0
-			if (hp->player->dimension == this->dimension && !addedPlayers)
-			{
-				addedPlayers = true;
-
-				PlayerList *players = MinecraftServer::getInstance()->getPlayerList();
-				for(auto& decorationPlayer : players->players)
+				if (hp->player->dimension == this->dimension && !addedPlayers)
 				{
+					addedPlayers = true;
+
+#if defined(_NATIVE_DESKTOP)
+					const auto& decorationPlayer = hp->player;
+					float xd = static_cast<float>(decorationPlayer->x - x) / (1 << scale);
+					float yd = static_cast<float>(decorationPlayer->z - z) / (1 << scale);
+					char x = static_cast<char>(xd * 2);
+					char y = static_cast<char>(yd * 2);
+					int size = MAP_SIZE;
+					char rot;
+					char imgIndex;
+
+#ifdef _LARGE_WORLDS
+					if (xd > -size && yd > -size && xd <= size && yd <= size)
+#endif
+					{
+						rot = static_cast<char>(decorationPlayer->yRot * 16 / 360 + 0.5);
+						if (dimension < 0)
+						{
+							int s = static_cast<int>(playerLevel->getLevelData()->getDayTime() / 10);
+							rot = static_cast<char>((s * s * 34187121 + s * 121) >> 15 & 15);
+						}
+
+						imgIndex = getRandomPlayerMapIcon(decorationPlayer);
+					}
+#ifdef _LARGE_WORLDS
+					else
+					{
+						imgIndex = getRandomPlayerMapIcon(decorationPlayer);
+						imgIndex += 16;
+
+						rot = 0;
+						size--;
+						if (xd <= -size) x = static_cast<byte>(size * 2 + 2.5);
+						if (yd <= -size) y = static_cast<byte>(size * 2 + 2.5);
+						if (xd >= size) x = static_cast<byte>(size * 2 + 1);
+						if (yd >= size) y = static_cast<byte>(size * 2 + 1);
+					}
+#endif
+
+					MemSect(45);
+					decorations.push_back(
+						new MapDecoration(
+							imgIndex,
+							x,
+							y,
+							rot,
+							decorationPlayer->entityId,
+							decorationPlayer->canShowOnMaps()));
+					MemSect(0);
+#else
+					PlayerList *players = MinecraftServer::getInstance()->getPlayerList();
+					for(auto& decorationPlayer : players->players)
+					{
 					if(decorationPlayer!=nullptr && decorationPlayer->dimension == this->dimension)
 					{
 						float xd = static_cast<float>(decorationPlayer->x - x) / (1 << scale);
@@ -466,10 +520,11 @@ void MapItemSavedData::tickCarriedBy(shared_ptr<Player> player, shared_ptr<ItemI
 
 						MemSect(45);
 						decorations.push_back(new MapDecoration(imgIndex, x, y, rot, decorationPlayer->entityId, (decorationPlayer == hp->player || decorationPlayer->canShowOnMaps()) ));
-						MemSect(0);
+							MemSect(0);
+						}
 					}
+#endif
 				}
-			}
 
 // 			float xd = (float) (hp->player->x - x) / (1 << scale);
 // 			float yd = (float) (hp->player->z - z) / (1 << scale);

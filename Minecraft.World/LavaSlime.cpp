@@ -4,7 +4,9 @@
 #include "net.minecraft.world.entity.ai.attributes.h"
 #include "net.minecraft.world.entity.monster.h"
 #include "net.minecraft.world.item.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "LavaSlime.h"
 #include "SoundTypes.h"
 

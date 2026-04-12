@@ -5,7 +5,7 @@
 #include "UIScene_DebugSetCamera.h"
 #include "Minecraft.h"
 #include "MultiPlayerLocalPlayer.h"
-#include "..\..\..\Minecraft.World\StringHelpers.h"
+#include "../../../Minecraft.World/StringHelpers.h"
 
 UIScene_DebugSetCamera::UIScene_DebugSetCamera(int iPad, void *initData, UILayer *parentLayer) : UIScene(iPad, parentLayer)
 {
@@ -173,8 +173,7 @@ void UIScene_DebugSetCamera::handlePress(F64 controlId, F64 childId)
 			ui.NavigateToScene(m_iPad, eUIScene_Keyboard, &kbData, eUILayer_Fullscreen, eUIGroup_Fullscreen);
 		}
 #else
->>>>>>> origin/main
-		InputManager.RequestKeyboard(L"Enter something",L"",(DWORD)0,25,&UIScene_DebugSetCamera::KeyboardCompleteCallback,this,C_4JInput::EKeyboardMode_Default);
+        InputManager.RequestKeyboard(L"Enter something",L"",(DWORD)0,25,&UIScene_DebugSetCamera::KeyboardCompleteCallback,this,C_4JInput::EKeyboardMode_Default);
 #endif
 		break;
 	};
@@ -198,8 +197,7 @@ int UIScene_DebugSetCamera::KeyboardCompleteCallback(LPVOID lpParam,bool bRes)
 #ifdef _WINDOWS64
 	Win64_GetKeyboardText(pchText, 2048);
 #else
->>>>>>> origin/main
-	InputManager.GetText(pchText);
+    InputManager.GetText(pchText);
 #endif
 
 	if(pchText[0]!=0)

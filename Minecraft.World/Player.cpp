@@ -7,6 +7,9 @@
 // the derived class itself (which should own the virtual GetType function)
 
 #include "stdafx.h"
+
+#include <climits>
+
 #include "JavaMath.h"
 #include "net.minecraft.h"
 #include "net.minecraft.world.h"
@@ -37,10 +40,14 @@
 #include "Player.h"
 #include "ParticleTypes.h"
 
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\LocalPlayer.h"
 #include "..\Minecraft.Client\HumanoidModel.h"
+#endif
 #include "SoundTypes.h"
 
 

@@ -16,6 +16,7 @@
 #endif
 
 #include <cstdint>
+#include <cfloat>
 
 #ifdef _DURANGO
 #include <xdk.h>
@@ -115,12 +116,22 @@ typedef XUID GameSessionUID;
 #include <assert.h>
 #endif
 
-#if defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP) && !defined(MINECRAFT_NATIVE_DESKTOP_CLIENT)
 #include "NativeDesktop/NativeDesktopStubs.h"
 #elif !defined(_XBOX)
-#include "extraX64.h"
+#include "x64headers/extraX64.h"
 #else
 #include "..\Minecraft.Client\xbox\network\extra.h"
+#endif
+
+#ifdef _NATIVE_DESKTOP
+#ifndef MINECRAFT_NATIVE_BYTE_DEFINED
+typedef unsigned char mc_byte;
+#define MINECRAFT_NATIVE_BYTE_DEFINED
+#endif
+#ifndef byte
+#define byte mc_byte
+#endif
 #endif
 
 #include "Definitions.h"
@@ -185,7 +196,7 @@ void MemSect(int sect);
 #include "..\Minecraft.Client\Common\Network\GameNetworkManager.h"
 
 // #ifdef _XBOX
-#include "..\Minecraft.Client\Common\App_defines.h"
+#include "../Minecraft.Client/Common/App_Defines.h"
 #include "..\Minecraft.Client\Common\UI\UIEnums.h"
 #include "..\Minecraft.Client\Common\App_enums.h"
 #include "..\Minecraft.Client\Common\Tutorial\TutorialEnum.h"

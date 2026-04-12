@@ -4,18 +4,18 @@
 #include "UIScene.h"
 #include "UIControl_Slider.h"
 #include "UIControl_TexturePackList.h"
-#include "..\..\..\Minecraft.World\StringHelpers.h"
-#include "..\..\LocalPlayer.h"
-#include "..\..\DLCTexturePack.h"
-#include "..\..\TexturePackRepository.h"
-#include "..\..\Minecraft.h"
-#include "..\..\..\Minecraft.World\net.minecraft.world.entity.boss.enderdragon.h"
-#include "..\..\EnderDragonRenderer.h"
-#include "..\..\MultiPlayerLocalPlayer.h"
+#include "../../../Minecraft.World/StringHelpers.h"
+#include "../../LocalPlayer.h"
+#include "../../DLCTexturePack.h"
+#include "../../TexturePackRepository.h"
+#include "../../Minecraft.h"
+#include "../../../Minecraft.World/net.minecraft.world.entity.boss.enderdragon.h"
+#include "../../EnderDragonRenderer.h"
+#include "../../MultiPlayerLocalPlayer.h"
 #include "UIFontData.h"
 #include "UISplitScreenHelpers.h"
 #ifdef _WINDOWS64
-#include "..\..\Windows64\KeyboardMouseInput.h"
+#include "../../Windows64/KeyboardMouseInput.h"
 #endif
 #ifdef __PSVITA__
 #include <message_dialog.h>
@@ -27,7 +27,7 @@
 
 //#define ENABLE_IGGY_EXPLORER
 #ifdef ENABLE_IGGY_EXPLORER
-#include "Windows64\Iggy\include\iggyexpruntime.h"
+#include "Windows64/Iggy/include/iggyexpruntime.h"
 #endif
 
 //#define ENABLE_IGGY_PERFMON
@@ -37,18 +37,18 @@
 #define PM_ORIGIN_Y 34
 
 #ifdef __ORBIS__
-#include "Orbis\Iggy\include\iggyperfmon.h"
-#include "Orbis\Iggy\include\iggyperfmon_orbis.h"
+#include "Orbis/Iggy/include/iggyperfmon.h"
+#include "Orbis/Iggy/include/iggyperfmon_orbis.h"
 #elif defined _DURANGO
-#include "Durango\Iggy\include\iggyperfmon.h"
+#include "Durango/Iggy/include/iggyperfmon.h"
 #elif defined __PS3__
-#include "PS3\Iggy\include\iggyperfmon.h"
-#include "PS3\Iggy\include\iggyperfmon_ps3.h"
+#include "PS3/Iggy/include/iggyperfmon.h"
+#include "PS3/Iggy/include/iggyperfmon_ps3.h"
 #elif defined __PSVITA__
-#include "PSVita\Iggy\include\iggyperfmon.h"
-#include "PSVita\Iggy\include\iggyperfmon_psp2.h"
+#include "PSVita/Iggy/include/iggyperfmon.h"
+#include "PSVita/Iggy/include/iggyperfmon_psp2.h"
 #elif defined __WINDOWS64
-#include "Windows64\Iggy\include\iggyperfmon.h"
+#include "Windows64/Iggy/include/iggyperfmon.h"
 #endif
 
 #endif
@@ -302,19 +302,34 @@ void UIController::preInit(S32 width, S32 height)
 
 void UIController::postInit()
 {
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: callbacks begin\n");
+#endif
 	// set up a custom rendering callback
 	IggySetCustomDrawCallback(&UIController::CustomDrawCallback, this);
 	IggySetAS3ExternalFunctionCallbackUTF16 ( &UIController::ExternalFunctionCallback, this );
 	IggySetTextureSubstitutionCallbacks ( &UIController::TextureSubstitutionCreateCallback , &UIController::TextureSubstitutionDestroyCallback, this );
 
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: setup font begin\n");
+#endif
 	SetupFont();
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: load skins begin\n");
+#endif
 	//
 	loadSkins();
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: groups begin\n");
+#endif
 
 	for(unsigned int i = 0; i < eUIGroup_COUNT; ++i)
 	{
 		m_groups[i] = new UIGroup(static_cast<EUIGroup>(i),i-1);
 	}
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: groups done\n");
+#endif
 
 
 #ifdef ENABLE_IGGY_EXPLORER
@@ -379,17 +394,34 @@ UITTFFont *UIController::createFont(EFont fontLanguage)
 
 void UIController::SetupFont()
 {
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: SetupFont enter\n");
+#endif
 	// 4J-JEV: Language hasn't changed or is already changing.
 	if ( (m_eCurrentFont != m_eTargetFont) || !UIString::setCurrentLanguage() ) return;
 
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: SetupFont language set\n");
+#endif
 	DWORD nextLanguage = UIString::getCurrentLanguage();
 	m_eTargetFont = getFontForLanguage(nextLanguage);
 
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: SetupFont language=%u target=%d\n",
+                 static_cast<unsigned int>(nextLanguage),
+                 static_cast<int>(m_eTargetFont));
+#endif
 	// flag a language change to reload the string tables in the DLC
 	app.m_dlcManager.LanguageChanged();
 
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: SetupFont dlc language changed\n");
+#endif
 	app.loadStringTable(); // Switch to use new string table,
 
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: SetupFont string table loaded\n");
+#endif
 	if (m_eTargetFont == m_eCurrentFont)
 	{
 		// 4J-JEV: If we're ingame, reload the font to update all the text.
@@ -408,13 +440,22 @@ void UIController::SetupFont()
 
 	if(m_eTargetFont == eFont_Bitmap)
 	{
+#ifdef _NATIVE_DESKTOP
+        std::fprintf(stderr, "NativeDesktop UI: SetupFont bitmap begin\n");
+#endif
 		// these may have been set up by a previous language being chosen
 		if (m_moj7 == nullptr)		m_moj7  = new UIBitmapFont(SFontData::Mojangles_7);
 		if (m_moj11 == nullptr)	m_moj11 = new UIBitmapFont(SFontData::Mojangles_11);
 
+#ifdef _NATIVE_DESKTOP
+        std::fprintf(stderr, "NativeDesktop UI: SetupFont bitmap objects ready\n");
+#endif
 		// 4J-JEV: Ensure we redirect to them correctly, even if the objects were previously initialised.
 		m_moj7->registerFont();
 		m_moj11->registerFont();
+#ifdef _NATIVE_DESKTOP
+        std::fprintf(stderr, "NativeDesktop UI: SetupFont bitmap registered\n");
+#endif
 	}
 	else if (m_eTargetFont != eFont_NotLoaded)
 	{
@@ -438,6 +479,9 @@ void UIController::SetupFont()
 	{
 		updateCurrentFont();
 	}
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: SetupFont done\n");
+#endif
 }
 
 bool UIController::PendingFontChange()
@@ -464,6 +508,9 @@ bool UIController::UsingBitmapFont()
 void UIController::tick()
 {
 	SetupFont(); // If necessary, change font.
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: tick after setup font\n");
+#endif
 
 	if ( (m_navigateToHomeOnReload || m_bCleanupOnReload) && !ui.IsReloadingSkin() )
 	{
@@ -496,13 +543,25 @@ void UIController::tick()
 
 	if(m_accumulatedTicks == 0) tickInput();
 	m_accumulatedTicks = 0;
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: tick input done\n");
+#endif
 
 	for(unsigned int i = 0; i < eUIGroup_COUNT; ++i)
 	{
+#ifdef _NATIVE_DESKTOP
+        std::fprintf(stderr, "NativeDesktop UI: group %u tick begin\n", i);
+#endif
 		m_groups[i]->tick();
+#ifdef _NATIVE_DESKTOP
+        std::fprintf(stderr, "NativeDesktop UI: group %u tick end\n", i);
+#endif
 
 		// TODO: May wish to skip ticking other groups here
 	}
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: tick groups done\n");
+#endif
 
 	// Clear out the cached movie file data
 	int64_t currentTime = System::currentTimeMillis();
@@ -723,6 +782,14 @@ bool UIController::IsReloadingSkin()
 
 bool UIController::IsExpectingOrReloadingSkin()
 {
+#ifdef _NATIVE_DESKTOP
+	Minecraft *minecraft = Minecraft::GetInstance();
+	if(minecraft == nullptr || minecraft->skins == nullptr ||
+		minecraft->skins->getSelected() == nullptr)
+	{
+		return IsReloadingSkin() || PendingFontChange();
+	}
+#endif
 	return Minecraft::GetInstance()->skins->getSelected()->isLoadingData() || Minecraft::GetInstance()->skins->needsUIUpdate() || IsReloadingSkin() || PendingFontChange();
 }
 
@@ -1564,24 +1631,48 @@ rrbool RADLINK UIController::ExternalFunctionCallback( void * user_callback_data
 // RENDERING
 void UIController::renderScenes()
 {
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: render begin\n");
+#endif
 	PIXBeginNamedEvent(0, "Rendering Iggy scenes");
 	// Only render player scenes if the game is started
 	if(app.GetGameStarted() && !m_groups[eUIGroup_Fullscreen]->hidesLowerScenes())
 	{
 		for(int i = eUIGroup_Player1; i < eUIGroup_COUNT; ++i)
 		{
+#ifdef _NATIVE_DESKTOP
+            std::fprintf(
+                stderr,
+                "NativeDesktop UI: render group %d begin\n",
+                i);
+#endif
 			PIXBeginNamedEvent(0, "Rendering layer %d scenes", i);
 			m_groups[i]->render();
 			PIXEndNamedEvent();
+#ifdef _NATIVE_DESKTOP
+            std::fprintf(
+                stderr,
+                "NativeDesktop UI: render group %d end\n",
+                i);
+#endif
 		}
 	}
 
 	// Always render the fullscreen group
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: render fullscreen begin\n");
+#endif
 	PIXBeginNamedEvent(0, "Rendering fullscreen scenes");
 	m_groups[eUIGroup_Fullscreen]->render();
 	PIXEndNamedEvent();
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: render fullscreen end\n");
+#endif
 
 	PIXEndNamedEvent();
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(stderr, "NativeDesktop UI: render end\n");
+#endif
 
 #ifdef ENABLE_IGGY_PERFMON
 	if (m_iggyPerfmonEnabled)

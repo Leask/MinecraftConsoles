@@ -2,6 +2,11 @@
 
 #include "SavedData.h"
 
+class DoorInfo;
+class Level;
+class Pos;
+class Village;
+
 class Villages : public SavedData
 {
 public:

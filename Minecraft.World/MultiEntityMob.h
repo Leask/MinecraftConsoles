@@ -1,6 +1,7 @@
 #pragma once
 
 class MultiEntityMobPart;
+class DamageSource;
 
 class MultiEntityMob
 {

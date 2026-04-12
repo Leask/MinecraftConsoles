@@ -14,7 +14,9 @@
 #include "net.minecraft.world.level.h"
 #include "net.minecraft.world.level.tile.h"
 #include "net.minecraft.world.phys.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "SynchedEntityData.h"
 #include "VillagerGolem.h"
 #include "ParticleTypes.h"

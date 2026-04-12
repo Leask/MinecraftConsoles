@@ -11,7 +11,9 @@
 #include "com.mojang.nbt.h"
 #include "BasicTypeContainers.h"
 #include "Spider.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "SoundTypes.h"
 
 

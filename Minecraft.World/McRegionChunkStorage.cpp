@@ -66,7 +66,7 @@ McRegionChunkStorage::~McRegionChunkStorage()
 {
 	for(auto& it : m_entityData)
 	{
-		delete it.second.data;
+		delete [] it.second.data;
 	}
 }
 
@@ -83,7 +83,7 @@ LevelChunk *McRegionChunkStorage::load(Level *level, int x, int z)
         auto it = m_entityData.find(index);
         if(it != m_entityData.end())
 		{
-			delete it->second.data;
+			delete [] it->second.data;
 			m_entityData.erase(it);
 		}
 	}
@@ -244,7 +244,7 @@ void McRegionChunkStorage::saveEntities(Level *level, LevelChunk *levelChunk)
 	PIXBeginNamedEvent(0,"Saving entities");
 	int64_t index = ((int64_t)(levelChunk->x) << 32) | (((int64_t)(levelChunk->z))&0x00000000FFFFFFFF);
 
-	delete m_entityData[index].data;
+	delete [] m_entityData[index].data;
 
 	CompoundTag *newTag = new CompoundTag();
 	bool savedEntities = OldChunkStorage::saveEntities(levelChunk, level, newTag);

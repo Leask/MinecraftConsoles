@@ -3,6 +3,7 @@
 #include "InputOutputStream.h"
 #include "PacketListener.h"
 #include "RespawnPacket.h"
+#include "ChunkSource.h"
 #include "LevelType.h"
 
 RespawnPacket::RespawnPacket()

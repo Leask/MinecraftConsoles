@@ -22,6 +22,7 @@ if(EXCLUDE_FOLDERS)
 endif()
 
 message(STATUS "Copying from ${COPY_SOURCE} to ${COPY_DEST}")
+file(MAKE_DIRECTORY "${COPY_DEST}")
 
 if(CMAKE_HOST_WIN32)
   set(robocopy_args

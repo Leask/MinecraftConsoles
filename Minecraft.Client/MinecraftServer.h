@@ -1,9 +1,9 @@
 #pragma once
 #include "ConsoleInputSource.h"
-#include "..\Minecraft.Server\Common\DedicatedServerWorldTypes.h"
-#include "..\Minecraft.World\ArrayWithLength.h"
-#include "..\Minecraft.World\SharedConstants.h"
-#include "..\Minecraft.World\C4JThread.h"
+#include "../Minecraft.Server/Common/DedicatedServerWorldTypes.h"
+#include "../Minecraft.World/ArrayWithLength.h"
+#include "../Minecraft.World/SharedConstants.h"
+#include "../Minecraft.World/C4JThread.h"
 
 class ServerConnection;
 class Settings;

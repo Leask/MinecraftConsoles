@@ -1,16 +1,33 @@
 #include "stdafx.h"
-#include "..\..\..\Minecraft.World\Socket.h"
-#include "..\..\..\Minecraft.World\StringHelpers.h"
+#include "../../../Minecraft.World/Socket.h"
+#include "../../../Minecraft.World/StringHelpers.h"
 #include "PlatformNetworkManagerStub.h"
-#include "..\..\Xbox\Network\NetworkPlayerXbox.h"
-#ifdef _WINDOWS64
-#include "..\..\Windows64\Network\WinsockNetLayer.h"
-#include "..\..\Windows64\Windows64_Xuid.h"
-#include "..\..\Minecraft.h"
-#include "..\..\User.h"
-#include "..\..\MinecraftServer.h"
-#include "..\..\PlayerList.h"
+#include "../../Xbox/Network/NetworkPlayerXbox.h"
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#include "../../Windows64/Network/WinsockNetLayer.h"
+#include "../../Windows64/Windows64_Xuid.h"
+#include "../../Minecraft.h"
+#include "../../User.h"
+#include "../../MinecraftServer.h"
+#include "../../PlayerList.h"
 #include <iostream>
+#if defined(_NATIVE_DESKTOP)
+#include <arpa/inet.h>
+#define NATIVE_DESKTOP_PLATFORM_TRACE(message) \
+	std::fprintf(stderr, "NativeDesktop platform: %s\n", message)
+#define NATIVE_DESKTOP_PLATFORM_TRACEF(format, ...) \
+	std::fprintf(stderr, "NativeDesktop platform: " format "\n", __VA_ARGS__)
+#else
+#define NATIVE_DESKTOP_PLATFORM_TRACE(message) ((void)0)
+#define NATIVE_DESKTOP_PLATFORM_TRACEF(format, ...) ((void)0)
+#endif
+#endif
+#ifndef NATIVE_DESKTOP_PLATFORM_TRACE
+#define NATIVE_DESKTOP_PLATFORM_TRACE(message) ((void)0)
+#define NATIVE_DESKTOP_PLATFORM_TRACEF(format, ...) ((void)0)
+#endif
+#if defined(_NATIVE_DESKTOP)
+static constexpr int kNativeDesktopServerStopWaitMs = 30000;
 #endif
 
 CPlatformNetworkManagerStub *g_pPlatformNetworkManager;
@@ -215,7 +232,7 @@ bool CPlatformNetworkManagerStub::isSystemPrimaryPlayer(IQNetPlayer *pQNetPlayer
 // We call this twice a frame, either side of the render call so is a good place to "tick" things
 void CPlatformNetworkManagerStub::DoWork()
 {
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 	extern QNET_STATE _iQNetStubState;
 	if (_iQNetStubState == QNET_STATE_SESSION_STARTING && app.GetGameStarted())
 	{
@@ -287,7 +304,7 @@ void CPlatformNetworkManagerStub::DoWork()
 
 bool CPlatformNetworkManagerStub::CanAcceptMoreConnections()
 {
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 	MinecraftServer* server = MinecraftServer::getInstance();
 	if (server == NULL) return true;
 	PlayerList* list = server->getPlayerList();
@@ -331,7 +348,7 @@ bool CPlatformNetworkManagerStub::AddLocalPlayerByUserIndex( int userIndex )
 
 bool CPlatformNetworkManagerStub::RemoveLocalPlayerByUserIndex( int userIndex )
 {
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 	if (userIndex > 0 && userIndex < XUSER_MAX_COUNT && !m_pIQNet->IsHost())
 	{
 		IQNetPlayer* qp = &IQNet::m_player[userIndex];
@@ -379,37 +396,66 @@ bool CPlatformNetworkManagerStub::IsAddingPlayer()
 bool CPlatformNetworkManagerStub::LeaveGame(bool bMigrateHost)
 {
 	if( m_bLeavingGame ) return true;
+	NATIVE_DESKTOP_PLATFORM_TRACE("LeaveGame begin");
 
 	m_bLeavingGame = true;
 	m_bLeaveGameOnTick = false;
 
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+	NATIVE_DESKTOP_PLATFORM_TRACE("StopAdvertising begin");
 	WinsockNetLayer::StopAdvertising();
+	NATIVE_DESKTOP_PLATFORM_TRACE("StopAdvertising end");
 #endif
 
 	// If we are the host wait for the game server to end
 	if(m_pIQNet->IsHost() && g_NetworkManager.ServerStoppedValid())
 	{
+		NATIVE_DESKTOP_PLATFORM_TRACE("EndGame host begin");
 		m_pIQNet->EndGame();
+		NATIVE_DESKTOP_PLATFORM_TRACE("ServerStoppedWait begin");
+#if defined(_NATIVE_DESKTOP)
+		if (!g_NetworkManager.ServerStoppedWaitFor(
+			kNativeDesktopServerStopWaitMs))
+		{
+			NATIVE_DESKTOP_PLATFORM_TRACE("ServerStoppedWait timeout");
+			return false;
+		}
+#else
 		g_NetworkManager.ServerStoppedWait();
+#endif
+		NATIVE_DESKTOP_PLATFORM_TRACE("ServerStoppedWait end");
 		g_NetworkManager.ServerStoppedDestroy();
 	}
 	else
 	{
+		NATIVE_DESKTOP_PLATFORM_TRACE("EndGame non-wait begin");
 		m_pIQNet->EndGame();
+		NATIVE_DESKTOP_PLATFORM_TRACE("EndGame non-wait end");
 	}
 
+	NATIVE_DESKTOP_PLATFORM_TRACEF(
+		"delete network players begin count=%zu",
+		currentNetworkPlayers.size());
 	for (auto & it : currentNetworkPlayers)
 		delete it;
 	currentNetworkPlayers.clear();
-	m_machineQNetPrimaryPlayers.clear();
-	SystemFlagReset();
+	NATIVE_DESKTOP_PLATFORM_TRACE("delete network players end");
 
-#ifdef _WINDOWS64
+	m_machineQNetPrimaryPlayers.clear();
+	NATIVE_DESKTOP_PLATFORM_TRACE("SystemFlagReset begin");
+	SystemFlagReset();
+	NATIVE_DESKTOP_PLATFORM_TRACE("SystemFlagReset end");
+
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+	NATIVE_DESKTOP_PLATFORM_TRACE("Winsock shutdown begin");
 	WinsockNetLayer::Shutdown();
+	NATIVE_DESKTOP_PLATFORM_TRACE("Winsock shutdown end");
+	NATIVE_DESKTOP_PLATFORM_TRACE("Winsock initialize begin");
 	WinsockNetLayer::Initialize();
+	NATIVE_DESKTOP_PLATFORM_TRACE("Winsock initialize end");
 #endif
 
+	NATIVE_DESKTOP_PLATFORM_TRACE("LeaveGame end");
 	return true;
 }
 
@@ -434,7 +480,7 @@ void CPlatformNetworkManagerStub::HostGame(int localUsersMask, bool bOnlineGame,
 
 	m_pIQNet->HostGame();
 
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 	IQNet::m_player[0].m_smallId = 0;
 	IQNet::m_player[0].m_isRemote = false;
 	// world host is pinned to legacy host XUID to keep old player data compatibility.
@@ -445,7 +491,7 @@ void CPlatformNetworkManagerStub::HostGame(int localUsersMask, bool bOnlineGame,
 
 	_HostGame( localUsersMask, publicSlots, privateSlots );
 
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 	int port = WIN64_NET_DEFAULT_PORT;
 	const char* bindIp = nullptr;
 	if (g_Win64DedicatedServer)
@@ -493,7 +539,7 @@ bool CPlatformNetworkManagerStub::_StartGame()
 
 int CPlatformNetworkManagerStub::JoinGame(FriendSessionInfo* searchResult, int localUsersMask, int primaryUserIndex)
 {
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 	if (searchResult == nullptr)
 		return CGameNetworkManager::JOINGAME_FAIL_GENERAL;
 
@@ -581,7 +627,7 @@ void CPlatformNetworkManagerStub::HandleSignInChange()
 
 bool CPlatformNetworkManagerStub::_RunNetworkGame()
 {
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 	extern QNET_STATE _iQNetStubState;
 	_iQNetStubState = QNET_STATE_GAME_PLAY;
 
@@ -803,7 +849,7 @@ wstring CPlatformNetworkManagerStub::GatherRTTStats()
 
 void CPlatformNetworkManagerStub::TickSearch()
 {
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 	if (m_SessionsUpdatedCallback == nullptr)
 		return;
 
@@ -819,7 +865,7 @@ void CPlatformNetworkManagerStub::TickSearch()
 
 void CPlatformNetworkManagerStub::SearchForGames()
 {
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 	std::vector<Win64LANSession> lanSessions = WinsockNetLayer::GetDiscoveredSessions();
 
 	//THEY GET DELETED HERE DAMMIT

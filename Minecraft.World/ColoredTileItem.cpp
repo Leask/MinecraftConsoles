@@ -35,7 +35,7 @@ int ColoredTileItem::getLevelDataForAuxValue(int auxValue)
 
 ColoredTileItem *ColoredTileItem::setDescriptionPostfixes(intArray descriptionPostfixes)
 {
-	if(this->descriptionPostfixes.data != nullptr) delete this->descriptionPostfixes.data;
+	if(this->descriptionPostfixes.data != nullptr) delete [] this->descriptionPostfixes.data;
 	this->descriptionPostfixes = intArray(descriptionPostfixes.length);
 	for(unsigned int i = 0; i < descriptionPostfixes.length; ++i )
 	{

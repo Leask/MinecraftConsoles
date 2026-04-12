@@ -9,11 +9,14 @@
 #include "net.minecraft.world.entity.animal.h"
 #include "net.minecraft.world.item.h"
 #include "net.minecraft.world.damagesource.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\MinecraftServer.h"
 #include "..\Minecraft.Client\ServerLevel.h"
+#endif
 #include "com.mojang.nbt.h"
 #include "Minecart.h"
 #include "SharedConstants.h"
+#include "Tickable.h"
 
 
 
@@ -223,45 +226,55 @@ void Minecart::tick()
 			outOfWorld();
 		}
 
-		if (!level->isClientSide && dynamic_cast<ServerLevel *>(level) != nullptr)
+		if (!level->isClientSide)
 		{
-			MinecraftServer *server = static_cast<ServerLevel *>(level)->getServer();
-			int waitTime = getPortalWaitTime();
-
-			if (isInsidePortal)
+#if defined(_NATIVE_DESKTOP)
+			if (changingDimensionDelay > 0)
 			{
-				if (server->isNetherEnabled())
+				changingDimensionDelay--;
+			}
+#else
+			if (dynamic_cast<ServerLevel *>(level) != nullptr)
+			{
+				MinecraftServer *server = static_cast<ServerLevel *>(level)->getServer();
+				int waitTime = getPortalWaitTime();
+
+				if (isInsidePortal)
 				{
-					if (riding == nullptr)
+					if (server->isNetherEnabled())
 					{
-						if (portalTime++ >= waitTime)
+						if (riding == nullptr)
 						{
-							portalTime = waitTime;
-							changingDimensionDelay = getDimensionChangingDelay();
-
-							int targetDimension;
-
-							if (level->dimension->id == -1)
+							if (portalTime++ >= waitTime)
 							{
-								targetDimension = 0;
-							}
-							else
-							{
-								targetDimension = -1;
-							}
+								portalTime = waitTime;
+								changingDimensionDelay = getDimensionChangingDelay();
 
-							changeDimension(targetDimension);
+								int targetDimension;
+
+								if (level->dimension->id == -1)
+								{
+									targetDimension = 0;
+								}
+								else
+								{
+									targetDimension = -1;
+								}
+
+								changeDimension(targetDimension);
+							}
 						}
+						isInsidePortal = false;
 					}
-					isInsidePortal = false;
 				}
+				else
+				{
+					if (portalTime > 0) portalTime -= 4;
+					if (portalTime < 0) portalTime = 0;
+				}
+				if (changingDimensionDelay > 0) changingDimensionDelay--;
 			}
-			else
-			{
-				if (portalTime > 0) portalTime -= 4;
-				if (portalTime < 0) portalTime = 0;
-			}
-			if (changingDimensionDelay > 0) changingDimensionDelay--;
+#endif
 		}
 
 		// 4J Stu - Fix for #8284 - Gameplay: Collision: Minecart clips into/ through blocks at the end of the track, prevents player from riding

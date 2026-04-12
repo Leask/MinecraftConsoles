@@ -12,7 +12,9 @@
 #include "net.minecraft.world.level.biome.h"
 #include "net.minecraft.world.item.h"
 #include "SharedConstants.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "SnowMan.h"
 #include "SoundTypes.h"
 

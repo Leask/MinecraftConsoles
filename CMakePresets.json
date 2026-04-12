@@ -24,7 +24,7 @@
       "hidden": true,
       "cacheVariables": {
         "MINECRAFT_BUILD_PORTABILITY": "ON",
-        "MINECRAFT_BUILD_WORLD": "OFF",
+        "MINECRAFT_BUILD_WORLD": "ON",
         "MINECRAFT_BUILD_CLIENT": "OFF",
         "MINECRAFT_BUILD_SERVER": "OFF",
         "PLATFORM_DEFINES": "_NATIVE_DESKTOP",
@@ -40,6 +40,30 @@
       "name": "linux-native",
       "displayName": "Linux Native Porting",
       "inherits": "native-base"
+    },
+    {
+      "name": "native-client-base",
+      "displayName": "Native Desktop Client Base",
+      "inherits": "base",
+      "hidden": true,
+      "cacheVariables": {
+        "MINECRAFT_BUILD_PORTABILITY": "OFF",
+        "MINECRAFT_BUILD_WORLD": "ON",
+        "MINECRAFT_BUILD_CLIENT": "ON",
+        "MINECRAFT_BUILD_SERVER": "OFF",
+        "PLATFORM_DEFINES": "_NATIVE_DESKTOP",
+        "PLATFORM_NAME": "NativeDesktop"
+      }
+    },
+    {
+      "name": "macos-native-client",
+      "displayName": "macOS Native Client",
+      "inherits": "native-client-base"
+    },
+    {
+      "name": "linux-native-client",
+      "displayName": "Linux Native Client",
+      "inherits": "native-client-base"
     },
     {
       "name": "durango",
@@ -102,9 +126,13 @@
 
     { "name": "macos-native-debug",   "displayName": "macOS Native - Debug",   "configurePreset": "macos-native", "configuration": "Debug" },
     { "name": "macos-native-release", "displayName": "macOS Native - Release", "configurePreset": "macos-native", "configuration": "Release" },
+    { "name": "macos-native-client-debug",   "displayName": "macOS Native Client - Debug",   "configurePreset": "macos-native-client", "configuration": "Debug" },
+    { "name": "macos-native-client-release", "displayName": "macOS Native Client - Release", "configurePreset": "macos-native-client", "configuration": "Release" },
 
     { "name": "linux-native-debug",   "displayName": "Linux Native - Debug",   "configurePreset": "linux-native", "configuration": "Debug" },
     { "name": "linux-native-release", "displayName": "Linux Native - Release", "configurePreset": "linux-native", "configuration": "Release" },
+    { "name": "linux-native-client-debug",   "displayName": "Linux Native Client - Debug",   "configurePreset": "linux-native-client", "configuration": "Debug" },
+    { "name": "linux-native-client-release", "displayName": "Linux Native Client - Release", "configurePreset": "linux-native-client", "configuration": "Release" },
 
     { "name": "durango-debug",     "displayName": "Durango - Debug",     "configurePreset": "durango",   "configuration": "Debug" },
     { "name": "durango-release",   "displayName": "Durango - Release",   "configurePreset": "durango",   "configuration": "Release" },
@@ -141,6 +169,24 @@
       }
     },
     {
+      "name": "macos-native-client-debug-test",
+      "displayName": "macOS Native Client Smoke - Debug",
+      "configurePreset": "macos-native-client",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "macos-native-client-release-test",
+      "displayName": "macOS Native Client Smoke - Release",
+      "configurePreset": "macos-native-client",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
       "name": "linux-native-debug-test",
       "displayName": "Linux Native Smoke - Debug",
       "configurePreset": "linux-native",
@@ -153,6 +199,24 @@
       "name": "linux-native-release-test",
       "displayName": "Linux Native Smoke - Release",
       "configurePreset": "linux-native",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-native-client-debug-test",
+      "displayName": "Linux Native Client Smoke - Debug",
+      "configurePreset": "linux-native-client",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "linux-native-client-release-test",
+      "displayName": "Linux Native Client Smoke - Release",
+      "configurePreset": "linux-native-client",
       "configuration": "Release",
       "output": {
         "outputOnFailure": true

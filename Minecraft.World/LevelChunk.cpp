@@ -11,11 +11,14 @@
 #include "SparseLightStorage.h"
 #include "BlockReplacements.h"
 #include "LevelChunk.h"
+#include "ChunkSource.h"
 #include "BasicTypeContainers.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\MinecraftServer.h"
 #include "..\Minecraft.Client\ServerLevel.h"
 #include "..\Minecraft.Client\ServerChunkCache.h"
 #include "..\Minecraft.Client\GameRenderer.h"
+#endif
 #include "ItemEntity.h"
 #include "Minecart.h"
 
@@ -233,10 +236,24 @@ LevelChunk::LevelChunk(Level *level, int x, int z, LevelChunk *lc)
 	sharingTilesAndData = true;
 	serverTerrainPopulated = &lc->terrainPopulated;
 #else
-	this->blocks = new CompressedTileStorage(lc->blocks);
-	this->data = new SparseDataStorage(lc->data);
-	this->skyLight = new SparseLightStorage(lc->skyLight);
-	this->blockLight = new SparseLightStorage(lc->blockLight);
+	lowerBlocks = new CompressedTileStorage(lc->lowerBlocks);
+	lowerData = new SparseDataStorage(lc->lowerData);
+	lowerSkyLight = new SparseLightStorage(lc->lowerSkyLight);
+	lowerBlockLight = new SparseLightStorage(lc->lowerBlockLight);
+	if(Level::maxBuildHeight > Level::COMPRESSED_CHUNK_SECTION_HEIGHT)
+	{
+		upperBlocks = new CompressedTileStorage(lc->upperBlocks);
+		upperData = new SparseDataStorage(lc->upperData);
+		upperSkyLight = new SparseLightStorage(lc->upperSkyLight);
+		upperBlockLight = new SparseLightStorage(lc->upperBlockLight);
+	}
+	else
+	{
+		upperBlocks = nullptr;
+		upperData = nullptr;
+		upperSkyLight = nullptr;
+		upperBlockLight = nullptr;
+	}
 	serverTerrainPopulated = nullptr;
 #endif
 }
@@ -539,7 +556,7 @@ void LevelChunk::recalcHeightmapOnly()
 		this->setUnsaved(true);
 
 #ifdef __PSVITA__
-		delete blockData.data;
+		delete [] blockData.data;
 #endif
 }
 
@@ -654,7 +671,7 @@ void LevelChunk::recalcHeightmap()
 			this->setUnsaved(true);
 
 #ifdef __PSVITA__
-			delete blockData.data;
+			delete [] blockData.data;
 #endif
 }
 
@@ -1909,6 +1926,7 @@ int LevelChunk::setBlocksAndData(byteArray data, int x0, int y0, int z0, int x1,
 		// Because the host's local client shares data with it, the lighting updates that are done via callbacks in the setDataRegion calls above when things don't work, as they
 		// don't detect changes because they've already happened just because the data was being shared when the server updated them. This will leave the lighting information out of sync on
 		// the client, so resync for this & surrounding chunks that might have been affected
+#if !defined(_NATIVE_DESKTOP)
 		if( level->isClientSide && g_NetworkManager.IsHost() )
 		{
 			reSyncLighting();
@@ -1921,6 +1939,7 @@ int LevelChunk::setBlocksAndData(byteArray data, int x0, int y0, int z0, int x1,
 			level->getChunk(x+0,z+1)->reSyncLighting();
 			level->getChunk(x+1,z+1)->reSyncLighting();
 		}
+#endif
 	}
 
 	/*
@@ -2167,7 +2186,7 @@ void LevelChunk::updateBiomeFlags(int x, int z)
 		if( biomes[0]->hasRain()) columnFlags[slot] |= ( eColumnFlag_biomeHasRain << shift );
 		if( biomes[0]->hasSnow()) columnFlags[slot] |= ( eColumnFlag_biomeHasSnow << shift );
 		columnFlags[slot] |= ( eColumnFlag_biomeOk << shift );
-		delete biomes.data;
+		delete [] biomes.data;
 	}
 }
 
@@ -2245,6 +2264,7 @@ void LevelChunk::compressBlocks()
 
 	// If we're the host machine, and this is the client level, then we only want to do this if we are sharing data. This means that we will be compressing the data that is shared from the server.
 	// No point trying to compress the local client copy of the data if the data is unshared, since we'll be throwing this data away again anyway once we share with the server again.
+#if !defined(_NATIVE_DESKTOP)
 	if( level->isClientSide && g_NetworkManager.IsHost() )
 	{
 		// Note - only the extraction of the pointers needs to be done in the critical section, since even if the data is unshared whilst we are processing this data is still valid (for the server)
@@ -2257,6 +2277,7 @@ void LevelChunk::compressBlocks()
 		LeaveCriticalSection(&m_csSharing);
 	}
 	else
+#endif
 	{
 		// Not the host, simple case
 		blocksToCompressLower = lowerBlocks;
@@ -2267,7 +2288,8 @@ void LevelChunk::compressBlocks()
 	if( blocksToCompressLower ) blocksToCompressLower->compress();
 	if( blocksToCompressUpper ) blocksToCompressUpper->compress();
 #else
-	blocks->compress();
+	if(lowerBlocks) lowerBlocks->compress();
+	if(upperBlocks) upperBlocks->compress();
 #endif
 }
 
@@ -2349,6 +2371,7 @@ void LevelChunk::compressData()
 
 	// If we're the host machine, and this is the client level, then we only want to do this if we are sharing data. This means that we will be compressing the data that is shared from the server.
 	// No point trying to compress the local client copy of the data if the data is unshared, since we'll be throwing this data away again anyway once we share with the server again.
+#if !defined(_NATIVE_DESKTOP)
 	if( level->isClientSide && g_NetworkManager.IsHost() )
 	{
 		// Note - only the extraction of the pointers needs to be done in the critical section, since even if the data is unshared whilst we are processing this data is still valid (for the server)
@@ -2361,6 +2384,7 @@ void LevelChunk::compressData()
 		LeaveCriticalSection(&m_csSharing);
 	}
 	else
+#endif
 	{
 		// Not the host, simple case
 		dataToCompressLower = lowerData;
@@ -2371,7 +2395,8 @@ void LevelChunk::compressData()
 	if( dataToCompressLower ) dataToCompressLower->compress();
 	if( dataToCompressUpper ) dataToCompressUpper->compress();
 #else
-	data->compress();
+	if(lowerData) lowerData->compress();
+	if(upperData) upperData->compress();
 #endif
 }
 

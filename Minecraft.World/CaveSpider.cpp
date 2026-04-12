@@ -5,7 +5,9 @@
 #include "net.minecraft.world.effect.h"
 #include "net.minecraft.world.level.h"
 #include "net.minecraft.world.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "CaveSpider.h"
 
 

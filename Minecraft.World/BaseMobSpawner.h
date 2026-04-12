@@ -43,7 +43,7 @@ private:
 
 public:
 	BaseMobSpawner();
-	~BaseMobSpawner();
+	virtual ~BaseMobSpawner();
 
 	virtual wstring getEntityId();
 	virtual void setEntityId(const wstring &entityId);

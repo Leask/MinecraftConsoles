@@ -2,7 +2,6 @@
 #include "net.minecraft.network.packet.h"
 #include "net.minecraft.world.level.h"
 #include "net.minecraft.commands.h"
-#include "..\Minecraft.Client\MinecraftServer.h"
 #include "CommandBlockEntity.h"
 
 CommandBlockEntity::CommandBlockEntity()
@@ -39,9 +38,13 @@ int CommandBlockEntity::performCommand(Level *level)
 	}
 	return 0;
 #else
+#if defined(_NATIVE_DESKTOP)
+    return 0;
+#else
 	// 4J-JEV: Cannot decide what to do with the command field.
 	assert(false);
 	return 0;
+#endif
 #endif
 }
 

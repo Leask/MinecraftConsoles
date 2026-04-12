@@ -5,6 +5,7 @@
 #include "com.mojang.nbt.h"
 #include "File.h"
 #include "SavedDataStorage.h"
+#include "StructureFeatureSavedData.h"
 
 #include "ConsoleSaveFileIO.h"
 

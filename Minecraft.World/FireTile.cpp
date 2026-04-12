@@ -5,12 +5,16 @@
 #include "net.minecraft.world.level.tile.h"
 #include "FireTile.h"
 #include "SoundTypes.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\MinecraftServer.h"
 #include "..\Minecraft.Client\PlayerList.h"
+#endif
 
 // AP - added for Vita to set Alpha Cut out
 #include "IntBuffer.h"
+#if defined(__PSVITA__)
 #include "..\Minecraft.Client\Tesselator.h"
+#endif
 
 
 const wstring FireTile::TEXTURE_FIRST = L"fire_0";
@@ -108,6 +112,7 @@ void FireTile::tick(Level *level, int x, int y, int z, Random *random)
 	// chunk map. If we did change something in that case, then the change wouldn't get sent to any player that had already received that full chunk, and so we'd just become desynchronised.
 	// Seems safest just to do an addToTickNextTick here instead with a decent delay, to make sure that we will get ticked again in the future, when we might again be in a chunk
 	// that is being tracked.
+#if !defined(_NATIVE_DESKTOP)
 	if( !level->isClientSide )		// Note - should only be being ticked on the server
 	{
 		if( !MinecraftServer::getInstance()->getPlayers()->isTrackingTile(x, y, z, level->dimension->id) )
@@ -116,6 +121,7 @@ void FireTile::tick(Level *level, int x, int y, int z, Random *random)
 			return;
 		}
 	}
+#endif
 
 
 	bool infiniBurn = level->getTile(x, y - 1, z) == Tile::netherRack_Id;

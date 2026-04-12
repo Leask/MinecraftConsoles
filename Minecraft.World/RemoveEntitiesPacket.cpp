@@ -16,7 +16,7 @@ RemoveEntitiesPacket::RemoveEntitiesPacket(intArray ids)
 
 RemoveEntitiesPacket::~RemoveEntitiesPacket()
 {
-	delete ids.data;
+	delete [] ids.data;
 }
 
 void RemoveEntitiesPacket::read(DataInputStream *dis) //throws IOException 
@@ -53,6 +53,7 @@ int RemoveEntitiesPacket::getEstimatedSize()
 	4J: These are necesary on the PS3.
 		(and 4).
 */
-#if (defined __PS3__ || defined __ORBIS__ || defined __PSVITA__)
+#if (defined __PS3__ || defined __ORBIS__ || defined __PSVITA__ || \
+    defined _NATIVE_DESKTOP)
 const int RemoveEntitiesPacket::MAX_PER_PACKET;
 #endif

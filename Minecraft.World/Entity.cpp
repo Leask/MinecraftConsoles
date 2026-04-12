@@ -18,12 +18,14 @@
 #include "EntityPos.h"
 #include "Entity.h"
 #include "SoundTypes.h"
-#include "..\minecraft.Client\HumanoidModel.h"
-#include "..\Minecraft.Client\MinecraftServer.h"
-#include "..\Minecraft.Client\MultiPlayerLevel.h"
-#include "..\Minecraft.Client\MultiplayerLocalPlayer.h"
-#include "..\Minecraft.Client\ServerLevel.h"
-#include "..\Minecraft.Client\PlayerList.h"
+#if !defined(_NATIVE_DESKTOP)
+#include "../Minecraft.Client/HumanoidModel.h"
+#include "../Minecraft.Client/MinecraftServer.h"
+#include "../Minecraft.Client/MultiPlayerLevel.h"
+#include "../Minecraft.Client/MultiPlayerLocalPlayer.h"
+#include "../Minecraft.Client/ServerLevel.h"
+#include "../Minecraft.Client/PlayerList.h"
+#endif
 
 const wstring Entity::RIDING_TAG = L"Riding";
 
@@ -48,6 +50,7 @@ int Entity::getSmallId()
 	// for final notification to the client that the entities are removed. We can't go re-using these small Ids yet, as otherwise we will
 	// potentially end up telling the client that the entity has been removed After we have already re-used its Id and created a new entity.
 	// This ends up with newly created client-side entities being removed by accident, causing invisible mobs.
+#if !defined(_NATIVE_DESKTOP)
 	if( ((size_t)TlsGetValue(tlsIdx) != 0 ) )
 	{
 		MinecraftServer *server = MinecraftServer::getInstance();
@@ -64,6 +67,7 @@ int Entity::getSmallId()
 			}
 		}
 	}
+#endif
 
 	for( int i = 0; i < (2048 / 32 ); i++ )
 	{
@@ -533,6 +537,7 @@ void Entity::baseTick()
 	xRotO = xRot;
 	yRotO = yRot;
 
+#if !defined(_NATIVE_DESKTOP)
 	if (!level->isClientSide) // 4J Stu - Don't need this && level instanceof ServerLevel)
 	{
 		if(!m_ignorePortal) // 4J Added
@@ -576,6 +581,9 @@ void Entity::baseTick()
 			if (changingDimensionDelay > 0) changingDimensionDelay--;
 		}
 	}
+#else
+	if (changingDimensionDelay > 0) changingDimensionDelay--;
+#endif
 
 	if (isSprinting() && !isInWater() && canCreateParticles())
 	{
@@ -1997,6 +2005,10 @@ void Entity::restoreFrom(shared_ptr<Entity> oldEntity, bool teleporting)
 
 void Entity::changeDimension(int i)
 {
+#if defined(_NATIVE_DESKTOP)
+	(void)i;
+	return;
+#else
 	if (level->isClientSide || removed) return;
 
 	MinecraftServer *server = MinecraftServer::getInstance();
@@ -2053,6 +2065,7 @@ void Entity::changeDimension(int i)
 
 	oldLevel->resetEmptyTime();
 	newLevel->resetEmptyTime();
+#endif
 }
 
 float Entity::getTileExplosionResistance(Explosion *explosion, Level *level, int x, int y, int z, Tile *tile)

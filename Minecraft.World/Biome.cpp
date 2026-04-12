@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "Color.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Minecraft.h"
+#endif
 #include "net.minecraft.world.level.levelgen.feature.h"
 #include "net.minecraft.world.level.tile.h"
 #include "net.minecraft.world.level.h"

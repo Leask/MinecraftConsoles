@@ -4,6 +4,10 @@
 #include "PacketListener.h"
 #include "TextureAndGeometryPacket.h"
 
+#if !defined(_NATIVE_DESKTOP)
+#include "../Minecraft.Client/Common/DLC/DLCSkinFile.h"
+#endif
+
 
 
 TextureAndGeometryPacket::TextureAndGeometryPacket()
@@ -60,6 +64,12 @@ TextureAndGeometryPacket::TextureAndGeometryPacket(const wstring &textureName, P
 
 	this->pbData = pbData;
 	this->dwTextureBytes = dwBytes;
+#if defined(_NATIVE_DESKTOP)
+	(void)pDLCSkinFile;
+	this->uiAnimOverrideBitmask = 0;
+	this->dwBoxC = 0;
+	this->BoxDataA = nullptr;
+#else
 	this->uiAnimOverrideBitmask = pDLCSkinFile->getAnimOverrideBitmask();
 	this->dwBoxC = pDLCSkinFile->getAdditionalBoxesCount();
 	if(this->dwBoxC!=0)
@@ -77,6 +87,7 @@ TextureAndGeometryPacket::TextureAndGeometryPacket(const wstring &textureName, P
 	{
 		this->BoxDataA=nullptr;
 	}
+#endif
 }
 
 TextureAndGeometryPacket::TextureAndGeometryPacket(const wstring &textureName, PBYTE pbData, DWORD dwBytes,vector<SKIN_BOX *> *pvSkinBoxes, unsigned int uiAnimOverrideBitmask)

@@ -1,49 +1,59 @@
 #include "stdafx.h"
-#include "..\..\..\Minecraft.World\StringHelpers.h"
-#include "..\..\..\Minecraft.World\AABB.h"
-#include "..\..\..\Minecraft.World\Vec3.h"
-#include "..\..\..\Minecraft.World\Socket.h"
-#include "..\..\..\Minecraft.World\ThreadName.h"
-#include "..\..\..\Minecraft.World\Entity.h"
-#include "..\..\..\Minecraft.World\net.minecraft.world.level.tile.h"
-#include "..\..\..\Minecraft.World\FireworksRecipe.h"
-#include "..\..\ClientConnection.h"
-#include "..\..\Minecraft.h"
-#include "..\..\User.h"
-#include "..\..\MinecraftServer.h"
-#include "..\..\PlayerList.h"
-#include "..\..\ServerPlayer.h"
-#include "..\..\PlayerConnection.h"
-#include "..\..\MultiPlayerLevel.h"
-#include "..\..\ProgressRenderer.h"
-#include "..\..\MultiPlayerLocalPlayer.h"
-#include "..\..\..\Minecraft.World\DisconnectPacket.h"
-#include "..\..\..\Minecraft.World\compression.h"
-#include "..\..\..\Minecraft.World\OldChunkStorage.h"
-#include "..\..\TexturePackRepository.h"
-#include "..\..\TexturePack.h"
+#include "../../../Minecraft.World/StringHelpers.h"
+#include "../../../Minecraft.World/AABB.h"
+#include "../../../Minecraft.World/Vec3.h"
+#include "../../../Minecraft.World/Socket.h"
+#include "../../../Minecraft.World/ThreadName.h"
+#include "../../../Minecraft.World/Entity.h"
+#include "../../../Minecraft.World/net.minecraft.world.level.tile.h"
+#include "../../../Minecraft.World/FireworksRecipe.h"
+#include "../../ClientConnection.h"
+#include "../../Minecraft.h"
+#include "../../User.h"
+#include "../../MinecraftServer.h"
+#include "../../PlayerList.h"
+#include "../../ServerPlayer.h"
+#include "../../PlayerConnection.h"
+#include "../../MultiPlayerLevel.h"
+#include "../../ProgressRenderer.h"
+#include "../../MultiPlayerLocalPlayer.h"
+#include "../../../Minecraft.World/DisconnectPacket.h"
+#include "../../../Minecraft.World/compression.h"
+#include "../../../Minecraft.World/OldChunkStorage.h"
+#include "../../TexturePackRepository.h"
+#include "../../TexturePack.h"
 
-#include "..\..\Gui.h"
-#include "..\..\LevelRenderer.h"
-#include "..\..\..\Minecraft.World\IntCache.h"
-#include "..\GameRules\ConsoleGameRules.h"
+#include "../../Gui.h"
+#include "../../LevelRenderer.h"
+#include "../../../Minecraft.World/IntCache.h"
+#include "../GameRules/ConsoleGameRules.h"
 #include "GameNetworkManager.h"
 
-#ifdef _XBOX
-#include "Common\XUI\XUI_PauseMenu.h"
+#if defined(_NATIVE_DESKTOP)
+#define NATIVE_DESKTOP_NET_TRACE(message) \
+	std::fprintf(stderr, "NativeDesktop network: %s\n", message)
+#define NATIVE_DESKTOP_NET_TRACEF(format, ...) \
+	std::fprintf(stderr, "NativeDesktop network: " format "\n", __VA_ARGS__)
 #else
-#include "Common\UI\UI.h"
-#include "Common\UI\UIScene_PauseMenu.h"
-#include "..\..\Xbox\Network\NetworkPlayerXbox.h"
+#define NATIVE_DESKTOP_NET_TRACE(message) ((void)0)
+#define NATIVE_DESKTOP_NET_TRACEF(format, ...) ((void)0)
+#endif
+
+#ifdef _XBOX
+#include "Common/XUI/XUI_PauseMenu.h"
+#else
+#include "Common/UI/UI.h"
+#include "Common/UI/UIScene_PauseMenu.h"
+#include "../../Xbox/Network/NetworkPlayerXbox.h"
 #endif
 
 #ifdef _DURANGO
-#include "..\Minecraft.World\DurangoStats.h"
+#include "../Minecraft.World/DurangoStats.h"
 #endif
 
-#ifdef _WINDOWS64
-#include "..\..\Windows64\Network\WinsockNetLayer.h"
-#include "..\..\Windows64\Windows64_Xuid.h"
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#include "../../Windows64/Network/WinsockNetLayer.h"
+#include "../../Windows64/Windows64_Xuid.h"
 #endif
 
 // Global instance
@@ -155,9 +165,13 @@ bool CGameNetworkManager::_RunNetworkGame(LPVOID lpParameter)
 	bool success = true;
 
 	bool isHost = g_NetworkManager.IsHost();
+	NATIVE_DESKTOP_NET_TRACEF("_RunNetworkGame begin host=%d", isHost ? 1 : 0);
 	// Start the network game
 	Minecraft *pMinecraft=Minecraft::GetInstance();
 	success = StartNetworkGame(pMinecraft,lpParameter);
+	NATIVE_DESKTOP_NET_TRACEF(
+		"StartNetworkGame result=%d",
+		success ? 1 : 0);
 
 	if(!success) return false;
 
@@ -181,6 +195,7 @@ bool CGameNetworkManager::_RunNetworkGame(LPVOID lpParameter)
 	if( g_NetworkManager.IsLeavingGame() ) return false;
 
 	app.SetGameStarted(true);
+	NATIVE_DESKTOP_NET_TRACE("_RunNetworkGame game started");
 
 	// 4J-PB - if this is the trial game, start the trial timer
 	if(!ProfileManager.IsFullVersion())
@@ -195,6 +210,7 @@ bool CGameNetworkManager::_RunNetworkGame(LPVOID lpParameter)
 
 bool	CGameNetworkManager::StartNetworkGame(Minecraft *minecraft, LPVOID lpParameter)
 {
+	NATIVE_DESKTOP_NET_TRACE("StartNetworkGame begin");
 #ifdef _DURANGO
 	ProfileManager.SetDeferredSignoutEnabled(true);
 #endif
@@ -231,7 +247,7 @@ bool	CGameNetworkManager::StartNetworkGame(Minecraft *minecraft, LPVOID lpParame
 						wstring fileRoot = L"GAME:\\res\\TitleUpdate\\GameRules\\" + param->levelGen->getBaseSavePath();
 #endif
 #else
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 						wstring fileRoot = L"Windows64Media\\Tutorial\\" + param->levelGen->getBaseSavePath();
 						File root(fileRoot);
 						if(!root.exists()) fileRoot = L"Windows64\\Tutorial\\" + param->levelGen->getBaseSavePath();
@@ -301,6 +317,7 @@ bool	CGameNetworkManager::StartNetworkGame(Minecraft *minecraft, LPVOID lpParame
 		ServerStoppedCreate(true);
 		ServerReadyCreate(true);
 		// Ready to go - create actual networking thread & start hosting
+		NATIVE_DESKTOP_NET_TRACE("starting server thread");
 		C4JThread* thread = new C4JThread(&CGameNetworkManager::ServerThreadProc, lpParameter, "Server", 256 * 1024);
 #if defined __PS3__ || defined __PSVITA__
 		thread->SetPriority(THREAD_PRIORITY_BELOW_NORMAL);
@@ -309,7 +326,9 @@ bool	CGameNetworkManager::StartNetworkGame(Minecraft *minecraft, LPVOID lpParame
 		thread->SetProcessor(CPU_CORE_SERVER);
 		thread->Run();
 
+		NATIVE_DESKTOP_NET_TRACE("waiting for server ready");
 		ServerReadyWait();
+		NATIVE_DESKTOP_NET_TRACE("server ready signalled");
 		ServerReadyDestroy();
 
 		if( MinecraftServer::serverHalted() )
@@ -375,6 +394,7 @@ bool	CGameNetworkManager::StartNetworkGame(Minecraft *minecraft, LPVOID lpParame
 	}
 	else if( g_NetworkManager.IsHost() )
 	{
+		NATIVE_DESKTOP_NET_TRACE("creating host client connection");
 		connection = new ClientConnection(minecraft, nullptr);
 	}
 	else
@@ -432,6 +452,15 @@ bool	CGameNetworkManager::StartNetworkGame(Minecraft *minecraft, LPVOID lpParame
 	TexturePack *tPack = Minecraft::GetInstance()->skins->getSelected();
 	do
 	{
+		static int nativeDesktopConnectionTick = 0;
+		if ((nativeDesktopConnectionTick++ % 20) == 0)
+		{
+			NATIVE_DESKTOP_NET_TRACEF(
+				"connection wait started=%d closed=%d inSession=%d",
+				connection->isStarted() ? 1 : 0,
+				connection->isClosed() ? 1 : 0,
+				IsInSession() ? 1 : 0);
+		}
 		app.DebugPrintf("ticking connection A\n");
 		connection->tick();
 
@@ -450,6 +479,7 @@ bool	CGameNetworkManager::StartNetworkGame(Minecraft *minecraft, LPVOID lpParame
 
 		if( connection->isStarted() && !connection->isClosed() )
 		{
+			NATIVE_DESKTOP_NET_TRACE("primary connection started");
 			createdConnections.push_back( connection );
 
 		int primaryPad = ProfileManager.GetPrimaryPad();
@@ -909,6 +939,7 @@ bool CGameNetworkManager::IsNetworkThreadRunning()
 
 int CGameNetworkManager::RunNetworkGameThreadProc( void* lpParameter )
 {
+	NATIVE_DESKTOP_NET_TRACE("RunNetworkGameThreadProc begin");
 	// Share AABB & Vec3 pools with default (main thread) - should be ok as long as we don't tick the main thread whilst this thread is running
 	AABB::UseDefaultThreadStorage();
 	Vec3::UseDefaultThreadStorage();
@@ -919,6 +950,9 @@ int CGameNetworkManager::RunNetworkGameThreadProc( void* lpParameter )
 	g_NetworkManager.m_bNetworkThreadRunning = true;
 	bool success = g_NetworkManager._RunNetworkGame(lpParameter);
 	g_NetworkManager.m_bNetworkThreadRunning = false;
+	NATIVE_DESKTOP_NET_TRACEF(
+		"RunNetworkGameThreadProc result=%d",
+		success ? 1 : 0);
 	if( !success)
 	{
 		TexturePack *tPack = Minecraft::GetInstance()->skins->getSelected();
@@ -949,6 +983,7 @@ int CGameNetworkManager::RunNetworkGameThreadProc( void* lpParameter )
 
 int CGameNetworkManager::ServerThreadProc( void* lpParameter )
 {
+	NATIVE_DESKTOP_NET_TRACE("ServerThreadProc begin");
     int64_t seed = 0;
     if (lpParameter != nullptr)
 	{
@@ -983,7 +1018,9 @@ int CGameNetworkManager::ServerThreadProc( void* lpParameter )
 	Tile::CreateNewThreadStorage();
 	FireworksRecipe::CreateNewThreadStorage();
 
+	NATIVE_DESKTOP_NET_TRACE("MinecraftServer::main begin");
 	MinecraftServer::main(seed, lpParameter); //saveData, app.GetGameHostOption(eGameHostOption_All));
+	NATIVE_DESKTOP_NET_TRACE("MinecraftServer::main end");
 
 	Tile::ReleaseThreadStorage();
 	AABB::ReleaseThreadStorage();
@@ -1526,7 +1563,7 @@ void CGameNetworkManager::CreateSocket( INetworkPlayer *pNetworkPlayer, bool loc
 	}
 	else
 	{
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 		// Non-host split-screen: open a dedicated TCP connection for this pad
 		if (localPlayer && !g_NetworkManager.IsHost() && g_NetworkManager.IsInGameplay())
 		{
@@ -2080,6 +2117,36 @@ void CGameNetworkManager::ServerStoppedCreate(bool create)
 void CGameNetworkManager::ServerStopped()
 {
 	m_hServerStoppedEvent->Set();
+}
+
+bool CGameNetworkManager::ServerStoppedWaitFor(int timeoutMs)
+{
+	if(m_hServerStoppedEvent == nullptr)
+	{
+		return true;
+	}
+
+	int elapsedMs = 0;
+	while(timeoutMs == INFINITE || elapsedMs < timeoutMs)
+	{
+		DWORD result = m_hServerStoppedEvent->WaitForSignal(20);
+		if(result == WAIT_OBJECT_0)
+		{
+			return true;
+		}
+		if(result != WAIT_TIMEOUT)
+		{
+			return false;
+		}
+
+		ProfileManager.Tick();
+		StorageManager.Tick();
+		InputManager.Tick();
+		RenderManager.Tick();
+		elapsedMs += 20;
+	}
+
+	return false;
 }
 
 void CGameNetworkManager::ServerStoppedWait()

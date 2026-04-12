@@ -18,7 +18,9 @@
 #include "net.minecraft.stats.h"
 #include "Sheep.h"
 #include "Wolf.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "SoundTypes.h"
 
 

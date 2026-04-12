@@ -3,9 +3,11 @@
 #include "net.minecraft.world.item.h"
 #include "Slot.h"
 #include "GenericStats.h"
-#include "..\Minecraft.Client\StatsCounter.h"
-#include "..\Minecraft.Client\Minecraft.h"
-#include "..\Minecraft.Client\LocalPlayer.h"
+#if defined(_EXTENDED_ACHIEVEMENTS) && !defined(_NATIVE_DESKTOP)
+#include "../Minecraft.Client/StatsCounter.h"
+#include "../Minecraft.Client/Minecraft.h"
+#include "../Minecraft.Client/LocalPlayer.h"
+#endif
 #include "ContainerMenu.h"
 
 ContainerMenu::ContainerMenu(shared_ptr<Container> inventory, shared_ptr<Container> container) : AbstractContainerMenu()
@@ -94,7 +96,7 @@ shared_ptr<ItemInstance> ContainerMenu::clicked(int slotIndex, int buttonNum, in
 {
 	shared_ptr<ItemInstance> out = AbstractContainerMenu::clicked(slotIndex, buttonNum, clickType, player, looped);
 
-#ifdef _EXTENDED_ACHIEVEMENTS
+#if defined(_EXTENDED_ACHIEVEMENTS) && !defined(_NATIVE_DESKTOP)
 	shared_ptr<LocalPlayer> localPlayer = dynamic_pointer_cast<LocalPlayer>(player);
 
 	if (localPlayer != nullptr)	// 4J-JEV: For "Chestful o'Cobblestone" achievement.

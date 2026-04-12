@@ -11,7 +11,9 @@
 #include "net.minecraft.world.entity.monster.h"
 #include "net.minecraft.stats.h"
 #include "Cow.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "MobCategory.h"
 
 

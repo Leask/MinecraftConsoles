@@ -5,8 +5,10 @@
 #include "net.minecraft.world.level.newbiome.layer.h"
 #include "System.h"
 #include "BiomeSource.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Minecraft.h"
 #include "..\Minecraft.Client\ProgressRenderer.h"
+#endif
 
 // 4J - removal of separate temperature & downfall layers brought forward from 1.2.3
 void BiomeSource::_init()
@@ -218,7 +220,7 @@ void BiomeSource::getBiomeBlock(BiomeArray& biomes, int x, int z, int w, int h, 
 	{
 		BiomeArray tmp = cache->getBiomeBlockAt(x, z);
 		System::arraycopy(tmp, 0, &biomes, 0, w * h);
-		delete tmp.data;	// MGH - added, the caching creates this array from the indices now.
+		delete [] tmp.data;	// MGH - added, the caching creates this array from the indices now.
 		//return biomes;
 	}
 
@@ -477,7 +479,7 @@ int64_t BiomeSource::findSeed(LevelType *generator)
 
 			// Clean up
 			delete pr;
-			delete indices.data;
+			delete [] indices.data;
 
 #ifdef DEBUG_SEEDS
 			app.DebugPrintf("%d: %d tries taken, seed used is %lld\n", k, tryCount, bestSeed);
@@ -529,7 +531,7 @@ int64_t BiomeSource::findSeed(LevelType *generator)
 			RenderManager.SaveTextureData(buf, &srcInfo, (int *)pixels);
 
 			delete [] pixels;
-			delete biomes.data;
+			delete [] biomes.data;
 			delete biomeSource;
 #endif
 		}

@@ -15,52 +15,62 @@
 #include "ServerLevel.h"
 #include "ServerLevelListener.h"
 #include "Settings.h"
-#include "..\Minecraft.World\Command.h"
-#include "..\Minecraft.World\AABB.h"
-#include "..\Minecraft.World\Vec3.h"
-#include "..\Minecraft.World\net.minecraft.network.h"
-#include "..\Minecraft.World\net.minecraft.world.level.dimension.h"
-#include "..\Minecraft.World\net.minecraft.world.level.storage.h"
-#include "..\Minecraft.World\net.minecraft.world.h"
-#include "..\Minecraft.World\net.minecraft.world.level.h"
-#include "..\Minecraft.World\net.minecraft.world.level.tile.h"
-#include "..\Minecraft.World\Pos.h"
-#include "..\Minecraft.World\System.h"
-#include "..\Minecraft.World\StringHelpers.h"
-#include "..\Minecraft.World\net.minecraft.world.entity.item.h"
-#include "..\Minecraft.World\net.minecraft.world.item.h"
-#include "..\Minecraft.World\net.minecraft.world.item.enchantment.h"
-#include "..\Minecraft.World\net.minecraft.world.damagesource.h"
+#include "../Minecraft.World/Command.h"
+#include "../Minecraft.World/AABB.h"
+#include "../Minecraft.World/Vec3.h"
+#include "../Minecraft.World/net.minecraft.network.h"
+#include "../Minecraft.World/net.minecraft.world.level.dimension.h"
+#include "../Minecraft.World/net.minecraft.world.level.storage.h"
+#include "../Minecraft.World/net.minecraft.world.h"
+#include "../Minecraft.World/net.minecraft.world.level.h"
+#include "../Minecraft.World/net.minecraft.world.level.tile.h"
+#include "../Minecraft.World/Pos.h"
+#include "../Minecraft.World/System.h"
+#include "../Minecraft.World/StringHelpers.h"
+#include "../Minecraft.World/net.minecraft.world.entity.item.h"
+#include "../Minecraft.World/net.minecraft.world.item.h"
+#include "../Minecraft.World/net.minecraft.world.item.enchantment.h"
+#include "../Minecraft.World/net.minecraft.world.damagesource.h"
 #ifdef _WINDOWS64
-#include "Windows64\Network\WinsockNetLayer.h"
+#include "Windows64/Network/WinsockNetLayer.h"
 #endif
 #include <sstream>
 #ifdef SPLIT_SAVES
-#include "..\Minecraft.World\ConsoleSaveFileSplit.h"
+#include "../Minecraft.World/ConsoleSaveFileSplit.h"
 #endif
-#include "..\Minecraft.World\ConsoleSaveFileOriginal.h"
-#include "..\Minecraft.World\Socket.h"
-#include "..\Minecraft.World\net.minecraft.world.entity.h"
+#include "../Minecraft.World/ConsoleSaveFileOriginal.h"
+#include "../Minecraft.World/Socket.h"
+#include "../Minecraft.World/net.minecraft.world.entity.h"
 #include "ProgressRenderer.h"
 #include "ServerPlayer.h"
 #include "GameRenderer.h"
-#include "..\Minecraft.World\ThreadName.h"
-#include "..\Minecraft.World\IntCache.h"
-#include "..\Minecraft.World\CompressedTileStorage.h"
-#include "..\Minecraft.World\SparseLightStorage.h"
-#include "..\Minecraft.World\SparseDataStorage.h"
-#include "..\Minecraft.World\compression.h"
+#include "../Minecraft.World/ThreadName.h"
+#include "../Minecraft.World/IntCache.h"
+#include "../Minecraft.World/CompressedTileStorage.h"
+#include "../Minecraft.World/SparseLightStorage.h"
+#include "../Minecraft.World/SparseDataStorage.h"
+#include "../Minecraft.World/compression.h"
 #ifdef _XBOX
-#include "Common\XUI\XUI_DebugSetCamera.h"
+#include "Common/XUI/XUI_DebugSetCamera.h"
 #endif
-#include "PS3\PS3Extras\ShutdownManager.h"
+#include "PS3/PS3Extras/ShutdownManager.h"
 #include "ServerCommandDispatcher.h"
-#include "..\Minecraft.World\BiomeSource.h"
+#include "../Minecraft.World/BiomeSource.h"
 #include "PlayerChunkMap.h"
-#include "Common\Telemetry\TelemetryManager.h"
+#include "Common/Telemetry/TelemetryManager.h"
 #include "PlayerConnection.h"
 #ifdef _XBOX_ONE
-#include "Durango\Network\NetworkPlayerDurango.h"
+#include "Durango/Network/NetworkPlayerDurango.h"
+#endif
+
+#if defined(_NATIVE_DESKTOP)
+#define NATIVE_DESKTOP_SERVER_TRACE(message) \
+	std::fprintf(stderr, "NativeDesktop server: %s\n", message)
+#define NATIVE_DESKTOP_SERVER_TRACEF(format, ...) \
+	std::fprintf(stderr, "NativeDesktop server: " format "\n", __VA_ARGS__)
+#else
+#define NATIVE_DESKTOP_SERVER_TRACE(message) ((void)0)
+#define NATIVE_DESKTOP_SERVER_TRACEF(format, ...) ((void)0)
 #endif
 
 #define DEBUG_SERVER_DONT_SPAWN_MOBS 0
@@ -584,6 +594,7 @@ MinecraftServer::~MinecraftServer()
 
 bool MinecraftServer::initServer(int64_t seed, NetworkGameInitData *initData, DWORD initSettings, bool findSeed)
 {
+	NATIVE_DESKTOP_SERVER_TRACE("initServer begin");
 	// 4J - removed
 #if 0
 	commands = new ConsoleCommands(this);
@@ -758,7 +769,9 @@ bool MinecraftServer::initServer(int64_t seed, NetworkGameInitData *initData, DW
 	}
 #endif
 	//        logger.info("Preparing level \"" + levelName + "\"");
+	NATIVE_DESKTOP_SERVER_TRACE("loadLevel begin");
 	m_bLoaded = loadLevel(new McRegionLevelStorageSource(File(L".")), levelName, seed, pLevelType, initData);
+	NATIVE_DESKTOP_SERVER_TRACEF("loadLevel result=%d", m_bLoaded ? 1 : 0);
 	//        logger.info("Done (" + (System.nanoTime() - levelNanoTime) + "ns)! For help, type \"help\" or \"?\"");
 
 	// 4J delete passed in save data now - this is only required for the tutorial which is loaded by passing data directly in rather than using the storage manager
@@ -880,6 +893,7 @@ void MinecraftServer::postProcessTerminate(ProgressRenderer *mcprogress)
 
 bool MinecraftServer::loadLevel(LevelStorageSource *storageSource, const wstring& name, int64_t levelSeed, LevelType *pLevelType, NetworkGameInitData *initData)
 {
+	NATIVE_DESKTOP_SERVER_TRACE("loadLevel core begin");
 	//	4J - TODO - do with new save stuff
 	//    if (storageSource->requiresConversion(name))
 	//	{
@@ -1035,11 +1049,14 @@ bool MinecraftServer::loadLevel(LevelStorageSource *storageSource, const wstring
 	int64_t startTime = System::currentTimeMillis();
 
 	// 4J Stu - Added this to temporarily make starting games on vita faster
-#ifdef __PSVITA__
+#ifdef _NATIVE_DESKTOP
+	int r = 16;
+#elif defined(__PSVITA__)
 	int r = 48;
 #else
 	int r = 196;
 #endif
+	NATIVE_DESKTOP_SERVER_TRACEF("prepare spawn radius=%d", r);
 
 	//  4J JEV: load gameRules.
 	ConsoleSavePath filepath(GAME_RULE_SAVENAME);
@@ -1084,6 +1101,7 @@ bool MinecraftServer::loadLevel(LevelStorageSource *storageSource, const wstring
 		if (i == 0 || GetDedicatedServerBool(settings, L"allow-nether", true))
 		{
 			ServerLevel *level = levels[i];
+			NATIVE_DESKTOP_SERVER_TRACEF("prepare dimension=%d", i);
 			if(levelChunksNeedConverted)
 			{
 				// 				storage->getSaveFile()->convertLevelChunks(level)

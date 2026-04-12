@@ -4,6 +4,7 @@
 #include "CommandSender.h"
 
 class ChatMessageComponent;
+class Pos;
 
 class CommandBlockEntity : public TileEntity, public CommandSender
 {

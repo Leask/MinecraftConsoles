@@ -2,15 +2,21 @@
 // https://github.com/LCEMP/LCEMP
 #pragma once
 
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 
+#ifdef _WINDOWS64
 #include <WinSock2.h>
 #include <WS2tcpip.h>
+#else
+#include <lce_win32/lce_win32.h>
+#endif
 #include <vector>
 #include <lce_net/lce_lan.h>
-#include "..\..\Common\Network\NetworkPlayerInterface.h"
+#include "../../Common/Network/NetworkPlayerInterface.h"
 
+#ifdef _WINDOWS64
 #pragma comment(lib, "Ws2_32.lib")
+#endif
 
 #define WIN64_NET_DEFAULT_PORT 25565
 #define WIN64_NET_MAX_CLIENTS 255

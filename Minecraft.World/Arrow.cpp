@@ -8,8 +8,10 @@
 #include "net.minecraft.world.damagesource.h"
 #include "net.minecraft.world.item.enchantment.h"
 #include "net.minecraft.network.packet.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\ServerPlayer.h"
 #include "..\Minecraft.Client\PlayerConnection.h"
+#endif
 #include "com.mojang.nbt.h"
 #include "Arrow.h"
 
@@ -340,10 +342,12 @@ void Arrow::tick()
 						ThornsEnchantment::doThornsAfterAttack(owner, mob, random);
 					}
 
+#if !defined(_NATIVE_DESKTOP)
 					if (owner != nullptr && res->entity != owner && owner->GetType() == eTYPE_SERVERPLAYER)
 					{
 						dynamic_pointer_cast<ServerPlayer>(owner)->connection->send(std::make_shared<GameEventPacket>(GameEventPacket::SUCCESSFUL_BOW_HIT, 0));
 					}
+#endif
 				}
 
 				// 4J : WESTY : For award, need to track if creeper was killed by arrow from the player.

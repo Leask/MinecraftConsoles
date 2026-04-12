@@ -44,6 +44,10 @@ target_include_directories(Minecraft.Portability
 
 target_link_libraries(Minecraft.Portability PUBLIC Threads::Threads)
 
+if(WIN32)
+  target_link_libraries(Minecraft.Portability PUBLIC ws2_32)
+endif()
+
 target_compile_definitions(Minecraft.Portability PRIVATE
   ${MINECRAFT_SHARED_DEFINES}
 )
@@ -114,11 +118,13 @@ target_link_libraries(Minecraft.Portability.SmokeTest PRIVATE
 
 target_compile_definitions(Minecraft.Portability.SmokeTest PRIVATE
   ${MINECRAFT_SHARED_DEFINES}
+  MINECRAFT_PORTABILITY_STANDALONE
 )
 
 target_include_directories(Minecraft.Portability.SmokeTest PRIVATE
   "${CMAKE_SOURCE_DIR}"
   "${CMAKE_SOURCE_DIR}/include"
+  "${CMAKE_SOURCE_DIR}/Minecraft.World/x64headers"
 )
 
 configure_compiler_target(Minecraft.Portability.SmokeTest)
@@ -178,6 +184,7 @@ target_compile_definitions(Minecraft.Server.NativeBootstrap PRIVATE
 target_include_directories(Minecraft.Server.NativeBootstrap PRIVATE
   "${CMAKE_SOURCE_DIR}"
   "${CMAKE_SOURCE_DIR}/include"
+  "${CMAKE_SOURCE_DIR}/Minecraft.World/x64headers"
 )
 
 configure_compiler_target(Minecraft.Server.NativeBootstrap)
@@ -308,7 +315,7 @@ if(BUILD_TESTING)
   )
   set_tests_properties(minecraft_portability_smoke PROPERTIES
     LABELS "native;portability;smoke"
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    WORKING_DIRECTORY "$<TARGET_FILE_DIR:Minecraft.Portability.SmokeTest>"
   )
   set_tests_properties(minecraft_native_server_bootstrap PROPERTIES
     LABELS "native;server;bootstrap"

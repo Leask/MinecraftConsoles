@@ -3,6 +3,7 @@
 #include "SharedConstants.h"
 
 class CombatEntry;
+class DamageSource;
 class LivingEntity;
 class ChatPacket;
 

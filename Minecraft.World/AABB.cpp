@@ -19,7 +19,7 @@ AABB::ThreadStorage::ThreadStorage()
 
 AABB::ThreadStorage::~ThreadStorage()
 {
-	delete pool;
+    delete [] pool;
 }
 
 void AABB::CreateNewThreadStorage()
@@ -351,4 +351,3 @@ wstring AABB::toString()
 	return L"box[" + std::to_wstring(x0) + L", " + std::to_wstring(y0) + L", " + std::to_wstring(z0) + L" -> " +
 		std::to_wstring(x1) + L", " + std::to_wstring(y1) + L", " + std::to_wstring(z1) + L"]";
 }
-

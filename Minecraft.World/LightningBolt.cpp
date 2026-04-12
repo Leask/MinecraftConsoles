@@ -4,10 +4,28 @@
 #include "net.minecraft.world.phys.h"
 #include "LightningBolt.h"
 #include "SoundTypes.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\MinecraftServer.h"
 #include "..\Minecraft.Client\PlayerList.h"
+#endif
 #include "net.minecraft.world.level.dimension.h"
 
+namespace
+{
+bool ShouldApplyLightningTileUpdate(Level* level, int x, int y, int z)
+{
+#if defined(_NATIVE_DESKTOP)
+	(void)level;
+	(void)x;
+	(void)y;
+	(void)z;
+	return true;
+#else
+	return MinecraftServer::getInstance()->getPlayers()->isTrackingTile(
+		x, y, z, level->dimension->id);
+#endif
+}
+}
 
 LightningBolt::LightningBolt(Level *level, double x, double y, double z) :
 	life( 0 ),
@@ -34,7 +52,7 @@ LightningBolt::LightningBolt(Level *level, double x, double y, double z) :
 			int yt = Mth::floor(y);
 			int zt = Mth::floor(z);
 			// 4J added - don't go setting tiles if we aren't tracking them for network synchronisation
-			if( MinecraftServer::getInstance()->getPlayers()->isTrackingTile(xt, yt, zt, level->dimension->id) )
+			if( ShouldApplyLightningTileUpdate(level, xt, yt, zt) )
 			{
 				if (level->getTile(xt, yt, zt) == 0 && Tile::fire->mayPlace(level, xt, yt, zt)) level->setTileAndUpdate(xt, yt, zt, Tile::fire_Id);
 			}
@@ -46,7 +64,7 @@ LightningBolt::LightningBolt(Level *level, double x, double y, double z) :
 			int yt = Mth::floor(y) + random->nextInt(3) - 1;
 			int zt = Mth::floor(z) + random->nextInt(3) - 1;
 			// 4J added - don't go setting tiles if we aren't tracking them for network synchronisation
-			if( MinecraftServer::getInstance()->getPlayers()->isTrackingTile(xt, yt, zt, level->dimension->id) )
+			if( ShouldApplyLightningTileUpdate(level, xt, yt, zt) )
 			{
 				if (level->getTile(xt, yt, zt) == 0 && Tile::fire->mayPlace(level, xt, yt, zt)) level->setTileAndUpdate(xt, yt, zt, Tile::fire_Id);
 			}
@@ -85,7 +103,7 @@ void LightningBolt::tick()
 				int zt = static_cast<int>(floor(z));
 
 				// 4J added - don't go setting tiles if we aren't tracking them for network synchronisation
-				if( MinecraftServer::getInstance()->getPlayers()->isTrackingTile(xt, yt, zt, level->dimension->id) )
+				if( ShouldApplyLightningTileUpdate(level, xt, yt, zt) )
 				{
 					if (level->getTile(xt, yt, zt) == 0 && Tile::fire->mayPlace(level, xt, yt, zt)) level->setTileAndUpdate(xt, yt, zt, Tile::fire_Id);
 				}

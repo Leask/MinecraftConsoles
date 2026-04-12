@@ -1100,7 +1100,7 @@ ShapedRecipy *Recipes::addShapedRecipy(ItemInstance *result, ...)
 
 			break;
 		case L'c':
-			wchFrom=va_arg(vl,wchar_t);
+			wchFrom=static_cast<wchar_t>(va_arg(vl,int));
 			break;
 		case L'z':
 			pItemInstance=va_arg(vl,ItemInstance *);
@@ -1117,7 +1117,7 @@ ShapedRecipy *Recipes::addShapedRecipy(ItemInstance *result, ...)
 			mappings->insert(myMap::value_type(wchFrom,pItemInstance));
 			break;
 		case L'g':
-			wchFrom=va_arg(vl,wchar_t);
+			wchFrom=static_cast<wchar_t>(va_arg(vl,int));
 			switch(wchFrom)
 			{
 // 			case L'W':
@@ -1215,7 +1215,7 @@ void Recipes::addShapelessRecipy(ItemInstance *result,... )
 			ingredients->push_back(new ItemInstance(pTile));
 			break;
 		case L'g':
-			wchFrom=va_arg(vl,wchar_t);
+			wchFrom=static_cast<wchar_t>(va_arg(vl,int));
 			switch(wchFrom)
 			{
 

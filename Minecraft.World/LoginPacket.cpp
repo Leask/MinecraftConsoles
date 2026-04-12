@@ -4,6 +4,7 @@
 #include "net.minecraft.world.entity.player.h"
 #include "PacketListener.h"
 #include "LoginPacket.h"
+#include "ChunkSource.h"
 #include "LevelType.h"
 
 

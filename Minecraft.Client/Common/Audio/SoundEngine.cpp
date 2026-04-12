@@ -1,20 +1,22 @@
 ﻿#include "stdafx.h"
 
 #include "SoundEngine.h"
-#include "..\Consoles_App.h"
-#include "..\..\MultiplayerLocalPlayer.h"
-#include "..\..\..\Minecraft.World\net.minecraft.world.level.h"
-#include "..\..\Minecraft.World\leveldata.h"
-#include "..\..\Minecraft.World\mth.h"
-#include "..\..\TexturePackRepository.h"
-#include "..\..\DLCTexturePack.h"
-#include "Common\DLC\DLCAudioFile.h"
+#include "../Consoles_App.h"
+#include "../../MultiPlayerLocalPlayer.h"
+#include "../../../Minecraft.World/net.minecraft.world.level.h"
+#include "../../Minecraft.World/LevelData.h"
+#include "../../Minecraft.World/Mth.h"
+#include "../../TexturePackRepository.h"
+#include "../../DLCTexturePack.h"
+#include "Common/DLC/DLCAudioFile.h"
 
 #ifdef __PSVITA__
 #include <audioout.h>
 #endif
 
-#include "..\..\Minecraft.Client\Windows64\Windows64_App.h"
+#ifndef _NATIVE_DESKTOP
+#include "../../Minecraft.Client/Windows64/Windows64_App.h"
+#endif
 
 #include "stb_vorbis.h"
 
@@ -25,7 +27,7 @@
 #include <vector>
 #include <memory>
 #include <mutex>
-#include <lce_filesystem\lce_filesystem.h>
+#include <lce_filesystem/lce_filesystem.h>
 
 #ifdef __ORBIS__
 #include <audioout.h>
@@ -66,6 +68,10 @@ void SoundEngine::playMusicTick() {};
 #ifdef _WINDOWS64
 char SoundEngine::m_szSoundPath[]={"Windows64Media\\Sound\\"};
 char SoundEngine::m_szMusicPath[]={"music\\"};
+char SoundEngine::m_szRedistName[]={"redist64"};
+#elif defined _NATIVE_DESKTOP
+char SoundEngine::m_szSoundPath[]={"Windows64Media/Sound/"};
+char SoundEngine::m_szMusicPath[]={"music/"};
 char SoundEngine::m_szRedistName[]={"redist64"};
 #elif defined _DURANGO
 char SoundEngine::m_szSoundPath[]={"Sound\\"};
@@ -168,15 +174,28 @@ void SoundEngine::init(Options* pOptions)
 {
     app.DebugPrintf("---SoundEngine::init\n");
 
+#ifdef _NATIVE_DESKTOP
+    (void)pOptions;
+    m_MasterMusicVolume = 1.0f;
+    m_MasterEffectsVolume = 1.0f;
+    m_validListenerCount = 1;
+    m_bSystemMusicPlaying = false;
+    m_audioBackendReady = false;
+    app.DebugPrintf("---NativeDesktop audio backend disabled\n");
+    return;
+#endif
+
     m_engineConfig = ma_engine_config_init();
     m_engineConfig.listenerCount = MAX_LOCAL_PLAYERS;
 
     if (ma_engine_init(&m_engineConfig, &m_engine) != MA_SUCCESS)
     {
         app.DebugPrintf("Failed to initialize miniaudio engine\n");
+        m_audioBackendReady = false;
         return;
     }
 
+    m_audioBackendReady = true;
     ma_engine_set_volume(&m_engine, 1.0f);
 
     m_MasterMusicVolume = 1.0f;
@@ -212,6 +231,11 @@ void SoundEngine::SetStreamingSounds(int iOverworldMin, int iOverWorldMax, int i
 
 void SoundEngine::updateMiniAudio()
 {
+    if (!m_audioBackendReady)
+    {
+        return;
+    }
+
     if (m_validListenerCount == 1)
     {
         for (size_t i = 0; i < MAX_LOCAL_PLAYERS; i++)
@@ -327,6 +351,12 @@ void SoundEngine::tick(shared_ptr<Mob> *players, float a)
 {
 	ConsoleSoundEngine::tick();
 
+#ifdef _NATIVE_DESKTOP
+	(void)players;
+	(void)a;
+	return;
+#endif
+
 	// update the listener positions
 	int listenerCount = 0;
 	if( players )
@@ -397,6 +427,7 @@ SoundEngine::SoundEngine()
 	memset(&m_engine, 0, sizeof(ma_engine));
     memset(&m_engineConfig, 0, sizeof(ma_engine_config));
     m_musicStreamActive = false;
+    m_audioBackendReady = false;
 	m_StreamState=eMusicStreamState_Idle;
 	m_iMusicDelay=0;
 	m_validListenerCount=0; 
@@ -445,6 +476,16 @@ void SoundEngine::GetSoundName(char *szSoundName,int iSound)
 /////////////////////////////////////////////
 void SoundEngine::play(int iSound, float x, float y, float z, float volume, float pitch)
 {
+#ifdef _NATIVE_DESKTOP
+    (void)iSound;
+    (void)x;
+    (void)y;
+    (void)z;
+    (void)volume;
+    (void)pitch;
+    return;
+#endif
+
     U8 szSoundName[256];
 
     if (iSound == -1)
@@ -581,6 +622,13 @@ void SoundEngine::play(int iSound, float x, float y, float z, float volume, floa
 /////////////////////////////////////////////
 void SoundEngine::playUI(int iSound, float volume, float pitch)
 {
+#ifdef _NATIVE_DESKTOP
+    (void)iSound;
+    (void)volume;
+    (void)pitch;
+    return;
+#endif
+
     U8 szSoundName[256];
     wstring name;
 
@@ -665,6 +713,17 @@ void SoundEngine::playUI(int iSound, float volume, float pitch)
 /////////////////////////////////////////////
 void SoundEngine::playStreaming(const wstring& name, float x, float y , float z, float volume, float pitch, bool bMusicDelay)
 {
+#ifdef _NATIVE_DESKTOP
+	(void)name;
+	(void)x;
+	(void)y;
+	(void)z;
+	(void)volume;
+	(void)pitch;
+	(void)bMusicDelay;
+	return;
+#endif
+
 	// This function doesn't actually play a streaming sound, just sets states and an id for the music tick to play it
 	// Level audio will be played when a play with an empty name comes in
 	// CD audio will be played when a named stream comes in
@@ -955,6 +1014,9 @@ int SoundEngine::OpenStreamThreadProc(void* lpParameter)
 /////////////////////////////////////////////
 void SoundEngine::playMusicTick() 
 {
+#ifdef _NATIVE_DESKTOP
+	return;
+#endif
 // AP - vita will update the music during the mixer callback
 #ifndef __PSVITA__
 	playMusicUpdate();
@@ -964,6 +1026,11 @@ void SoundEngine::playMusicTick()
 // AP - moved to a separate function so it can be called from the mixer callback on Vita
 void SoundEngine::playMusicUpdate() 
 {
+	if (!m_audioBackendReady)
+	{
+		return;
+	}
+
 	static float fMusicVol = 0.0f;
 	fMusicVol = getMasterMusicVolume();
 

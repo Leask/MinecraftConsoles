@@ -2,6 +2,7 @@
 #include "BaseEntityTile.h"
 #include "Material.h"
 
+class Container;
 class Player;
 class Random;
 

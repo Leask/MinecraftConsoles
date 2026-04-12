@@ -3,16 +3,16 @@
 
 #include "C4JThread.h"
 #ifdef __PSVITA__
-#include "..\Minecraft.Client\PSVita\PSVitaExtras\ShutdownManager.h"
-#include "..\Minecraft.Client\PSVita\PSVitaExtras\PSVitaTLSStorage.h"
+#include "../Minecraft.Client/PSVita/PSVitaExtras/ShutdownManager.h"
+#include "../Minecraft.Client/PSVita/PSVitaExtras/PSVitaTLSStorage.h"
 
 // AP - this comes from the low level user_malloc.c file used to overide the default memory functions. These must be called when a thread is started/stopped
 extern "C" {
 extern void user_registerthread();
 extern void user_removethread();
 }
-#else
-#include "..\Minecraft.Client\PS3\PS3Extras\ShutdownManager.h"
+#elif !defined(_NATIVE_DESKTOP)
+#include "../Minecraft.Client/PS3/PS3Extras/ShutdownManager.h"
 
 #endif
 
@@ -1036,6 +1036,37 @@ int C4JThread::EventQueue::threadFunc( void* lpParam )
 
 void C4JThread::EventQueue::threadPoll()
 {
+#if defined(_NATIVE_DESKTOP)
+	if(m_threadInitFunc)
+		m_threadInitFunc();
+
+	while(true)
+	{
+		DWORD err = m_startEvent->WaitForAny(INFINITE);
+		if(err == WAIT_OBJECT_0)
+		{
+			bool bListEmpty = true;
+			do
+			{
+				EnterCriticalSection(&m_critSect);
+				void* updateParam = m_queue.front();
+				LeaveCriticalSection(&m_critSect);
+
+				m_updateFunc(updateParam);
+
+				EnterCriticalSection(&m_critSect);
+				m_queue.pop();
+				bListEmpty = m_queue.empty();
+				if(bListEmpty)
+				{
+					m_finishedEvent->Set();
+				}
+				LeaveCriticalSection(&m_critSect);
+
+			} while(!bListEmpty);
+		}
+	}
+#else
 	ShutdownManager::HasStarted(ShutdownManager::eEventQueueThreads, m_startEvent);
 
 	if(m_threadInitFunc)
@@ -1070,6 +1101,7 @@ void C4JThread::EventQueue::threadPoll()
 	};
 
 	ShutdownManager::HasFinished(ShutdownManager::eEventQueueThreads);
+#endif
 }
 
 

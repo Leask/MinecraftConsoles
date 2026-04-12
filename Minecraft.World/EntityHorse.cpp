@@ -13,8 +13,10 @@
 #include "net.minecraft.world.level.tile.h"
 #include "net.minecraft.world.inventory.h"
 #include "net.minecraft.world.phys.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
 #include "..\Minecraft.Client\Minecraft.h"
+#endif
 #include "BasicTypeContainers.h"
 #include "EntityHorse.h"
 

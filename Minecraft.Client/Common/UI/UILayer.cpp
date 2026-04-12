@@ -16,6 +16,14 @@ UILayer::UILayer(UIGroup *parent)
 
 void UILayer::tick()
 {
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(
+        stderr,
+        "NativeDesktop UI: layer %p tick begin components=%zu stack=%zu\n",
+        static_cast<void*>(this),
+        m_components.size(),
+        m_sceneStack.size());
+#endif
 	// Delete old scenes - deleting a scene can cause a new scene to be deleted, so we need to make a copy of the scenes that we are going to try and destroy this tick
 	vector<UIScene *>scenesToDeleteCopy;
 	for(auto& scene : m_scenesToDelete)
@@ -47,7 +55,21 @@ void UILayer::tick()
 
 	for(auto & component : m_components)
 	{
+#ifdef _NATIVE_DESKTOP
+        std::fprintf(
+            stderr,
+            "NativeDesktop UI: layer %p component %d tick begin\n",
+            static_cast<void*>(this),
+            static_cast<int>(component->getSceneType()));
+#endif
 		component->tick();
+#ifdef _NATIVE_DESKTOP
+        std::fprintf(
+            stderr,
+            "NativeDesktop UI: layer %p component %d tick end\n",
+            static_cast<void*>(this),
+            static_cast<int>(component->getSceneType()));
+#endif
 	}
 	// Note: reverse iterator, the last element is the top of the stack
 	int sceneIndex = m_sceneStack.size() - 1;
@@ -55,14 +77,42 @@ void UILayer::tick()
 	{
 		//(*it)->tick();
 		UIScene *scene = m_sceneStack[sceneIndex];
+#ifdef _NATIVE_DESKTOP
+        std::fprintf(
+            stderr,
+            "NativeDesktop UI: layer %p scene %d tick begin\n",
+            static_cast<void*>(this),
+            static_cast<int>(scene->getSceneType()));
+#endif
 		scene->tick();
+#ifdef _NATIVE_DESKTOP
+        std::fprintf(
+            stderr,
+            "NativeDesktop UI: layer %p scene %d tick end\n",
+            static_cast<void*>(this),
+            static_cast<int>(scene->getSceneType()));
+#endif
 		--sceneIndex;
 		// TODO: We may wish to ignore ticking the rest of the stack based on this scene
 	}
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(
+        stderr,
+        "NativeDesktop UI: layer %p tick end\n",
+        static_cast<void*>(this));
+#endif
 }
 
 void UILayer::render(S32 width, S32 height, C4JRender::eViewportType viewport)
 {
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(
+        stderr,
+        "NativeDesktop UI: layer %p render begin components=%zu stack=%zu\n",
+        static_cast<void*>(this),
+        m_components.size(),
+        m_sceneStack.size());
+#endif
 	if(!ui.IsExpectingOrReloadingSkin())
 	{
 		for(auto& it : m_components)
@@ -72,9 +122,23 @@ void UILayer::render(S32 width, S32 height, C4JRender::eViewportType viewport)
 			{
 				if(it->isVisible() )
 				{
+#ifdef _NATIVE_DESKTOP
+                    std::fprintf(
+                        stderr,
+                        "NativeDesktop UI: layer %p component %d render begin\n",
+                        static_cast<void*>(this),
+                        static_cast<int>(it->getSceneType()));
+#endif
 					PIXBeginNamedEvent(0, "Rendering component %d", it->getSceneType() );
 					it->render(width, height,viewport);
 					PIXEndNamedEvent();
+#ifdef _NATIVE_DESKTOP
+                    std::fprintf(
+                        stderr,
+                        "NativeDesktop UI: layer %p component %d render end\n",
+                        static_cast<void*>(this),
+                        static_cast<int>(it->getSceneType()));
+#endif
 				}
 			}
 		}
@@ -91,12 +155,34 @@ void UILayer::render(S32 width, S32 height, C4JRender::eViewportType viewport)
 		{
 			if(m_sceneStack[lowestRenderable]->isVisible() && (!ui.IsExpectingOrReloadingSkin() || m_sceneStack[lowestRenderable]->getSceneType()==eUIScene_Timer))
 			{
+#ifdef _NATIVE_DESKTOP
+                std::fprintf(
+                    stderr,
+                    "NativeDesktop UI: layer %p scene %d render begin\n",
+                    static_cast<void*>(this),
+                    static_cast<int>(
+                        m_sceneStack[lowestRenderable]->getSceneType()));
+#endif
 				PIXBeginNamedEvent(0, "Rendering scene %d", m_sceneStack[lowestRenderable]->getSceneType() );
 				m_sceneStack[lowestRenderable]->render(width, height,viewport);
 				PIXEndNamedEvent();
+#ifdef _NATIVE_DESKTOP
+                std::fprintf(
+                    stderr,
+                    "NativeDesktop UI: layer %p scene %d render end\n",
+                    static_cast<void*>(this),
+                    static_cast<int>(
+                        m_sceneStack[lowestRenderable]->getSceneType()));
+#endif
 			}
 		}
 	}
+#ifdef _NATIVE_DESKTOP
+    std::fprintf(
+        stderr,
+        "NativeDesktop UI: layer %p render end\n",
+        static_cast<void*>(this));
+#endif
 }
 
 bool UILayer::IsSceneInStack(EUIScene scene)

@@ -70,6 +70,8 @@ public:
 	LevelData(CompoundTag *tag);
 	LevelData(LevelSettings *levelSettings, const wstring& levelName);
 	LevelData(LevelData *copy);
+	virtual ~LevelData() = default;
+
 	CompoundTag *createTag();
 	CompoundTag *createTag(vector<shared_ptr<Player> > *players);
 

@@ -1,8 +1,10 @@
 #include "stdafx.h"
 #include "net.minecraft.commands.h"
-#include "..\Minecraft.Client\MinecraftServer.h"
-#include "..\Minecraft.Client\PlayerList.h"
-#include "..\Minecraft.Client\ServerPlayer.h"
+#if !defined(_NATIVE_DESKTOP)
+#include "../Minecraft.Client/MinecraftServer.h"
+#include "../Minecraft.Client/PlayerList.h"
+#include "../Minecraft.Client/ServerPlayer.h"
+#endif
 #include "Command.h"
 
 AdminLogCommand *Command::logger;
@@ -37,6 +39,10 @@ void Command::setLogger(AdminLogCommand *logger)
 
 shared_ptr<ServerPlayer> Command::getPlayer(PlayerUID playerId)
 {
+#if defined(_NATIVE_DESKTOP)
+	(void)playerId;
+	return nullptr;
+#else
 	shared_ptr<ServerPlayer> player = MinecraftServer::getInstance()->getPlayers()->getPlayer(playerId);
 
 	if (player == nullptr)
@@ -47,4 +53,5 @@ shared_ptr<ServerPlayer> Command::getPlayer(PlayerUID playerId)
 	{
 		return player;
 	}
+#endif
 }

@@ -5,6 +5,8 @@
 
 #if defined(_NATIVE_DESKTOP)
 #include "Minecraft.World/NativeDesktop/NativeDesktopStubs.h"
+#elif defined(_WINDOWS64)
+typedef unsigned long long PlayerUID;
 #endif
 
 namespace ServerRuntime

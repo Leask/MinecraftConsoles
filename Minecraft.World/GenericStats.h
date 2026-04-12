@@ -7,6 +7,8 @@
 
 //#include "..\Minecraft.Client\Common\Console_Awards_enum.h"
 
+class DamageSource;
+
 /**
 	4J-JEV:
 		Java version exposed the static instance of each stat.

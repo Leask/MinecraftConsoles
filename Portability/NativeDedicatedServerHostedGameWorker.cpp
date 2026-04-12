@@ -279,10 +279,10 @@ namespace ServerRuntime
         }
 
         const std::uint64_t lastCommandId =
-            std::max(lastQueuedCommandId, lastProcessedCommandId);
+            (std::max)(lastQueuedCommandId, lastProcessedCommandId);
         const std::uint64_t nextCommandId =
-            lastCommandId == std::numeric_limits<std::uint64_t>::max()
-                ? std::numeric_limits<std::uint64_t>::max()
+            lastCommandId == (std::numeric_limits<std::uint64_t>::max)()
+                ? (std::numeric_limits<std::uint64_t>::max)()
                 : lastCommandId + 1;
         g_nativeHostedWorkerNextCommandId.store(
             nextCommandId == 0 ? 1 : nextCommandId);
@@ -520,7 +520,7 @@ namespace ServerRuntime
 
     std::uint64_t GetNativeDedicatedServerHostedGameWorkerAutosaveCompletions()
     {
-        return std::max(
+        return (std::max)(
             GetDedicatedServerAutosaveTrackerCompletionCount(),
             g_nativeHostedWorkerProcessedAutosaveCommands.load());
     }

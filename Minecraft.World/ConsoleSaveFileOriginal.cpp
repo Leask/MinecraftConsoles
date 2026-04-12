@@ -4,13 +4,13 @@
 #include "File.h"
 #include <xuiapp.h>
 #include "compression.h"
-#include "..\Minecraft.Client\Minecraft.h"
-#include "..\Minecraft.Client\MinecraftServer.h"
-#include "..\Minecraft.Client\ServerLevel.h"
-#include "..\Minecraft.World\net.minecraft.world.level.h"
-#include "..\Minecraft.World\LevelData.h"
-#include "..\Minecraft.Client\Common\GameRules\LevelGenerationOptions.h"
-#include "..\Minecraft.World\net.minecraft.world.level.chunk.storage.h"
+#include "../Minecraft.Client/Minecraft.h"
+#include "../Minecraft.Client/MinecraftServer.h"
+#include "../Minecraft.Client/ServerLevel.h"
+#include "net.minecraft.world.level.h"
+#include "LevelData.h"
+#include "../Minecraft.Client/Common/GameRules/LevelGenerationOptions.h"
+#include "net.minecraft.world.level.chunk.storage.h"
 
 
 #ifdef _XBOX
@@ -1041,7 +1041,7 @@ void ConsoleSaveFileOriginal::ConvertRegionFile(File sourceFile)
 				dos->close();
 				dos->deleteChildStream();
 				delete dos;
-				delete inData.data;
+				delete [] inData.data;
 
 			}
 

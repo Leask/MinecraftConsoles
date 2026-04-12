@@ -1,6 +1,8 @@
 #pragma once
 
+#if !defined(_NATIVE_DESKTOP)
 #include <d3d11.h>
+#endif
 
 class PostProcesser
 {
@@ -60,3 +62,36 @@ private:
     static const char* g_gammaVSCode;
     static const char* g_gammaPSCode;
 };
+
+#if defined(_NATIVE_DESKTOP)
+inline PostProcesser::PostProcesser() = default;
+inline PostProcesser::~PostProcesser() = default;
+inline bool PostProcesser::IsRunningUnderWine()
+{
+    return false;
+}
+inline void PostProcesser::Init()
+{
+    m_initialized = true;
+}
+inline void PostProcesser::Apply() const {}
+inline void PostProcesser::SetViewport(const D3D11_VIEWPORT& viewport)
+{
+    m_customViewport = viewport;
+    m_useCustomViewport = true;
+}
+inline void PostProcesser::ResetViewport()
+{
+    m_useCustomViewport = false;
+}
+inline void PostProcesser::CopyBackbuffer() {}
+inline void PostProcesser::ApplyFromCopied() const {}
+inline void PostProcesser::Cleanup()
+{
+    m_initialized = false;
+}
+inline void PostProcesser::SetGamma(float gamma)
+{
+    m_gamma = gamma;
+}
+#endif

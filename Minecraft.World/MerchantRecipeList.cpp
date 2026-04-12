@@ -2,6 +2,81 @@
 #include "net.minecraft.world.item.trading.h"
 #include "MerchantRecipeList.h"
 
+namespace
+{
+    CompoundTag *readMerchantRecipeNbt(DataInputStream *stream)
+    {
+        int size = stream->readShort();
+        if (size <= 0)
+        {
+            return nullptr;
+        }
+
+        const int maxNbtSize = 32767;
+        if (size > maxNbtSize)
+        {
+            return nullptr;
+        }
+
+        byteArray buffer(size);
+        if (!stream->readFully(buffer))
+        {
+            delete[] buffer.data;
+            return nullptr;
+        }
+
+        CompoundTag *result = (CompoundTag *) NbtIo::decompress(buffer);
+        delete[] buffer.data;
+        return result;
+    }
+
+    void writeMerchantRecipeNbt(CompoundTag *tag, DataOutputStream *stream)
+    {
+        if (tag == nullptr)
+        {
+            stream->writeShort(-1);
+            return;
+        }
+
+        byteArray buffer = NbtIo::compress(tag);
+        stream->writeShort(static_cast<short>(buffer.length));
+        stream->write(buffer);
+        delete[] buffer.data;
+    }
+
+    shared_ptr<ItemInstance> readMerchantRecipeItem(DataInputStream *stream)
+    {
+        int id = stream->readShort();
+        if (id < 0 || id >= 32000)
+        {
+            return nullptr;
+        }
+
+        int count = stream->readByte();
+        int damage = stream->readShort();
+        shared_ptr<ItemInstance> item =
+            std::make_shared<ItemInstance>(id, count, damage);
+        item->tag = readMerchantRecipeNbt(stream);
+        return item;
+    }
+
+    void writeMerchantRecipeItem(
+        shared_ptr<ItemInstance> item,
+        DataOutputStream *stream)
+    {
+        if (item == nullptr)
+        {
+            stream->writeShort(-1);
+            return;
+        }
+
+        stream->writeShort(item->id);
+        stream->writeByte(item->count);
+        stream->writeShort(item->getAuxValue());
+        writeMerchantRecipeNbt(item->tag, stream);
+    }
+}
+
 MerchantRecipeList::MerchantRecipeList()
 {
 }
@@ -94,14 +169,14 @@ void MerchantRecipeList::writeToStream(DataOutputStream *stream)
 	for (size_t i = 0; i < m_recipes.size(); i++)
 	{
 		MerchantRecipe *r = m_recipes.at(i);
-		Packet::writeItem(r->getBuyAItem(), stream);
-		Packet::writeItem(r->getSellItem(), stream);
+		writeMerchantRecipeItem(r->getBuyAItem(), stream);
+		writeMerchantRecipeItem(r->getSellItem(), stream);
 
 		shared_ptr<ItemInstance> buyBItem = r->getBuyBItem();
 		stream->writeBoolean(buyBItem != nullptr);
 		if (buyBItem != nullptr)
 		{
-			Packet::writeItem(buyBItem, stream);
+			writeMerchantRecipeItem(buyBItem, stream);
 		}
 		stream->writeBoolean(r->isDeprecated());
 		stream->writeInt(r->getUses());
@@ -116,13 +191,13 @@ MerchantRecipeList *MerchantRecipeList::createFromStream(DataInputStream *stream
 	int count = (int) (stream->readByte() & 0xff);
 	for (int i = 0; i < count; i++)
 	{
-		shared_ptr<ItemInstance> buy = Packet::readItem(stream);
-		shared_ptr<ItemInstance> sell = Packet::readItem(stream);
+		shared_ptr<ItemInstance> buy = readMerchantRecipeItem(stream);
+		shared_ptr<ItemInstance> sell = readMerchantRecipeItem(stream);
 
 		shared_ptr<ItemInstance> buyB = nullptr;
 		if (stream->readBoolean())
 		{
-			buyB = Packet::readItem(stream);
+			buyB = readMerchantRecipeItem(stream);
 		}
 		bool isDeprecated = stream->readBoolean();
 		int uses = stream->readInt();
