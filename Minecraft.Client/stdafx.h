@@ -116,7 +116,7 @@ typedef XUID GameSessionUID;
 
 #include "../Minecraft.Client/Xbox/Network/extra.h"
 #else
-#include "extraX64.h"
+#include "../Minecraft.World/x64headers/extraX64.h"
 #ifdef _NATIVE_DESKTOP
 #ifndef MINECRAFT_NATIVE_BYTE_DEFINED
 typedef unsigned char mc_byte;
