@@ -45,25 +45,12 @@
 #include "../Minecraft.World/SoundTypes.h"
 #include "../Minecraft.World/BasicTypeContainers.h"
 #include "TexturePackRepository.h"
-#ifdef _XBOX
-#include "Common/XUI/XUI_Scene_Trading.h"
-#else
 #include "Common/UI/UI.h"
-#endif
-#ifdef __PS3__
-#include "PS3/Network/SonyVoiceChat.h"
-#endif
 #include "DLCTexturePack.h"
 
-#ifdef _WINDOWS64
-#include "Xbox/Network/NetworkPlayerXbox.h"
+#if defined(_NATIVE_DESKTOP)
+#include "NativeDesktop/Network/NetworkPlayerNative.h"
 #include "Common/Network/PlatformNetworkManagerStub.h"
-#endif
-
-
-#ifdef _DURANGO
-#include "../Minecraft.World/DurangoStats.h"
-#include "../Minecraft.World/GenericStats.h"
 #endif
 
 ClientConnection::ClientConnection(Minecraft *minecraft, const wstring& ip, int port)
@@ -898,7 +885,7 @@ void ClientConnection::handleAddPlayer(shared_ptr<AddPlayerPacket> packet)
 			INetworkPlayer* np = g_NetworkManager.GetPlayerBySmallId(smallId);
 			if (np != nullptr)
 			{
-				NetworkPlayerXbox* npx = (NetworkPlayerXbox*)np;
+				NetworkPlayerNative* npx = (NetworkPlayerNative*)np;
 				matchedQNetPlayer = npx->GetQNetPlayer();
 			}
 		}
@@ -913,7 +900,7 @@ void ClientConnection::handleAddPlayer(shared_ptr<AddPlayerPacket> packet)
 				if (np == nullptr)
 					continue;
 
-				NetworkPlayerXbox* npx = (NetworkPlayerXbox*)np;
+				NetworkPlayerNative* npx = (NetworkPlayerNative*)np;
 				IQNetPlayer* qp = npx->GetQNetPlayer();
 				if (qp != nullptr && _wcsicmp(qp->m_gamertag, packet->name.c_str()) == 0)
 				{
@@ -1103,7 +1090,7 @@ void ClientConnection::handleRemoveEntity(shared_ptr<RemoveEntitiesPacket> packe
 					INetworkPlayer* np = g_NetworkManager.GetPlayerByXuid(xuid);
 					if (np != nullptr)
 					{
-						NetworkPlayerXbox* npx = (NetworkPlayerXbox*)np;
+						NetworkPlayerNative* npx = (NetworkPlayerNative*)np;
 						IQNetPlayer* qp = npx->GetQNetPlayer();
 						if (qp != nullptr)
 						{

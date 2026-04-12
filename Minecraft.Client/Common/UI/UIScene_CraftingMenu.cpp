@@ -4,15 +4,6 @@
 #include "../../MultiPlayerLocalPlayer.h"
 #include "../../../Minecraft.World/net.minecraft.world.inventory.h"
 #include "UIScene_CraftingMenu.h"
-#ifdef _WINDOWS64
-#include "../../Windows64/Iggy/gdraw/gdraw_d3d11.h"
-#endif
-
-#ifdef __PSVITA__
-#define GAME_CRAFTING_TOUCHUPDATE_TIMER_ID 0
-#define GAME_CRAFTING_TOUCHUPDATE_TIMER_TIME 100
-#endif
-
 UIScene_CraftingMenu::UIScene_CraftingMenu(int iPad, void *_initData, UILayer *parentLayer) : UIScene(iPad, parentLayer)
 {
 #ifdef _WINDOWS64

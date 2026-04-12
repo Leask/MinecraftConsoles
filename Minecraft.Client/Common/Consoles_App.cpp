@@ -25,12 +25,8 @@
 #include "../../Minecraft.World/SignTileEntity.h"
 #include "../StatsCounter.h"
 #include "../GameMode.h"
-#include "../Xbox/Social/SocialManager.h"
+#include "../NativeDesktop/SocialManager.h"
 #include "Tutorial/TutorialMode.h"
-#if defined _XBOX || defined _WINDOWS64
-#include "../Xbox/XML/ATGXmlParser.h"
-#include "../Xbox/XML/xmlFilesCallback.h"
-#endif
 #include "Minecraft_Macros.h"
 #include "../PlayerList.h"
 #include "../ServerPlayer.h"
@@ -52,22 +48,8 @@
 #include "../ArchiveFile.h"
 #endif
 #include "../Minecraft.h"
-#ifdef _XBOX
-#include "../Xbox/GameConfig/Minecraft.spa.h"
-#include "../Xbox/Network/NetworkPlayerXbox.h"
-#include "XUI/XUI_TextEntry.h"
-#include "XUI/XUI_XZP_Icons.h"
-#include "XUI/XUI_PauseMenu.h"
-#else
 #include "UI/UI.h"
 #include "UI/UIScene_PauseMenu.h"
-#endif
-#ifdef __PS3__
-#include <sys/tty.h>
-#endif
-#ifdef __ORBIS__
-#include <save_data_dialog.h>
-#endif
 
 #include "../Common/Leaderboards/LeaderboardManager.h"
 
@@ -4175,7 +4157,7 @@ void CMinecraftApp::HandleXuiActions(void)
 #if defined _XBOX
 						INetworkPlayer *pHost=g_NetworkManager.GetHostPlayer();
 						// write the level to the banned level list, and exit the world
-						AddLevelToBannedLevelList(i,((NetworkPlayerXbox *)pHost)->GetUID(),GetUniqueMapName(),true);
+						AddLevelToBannedLevelList(i,((NetworkPlayerNative *)pHost)->GetUID(),GetUniqueMapName(),true);
 #elif defined _XBOX_ONE
 						INetworkPlayer *pHost=g_NetworkManager.GetHostPlayer();
 						AddLevelToBannedLevelList(i,pHost->GetUID(),GetUniqueMapName(),true);
@@ -4512,7 +4494,7 @@ int CMinecraftApp::BannedLevelDialogReturned(void *pParam,int iPad,const C4JStor
 		if (pHost != nullptr)
 		{
 #if defined _XBOX
-			pApp->RemoveLevelFromBannedLevelList(iPad,((NetworkPlayerXbox *)pHost)->GetUID(),pApp->GetUniqueMapName());
+			pApp->RemoveLevelFromBannedLevelList(iPad,((NetworkPlayerNative *)pHost)->GetUID(),pApp->GetUniqueMapName());
 #else
 			pApp->RemoveLevelFromBannedLevelList(iPad,pHost->GetUID(),pApp->GetUniqueMapName());
 #endif
@@ -4536,21 +4518,7 @@ int CMinecraftApp::BannedLevelDialogReturned(void *pParam,int iPad,const C4JStor
 
 void CMinecraftApp::loadMediaArchive()
 {
-	wstring mediapath = L"";
-
-#ifdef __PS3__
-	mediapath = L"Common\\Media\\MediaPS3.arc";
-#elif _WINDOWS64
-	mediapath = L"Common\\Media\\MediaWindows64.arc";
-#elif defined(_NATIVE_DESKTOP)
-	mediapath = L"Common/Media/MediaWindows64.arc";
-#elif __ORBIS__
-	mediapath = L"Common\\Media\\MediaOrbis.arc";
-#elif _DURANGO
-	mediapath = L"Common\\Media\\MediaDurango.arc";
-#elif __PSVITA__
-	mediapath = L"Common\\Media\\MediaPSVita.arc";
-#endif
+	wstring mediapath = L"Common/Media/MediaNativeDesktop.arc";
 
 	if (!mediapath.empty())
 	{
@@ -10241,17 +10209,7 @@ enum ETitleUpdateTexturePacks
 	//eTUTP_Steampunk = 0x01000808, // 4J Stu - The released Steampunk pack had a sub-pack ID
 };
 
-#ifdef _WINDOWS64
-wstring titleUpdateTexturePackRoot = L"Windows64\\DLC\\";
-#elif defined(__ORBIS__)
-wstring titleUpdateTexturePackRoot = L"/app0/orbis/CU/DLC/";
-#elif defined(__PSVITA__)
-wstring titleUpdateTexturePackRoot = L"PSVita/CU/DLC/";
-#elif defined(__PS3__)
-wstring titleUpdateTexturePackRoot = L"PS3/CU/DLC/";
-#else
 wstring titleUpdateTexturePackRoot = L"CU\\DLC\\";
-#endif
 
 #endif
 

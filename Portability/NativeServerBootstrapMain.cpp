@@ -24,16 +24,10 @@ namespace
             return false;
         }
 
-#if defined(_WINDOWS64) || defined(_WIN32)
-        return _putenv_s(
-            "MINECRAFT_SERVER_STORAGE_ROOT",
-            storageRoot) == 0;
-#else
         return setenv(
             "MINECRAFT_SERVER_STORAGE_ROOT",
             storageRoot,
             1) == 0;
-#endif
     }
 }
 

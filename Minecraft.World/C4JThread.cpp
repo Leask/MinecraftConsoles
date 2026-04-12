@@ -2,19 +2,7 @@
 
 
 #include "C4JThread.h"
-#ifdef __PSVITA__
-#include "../Minecraft.Client/PSVita/PSVitaExtras/ShutdownManager.h"
-#include "../Minecraft.Client/PSVita/PSVitaExtras/PSVitaTLSStorage.h"
-
-// AP - this comes from the low level user_malloc.c file used to overide the default memory functions. These must be called when a thread is started/stopped
-extern "C" {
-extern void user_registerthread();
-extern void user_removethread();
-}
-#elif !defined(_NATIVE_DESKTOP)
-#include "../Minecraft.Client/PS3/PS3Extras/ShutdownManager.h"
-
-#endif
+#include "../Minecraft.Client/NativeDesktop/Legacy/ShutdownManager.h"
 
 std::vector<C4JThread*> C4JThread::ms_threadList;
 CRITICAL_SECTION C4JThread::ms_threadListCS;

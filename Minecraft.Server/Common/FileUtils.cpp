@@ -1,15 +1,11 @@
 #include "FileUtils.h"
 
 #include <filesystem>
-#if defined(_WIN32)
-#include <io.h>
-#else
 #include <unistd.h>
-#endif
 #include <stdio.h>
 
 #include <lce_time/lce_time.h>
-#include <lce_win32/lce_win32.h>
+#include <lce_abi/lce_abi.h>
 
 namespace ServerRuntime
 {
@@ -26,13 +22,7 @@ namespace ServerRuntime
 				const std::filesystem::path &path,
 				const char *mode)
 			{
-#if defined(_WIN32)
-				const std::wstring wideMode =
-					std::filesystem::path(mode).wstring();
-				return _wfopen(path.c_str(), wideMode.c_str());
-#else
 				return fopen(path.c_str(), mode);
-#endif
 			}
 
 			static bool FlushFileToStorage(FILE *file)
@@ -47,20 +37,16 @@ namespace ServerRuntime
 					return false;
 				}
 
-#if defined(_WIN32)
-				return _commit(_fileno(file)) == 0;
-#else
 				return fsync(fileno(file)) == 0;
-#endif
 			}
 		}
 
 		unsigned long long GetCurrentUtcFileTime()
 		{
-			static const unsigned long long kWindowsToUnixEpoch100Ns =
+			static const unsigned long long kFileTimeToUnixEpoch100Ns =
 				116444736000000000ULL;
 			return (LceGetUnixTimeMilliseconds() * 10000ULL) +
-				kWindowsToUnixEpoch100Ns;
+				kFileTimeToUnixEpoch100Ns;
 		}
 
 		bool ReadTextFile(const std::string &filePath, std::string *outText)
@@ -160,38 +146,12 @@ namespace ServerRuntime
 			}
 			fclose(outFile);
 
-#if defined(_WIN32)
-			if (std::filesystem::exists(nativePath) &&
-				std::filesystem::is_regular_file(nativePath))
-			{
-				// Replace the destination without deleting the last known-good file first.
-				if (ReplaceFileW(
-						nativePath.c_str(),
-						tmpPath.c_str(),
-						nullptr,
-						REPLACEFILE_IGNORE_MERGE_ERRORS,
-						nullptr,
-						nullptr))
-				{
-					return true;
-				}
-			}
-
-			if (MoveFileExW(
-					tmpPath.c_str(),
-					nativePath.c_str(),
-					MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH))
-			{
-				return true;
-			}
-#else
 			std::error_code renameError;
 			std::filesystem::rename(tmpPath, nativePath, renameError);
 			if (!renameError)
 			{
 				return true;
 			}
-#endif
 
 			// Keep the temp file on failure so the original file remains recoverable and the caller can inspect the write result.
 			return false;

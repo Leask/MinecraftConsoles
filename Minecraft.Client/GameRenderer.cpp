@@ -45,7 +45,7 @@
 #include "HumanoidModel.h"
 #include "../Minecraft.World/Item.h"
 #include "../Minecraft.World/compression.h"
-#include "PS3/PS3Extras/ShutdownManager.h"
+#include "NativeDesktop/Legacy/ShutdownManager.h"
 #include "BossMobGuiInfo.h"
 
 #include "TexturePackRepository.h"

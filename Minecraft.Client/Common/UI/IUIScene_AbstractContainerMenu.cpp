@@ -15,8 +15,8 @@
 #include <pad.h>
 #endif
 
-#ifdef _WINDOWS64
-#include "../../Windows64/KeyboardMouseInput.h"
+#if defined(_NATIVE_DESKTOP)
+#include "../../NativeDesktop/NativeDesktopClientStubs.h"
 #endif
 
 IUIScene_AbstractContainerMenu::IUIScene_AbstractContainerMenu()

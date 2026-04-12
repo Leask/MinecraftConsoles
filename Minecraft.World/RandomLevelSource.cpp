@@ -198,7 +198,7 @@ float RandomLevelSource::getHeightFalloff(int xxx, int zzz, int* pEMin)
 #else
 
 
-// MGH  - go back to using the simpler version for PS3/vita/360, as it was causing a lot of slow down on the tuturial generation
+// MGH - keep the simpler version because the newer path regressed tutorial generation performance.
 float RandomLevelSource::getHeightFalloff(int xxx, int zzz, int* pEMin)
 {
 	///////////////////////////////////////////////////////////////////
@@ -299,9 +299,9 @@ void RandomLevelSource::prepareHeights(int xOffs, int zOffs, byteArray blocks)
 						val -= vala;
 						for (int z = 0; z < CHUNK_WIDTH; z++)
 						{
-// 4J Stu - I have removed all uses of the new getHeightFalloff function for now as we had some problems with PS3/PSVita world generation
+// 4J Stu - removed all uses of the new getHeightFalloff function after world generation regressions.
 // I have fixed the non large worlds method, however we will be happier if the current builds go out with completely old code
-// We can put the new code back in mid-november 2014 once those PS3/Vita builds are gone (and the PS4 doesn't have world enlarging in these either anyway)
+// Keep this path until the world-enlarging behavior is revalidated on native targets.
 							int xxx = ( ( xOffs * 16 ) + x + ( xc * CHUNK_WIDTH ) );
 							int zzz = ( ( zOffs * 16 ) + z + ( zc * CHUNK_WIDTH ) );
 							int emin;

@@ -17,8 +17,8 @@ namespace ServerRuntime
 		 */
 		bool WriteTextFileAtomic(const std::string &filePath, const std::string &text);
 		/**
-		 * Returns the current UTC timestamp encoded in Windows FILETIME units for expiry comparisons
-		 * 期限判定用に現在UTC時刻をWindows FILETIME単位で返す
+		 * Returns the current UTC timestamp encoded in FILETIME-compatible 100ns units
+		 * 期限判定用に現在UTC時刻をFILETIME互換100ns単位で返す
 		 */
 		unsigned long long GetCurrentUtcFileTime();
 	}

@@ -1,225 +1,243 @@
 ![Legacy Edition Banner](.github/banner.png)
-# MinecraftConsoles (Legacy Console Edition)
 
+# MinecraftConsoles
+
+[![Native Smoke](https://github.com/MCLCE/MinecraftConsoles/actions/workflows/native-smoke.yml/badge.svg?branch=main)](https://github.com/MCLCE/MinecraftConsoles/actions/workflows/native-smoke.yml)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/jrum7HhegA)
 
-This project is based on source code of Minecraft Legacy Console Edition v1.6.0560.0 (TU19) with some fixes and improvements applied. 
+MinecraftConsoles is now a macOS/Linux native-only Minecraft Legacy Console
+Edition codebase. Starting from this branch, `main` no longer carries Windows
+build support, release automation, Wine/Docker runtime support, or Windows
+compatibility goals.
 
-The current goal of MinecraftConsoles is to be a multi-platform base for further development, such as modding, backports, and anything else LCE. On top of that, we're working to make this a quality experience on Desktop with or without a controller while (long-term) retaining console support. 
+The last branch that intentionally preserves the previous Windows-compatible
+state is:
 
-See our our [Contributor's Guide](./CONTRIBUTING.md) for more information on the goals of this project.
+```text
+last-windows-compatible
+```
 
-## Download
-### Client
-Windows users can download our [Nightly Build](https://github.com/smartcmd/MinecraftConsoles/releases/tag/nightly)! Simply download the `.zip` file and extract it to a folder where you'd like to keep the game. You can set your username in `username.txt` (you'll have to make this file)
-### Server
-If you're looking for Dedicated Server software, download its [Nightly Build here](https://github.com/smartcmd/MinecraftConsoles/releases/tag/nightly-dedicated-server). Similar instructions to the client more or less, though see further down in this README for more info on that.
+Use that branch if you need the archived Windows client/server build. All new
+work on `main` targets macOS and Linux only.
 
-## Platform Support
+## Current Goal
 
-- **Windows**: Supported for building and running the project
-- **macOS / Linux**: The Windows nightly build will run through Wine or CrossOver based on community reports, but this is unofficial and not currently tested by the maintainers when pushing updates
-- **Android**: The Windows nightly build does run but has stability / frametime pacing issues frequently reported
-- **iOS**: No current support
-- **All Consoles**: Console support remains in the code, but maintainers are not currently verifying console functionality / porting UI Changes to the console builds at this time.
+The active deliverable is the native headless server runtime:
 
-## Features
+```text
+Minecraft.Server.NativeBootstrap
+```
 
-- Dedicated Server Software (`Minecraft.Server.exe`)
-- Fixed compilation and execution in both Debug and Release mode on Windows using Visual Studio 2022
-- Added support for keyboard and mouse input
-- Added fullscreen mode support (toggle using F11)
-- (WIP) Disabled V-Sync for better performance
-- Added a high-resolution timer path on Windows for smoother high-FPS gameplay timing
-- Device's screen resolution will be used as the game resolution instead of using a fixed resolution (1920x1080)
-- LAN Multiplayer & Discovery
-- Added persistent username system via `username.txt`
-- Decoupled usernames and UIDs to allow username changes
-- Fixed various security issues present in the original codebase
-- Splitscreen Multiplayer support (connect to dedicated servers, etc)
-- In-game server management (Add Server button, etc)
+The project direction is:
 
+- make native macOS/Linux server startup reliable
+- keep create/load/save/reload/shutdown under native smoke coverage
+- keep stdin and plain-text TCP shell control as the admin surface
+- continue shrinking legacy platform glue behind native runtime contracts
+- move toward a native desktop client only through macOS/Linux build paths
 
-## Controls (Keyboard & Mouse)
+The old Windows client, Windows dedicated server, Direct3D path, Wine Docker
+server, and Windows release workflows are intentionally out of scope for `main`.
 
-- **Movement**: `W` `A` `S` `D`
-- **Jump / Fly (Up)**: `Space`
-- **Sneak / Fly (Down)**: `Shift` (Hold)
-- **Sprint**: `Ctrl` (Hold) or Double-tap `W`
-- **Inventory**: `E`
-- **Chat**: `T`
-- **Drop Item**: `Q`
-- **Crafting**: `C` Use `Q` and `E` to move through tabs (cycles Left/Right)
-- **Toggle View (FPS/TPS)**: `F5`
-- **Fullscreen**: `F11`
-- **Pause Menu**: `Esc`
-- **Attack / Destroy**: `Left Click`
-- **Use / Place**: `Right Click`
-- **Select Item**: `Mouse Wheel` or keys `1` to `9`
-- **Accept or Decline Tutorial hints**: `Enter` to accept and `B` to decline
-- **Game Info (Player list and Host Options)**: `TAB`
-- **Toggle HUD**: `F1`
-- **Toggle Debug Info**: `F3`
-- **Open Debug Overlay**: `F4`
-- **Toggle Debug Console**: `F6`
+## Platform Status
 
+| Target | Entry Point | Status |
+|--------|-------------|--------|
+| macOS native headless server | `Minecraft.Server.NativeBootstrap` | Primary supported path |
+| Linux native headless server | `Minecraft.Server.NativeBootstrap` | Primary supported path |
+| macOS native client | `Minecraft.Client` | Early smoke target |
+| Linux native client | `Minecraft.Client` | Early smoke target |
 
+No other platform is a supported target on `main`.
 
-## Contributors
-Would you like to contribute to this project? Please read our [Contributor's Guide](CONTRIBUTING.md) before doing so! This document includes our current goals, standards for inclusions, rules, and more.
+## Quick Start
 
-## Client Launch Arguments
+### macOS Headless Runtime
 
-| Argument           | Description                                                                                         |
-|--------------------|-----------------------------------------------------------------------------------------------------|
-| `-name <username>` | Overrides your in-game username.                                                                    |
-| `-fullscreen`      | Launches the game in Fullscreen mode                                                                |
+```bash
+cmake --preset macos-native
+cmake --build --preset macos-native-debug --target Minecraft.Portability.Check
+```
+
+Run the native server bootstrap:
+
+```bash
+./build/macos-native/Portability/Debug/Minecraft.Server.NativeBootstrap \
+    --bootstrap-only
+```
+
+### Linux Headless Runtime
+
+```bash
+cmake --preset linux-native
+cmake --build --preset linux-native-debug --target Minecraft.Portability.Check
+```
+
+Run the native server bootstrap:
+
+```bash
+./build/linux-native/Portability/Debug/Minecraft.Server.NativeBootstrap \
+    --bootstrap-only
+```
+
+## Native Headless Server
+
+`Minecraft.Server.NativeBootstrap` is the only native server executable. It is
+not a wrapper around the old desktop gameplay startup chain.
+
+Supported runtime coverage includes:
+
+- bootstrap-only startup validation
+- native storage-root overrides
+- create/load/save/reload lifecycle smoke tests
+- save-on-exit persistence
+- corrupt save rejection during bootstrap/load
+- autosave scheduling
+- stdin shell commands
+- plain-text TCP remote shell commands
+- connection and command lineage in runtime status
 
 Example:
+
+```bash
+./build/macos-native/Portability/Debug/Minecraft.Server.NativeBootstrap \
+    --storage-root ./native-server-data \
+    -name NativeServer \
+    -port 25565 \
+    -loglevel info
 ```
-Minecraft.Client.exe -name Steve -fullscreen
-```
 
-## LAN Multiplayer
-LAN multiplayer is available on the Windows build
+### Shell Commands
 
-- Hosting a multiplayer world automatically advertises it on the local network
-- Other players on the same LAN can discover the session from the in-game Join Game menu
-- Game connections use TCP port `25565` by default
-- LAN discovery uses UDP port `25566`
-- Add servers to your server list with the in-game Add Server button (temp)
-- Rename yourself without losing data by keeping your `uid.dat`
-- Split-screen players can join in, even in Multiplayer
+| Command | Behavior |
+|---------|----------|
+| `help` | Print supported commands |
+| `status` | Report world, runtime, autosave, worker, save, and session state |
+| `save` | Enqueue a save through the native worker queue |
+| `stop` | Enqueue controlled shutdown through the native worker queue |
 
-# Dedicated Server Software
+### Bootstrap Test Options
 
-## About `server.properties`
+| Option | Purpose |
+|--------|---------|
+| `--bootstrap-only` | Initialize bootstrap state and exit |
+| `--self-connect` | Loop back one TCP client and exit |
+| `--shell-self-connect` | Loop back one TCP client while shell mode runs |
+| `--shutdown-after-ms <ms>` | Run shell mode for a bounded time |
+| `--require-accepted-connections <n>` | Fail unless at least `n` clients were accepted |
+| `--require-remote-commands <n>` | Fail unless at least `n` remote commands ran |
+| `--storage-root <path>` | Override native storage root |
+| `--command <cmd>` | Run one native shell command before stdin |
+| `--shell-self-command <cmd>` | Send one loopback remote shell command |
 
-`Minecraft.Server` reads `server.properties` from the executable working directory (Docker image: `/srv/mc/server.properties`).
-If the file is missing or contains invalid values, defaults are auto-generated/normalized on startup.
+## Server Configuration
 
-Important keys:
+The native server reads `server.properties` from the executable working
+directory. Missing or invalid values are generated or normalized on startup.
+Command-line arguments override the file.
+
+Common keys:
 
 | Key | Values / Range | Default | Notes |
-|-----|-----------------|---------|-------|
-| `server-port` | `1-65535` | `25565` | Listen TCP port |
-| `server-ip` | string | `0.0.0.0` | Bind address |
-| `server-name` | string (max 16 chars) | `DedicatedServer` | Host display name |
-| `max-players` | `1-8` | `8` | Public player slots |
+|-----|----------------|---------|-------|
+| `server-port` | `1-65535` | `25565` | TCP listen port |
+| `server-ip` | address string | `0.0.0.0` | Bind address |
+| `server-name` | string, max 16 chars | `DedicatedServer` | Host display name |
+| `max-players` | `1-256` | `16` | Public player slots |
 | `level-name` | string | `world` | Display world name |
-| `level-id` | safe ID string | derived from `level-name` | Save folder ID; normalized automatically |
-| `level-seed` | int64 or empty | empty | Empty = random seed |
-| `world-size` | `classic\|small\|medium\|large` | `classic` | World size preset for new worlds and expansion target for existing worlds |
-| `log-level` | `debug\|info\|warn\|error` | `info` | Server log verbosity |
+| `level-id` | safe ID string | `world` | Save slot ID |
+| `level-seed` | int64 or empty | empty | Empty means random seed |
+| `world-size` | `classic`, `small`, `medium`, `large` | `classic` | World size preset |
+| `log-level` | `debug`, `info`, `warn`, `error` | `info` | Log verbosity |
 | `autosave-interval` | `5-3600` | `60` | Seconds between autosaves |
-| `white-list` | `true/false` | `false` | Enable access list checks |
-| `lan-advertise` | `true/false` | `false` | LAN session advertisement |
+| `white-list` | `true` / `false` | `false` | Enable access checks |
+| `lan-advertise` | `true` / `false` | `false` | LAN advertisement flag |
 
-Minimal example:
-
-```properties
-server-name=DedicatedServer
-server-port=25565
-max-players=8
-level-name=world
-level-seed=
-world-size=classic
-log-level=info
-white-list=false
-lan-advertise=false
-autosave-interval=60
-```
-
-## Dedicated Server launch arguments
-
-The server loads base settings from `server.properties`, then CLI arguments override those values.
+Common CLI overrides:
 
 | Argument | Description |
 |----------|-------------|
-| `-port <1-65535>` | Override `server-port` |
+| `-port <0-65535>` | Override `server-port`; `0` requests an ephemeral port |
 | `-ip <addr>` | Override `server-ip` |
 | `-bind <addr>` | Alias of `-ip` |
-| `-name <name>` | Override `server-name` (max 16 chars) |
-| `-maxplayers <1-8>` | Override `max-players` |
+| `-name <name>` | Override `server-name` |
+| `-maxplayers <1-256>` | Override public slots |
 | `-seed <int64>` | Override `level-seed` |
-| `-loglevel <level>` | Override `log-level` (`debug`, `info`, `warn`, `error`) |
-| `-help` / `--help` / `-h` | Print usage and exit |
+| `-loglevel <level>` | Override `log-level` |
+| `-help`, `--help`, `-h` | Print usage |
 
-Examples:
+## Unattended Harness
 
-```powershell
-Minecraft.Server.exe -name MyServer -port 25565 -ip 0.0.0.0 -maxplayers 8 -loglevel info
-Minecraft.Server.exe -seed 123456789
-```
-
-## Dedicated Server in Docker (Wine)
-
-This repository includes a lightweight Docker setup for running the Windows dedicated server under Wine.
-### Quick Start (No Build, Recommended)
-
-No local build is required. The container image is pulled from GHCR.
+The native server engineering harness is:
 
 ```bash
-./start-dedicated-server.sh
+tools/headless_server_native_harness.sh
 ```
 
-`start-dedicated-server.sh` does the following:
-- uses `docker-compose.dedicated-server.ghcr.yml`
-- pulls latest image, then starts the container
+By default it:
 
-If you want to skip pulling and just start:
+- builds and validates the local macOS native path
+- syncs to Linux host `elm`
+- builds and validates the Linux native path
+- runs bootstrap, live shell, and signal checks
+- writes logs under `build/harness/`
+
+Override `REMOTE_HOST`, `REMOTE_ROOT`, and preset variables when using a
+different Linux machine.
+
+## Native Client Smoke
+
+The native desktop client remains an early smoke target, not the main shipping
+artifact yet.
+
+macOS:
 
 ```bash
-./start-dedicated-server.sh --no-pull
+cmake --preset macos-native-client
+cmake --build --preset macos-native-client-debug \
+    --target Minecraft.NativeDesktop.Check
 ```
 
-Equivalent manual command:
+Linux:
 
 ```bash
-docker compose -f docker-compose.dedicated-server.ghcr.yml up -d
+cmake --preset linux-native-client
+cmake --build --preset linux-native-client-debug \
+    --target Minecraft.NativeDesktop.Check
 ```
 
-### Local Build Mode (Optional)
+## Repository Map
 
-Use this only when you want to run your own locally built `Minecraft.Server` binary in Docker.
-**A local build of `Minecraft.Server` is required for this mode.**
+| Path | Purpose |
+|------|---------|
+| `Portability/` | Native bootstrap, native server runtime, native smoke tests |
+| `Minecraft.Server/Common/` | Shared native server lifecycle, shell, storage, runtime contracts |
+| `Minecraft.World/` | Shared world/gameplay code used by native smoke paths |
+| `Minecraft.Client/NativeDesktop/` | Experimental macOS/Linux native client shell |
+| `include/` | Native portability helpers and legacy ABI shims used by the native build |
+| `tools/headless_server_native_harness.sh` | macOS/Linux unattended validation harness |
+| `docs/native-port-plan.md` | Native-only direction and phased plan |
+| `docs/headless-server-native-harness-plan.md` | Headless runtime harness notes |
+| `COMPILE.md` | Build instructions |
+
+## Development Rules
+
+- `main` is macOS/Linux native-only.
+- Do not add Windows presets, Windows release workflows, Wine runtime scripts,
+  or Direct3D-backed build paths back to `main`.
+- Keep `Minecraft.Server.NativeBootstrap` as the only native server entry point.
+- Route save, autosave, stop, and halt through the native worker/session flow.
+- Validate native runtime work with `Minecraft.Portability.Check`.
+- Use the full harness before stage commits when Linux validation is available.
+
+Minimum local check:
 
 ```bash
-docker compose -f docker-compose.dedicated-server.yml up -d --build
+cmake --build --preset macos-native-debug --target Minecraft.Portability.Check
 ```
 
-Useful environment variables:
-- `XVFB_DISPLAY` (default: `:99`)
-- `XVFB_SCREEN` (default: `720x1280x16`, minimum virtual display used by Wine)
-- `SERVER_BIND_IP` (default: `0.0.0.0`)
-- `SERVER_PORT` (default: `25565`)
+Full harness:
 
-Fixed server runtime behavior in container:
-- executable path: `/srv/mc/Minecraft.Server.exe`
-- bind IP: configured by `SERVER_BIND_IP`
-- server port: configured by `SERVER_PORT`
-
-Persistent files are bind-mounted to host:
-- `./server-data/server.properties` -> `/srv/mc/server.properties`
-- `./server-data/GameHDD` -> `/srv/mc/Windows64/GameHDD`
-
-
-## Build & Run
-
-1. Install [Visual Studio 2022](https://aka.ms/vs/17/release/vs_community.exe) or [newer](https://visualstudio.microsoft.com/downloads/).
-2. Clone the repository.
-3. Open the project folder from Visual Studio.
-4. Set the build configuration to **Windows64 - Debug** (Release is also ok but missing some debug features), then build and run.
-
-### CMake (Windows x64)
-
-```powershell
-cmake --preset windows64
-cmake --build --preset windows64-debug --target Minecraft.Client
+```bash
+tools/headless_server_native_harness.sh
 ```
-
-For more information, see [COMPILE.md](COMPILE.md).
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=smartcmd/MinecraftConsoles&type=date&legend=top-left)](https://www.star-history.com/?spm=a2c6h.12873639.article-detail.7.7b9d7fabjNxTRk#smartcmd/MinecraftConsoles&type=date&legend=top-left)

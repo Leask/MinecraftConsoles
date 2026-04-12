@@ -186,7 +186,7 @@ class Keyboard
 public:
 	static void create() {}
 	static void destroy() {}
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	static bool isKeyDown(int keyCode);
 #else
 	static bool isKeyDown(int) { return false; }
@@ -251,8 +251,8 @@ public:
 	static const int KEY_LEFT = 54;
 	static const int KEY_RIGHT = 55;
 
-#ifdef _WINDOWS64
-	// Map LWJGL-style key constant to Windows VK code
+#if defined(_NATIVE_DESKTOP)
+	// Map LWJGL-style key constant to native virtual-key codes.
 	static int toVK(int keyConst);
 #endif
 };
@@ -262,7 +262,7 @@ class Mouse
 public:
 	static void create() {}
 	static void destroy() {}
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	static int getX();
 	static int getY();
 	static bool isButtonDown(int button);

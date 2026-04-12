@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
-#ifdef _WINDOWS64
-#include "Windows64/KeyboardMouseInput.h"
+#if defined(_NATIVE_DESKTOP)
+#include "NativeDesktop/NativeDesktopClientStubs.h"
 
 static const int s_keyToVK[] = {
 	'A',        // KEY_A = 0

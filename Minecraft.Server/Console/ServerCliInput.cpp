@@ -5,16 +5,14 @@
 #include "../vendor/linenoise/linenoise.h"
 #include <lce_stdin/lce_stdin.h>
 #include <lce_time/lce_time.h>
-#include <lce_win32/lce_win32.h>
+#include <lce_abi/lce_abi.h>
 
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
 #include <vector>
-#if !defined(_WINDOWS64) && !defined(_WIN32)
 #include <strings.h>
-#endif
 
 namespace
 {
@@ -25,11 +23,7 @@ namespace
 			return false;
 		}
 
-#if defined(_WINDOWS64) || defined(_WIN32)
-		return _stricmp(lhs, rhs) == 0;
-#else
 		return strcasecmp(lhs, rhs) == 0;
-#endif
 	}
 
 	bool UseStreamInputMode()
@@ -47,11 +41,7 @@ namespace
 				|| EqualsIgnoreCase(mode, "stdin");
 		}
 
-#if !defined(_WINDOWS64) && !defined(_WIN32)
 		return true;
-#else
-		return false;
-#endif
 	}
 }
 
@@ -98,9 +88,6 @@ namespace ServerRuntime
 		linenoiseRequestStop();
 		if (m_inputThread.joinable())
 		{
-#if defined(_WINDOWS64) || defined(_WIN32)
-			CancelSynchronousIo((HANDLE)m_inputThread.native_handle());
-#endif
 			m_inputThread.join();
 		}
 		linenoiseSetCompletionCallback(NULL);
@@ -157,17 +144,14 @@ namespace ServerRuntime
 	}
 
 	/**
-	 * use file-based stdin reading instead of linenoise when requested or when stdin is not a console/pty (e.g. piped input or non-interactive docker)
+	 * use file-based stdin reading instead of linenoise when requested or
+	 * when stdin is not a console/pty.
 	 */
 	void ServerCliInput::RunStreamInputLoop()
 	{
 		if (!LceStdinIsAvailable())
 		{
 			LogWarn("console", "stream input mode requested but STDIN handle is unavailable.");
-#if defined(_WINDOWS64) || defined(_WIN32)
-			LogWarn("console", "falling back to linenoise interactive mode.");
-			RunLinenoiseLoop();
-#endif
 			return;
 		}
 

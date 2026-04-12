@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include <lce_win32/lce_win32.h>
+#include <lce_abi/lce_abi.h>
 #include <lce_time/lce_time.h>
 
 #include "DedicatedServerPlatformState.h"

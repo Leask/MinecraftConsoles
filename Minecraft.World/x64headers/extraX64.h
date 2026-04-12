@@ -11,7 +11,6 @@
 
 #define MULTITHREAD_ENABLE
 
-#if defined(_NATIVE_DESKTOP) || defined(_WINDOWS64)
 #ifndef MINECRAFT_NATIVE_BYTE_DEFINED
 typedef unsigned char mc_byte;
 #define MINECRAFT_NATIVE_BYTE_DEFINED
@@ -19,80 +18,23 @@ typedef unsigned char mc_byte;
 #ifndef byte
 #define byte mc_byte
 #endif
-#else
-typedef unsigned char byte;
-#endif
 
 const int XUSER_INDEX_ANY = 255;
 const int XUSER_INDEX_FOCUS = 254;
 
-#ifdef __PSVITA__
-const int XUSER_MAX_COUNT = 1;
-const int MINECRAFT_NET_MAX_PLAYERS = 4;
-#else
 const int XUSER_MAX_COUNT = 4;
 const int MINECRAFT_NET_MAX_PLAYERS = 256;
-#endif
 
-
-
-#ifdef __ORBIS__
-#include <net.h>
-#include <np/np_npid.h>
-#include <user_service.h>
-#include "..\..\Minecraft.Client\Orbis\Orbis_PlayerUID.h"
-#include "..\..\Minecraft.Client\Orbis\Network\SQRNetworkManager_Orbis.h"
-typedef SQRNetworkManager_Orbis::SessionID SessionID;
-typedef SQRNetworkManager_Orbis::PresenceSyncInfo INVITE_INFO;
-
-#elif defined __PS3__		// defined in the profile lib
-#include <np.h>
-#include <sysutil/sysutil_userinfo.h>
-#include <netex/libnetctl.h>
-#include <assert.h>
-#include <stdlib.h>
-#include "..\..\Minecraft.Client\PS3\PS3_PlayerUID.h"
-#include "..\..\Minecraft.Client\PS3\Network\SQRNetworkManager_PS3.h"
-typedef SQRNetworkManager::SessionID SessionID;
-typedef SQRNetworkManager::PresenceSyncInfo INVITE_INFO;
-
-#elif defined __PSVITA__
-#include <np.h>
-#include <assert.h>
-#include <stdlib.h>
-#include "..\..\Minecraft.Client\PSVita\Network\SQRNetworkManager_Vita.h"
-#include "..\..\Minecraft.Client\PSVita\Network\SQRNetworkManager_AdHoc_Vita.h"
-#include "..\..\Minecraft.Client\PSVita\4JLibs\inc\4J_Profile.h"
-typedef SQRNetworkManager_Vita::SessionID SessionID;
-typedef SQRNetworkManager_Vita::PresenceSyncInfo INVITE_INFO;
-
-#elif defined _DURANGO
-#include "..\..\Minecraft.Client\Durango\4JLibs\inc\4J_Profile.h"
-#include "..\..\Minecraft.Client\Durango\Network\DQRNetworkManager.h"
-typedef ULONGLONG SessionID;
-typedef ULONGLONG GameSessionUID;
-typedef DQRNetworkManager::SessionInfo INVITE_INFO;
-#else
 typedef ULONGLONG PlayerUID;
 typedef ULONGLONG SessionID;
 typedef PlayerUID GameSessionUID;
 class INVITE_INFO;
 
-#endif //  __PS3__
-
-#if !(defined _DURANGO || defined __PSVITA__)
 typedef PlayerUID *PPlayerUID;
-#endif
 typedef struct _XUIOBJ* HXUIOBJ;
 typedef struct _XUICLASS* HXUICLASS;
 typedef struct _XUIBRUSH* HXUIBRUSH;
 typedef struct _XUIDC* HXUIDC;
-
-
-
-// #ifdef _DURANGO
-// void GetLocalTime(SYSTEMTIME *time);
-// #endif
 
 bool IsEqualXUID(PlayerUID a, PlayerUID b);
 
@@ -342,8 +284,8 @@ public:
 #define PIXSetMarkerDeprecated(a, b, ...) PIXSetMarker(a, L ## b, __VA_ARGS__)
 #define PIXAddNamedCounter(a, b) PIXReportCounter( L ## b, a)
 #else
-#ifndef LCE_WIN32_PIX_STUBS_DEFINED
-#define LCE_WIN32_PIX_STUBS_DEFINED
+#ifndef LCE_ABI_PIX_STUBS_DEFINED
+#define LCE_ABI_PIX_STUBS_DEFINED
 inline void PIXAddNamedCounter(int, const char*, ...) {}
 inline void PIXBeginNamedEvent(int, const char*, ...) {}
 inline void PIXEndNamedEvent() {}

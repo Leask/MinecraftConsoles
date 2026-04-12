@@ -63,17 +63,6 @@
 #include "../Minecraft.World/BasicTypeContainers.h"
 #include "Common/UI/UIScene_SettingsGraphicsMenu.h"	
 
-//#define DISABLE_SPU_CODE
-
-#ifdef __PS3__
-#include "PS3/SPU_Tasks/LevelRenderer_cull/LevelRenderer_cull.h"
-#include "PS3/SPU_Tasks/LevelRenderer_FindNearestChunk/LevelRenderer_FindNearestChunk.h"
-#include "C4JSpursJob.h"
-
-static LevelRenderer_cull_DataIn g_cullDataIn[4] __attribute__((__aligned__(16)));
-static LevelRenderer_FindNearestChunk_DataIn g_findNearestChunkDataIn __attribute__((__aligned__(16)));
-#endif
-
 ResourceLocation LevelRenderer::MOON_LOCATION = ResourceLocation(TN_TERRAIN_MOON);
 ResourceLocation LevelRenderer::MOON_PHASES_LOCATION = ResourceLocation(TN_TERRAIN_MOON_PHASES);
 ResourceLocation LevelRenderer::SUN_LOCATION = ResourceLocation(TN_TERRAIN_SUN);

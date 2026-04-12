@@ -7,7 +7,6 @@
 #include "TutorialConstraints.h"
 #include "ChoiceTask.h"
 #include "../../../Minecraft.World/Material.h"
-#include "../../Windows64/KeyboardMouseInput.h"
 #include "Common/UI/UI.h"
 
 ChoiceTask::ChoiceTask(Tutorial *tutorial, int descriptionId, int promptId /*= -1*/, bool requiresUserInput /*= false*/,

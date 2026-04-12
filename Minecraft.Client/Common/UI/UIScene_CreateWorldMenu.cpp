@@ -13,16 +13,6 @@
 #include "../../../Minecraft.World/LevelType.h"
 #include "../../DLCTexturePack.h"
 
-#ifdef __PSVITA__
-#include "PSVita/Network/SQRNetworkManager_AdHoc_Vita.h"
-#endif
-
-#ifdef  _WINDOWS64
-
-#include <windows.h>
-#include "Xbox/Resource.h"
-#endif
-
 #define GAME_CREATE_ONLINE_TIMER_ID 0
 #define GAME_CREATE_ONLINE_TIMER_TIME 100
 

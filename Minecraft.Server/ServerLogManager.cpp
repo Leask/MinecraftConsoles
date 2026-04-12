@@ -8,8 +8,6 @@
 #include <array>
 #include <mutex>
 
-extern bool g_Win64DedicatedServer;
-
 namespace ServerRuntime
 {
 	namespace ServerLogManager
@@ -42,7 +40,7 @@ namespace ServerRuntime
 
 			static bool IsDedicatedServerLoggingEnabled()
 			{
-				return g_Win64DedicatedServer;
+				return true;
 			}
 
 			static void ResetConnectionLogEntry(ConnectionLogEntry *entry)

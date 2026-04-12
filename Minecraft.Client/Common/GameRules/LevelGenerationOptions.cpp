@@ -456,7 +456,7 @@ unordered_map<wstring, ConsoleSchematicFile *> *LevelGenerationOptions::getUnfin
 
 void LevelGenerationOptions::loadBaseSaveData()
 {
-#ifdef _WINDOWS64
+#ifdef _NATIVE_DESKTOP
 	
 	int gameRulesCount = m_parentDLCPack ? m_parentDLCPack->getDLCItemsCount(DLCManager::e_DLCType_GameRulesHeader) : 0;
 
@@ -469,12 +469,12 @@ void LevelGenerationOptions::loadBaseSaveData()
 
 		if (!dlcFile->getGrfPath().empty())
 		{
-			File grf(L"Windows64Media\\DLC\\" + packName + L"\\Data\\" + dlcFile->getGrfPath());
+			File grf(L"NativeDesktopMedia\\DLC\\" + packName + L"\\Data\\" + dlcFile->getGrfPath());
 
 			if (grf.exists())
 			{
 				wstring path = grf.getPath();
-				HANDLE fileHandle = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
+				HANDLE fileHandle = CreateFile(wstringtofilename(path), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
 
 				if (fileHandle != INVALID_HANDLE_VALUE)
 				{
@@ -497,12 +497,12 @@ void LevelGenerationOptions::loadBaseSaveData()
 
 	if (requiresBaseSave() && !getBaseSavePath().empty())
 	{
-		File save(L"Windows64Media\\DLC\\" + packName + L"\\Data\\" + baseSave);
+		File save(L"NativeDesktopMedia\\DLC\\" + packName + L"\\Data\\" + baseSave);
 
 		if (save.exists())
 		{
 			wstring path = save.getPath();
-			HANDLE fileHandle = CreateFileW(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
+			HANDLE fileHandle = CreateFile(wstringtofilename(path), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
 
 			if (fileHandle != INVALID_HANDLE_VALUE)
 			{

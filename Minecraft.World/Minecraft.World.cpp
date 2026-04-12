@@ -20,11 +20,7 @@
 #include "../Minecraft.Client/ServerLevel.h"
 #endif
 
-#ifdef _DURANGO
-#include "DurangoStats.h"
-#else
 #include "CommonStats.h"
-#endif
 
 void MinecraftWorld_RunStaticCtors()
 {
@@ -66,14 +62,10 @@ void MinecraftWorld_RunStaticCtors()
 		FurnaceRecipes::staticCtor();
 		NATIVE_DESKTOP_STATIC_CTOR_TRACE("Recipes");
 		Recipes::staticCtor();	
-#ifdef _DURANGO
-		GenericStats::setInstance(new DurangoStats());
-#else
 		NATIVE_DESKTOP_STATIC_CTOR_TRACE("CommonStats");
 		GenericStats::setInstance(new CommonStats());
 		NATIVE_DESKTOP_STATIC_CTOR_TRACE("Stats");
 		Stats::staticCtor();
-#endif
 		//Achievements::staticCtor(); // 4J Stu - This is now called from within the Stats::staticCtor()
 		NATIVE_DESKTOP_STATIC_CTOR_TRACE("TileEntity");
 		TileEntity::staticCtor();

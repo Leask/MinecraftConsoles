@@ -8,16 +8,6 @@
       "hidden": true
     },
     {
-      "name": "windows64",
-      "displayName": "Windows64",
-      "inherits": "base",
-      "cacheVariables": {
-        "PLATFORM_DEFINES": "_WINDOWS64",
-        "PLATFORM_NAME": "Windows64",
-        "IGGY_LIBS": "iggy_w64.lib;iggyperfmon_w64.lib;iggyexpruntime_w64.lib"
-      }
-    },
-    {
       "name": "native-base",
       "displayName": "Native Desktop Base",
       "inherits": "base",
@@ -26,19 +16,18 @@
         "MINECRAFT_BUILD_PORTABILITY": "ON",
         "MINECRAFT_BUILD_WORLD": "ON",
         "MINECRAFT_BUILD_CLIENT": "OFF",
-        "MINECRAFT_BUILD_SERVER": "OFF",
         "PLATFORM_DEFINES": "_NATIVE_DESKTOP",
         "PLATFORM_NAME": "NativeDesktop"
       }
     },
     {
       "name": "macos-native",
-      "displayName": "macOS Native Porting",
+      "displayName": "macOS Native",
       "inherits": "native-base"
     },
     {
       "name": "linux-native",
-      "displayName": "Linux Native Porting",
+      "displayName": "Linux Native",
       "inherits": "native-base"
     },
     {
@@ -50,7 +39,6 @@
         "MINECRAFT_BUILD_PORTABILITY": "OFF",
         "MINECRAFT_BUILD_WORLD": "ON",
         "MINECRAFT_BUILD_CLIENT": "ON",
-        "MINECRAFT_BUILD_SERVER": "OFF",
         "PLATFORM_DEFINES": "_NATIVE_DESKTOP",
         "PLATFORM_NAME": "NativeDesktop"
       }
@@ -64,90 +52,57 @@
       "name": "linux-native-client",
       "displayName": "Linux Native Client",
       "inherits": "native-client-base"
-    },
-    {
-      "name": "durango",
-      "displayName": "Durango",
-      "inherits": "base",
-      "toolchainFile": "${sourceDir}/cmake/toolchains/durango.cmake",
-      "cacheVariables": {
-        "PLATFORM_DEFINES": "_DURANGO;_XBOX_ONE",
-        "PLATFORM_NAME": "Durango",
-        "IGGY_LIBS": "iggy_durango.lib;iggyperfmon_durango.lib"
-      }
-    },
-    {
-      "name": "orbis",
-      "displayName": "ORBIS",
-      "inherits": "base",
-      "toolchainFile": "${sourceDir}/cmake/toolchains/orbis.cmake",
-      "cacheVariables": {
-        "PLATFORM_DEFINES": "__ORBIS__",
-        "PLATFORM_NAME": "Orbis",
-        "IGGY_LIBS": "libiggy_orbis.a;libiggyperfmon_orbis.a"
-      }
-    },
-    {
-      "name": "ps3",
-      "displayName": "PS3",
-      "inherits": "base",
-      "toolchainFile": "${sourceDir}/cmake/toolchains/ps3.cmake",
-      "cacheVariables": {
-        "PLATFORM_DEFINES": "__PS3__",
-        "PLATFORM_NAME": "PS3",
-        "IGGY_LIBS": "libiggy_ps3.a;libiggyperfmon_ps3.a;libiggyexpruntime_ps3.a"
-      }
-    },
-    {
-      "name": "psvita",
-      "displayName": "PSVita",
-      "inherits": "base",
-      "toolchainFile": "${sourceDir}/cmake/toolchains/psvita.cmake",
-      "cacheVariables": {
-        "PLATFORM_DEFINES": "__PSVITA__",
-        "PLATFORM_NAME": "PSVita",
-        "IGGY_LIBS": "libiggy_psp2.a;libiggyperfmon_psp2.a"
-      }
-    },
-    {
-      "name": "xbox360",
-      "displayName": "Xbox 360",
-      "inherits": "base",
-      "toolchainFile": "${sourceDir}/cmake/toolchains/xbox360.cmake",
-      "cacheVariables": {
-        "PLATFORM_DEFINES": "_XBOX",
-        "PLATFORM_NAME": "Xbox"
-      }
     }
   ],
   "buildPresets": [
-    { "name": "windows64-debug",   "displayName": "Windows64 - Debug",   "configurePreset": "windows64", "configuration": "Debug" },
-    { "name": "windows64-release", "displayName": "Windows64 - Release", "configurePreset": "windows64", "configuration": "Release" },
-
-    { "name": "macos-native-debug",   "displayName": "macOS Native - Debug",   "configurePreset": "macos-native", "configuration": "Debug" },
-    { "name": "macos-native-release", "displayName": "macOS Native - Release", "configurePreset": "macos-native", "configuration": "Release" },
-    { "name": "macos-native-client-debug",   "displayName": "macOS Native Client - Debug",   "configurePreset": "macos-native-client", "configuration": "Debug" },
-    { "name": "macos-native-client-release", "displayName": "macOS Native Client - Release", "configurePreset": "macos-native-client", "configuration": "Release" },
-
-    { "name": "linux-native-debug",   "displayName": "Linux Native - Debug",   "configurePreset": "linux-native", "configuration": "Debug" },
-    { "name": "linux-native-release", "displayName": "Linux Native - Release", "configurePreset": "linux-native", "configuration": "Release" },
-    { "name": "linux-native-client-debug",   "displayName": "Linux Native Client - Debug",   "configurePreset": "linux-native-client", "configuration": "Debug" },
-    { "name": "linux-native-client-release", "displayName": "Linux Native Client - Release", "configurePreset": "linux-native-client", "configuration": "Release" },
-
-    { "name": "durango-debug",     "displayName": "Durango - Debug",     "configurePreset": "durango",   "configuration": "Debug" },
-    { "name": "durango-release",   "displayName": "Durango - Release",   "configurePreset": "durango",   "configuration": "Release" },
-
-    { "name": "orbis-debug",       "displayName": "ORBIS - Debug",       "configurePreset": "orbis",     "configuration": "Debug" },
-    { "name": "orbis-release",     "displayName": "ORBIS - Release",     "configurePreset": "orbis",     "configuration": "Release" },
-
-    { "name": "ps3-debug",         "displayName": "PS3 - Debug",         "configurePreset": "ps3",       "configuration": "Debug" },
-    { "name": "ps3-release",       "displayName": "PS3 - Release",       "configurePreset": "ps3",       "configuration": "Release" },
-
-    { "name": "psvita-debug",      "displayName": "PSVita - Debug",      "configurePreset": "psvita",    "configuration": "Debug" },
-    { "name": "psvita-release",    "displayName": "PSVita - Release",    "configurePreset": "psvita",    "configuration": "Release" },
-
-    { "name": "xbox360-debug",     "displayName": "Xbox 360 - Debug",    "configurePreset": "xbox360",   "configuration": "Debug" },
-    { "name": "xbox360-release",   "displayName": "Xbox 360 - Release",  "configurePreset": "xbox360",   "configuration": "Release" }
+    {
+      "name": "macos-native-debug",
+      "displayName": "macOS Native - Debug",
+      "configurePreset": "macos-native",
+      "configuration": "Debug"
+    },
+    {
+      "name": "macos-native-release",
+      "displayName": "macOS Native - Release",
+      "configurePreset": "macos-native",
+      "configuration": "Release"
+    },
+    {
+      "name": "macos-native-client-debug",
+      "displayName": "macOS Native Client - Debug",
+      "configurePreset": "macos-native-client",
+      "configuration": "Debug"
+    },
+    {
+      "name": "macos-native-client-release",
+      "displayName": "macOS Native Client - Release",
+      "configurePreset": "macos-native-client",
+      "configuration": "Release"
+    },
+    {
+      "name": "linux-native-debug",
+      "displayName": "Linux Native - Debug",
+      "configurePreset": "linux-native",
+      "configuration": "Debug"
+    },
+    {
+      "name": "linux-native-release",
+      "displayName": "Linux Native - Release",
+      "configurePreset": "linux-native",
+      "configuration": "Release"
+    },
+    {
+      "name": "linux-native-client-debug",
+      "displayName": "Linux Native Client - Debug",
+      "configurePreset": "linux-native-client",
+      "configuration": "Debug"
+    },
+    {
+      "name": "linux-native-client-release",
+      "displayName": "Linux Native Client - Release",
+      "configurePreset": "linux-native-client",
+      "configuration": "Release"
+    }
   ],
   "testPresets": [
     {

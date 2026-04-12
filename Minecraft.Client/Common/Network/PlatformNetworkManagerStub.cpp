@@ -2,10 +2,10 @@
 #include "../../../Minecraft.World/Socket.h"
 #include "../../../Minecraft.World/StringHelpers.h"
 #include "PlatformNetworkManagerStub.h"
-#include "../../Xbox/Network/NetworkPlayerXbox.h"
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
-#include "../../Windows64/Network/WinsockNetLayer.h"
-#include "../../Windows64/Windows64_Xuid.h"
+#include "../../NativeDesktop/Network/NetworkPlayerNative.h"
+#if defined(_NATIVE_DESKTOP)
+#include "../../NativeDesktop/Network/WinsockNetLayer.h"
+#include "../../NativeDesktop/NativeDesktop_Xuid.h"
 #include "../../Minecraft.h"
 #include "../../User.h"
 #include "../../MinecraftServer.h"
@@ -43,7 +43,7 @@ void CPlatformNetworkManagerStub::NotifyPlayerJoined(IQNetPlayer *pQNetPlayer	)
 	bool createFakeSocket = false;
 	bool localPlayer = false;
 
-	NetworkPlayerXbox *networkPlayer = static_cast<NetworkPlayerXbox *>(addNetworkPlayer(pQNetPlayer));
+	NetworkPlayerNative *networkPlayer = static_cast<NetworkPlayerNative *>(addNetworkPlayer(pQNetPlayer));
 
     if( pQNetPlayer->IsLocal() )
     {
@@ -232,7 +232,7 @@ bool CPlatformNetworkManagerStub::isSystemPrimaryPlayer(IQNetPlayer *pQNetPlayer
 // We call this twice a frame, either side of the render call so is a good place to "tick" things
 void CPlatformNetworkManagerStub::DoWork()
 {
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	extern QNET_STATE _iQNetStubState;
 	if (_iQNetStubState == QNET_STATE_SESSION_STARTING && app.GetGameStarted())
 	{
@@ -304,7 +304,7 @@ void CPlatformNetworkManagerStub::DoWork()
 
 bool CPlatformNetworkManagerStub::CanAcceptMoreConnections()
 {
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	MinecraftServer* server = MinecraftServer::getInstance();
 	if (server == NULL) return true;
 	PlayerList* list = server->getPlayerList();
@@ -348,7 +348,7 @@ bool CPlatformNetworkManagerStub::AddLocalPlayerByUserIndex( int userIndex )
 
 bool CPlatformNetworkManagerStub::RemoveLocalPlayerByUserIndex( int userIndex )
 {
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	if (userIndex > 0 && userIndex < XUSER_MAX_COUNT && !m_pIQNet->IsHost())
 	{
 		IQNetPlayer* qp = &IQNet::m_player[userIndex];
@@ -401,7 +401,7 @@ bool CPlatformNetworkManagerStub::LeaveGame(bool bMigrateHost)
 	m_bLeavingGame = true;
 	m_bLeaveGameOnTick = false;
 
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	NATIVE_DESKTOP_PLATFORM_TRACE("StopAdvertising begin");
 	WinsockNetLayer::StopAdvertising();
 	NATIVE_DESKTOP_PLATFORM_TRACE("StopAdvertising end");
@@ -446,7 +446,7 @@ bool CPlatformNetworkManagerStub::LeaveGame(bool bMigrateHost)
 	SystemFlagReset();
 	NATIVE_DESKTOP_PLATFORM_TRACE("SystemFlagReset end");
 
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	NATIVE_DESKTOP_PLATFORM_TRACE("Winsock shutdown begin");
 	WinsockNetLayer::Shutdown();
 	NATIVE_DESKTOP_PLATFORM_TRACE("Winsock shutdown end");
@@ -480,7 +480,7 @@ void CPlatformNetworkManagerStub::HostGame(int localUsersMask, bool bOnlineGame,
 
 	m_pIQNet->HostGame();
 
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	IQNet::m_player[0].m_smallId = 0;
 	IQNet::m_player[0].m_isRemote = false;
 	// world host is pinned to legacy host XUID to keep old player data compatibility.
@@ -491,7 +491,7 @@ void CPlatformNetworkManagerStub::HostGame(int localUsersMask, bool bOnlineGame,
 
 	_HostGame( localUsersMask, publicSlots, privateSlots );
 
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	int port = WIN64_NET_DEFAULT_PORT;
 	const char* bindIp = nullptr;
 	if (g_Win64DedicatedServer)
@@ -539,7 +539,7 @@ bool CPlatformNetworkManagerStub::_StartGame()
 
 int CPlatformNetworkManagerStub::JoinGame(FriendSessionInfo* searchResult, int localUsersMask, int primaryUserIndex)
 {
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	if (searchResult == nullptr)
 		return CGameNetworkManager::JOINGAME_FAIL_GENERAL;
 
@@ -627,7 +627,7 @@ void CPlatformNetworkManagerStub::HandleSignInChange()
 
 bool CPlatformNetworkManagerStub::_RunNetworkGame()
 {
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	extern QNET_STATE _iQNetStubState;
 	_iQNetStubState = QNET_STATE_GAME_PLAY;
 
@@ -665,7 +665,7 @@ void CPlatformNetworkManagerStub::UpdateAndSetGameSessionData(INetworkPlayer *pN
 // 			// We can call this from NotifyPlayerLeaving but at that point the player is still considered in the session
 // 			if( pNetworkPlayer != pNetworkPlayerLeaving )
 // 			{
-// 				m_hostGameSessionData.players[i] = ((NetworkPlayerXbox *)pNetworkPlayer)->GetUID();
+// 				m_hostGameSessionData.players[i] = ((NetworkPlayerNative *)pNetworkPlayer)->GetUID();
 //
 // 				char *temp;
 // 				temp = (char *)wstringtofilename( pNetworkPlayer->GetOnlineName() );
@@ -684,7 +684,7 @@ void CPlatformNetworkManagerStub::UpdateAndSetGameSessionData(INetworkPlayer *pN
 // 		}
 // 	}
 //
-// 	m_hostGameSessionData.hostPlayerUID = ((NetworkPlayerXbox *)GetHostPlayer())->GetQNetPlayer()->GetXuid();
+// 	m_hostGameSessionData.hostPlayerUID = ((NetworkPlayerNative *)GetHostPlayer())->GetQNetPlayer()->GetXuid();
 // 	m_hostGameSessionData.m_uiGameHostSettings = app.GetGameHostOption(eGameHostOption_All);
 }
 
@@ -835,7 +835,7 @@ wstring CPlatformNetworkManagerStub::GatherRTTStats()
 
 	for(unsigned int i = 0; i < GetPlayerCount(); ++i)
 	{
-		IQNetPlayer *pQNetPlayer = static_cast<NetworkPlayerXbox *>(GetPlayerByIndex(i))->GetQNetPlayer();
+		IQNetPlayer *pQNetPlayer = static_cast<NetworkPlayerNative *>(GetPlayerByIndex(i))->GetQNetPlayer();
 
 		if(!pQNetPlayer->IsLocal())
 		{
@@ -1005,7 +1005,7 @@ void CPlatformNetworkManagerStub::ForceFriendsSessionRefresh()
 
 INetworkPlayer *CPlatformNetworkManagerStub::addNetworkPlayer(IQNetPlayer *pQNetPlayer)
 {
-	NetworkPlayerXbox *pNetworkPlayer = new NetworkPlayerXbox(pQNetPlayer);
+	NetworkPlayerNative *pNetworkPlayer = new NetworkPlayerNative(pQNetPlayer);
 	pQNetPlayer->SetCustomDataValue((ULONG_PTR)pNetworkPlayer);
 	currentNetworkPlayers.push_back( pNetworkPlayer );
 	return pNetworkPlayer;

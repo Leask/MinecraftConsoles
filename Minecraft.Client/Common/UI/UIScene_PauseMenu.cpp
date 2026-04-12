@@ -7,22 +7,6 @@
 #include "../../TexturePack.h"
 #include "../../DLCTexturePack.h"
 #include "../../../Minecraft.World/StringHelpers.h"
-#ifdef __ORBIS__
-#include <error_dialog.h>
-#endif
-
-#ifdef _DURANGO
-#include "../../Durango/Leaderboards/DurangoStatsDebugger.h"
-#endif
-
-#ifdef __PSVITA__
-#include "PSVita/Network/SonyCommerce_Vita.h"
-#endif
-
-#if defined __PS3__ || defined __ORBIS__
-#define USE_SONY_REMOTE_STORAGE
-#endif 
-
 UIScene_PauseMenu::UIScene_PauseMenu(int iPad, void *initData, UILayer *parentLayer) : UIScene(iPad, parentLayer)
 {
 	// Setup all the Iggy references we need for this scene

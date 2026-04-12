@@ -31,8 +31,8 @@
 #include "../Minecraft.World/net.minecraft.world.item.h"
 #include "../Minecraft.World/net.minecraft.world.item.enchantment.h"
 #include "../Minecraft.World/net.minecraft.world.damagesource.h"
-#ifdef _WINDOWS64
-#include "Windows64/Network/WinsockNetLayer.h"
+#if defined(_NATIVE_DESKTOP)
+#include "NativeDesktop/Network/WinsockNetLayer.h"
 #endif
 #include <sstream>
 #ifdef SPLIT_SAVES
@@ -50,19 +50,12 @@
 #include "../Minecraft.World/SparseLightStorage.h"
 #include "../Minecraft.World/SparseDataStorage.h"
 #include "../Minecraft.World/compression.h"
-#ifdef _XBOX
-#include "Common/XUI/XUI_DebugSetCamera.h"
-#endif
-#include "PS3/PS3Extras/ShutdownManager.h"
+#include "NativeDesktop/Legacy/ShutdownManager.h"
 #include "ServerCommandDispatcher.h"
 #include "../Minecraft.World/BiomeSource.h"
 #include "PlayerChunkMap.h"
 #include "Common/Telemetry/TelemetryManager.h"
 #include "PlayerConnection.h"
-#ifdef _XBOX_ONE
-#include "Durango/Network/NetworkPlayerDurango.h"
-#endif
-
 #if defined(_NATIVE_DESKTOP)
 #define NATIVE_DESKTOP_SERVER_TRACE(message) \
 	std::fprintf(stderr, "NativeDesktop server: %s\n", message)
@@ -98,7 +91,7 @@ unordered_map<wstring, int> MinecraftServer::ironTimers;
 
 static bool ShouldUseDedicatedServerProperties()
 {
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	return g_Win64DedicatedServer;
 #else
 	return false;
@@ -699,7 +692,7 @@ bool MinecraftServer::initServer(int64_t seed, NetworkGameInitData *initData, DW
 	}
 #endif
 	setPlayers(new PlayerList(this));
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	{
 		int maxP = getPlayerList()->getMaxPlayers();
 		WinsockNetLayer::UpdateAdvertiseMaxPlayers((BYTE)(maxP > 255 ? 255 : maxP));
@@ -1264,9 +1257,9 @@ bool MinecraftServer::loadLevel(LevelStorageSource *storageSource, const wstring
 
 	if( levels[0]->isNew || levels[1]->isNew || levels[2]->isNew )
 	{
-#ifndef _WINDOWS64
-		// On Windows64 we skip the automatic initial save so that choosing
-		// "Exit without saving" on a new world does not leave an orphaned save folder.
+#if !defined(_NATIVE_DESKTOP)
+		// Native desktop skips the automatic initial save so choosing
+		// "Exit without saving" does not leave an orphaned save folder.
 		levels[0]->saveToDisc(mcprogress, false);
 #endif
 	}
@@ -1543,7 +1536,7 @@ void MinecraftServer::stopServer(bool didInit)
 	m_bPrimaryPlayerSignedOut=false;
 	s_bServerHalted = false;
 
-	// On Durango/Orbis, we need to wait for all the asynchronous saving processes to complete before destroying the levels, as that will ultimately delete
+	// Wait for asynchronous saving processes to complete before destroying the levels, as that will ultimately delete
 	// the directory level storage & therefore the ConsoleSaveSplit instance, which needs to be around until all the sub files have completed saving.
 #if defined(_DURANGO) || defined(__ORBIS__) || defined(__PSVITA__)
 	while(StorageManager.GetSaveState() != C4JStorage::ESaveGame_Idle )

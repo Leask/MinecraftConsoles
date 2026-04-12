@@ -226,11 +226,7 @@ namespace ServerRuntime
 
 				const std::time_t seconds =
 					static_cast<std::time_t>(LceGetUnixTimeMilliseconds() / 1000ULL);
-#if defined(_WIN32)
-				return gmtime_s(outTime, &seconds) == 0;
-#else
 				return gmtime_r(&seconds, outTime) != NULL;
-#endif
 			}
 		}
 
@@ -449,21 +445,17 @@ namespace ServerRuntime
 			utc.tm_sec = (int)second;
 			utc.tm_isdst = 0;
 
-#if defined(_WIN32)
-			const std::time_t seconds = _mkgmtime(&utc);
-#else
 			const std::time_t seconds = timegm(&utc);
-#endif
 			if (seconds < 0)
 			{
 				return false;
 			}
 
-			static const unsigned long long kWindowsToUnixEpoch100Ns =
+			static const unsigned long long kFileTimeToUnixEpoch100Ns =
 				116444736000000000ULL;
 			*outFileTime =
 				(static_cast<unsigned long long>(seconds) * 10000000ULL) +
-				kWindowsToUnixEpoch100Ns;
+				kFileTimeToUnixEpoch100Ns;
 			return true;
 		}
 	}

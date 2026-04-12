@@ -1,8 +1,5 @@
 #include "stdafx.h"
 #include "UI.h"
-#if defined(__PS3__) || defined(__ORBIS__)
-#include "Common/Network/Sony/SonyCommerce.h"
-#endif
 #include "UIScene_DLCMainMenu.h"
 
 #define PLAYER_ONLINE_TIMER_ID 0
@@ -239,4 +236,3 @@ void UIScene_DLCMainMenu::tick()
 	}
 #endif
 }
-

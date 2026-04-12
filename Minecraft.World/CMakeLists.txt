@@ -1,13 +1,9 @@
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/sources/Common.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/cmake/sources/Durango.cmake")
 
 include("${CMAKE_SOURCE_DIR}/cmake/CommonSources.cmake")
 
-# Combine all source files into a single variable for the target
-# We cant use CMAKE_CONFIGURE_PRESET here as VS doesn't set it, so just rely on the folder
 set(MINECRAFT_WORLD_SOURCES
   ${MINECRAFT_WORLD_COMMON}
-  $<$<STREQUAL:${PLATFORM_NAME},Durango>:${MINECRAFT_WORLD_DURANGO}>
   ${SOURCES_COMMON}
 )
 

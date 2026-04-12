@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include <lce_win32/lce_win32.h>
+#include <lce_abi/lce_abi.h>
 
 #include "DedicatedServerWorldTypes.h"
 

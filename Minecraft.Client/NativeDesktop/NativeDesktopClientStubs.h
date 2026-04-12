@@ -8,12 +8,12 @@
 #include <unordered_map>
 #include <vector>
 
-#include <lce_win32/lce_win32.h>
+#include <lce_abi/lce_abi.h>
 
-#include "../Windows64/GameConfig/Minecraft.spa.h"
-#include "../Windows64/Sentient/SentientTelemetryCommon.h"
-#include "../Windows64/Sentient/TelemetryEnum.h"
-#include "../Windows64Media/strings.h"
+#include "GameConfig/Minecraft.spa.h"
+#include "Sentient/SentientTelemetryCommon.h"
+#include "TelemetryEnum.h"
+#include "strings.h"
 
 #ifndef DYNAMIC_CONFIG_DEFAULT_TRIAL_TIME
 #define DYNAMIC_CONFIG_DEFAULT_TRIAL_TIME 2400
@@ -61,7 +61,11 @@ public:
 #define VK_F4 0x73
 #define VK_F5 0x74
 #define VK_F6 0x75
+#define VK_F8 0x77
+#define VK_F9 0x78
 #define VK_F11 0x7A
+#define VK_ADD 0x6B
+#define VK_SUBTRACT 0x6D
 #endif
 
 class KeyboardMouseInput

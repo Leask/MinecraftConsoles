@@ -1,6 +1,6 @@
 #pragma once
 
-#include <lce_win32/lce_win32.h>
+#include <lce_abi/lce_abi.h>
 
 namespace ServerRuntime
 {

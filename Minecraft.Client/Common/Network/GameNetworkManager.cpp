@@ -39,21 +39,13 @@
 #define NATIVE_DESKTOP_NET_TRACEF(format, ...) ((void)0)
 #endif
 
-#ifdef _XBOX
-#include "Common/XUI/XUI_PauseMenu.h"
-#else
 #include "Common/UI/UI.h"
 #include "Common/UI/UIScene_PauseMenu.h"
-#include "../../Xbox/Network/NetworkPlayerXbox.h"
-#endif
+#include "../../NativeDesktop/Network/NetworkPlayerNative.h"
 
-#ifdef _DURANGO
-#include "../Minecraft.World/DurangoStats.h"
-#endif
-
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
-#include "../../Windows64/Network/WinsockNetLayer.h"
-#include "../../Windows64/Windows64_Xuid.h"
+#if defined(_NATIVE_DESKTOP)
+#include "../../NativeDesktop/Network/WinsockNetLayer.h"
+#include "../../NativeDesktop/NativeDesktop_Xuid.h"
 #endif
 
 // Global instance
@@ -247,16 +239,10 @@ bool	CGameNetworkManager::StartNetworkGame(Minecraft *minecraft, LPVOID lpParame
 						wstring fileRoot = L"GAME:\\res\\TitleUpdate\\GameRules\\" + param->levelGen->getBaseSavePath();
 #endif
 #else
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
-						wstring fileRoot = L"Windows64Media\\Tutorial\\" + param->levelGen->getBaseSavePath();
+#if defined(_NATIVE_DESKTOP)
+						wstring fileRoot = L"NativeDesktopMedia\\Tutorial\\" + param->levelGen->getBaseSavePath();
 						File root(fileRoot);
-						if(!root.exists()) fileRoot = L"Windows64\\Tutorial\\" + param->levelGen->getBaseSavePath();
-#elif defined(__ORBIS__)
-						wstring fileRoot = L"/app0/orbis/Tutorial/" + param->levelGen->getBaseSavePath();
-#elif defined(__PSVITA__)
-						wstring fileRoot = L"PSVita/Tutorial/" + param->levelGen->getBaseSavePath();
-#elif defined(__PS3__)
-						wstring fileRoot = L"PS3/Tutorial/" + param->levelGen->getBaseSavePath();
+						if(!root.exists()) fileRoot = L"NativeDesktop\\Tutorial\\" + param->levelGen->getBaseSavePath();
 #else
 						wstring fileRoot = L"Tutorial\\" + param->levelGen->getBaseSavePath();
 #endif
@@ -1563,7 +1549,7 @@ void CGameNetworkManager::CreateSocket( INetworkPlayer *pNetworkPlayer, bool loc
 	}
 	else
 	{
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 		// Non-host split-screen: open a dedicated TCP connection for this pad
 		if (localPlayer && !g_NetworkManager.IsHost() && g_NetworkManager.IsInGameplay())
 		{
@@ -1578,7 +1564,7 @@ void CGameNetworkManager::CreateSocket( INetworkPlayer *pNetworkPlayer, bool loc
 			}
 
 			// Update the local IQNetPlayer (at pad index) with the host-assigned smallId.
-			// The NetworkPlayerXbox created by NotifyPlayerJoined already points to
+			// The NetworkPlayerNative created by NotifyPlayerJoined already points to
 			// m_player[padIdx], so we just set the smallId for network routing.
 			IQNet::m_player[padIdx].m_smallId = assignedSmallId;
 			IQNet::m_player[padIdx].m_resolvedXuid = Win64Xuid::DeriveXuidForPad(Win64Xuid::ResolvePersistentXuid(), padIdx);

@@ -3,10 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-
-#if !defined(_WIN32)
 #include <strings.h>
-#endif
 
 namespace
 {
@@ -23,11 +20,7 @@ namespace
             return false;
         }
 
-#if defined(_WIN32)
-        return _stricmp(lhs, rhs) == 0;
-#else
         return strcasecmp(lhs, rhs) == 0;
-#endif
     }
 
     void CopyString(char *destination, std::size_t count, const char *source)

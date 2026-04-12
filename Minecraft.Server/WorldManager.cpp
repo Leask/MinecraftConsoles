@@ -88,8 +88,8 @@ static bool EnsureGameHddRootExists()
 	const std::string gameHddRoot =
 		ServerRuntime::GetServerGameHddRootPath();
 
-	bool windows64Created = false;
-	if (!EnsureDirectoryExists(platformDirectory, &windows64Created))
+	bool platformRootCreated = false;
+	if (!EnsureDirectoryExists(platformDirectory, &platformRootCreated))
 	{
 		return false;
 	}
@@ -100,7 +100,7 @@ static bool EnsureGameHddRootExists()
 		return false;
 	}
 
-	if (windows64Created || gameHddCreated)
+	if (platformRootCreated || gameHddCreated)
 	{
 		LogInfof(
 			"world-io",

@@ -1,9 +1,9 @@
-# Make sure the GameHDD directory exists, only supported on Windows
+# Make sure the native GameHDD directory exists.
 function(add_gamehdd_target TARGET_NAME)
   add_custom_target(EnsureGameHDD_${TARGET_NAME} ALL
     COMMAND ${CMAKE_COMMAND}
-      -E make_directory "$<TARGET_FILE_DIR:${TARGET_NAME}>/Windows64/GameHDD"
-    COMMENT "Ensuring GameHDD directory exists..."
+      -E make_directory "$<TARGET_FILE_DIR:${TARGET_NAME}>/NativeDesktop/GameHDD"
+    COMMENT "Ensuring native GameHDD directory exists..."
     VERBATIM
   )
   add_dependencies(${TARGET_NAME} EnsureGameHDD_${TARGET_NAME})

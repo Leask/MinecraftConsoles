@@ -3,9 +3,7 @@
 #include <filesystem>
 #include <string>
 
-#if defined(_WIN32)
-#include <windows.h>
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
 #include <mach-o/dyld.h>
 #include <vector>
 #else
@@ -22,17 +20,7 @@ namespace
             return false;
         }
 
-#if defined(_WIN32)
-        char pathBuffer[MAX_PATH] = {};
-        const DWORD length = GetModuleFileNameA(nullptr, pathBuffer, MAX_PATH);
-        if (length == 0 || length >= MAX_PATH)
-        {
-            return false;
-        }
-
-        *outPath = std::filesystem::path(pathBuffer);
-        return true;
-#elif defined(__APPLE__)
+#if defined(__APPLE__)
         std::uint32_t requiredSize = 0;
         _NSGetExecutablePath(nullptr, &requiredSize);
         if (requiredSize == 0)
@@ -103,11 +91,7 @@ bool LceSetCurrentDirectoryToExecutable()
         return false;
     }
 
-#if defined(_WIN32)
-    return SetCurrentDirectoryA(executableDirectory.c_str()) != 0;
-#else
     std::error_code errorCode;
     std::filesystem::current_path(executableDirectory, errorCode);
     return !errorCode;
-#endif
 }

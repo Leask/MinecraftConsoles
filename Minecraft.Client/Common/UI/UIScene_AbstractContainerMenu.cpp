@@ -6,8 +6,8 @@
 #include "../../../Minecraft.World/net.minecraft.world.inventory.h"
 #include "../../../Minecraft.World/net.minecraft.world.item.h"
 #include "../../MultiPlayerLocalPlayer.h"
-#ifdef _WINDOWS64
-#include "../../Windows64/KeyboardMouseInput.h"
+#if defined(_NATIVE_DESKTOP)
+#include "../../NativeDesktop/NativeDesktopClientStubs.h"
 #endif
 
 UIScene_AbstractContainerMenu::UIScene_AbstractContainerMenu(int iPad, UILayer *parentLayer) : UIScene(iPad, parentLayer)

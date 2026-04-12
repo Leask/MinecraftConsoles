@@ -501,7 +501,7 @@ SCreditTextItemDef UIScene_Credits::gs_aCreditDefs[MAX_CREDIT_STRINGS] =
     {L"la", NO_TRANSLATED_STRING, NO_TRANSLATED_STRING, eSmallText},
     {L"", NO_TRANSLATED_STRING, NO_TRANSLATED_STRING, eSmallText},
     {L"Thank you to our 100+ contributors on GitHub!", NO_TRANSLATED_STRING, NO_TRANSLATED_STRING, eLargeText},
-    {L"github.com/smartcmd/MinecraftConsoles", NO_TRANSLATED_STRING, NO_TRANSLATED_STRING, eSmallText},
+    {L"github.com/MCLCE/MinecraftConsoles", NO_TRANSLATED_STRING, NO_TRANSLATED_STRING, eSmallText},
     {L"", NO_TRANSLATED_STRING, NO_TRANSLATED_STRING, eSmallText},
     {L"", NO_TRANSLATED_STRING, NO_TRANSLATED_STRING, eSmallText},
     {L"Additional Thanks", NO_TRANSLATED_STRING, NO_TRANSLATED_STRING, eLargeText},

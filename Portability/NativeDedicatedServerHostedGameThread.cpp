@@ -2,7 +2,7 @@
 #include "Minecraft.Server/Common/DedicatedServerHostedGameThreadProc.h"
 #include "Minecraft.Server/Common/DedicatedServerSignalState.h"
 
-#include <lce_win32/lce_win32.h>
+#include <lce_abi/lce_abi.h>
 
 #include <memory>
 

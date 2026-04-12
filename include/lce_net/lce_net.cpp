@@ -1,9 +1,5 @@
 #include "lce_net.h"
 
-#if defined(_WINDOWS64) || defined(_WIN32)
-#include <WinSock2.h>
-#include <WS2tcpip.h>
-#else
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -13,44 +9,35 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>
-#endif
 
 #include <cstdio>
 #include <cstring>
 
+namespace
+{
+    int ToNativeSocket(LceSocketHandle socketHandle)
+    {
+        return static_cast<int>(socketHandle);
+    }
+}
+
 bool LceNetInitialize()
 {
-#if defined(_WINDOWS64) || defined(_WIN32)
-    WSADATA wsaData = {};
-    return WSAStartup(MAKEWORD(2, 2), &wsaData) == 0;
-#else
     return true;
-#endif
 }
 
 void LceNetShutdown()
 {
-#if defined(_WINDOWS64) || defined(_WIN32)
-    WSACleanup();
-#endif
 }
 
 int LceNetGetLastError()
 {
-#if defined(_WINDOWS64) || defined(_WIN32)
-    return WSAGetLastError();
-#else
     return errno;
-#endif
 }
 
 int LceNetCloseSocket(LceSocketHandle socketHandle)
 {
-#if defined(_WINDOWS64) || defined(_WIN32)
-    return closesocket(static_cast<SOCKET>(socketHandle));
-#else
-    return close(static_cast<int>(socketHandle));
-#endif
+    return close(ToNativeSocket(socketHandle));
 }
 
 bool LceNetStringIsIpLiteral(const char* text)
@@ -94,11 +81,7 @@ bool LceNetResolveIpv4(
     hints.ai_protocol = IPPROTO_TCP;
 
     char portText[16] = {};
-#if defined(_WINDOWS64) || defined(_WIN32)
-    _snprintf_s(portText, sizeof(portText), _TRUNCATE, "%d", port);
-#else
     std::snprintf(portText, sizeof(portText), "%d", port);
-#endif
 
     addrinfo* result = nullptr;
     if (getaddrinfo(host, portText, &hints, &result) != 0 || result == nullptr)
@@ -107,7 +90,8 @@ bool LceNetResolveIpv4(
     }
 
     bool resolved = false;
-    for (addrinfo* current = result; current != nullptr; current = current->ai_next)
+    for (addrinfo* current = result; current != nullptr;
+        current = current->ai_next)
     {
         if (current->ai_family != AF_INET)
         {
@@ -116,7 +100,11 @@ bool LceNetResolveIpv4(
 
         const sockaddr_in* address =
             reinterpret_cast<const sockaddr_in*>(current->ai_addr);
-        if (inet_ntop(AF_INET, &address->sin_addr, outIp, outIpSize) != nullptr)
+        if (inet_ntop(
+                AF_INET,
+                &address->sin_addr,
+                outIp,
+                outIpSize) != nullptr)
         {
             resolved = true;
             break;
@@ -129,32 +117,18 @@ bool LceNetResolveIpv4(
 
 LceSocketHandle LceNetOpenTcpSocket()
 {
-#if defined(_WINDOWS64) || defined(_WIN32)
-    const SOCKET socketHandle = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    return socketHandle == INVALID_SOCKET
-        ? LCE_INVALID_SOCKET
-        : static_cast<LceSocketHandle>(socketHandle);
-#else
     const int socketHandle = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     return socketHandle < 0
         ? LCE_INVALID_SOCKET
         : static_cast<LceSocketHandle>(socketHandle);
-#endif
 }
 
 LceSocketHandle LceNetOpenUdpSocket()
 {
-#if defined(_WINDOWS64) || defined(_WIN32)
-    const SOCKET socketHandle = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    return socketHandle == INVALID_SOCKET
-        ? LCE_INVALID_SOCKET
-        : static_cast<LceSocketHandle>(socketHandle);
-#else
     const int socketHandle = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     return socketHandle < 0
         ? LCE_INVALID_SOCKET
         : static_cast<LceSocketHandle>(socketHandle);
-#endif
 }
 
 bool LceNetSetSocketNonBlocking(LceSocketHandle socketHandle, bool enabled)
@@ -164,14 +138,7 @@ bool LceNetSetSocketNonBlocking(LceSocketHandle socketHandle, bool enabled)
         return false;
     }
 
-#if defined(_WINDOWS64) || defined(_WIN32)
-    u_long mode = enabled ? 1UL : 0UL;
-    return ioctlsocket(
-        static_cast<SOCKET>(socketHandle),
-        FIONBIO,
-        &mode) == 0;
-#else
-    const int flags = fcntl(static_cast<int>(socketHandle), F_GETFL, 0);
+    const int flags = fcntl(ToNativeSocket(socketHandle), F_GETFL, 0);
     if (flags < 0)
     {
         return false;
@@ -180,11 +147,7 @@ bool LceNetSetSocketNonBlocking(LceSocketHandle socketHandle, bool enabled)
     const int nextFlags = enabled
         ? (flags | O_NONBLOCK)
         : (flags & ~O_NONBLOCK);
-    return fcntl(
-        static_cast<int>(socketHandle),
-        F_SETFL,
-        nextFlags) == 0;
-#endif
+    return fcntl(ToNativeSocket(socketHandle), F_SETFL, nextFlags) == 0;
 }
 
 bool LceNetSetSocketNoDelay(LceSocketHandle socketHandle, bool enabled)
@@ -195,21 +158,12 @@ bool LceNetSetSocketNoDelay(LceSocketHandle socketHandle, bool enabled)
     }
 
     const int value = enabled ? 1 : 0;
-#if defined(_WINDOWS64) || defined(_WIN32)
     return setsockopt(
-        static_cast<SOCKET>(socketHandle),
-        IPPROTO_TCP,
-        TCP_NODELAY,
-        reinterpret_cast<const char*>(&value),
-        sizeof(value)) == 0;
-#else
-    return setsockopt(
-        static_cast<int>(socketHandle),
+        ToNativeSocket(socketHandle),
         IPPROTO_TCP,
         TCP_NODELAY,
         &value,
         sizeof(value)) == 0;
-#endif
 }
 
 bool LceNetSetSocketBroadcast(LceSocketHandle socketHandle, bool enabled)
@@ -220,21 +174,12 @@ bool LceNetSetSocketBroadcast(LceSocketHandle socketHandle, bool enabled)
     }
 
     const int value = enabled ? 1 : 0;
-#if defined(_WINDOWS64) || defined(_WIN32)
     return setsockopt(
-        static_cast<SOCKET>(socketHandle),
-        SOL_SOCKET,
-        SO_BROADCAST,
-        reinterpret_cast<const char*>(&value),
-        sizeof(value)) == 0;
-#else
-    return setsockopt(
-        static_cast<int>(socketHandle),
+        ToNativeSocket(socketHandle),
         SOL_SOCKET,
         SO_BROADCAST,
         &value,
         sizeof(value)) == 0;
-#endif
 }
 
 bool LceNetSetSocketReuseAddress(LceSocketHandle socketHandle, bool enabled)
@@ -245,21 +190,12 @@ bool LceNetSetSocketReuseAddress(LceSocketHandle socketHandle, bool enabled)
     }
 
     const int value = enabled ? 1 : 0;
-#if defined(_WINDOWS64) || defined(_WIN32)
     return setsockopt(
-        static_cast<SOCKET>(socketHandle),
-        SOL_SOCKET,
-        SO_REUSEADDR,
-        reinterpret_cast<const char*>(&value),
-        sizeof(value)) == 0;
-#else
-    return setsockopt(
-        static_cast<int>(socketHandle),
+        ToNativeSocket(socketHandle),
         SOL_SOCKET,
         SO_REUSEADDR,
         &value,
         sizeof(value)) == 0;
-#endif
 }
 
 bool LceNetSetSocketRecvTimeout(LceSocketHandle socketHandle, int timeoutMs)
@@ -269,26 +205,16 @@ bool LceNetSetSocketRecvTimeout(LceSocketHandle socketHandle, int timeoutMs)
         return false;
     }
 
-#if defined(_WINDOWS64) || defined(_WIN32)
-    const DWORD timeout = static_cast<DWORD>(timeoutMs);
-    return setsockopt(
-        static_cast<SOCKET>(socketHandle),
-        SOL_SOCKET,
-        SO_RCVTIMEO,
-        reinterpret_cast<const char*>(&timeout),
-        sizeof(timeout)) == 0;
-#else
     const timeval timeout = {
         timeoutMs / 1000,
         static_cast<suseconds_t>((timeoutMs % 1000) * 1000)
     };
     return setsockopt(
-        static_cast<int>(socketHandle),
+        ToNativeSocket(socketHandle),
         SOL_SOCKET,
         SO_RCVTIMEO,
         &timeout,
         sizeof(timeout)) == 0;
-#endif
 }
 
 bool LceNetBindIpv4(LceSocketHandle socketHandle, const char* bindIp, int port)
@@ -310,17 +236,10 @@ bool LceNetBindIpv4(LceSocketHandle socketHandle, const char* bindIp, int port)
         return false;
     }
 
-#if defined(_WINDOWS64) || defined(_WIN32)
     return ::bind(
-        static_cast<SOCKET>(socketHandle),
+        ToNativeSocket(socketHandle),
         reinterpret_cast<const sockaddr*>(&address),
         sizeof(address)) == 0;
-#else
-    return ::bind(
-        static_cast<int>(socketHandle),
-        reinterpret_cast<const sockaddr*>(&address),
-        sizeof(address)) == 0;
-#endif
 }
 
 int LceNetGetBoundPort(LceSocketHandle socketHandle)
@@ -331,25 +250,14 @@ int LceNetGetBoundPort(LceSocketHandle socketHandle)
     }
 
     sockaddr_in address = {};
-#if defined(_WINDOWS64) || defined(_WIN32)
-    int addressLength = sizeof(address);
-    if (getsockname(
-            static_cast<SOCKET>(socketHandle),
-            reinterpret_cast<sockaddr*>(&address),
-            &addressLength) != 0)
-    {
-        return -1;
-    }
-#else
     socklen_t addressLength = sizeof(address);
     if (getsockname(
-            static_cast<int>(socketHandle),
+            ToNativeSocket(socketHandle),
             reinterpret_cast<sockaddr*>(&address),
             &addressLength) != 0)
     {
         return -1;
     }
-#endif
 
     return static_cast<int>(ntohs(address.sin_port));
 }
@@ -361,11 +269,7 @@ bool LceNetListen(LceSocketHandle socketHandle, int backlog)
         return false;
     }
 
-#if defined(_WINDOWS64) || defined(_WIN32)
-    return listen(static_cast<SOCKET>(socketHandle), backlog) == 0;
-#else
-    return listen(static_cast<int>(socketHandle), backlog) == 0;
-#endif
+    return listen(ToNativeSocket(socketHandle), backlog) == 0;
 }
 
 bool LceNetConnectIpv4(LceSocketHandle socketHandle, const char* ip, int port)
@@ -387,17 +291,10 @@ bool LceNetConnectIpv4(LceSocketHandle socketHandle, const char* ip, int port)
         return false;
     }
 
-#if defined(_WINDOWS64) || defined(_WIN32)
     return connect(
-        static_cast<SOCKET>(socketHandle),
+        ToNativeSocket(socketHandle),
         reinterpret_cast<const sockaddr*>(&address),
         sizeof(address)) == 0;
-#else
-    return connect(
-        static_cast<int>(socketHandle),
-        reinterpret_cast<const sockaddr*>(&address),
-        sizeof(address)) == 0;
-#endif
 }
 
 LceSocketHandle LceNetAcceptIpv4(
@@ -421,27 +318,15 @@ LceSocketHandle LceNetAcceptIpv4(
     }
 
     sockaddr_in address = {};
-#if defined(_WINDOWS64) || defined(_WIN32)
-    int addressLength = sizeof(address);
-    const SOCKET accepted = accept(
-        static_cast<SOCKET>(socketHandle),
-        reinterpret_cast<sockaddr*>(&address),
-        &addressLength);
-    if (accepted == INVALID_SOCKET)
-    {
-        return LCE_INVALID_SOCKET;
-    }
-#else
     socklen_t addressLength = sizeof(address);
     const int accepted = accept(
-        static_cast<int>(socketHandle),
+        ToNativeSocket(socketHandle),
         reinterpret_cast<sockaddr*>(&address),
         &addressLength);
     if (accepted < 0)
     {
         return LCE_INVALID_SOCKET;
     }
-#endif
 
     if (outIp != nullptr && outIpSize > 0)
     {
@@ -464,19 +349,11 @@ int LceNetSend(LceSocketHandle socketHandle, const void* data, int dataSize)
         return -1;
     }
 
-#if defined(_WINDOWS64) || defined(_WIN32)
-    return send(
-        static_cast<SOCKET>(socketHandle),
-        static_cast<const char*>(data),
-        dataSize,
-        0);
-#else
     return static_cast<int>(send(
-        static_cast<int>(socketHandle),
+        ToNativeSocket(socketHandle),
         data,
         static_cast<std::size_t>(dataSize),
         0));
-#endif
 }
 
 int LceNetRecv(LceSocketHandle socketHandle, void* buffer, int bufferSize)
@@ -488,19 +365,11 @@ int LceNetRecv(LceSocketHandle socketHandle, void* buffer, int bufferSize)
         return -1;
     }
 
-#if defined(_WINDOWS64) || defined(_WIN32)
-    return recv(
-        static_cast<SOCKET>(socketHandle),
-        static_cast<char*>(buffer),
-        bufferSize,
-        0);
-#else
     return static_cast<int>(recv(
-        static_cast<int>(socketHandle),
+        ToNativeSocket(socketHandle),
         buffer,
         static_cast<std::size_t>(bufferSize),
         0));
-#endif
 }
 
 bool LceNetSendAll(LceSocketHandle socketHandle, const void* data, int dataSize)
@@ -581,23 +450,13 @@ int LceNetSendToIpv4(
         return -1;
     }
 
-#if defined(_WINDOWS64) || defined(_WIN32)
-    return sendto(
-        static_cast<SOCKET>(socketHandle),
-        static_cast<const char*>(data),
-        dataSize,
-        0,
-        reinterpret_cast<const sockaddr*>(&address),
-        sizeof(address));
-#else
     return static_cast<int>(sendto(
-        static_cast<int>(socketHandle),
+        ToNativeSocket(socketHandle),
         data,
         static_cast<std::size_t>(dataSize),
         0,
         reinterpret_cast<const sockaddr*>(&address),
         sizeof(address)));
-#endif
 }
 
 int LceNetRecvFromIpv4(
@@ -625,25 +484,14 @@ int LceNetRecvFromIpv4(
     }
 
     sockaddr_in senderAddress = {};
-#if defined(_WINDOWS64) || defined(_WIN32)
-    int senderLength = sizeof(senderAddress);
-    const int bytesRead = recvfrom(
-        static_cast<SOCKET>(socketHandle),
-        static_cast<char*>(buffer),
-        bufferSize,
-        0,
-        reinterpret_cast<sockaddr*>(&senderAddress),
-        &senderLength);
-#else
     socklen_t senderLength = sizeof(senderAddress);
     const int bytesRead = static_cast<int>(recvfrom(
-        static_cast<int>(socketHandle),
+        ToNativeSocket(socketHandle),
         buffer,
         static_cast<std::size_t>(bufferSize),
         0,
         reinterpret_cast<sockaddr*>(&senderAddress),
         &senderLength));
-#endif
     if (bytesRead < 0)
     {
         return -1;

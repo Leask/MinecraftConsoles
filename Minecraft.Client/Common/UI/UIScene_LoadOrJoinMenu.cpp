@@ -13,19 +13,7 @@
 #include "../../TexturePackRepository.h"
 #include "../../TexturePack.h"
 #include "../Network/SessionInfo.h"
-#if defined(__PS3__) || defined(__ORBIS__) || defined(__PSVITA__)
-#include "Common/Network/Sony/SonyHttp.h"
-#include "Common/Network/Sony/SonyRemoteStorage.h"
-#include "DLCTexturePack.h"
-#endif
-#if defined(__ORBIS__) || defined(__PSVITA__)
-#include <ces.h>
-#endif
-#ifdef __PSVITA__
-#include "message_dialog.h"
-#endif
-
-#ifdef _WINDOWS64
+#ifdef _NATIVE_DESKTOP
 #include "../../../Minecraft.World/NbtIo.h"
 #include "../../../Minecraft.World/compression.h"
 
@@ -37,7 +25,7 @@ static wstring ReadLevelNameFromSaveFile(const wstring& filePath)
     {
         wstring sidecarPath = filePath.substr(0, slashPos + 1) + L"worldname.txt";
         FILE *fr = nullptr;
-        if (_wfopen_s(&fr, sidecarPath.c_str(), L"r") == 0 && fr)
+        if (fopen_s(&fr, wstringtofilename(sidecarPath), "r") == 0 && fr)
         {
             char buf[128] = {};
             if (fgets(buf, sizeof(buf), fr))
@@ -57,7 +45,7 @@ static wstring ReadLevelNameFromSaveFile(const wstring& filePath)
         }
     }
 
-    HANDLE hFile = CreateFileW(filePath.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
+    HANDLE hFile = CreateFile(wstringtofilename(filePath), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
     if (hFile == INVALID_HANDLE_VALUE) return L"";
 
     DWORD fileSize = GetFileSize(hFile, nullptr);
@@ -3208,7 +3196,7 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
             break;
         case eSaveTransfer_Saving:
 			{
-				// On Durango/Orbis, we need to wait for all the asynchronous saving processes to complete before destroying the levels, as that will ultimately delete
+				// Wait for asynchronous saving processes to complete before destroying the levels, as that will ultimately delete
 				// the directory level storage & therefore the ConsoleSaveSplit instance, which needs to be around until all the sub files have completed saving.
 #if defined(_DURANGO) || defined(__ORBIS__)
 				while(StorageManager.GetSaveState() != C4JStorage::ESaveGame_Idle )
@@ -3748,7 +3736,7 @@ int UIScene_LoadOrJoinMenu::DownloadXbox360SaveThreadProc( LPVOID lpParameter )
 #endif
             break;
         case C4JStorage::eSaveTransfer_Saving:
-            // On Durango/Orbis, we need to wait for all the asynchronous saving processes to complete before destroying the levels, as that will ultimately delete
+            // Wait for asynchronous saving processes to complete before destroying the levels, as that will ultimately delete
             // the directory level storage & therefore the ConsoleSaveSplit instance, which needs to be around until all the sub files have completed saving.
 #if defined(_DURANGO) || defined(__ORBIS__)
 			pMinecraft->progressRenderer->progressStage(IDS_PROGRESS_SAVING_TO_DISC);

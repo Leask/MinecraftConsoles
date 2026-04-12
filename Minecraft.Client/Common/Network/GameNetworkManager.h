@@ -4,20 +4,8 @@ using namespace std;
 #include <qnet.h>
 #include "../../../Minecraft.World/C4JThread.h"
 #include "NetworkPlayerInterface.h"
-#ifdef _XBOX
-#include "../../Xbox/Network/PlatformNetworkManagerXbox.h"
-#elif defined __PS3__ || defined __ORBIS__ || defined __PSVITA__
-#include "../../Common/Network/Sony/PlatformNetworkManagerSony.h"
-#elif defined _DURANGO
-#include "../../Durango/Network/PlatformNetworkManagerDurango.h"
-#else
 #include "PlatformNetworkManagerStub.h"
-#endif
 #include "SessionInfo.h"
-
-#ifdef __ORBIS__
-#include "../../Orbis/Network/PsPlusUpsellWrapper_Orbis.h"
-#endif
 
 class ClientConnection;
 class Minecraft;
@@ -30,15 +18,7 @@ const int NON_QNET_SENDDATA_ACK_REQUIRED = 1;
 
 class CGameNetworkManager
 {
-#ifdef _XBOX
-	friend class CPlatformNetworkManagerXbox;
-#elif defined __PS3__ || defined __ORBIS__ || defined __PSVITA__
-	friend class CPlatformNetworkManagerSony;
-#elif defined _DURANGO
-	friend class CPlatformNetworkManagerDurango;
-#else
 	friend class CPlatformNetworkManagerStub;
-#endif
 public:
 	CGameNetworkManager();
 	// Misc high level flow

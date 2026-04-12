@@ -8,13 +8,7 @@
 #include "../../MinecraftServer.h"
 #include "../../../Minecraft.World/LevelSettings.h"
 #include "../../../Minecraft.World/StringHelpers.h"
-#if defined(__PS3__) || defined(__ORBIS__) || defined(__PSVITA__)
-#include "Common/Network/Sony/SonyHttp.h"
-#endif
 #include "../../DLCTexturePack.h"
-#if defined(__ORBIS__) || defined(__PSVITA__)
-#include <ces.h>
-#endif
 
 #define GAME_CREATE_ONLINE_TIMER_ID 0
 #define GAME_CREATE_ONLINE_TIMER_TIME 100

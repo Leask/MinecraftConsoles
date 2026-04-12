@@ -30,11 +30,11 @@ set(_INCLUDE_LCE_PROCESS
 )
 source_group("include/lce_process" FILES ${_INCLUDE_LCE_PROCESS})
 
-set(_INCLUDE_LCE_WIN32
-  "${CMAKE_SOURCE_DIR}/include/lce_win32/lce_win32.cpp"
-  "${CMAKE_SOURCE_DIR}/include/lce_win32/lce_win32.h"
+set(_INCLUDE_LCE_ABI
+  "${CMAKE_SOURCE_DIR}/include/lce_abi/lce_abi.cpp"
+  "${CMAKE_SOURCE_DIR}/include/lce_abi/lce_abi.h"
 )
-source_group("include/lce_win32" FILES ${_INCLUDE_LCE_WIN32})
+source_group("include/lce_abi" FILES ${_INCLUDE_LCE_ABI})
 
 set(_INCLUDE_BUILDVER
   "${CMAKE_SOURCE_DIR}/include/Common/BuildVer.h"
@@ -47,6 +47,6 @@ set(SOURCES_COMMON
 	${_INCLUDE_LCE_STDIN}
 	${_INCLUDE_LCE_NET}
 	${_INCLUDE_LCE_PROCESS}
-	${_INCLUDE_LCE_WIN32}
+	${_INCLUDE_LCE_ABI}
 	${_INCLUDE_BUILDVER}
 )

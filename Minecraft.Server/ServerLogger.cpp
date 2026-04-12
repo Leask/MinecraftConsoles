@@ -7,12 +7,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-
-#if defined(_WIN32)
-#include <windows.h>
-#else
 #include <unistd.h>
-#endif
 
 namespace ServerRuntime
 {
@@ -66,24 +61,6 @@ static bool EqualsIgnoreCase(const char *lhs, const char *rhs)
 	return *lhs == 0 && *rhs == 0;
 }
 
-#if defined(_WIN32)
-static WORD LogLevelToColor(EServerLogLevel level)
-{
-	switch (level)
-	{
-	case eServerLogLevel_Debug:
-		return FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
-	case eServerLogLevel_Warn:
-		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
-	case eServerLogLevel_Error:
-		return FOREGROUND_RED | FOREGROUND_INTENSITY;
-	case eServerLogLevel_Info:
-	default:
-		return FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE |
-			FOREGROUND_INTENSITY;
-	}
-}
-#else
 static const char *LogLevelToAnsiColor(EServerLogLevel level)
 {
 	switch (level)
@@ -99,7 +76,6 @@ static const char *LogLevelToAnsiColor(EServerLogLevel level)
 		return "\033[37m";
 	}
 }
-#endif
 
 static void BuildTimestamp(char *buffer, size_t bufferSize)
 {
@@ -113,11 +89,7 @@ static void BuildTimestamp(char *buffer, size_t bufferSize)
 	const std::time_t nowSeconds =
 		std::chrono::system_clock::to_time_t(now);
 	std::tm localTime = {};
-#if defined(_WIN32)
-	localtime_s(&localTime, &nowSeconds);
-#else
 	localtime_r(&nowSeconds, &localTime);
-#endif
 	const unsigned milliseconds =
 		(unsigned)(std::chrono::duration_cast<std::chrono::milliseconds>(
 			now.time_since_epoch()).count() % 1000ULL);
@@ -155,24 +127,11 @@ static void WriteLogLine(EServerLogLevel level, const char *category, const char
 	BuildTimestamp(timestamp, sizeof(timestamp));
 
 	bool hasColorConsole = false;
-#if defined(_WIN32)
-	HANDLE stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO originalInfo = {};
-	if (stdoutHandle != INVALID_HANDLE_VALUE && stdoutHandle != NULL)
-	{
-		if (GetConsoleScreenBufferInfo(stdoutHandle, &originalInfo))
-		{
-			hasColorConsole = true;
-			SetConsoleTextAttribute(stdoutHandle, LogLevelToColor(level));
-		}
-	}
-#else
 	hasColorConsole = isatty(fileno(stdout)) != 0;
 	if (hasColorConsole)
 	{
 		fputs(LogLevelToAnsiColor(level), stdout);
 	}
-#endif
 
 	printf(
 		"[%s][%s][%s] %s\n",
@@ -184,11 +143,7 @@ static void WriteLogLine(EServerLogLevel level, const char *category, const char
 
 	if (hasColorConsole)
 	{
-#if defined(_WIN32)
-		SetConsoleTextAttribute(stdoutHandle, originalInfo.wAttributes);
-#else
 		fputs("\033[0m", stdout);
-#endif
 	}
 
 	linenoiseExternalWriteEnd();

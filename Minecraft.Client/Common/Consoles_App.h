@@ -7,10 +7,6 @@ using namespace std;
 #include <xuiapp.h>
 #include "./Tutorial/TutorialEnum.h"
 
-#ifdef _XBOX
-#include "./XUI/XUI_Helper.h"
-#include "./XUI/XUI_HelpCredits.h"
-#endif
 #include "UI/UIStructs.h"
 
 #include "../../Minecraft.World/DisconnectPacket.h"
@@ -56,10 +52,6 @@ class Merchant;
 class CMinecraftAudio;
 
 class CMinecraftApp
-
-#ifdef _XBOX
-	: public CXuiModule
-#endif
 {
 private:
 	static int s_iHTMLFontSizesA[eHTMLSize_COUNT];

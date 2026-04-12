@@ -10,14 +10,6 @@
 #include "../../DLCTexturePack.h"
 #include "Common/DLC/DLCAudioFile.h"
 
-#ifdef __PSVITA__
-#include <audioout.h>
-#endif
-
-#ifndef _NATIVE_DESKTOP
-#include "../../Minecraft.Client/Windows64/Windows64_App.h"
-#endif
-
 #include "stb_vorbis.h"
 
 #define MA_NO_DSOUND
@@ -28,11 +20,6 @@
 #include <memory>
 #include <mutex>
 #include <lce_filesystem/lce_filesystem.h>
-
-#ifdef __ORBIS__
-#include <audioout.h>
-//#define __DISABLE_MILES__			// MGH disabled for now as it crashes if we call sceNpMatching2Initialize
-#endif 
 
 // take out Orbis until they are done
 #if defined _XBOX 
@@ -65,49 +52,9 @@ void SoundEngine::playMusicTick() {};
 
 #else
 
-#ifdef _WINDOWS64
-char SoundEngine::m_szSoundPath[]={"Windows64Media\\Sound\\"};
-char SoundEngine::m_szMusicPath[]={"music\\"};
-char SoundEngine::m_szRedistName[]={"redist64"};
-#elif defined _NATIVE_DESKTOP
-char SoundEngine::m_szSoundPath[]={"Windows64Media/Sound/"};
+char SoundEngine::m_szSoundPath[]={"NativeDesktopMedia/Sound/"};
 char SoundEngine::m_szMusicPath[]={"music/"};
 char SoundEngine::m_szRedistName[]={"redist64"};
-#elif defined _DURANGO
-char SoundEngine::m_szSoundPath[]={"Sound\\"};
-char SoundEngine::m_szMusicPath[]={"music\\"};
-char SoundEngine::m_szRedistName[]={"redist64"};
-#elif defined __ORBIS__
-
-#ifdef _CONTENT_PACKAGE
-char SoundEngine::m_szSoundPath[]={"Sound/"};
-#elif defined _ART_BUILD
-char SoundEngine::m_szSoundPath[]={"Sound/"};
-#else
-// just use the host Durango folder for the sound. In the content package, we'll have moved this in the .gp4 file
-char SoundEngine::m_szSoundPath[]={"Durango/Sound/"};
-#endif
-char SoundEngine::m_szMusicPath[]={"music/"};
-char SoundEngine::m_szRedistName[]={"redist64"};
-#elif defined __PSVITA__
-char SoundEngine::m_szSoundPath[]={"PSVita/Sound/"};
-char SoundEngine::m_szMusicPath[]={"music/"};
-char SoundEngine::m_szRedistName[]={"redist"};
-#elif defined __PS3__
-//extern const char* getPS3HomePath();
-char SoundEngine::m_szSoundPath[]={"PS3/Sound/"};
-char SoundEngine::m_szMusicPath[]={"music/"};
-char SoundEngine::m_szRedistName[]={"redist"};
-
-#define USE_SPURS
-
-#ifdef USE_SPURS
-#include <cell/spurs.h>
-#else
-#include <sys/spu_image.h>
-#endif
-
-#endif
 
 const char *SoundEngine::m_szStreamFileA[eStream_Max]=
 {
@@ -506,7 +453,7 @@ void SoundEngine::play(int iSound, float x, float y, float z, float volume, floa
         iSound, SoundName, szSoundName, x, y, z, volume, pitch);
 
     char basePath[256];
-    sprintf_s(basePath, "Windows64Media/Sound/%s", (char*)szSoundName);
+    sprintf_s(basePath, "NativeDesktopMedia/Sound/%s", (char*)szSoundName);
 
     char finalPath[256];
     sprintf_s(finalPath, "%s.wav", basePath);
@@ -647,7 +594,10 @@ void SoundEngine::playUI(int iSound, float volume, float pitch)
     strcat((char*)szSoundName, SoundName);
 
     char basePath[256];
-    sprintf_s(basePath, "Windows64Media/Sound/Minecraft/UI/%s", ConvertSoundPathToName(name));
+    sprintf_s(
+        basePath,
+        "NativeDesktopMedia/Sound/Minecraft/UI/%s",
+        ConvertSoundPathToName(name));
 
     char finalPath[256];
     sprintf_s(finalPath, "%s.wav", basePath);

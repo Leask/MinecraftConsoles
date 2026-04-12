@@ -6,7 +6,7 @@ class Level;
 class Random;
 class BoundingBox;
 class ConsoleGenerateStructureAction;
-class XboxStructureActionPlaceContainer;
+class ConsoleStructureActionPlaceContainer;
 class GRFObject;
 
 class ConsoleGenerateStructure : public GameRuleDefinition, public StructurePiece
@@ -30,7 +30,7 @@ public:
 	virtual BoundingBox *getBoundingBox();
 	virtual bool postProcess(Level *level, Random *random, BoundingBox *chunkBB);
 
-	void createContainer(XboxStructureActionPlaceContainer *action, Level *level, BoundingBox *chunkBB);
+	void createContainer(ConsoleStructureActionPlaceContainer *action, Level *level, BoundingBox *chunkBB);
 
 	bool checkIntersects(int x0, int y0, int z0, int x1, int y1, int z1);
 

@@ -11,15 +11,15 @@
 #include <string>
 #include <vector>
 
-#include <lce_win32/lce_win32.h>
+#include <lce_abi/lce_abi.h>
 
 #include "Common/BuildVer.h"
 #include "../../Minecraft.Client/Common/App_enums.h"
 #include "../../Minecraft.Client/Common/Console_Debug_enum.h"
 #include "../../Minecraft.Client/Common/Console_Awards_enum.h"
 #include "../../Minecraft.Client/SkinBox.h"
-#include "../../Minecraft.Client/Windows64/Sentient/TelemetryEnum.h"
-#include "../../Minecraft.Client/Windows64Media/strings.h"
+#include "../../Minecraft.Client/NativeDesktop/TelemetryEnum.h"
+#include "../../Minecraft.Client/NativeDesktop/strings.h"
 
 #define MULTITHREAD_ENABLE
 
@@ -54,8 +54,8 @@ typedef unsigned char boolean;
 #define ERROR_SUCCESS 0L
 #endif
 
-#ifndef LCE_WIN32_OUTPUT_DEBUG_STRING_DEFINED
-#define LCE_WIN32_OUTPUT_DEBUG_STRING_DEFINED
+#ifndef LCE_ABI_OUTPUT_DEBUG_STRING_DEFINED
+#define LCE_ABI_OUTPUT_DEBUG_STRING_DEFINED
 inline void OutputDebugStringA(LPCSTR value)
 {
     (void)value;
@@ -121,8 +121,8 @@ const int INVALID_XUID = 0;
     std::snprintf((buffer), (size), (format), __VA_ARGS__)
 #endif
 
-#ifndef LCE_WIN32_SWPRINTF_S_DEFINED
-#define LCE_WIN32_SWPRINTF_S_DEFINED
+#ifndef LCE_ABI_SWPRINTF_S_DEFINED
+#define LCE_ABI_SWPRINTF_S_DEFINED
 template <typename... Args>
 inline int swprintf_s(wchar_t* buffer, size_t size, const wchar_t* format,
                       Args... args)

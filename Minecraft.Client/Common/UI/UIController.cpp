@@ -14,45 +14,9 @@
 #include "../../MultiPlayerLocalPlayer.h"
 #include "UIFontData.h"
 #include "UISplitScreenHelpers.h"
-#ifdef _WINDOWS64
-#include "../../Windows64/KeyboardMouseInput.h"
+#if defined(_NATIVE_DESKTOP)
+#include "../../NativeDesktop/NativeDesktopClientStubs.h"
 #endif
-#ifdef __PSVITA__
-#include <message_dialog.h>
-#endif
-
-// 4J Stu - Enable this to override the Iggy Allocator
-//#define ENABLE_IGGY_ALLOCATOR
-//#define EXCLUDE_IGGY_ALLOCATIONS_FROM_HEAP_INSPECTOR
-
-//#define ENABLE_IGGY_EXPLORER
-#ifdef ENABLE_IGGY_EXPLORER
-#include "Windows64/Iggy/include/iggyexpruntime.h"
-#endif
-
-//#define ENABLE_IGGY_PERFMON
-#ifdef ENABLE_IGGY_PERFMON
-
-#define PM_ORIGIN_X 24
-#define PM_ORIGIN_Y 34
-
-#ifdef __ORBIS__
-#include "Orbis/Iggy/include/iggyperfmon.h"
-#include "Orbis/Iggy/include/iggyperfmon_orbis.h"
-#elif defined _DURANGO
-#include "Durango/Iggy/include/iggyperfmon.h"
-#elif defined __PS3__
-#include "PS3/Iggy/include/iggyperfmon.h"
-#include "PS3/Iggy/include/iggyperfmon_ps3.h"
-#elif defined __PSVITA__
-#include "PSVita/Iggy/include/iggyperfmon.h"
-#include "PSVita/Iggy/include/iggyperfmon_psp2.h"
-#elif defined __WINDOWS64
-#include "Windows64/Iggy/include/iggyperfmon.h"
-#endif
-
-#endif
-
 CRITICAL_SECTION UIController::ms_reloadSkinCS;
 bool UIController::ms_bReloadSkinCSInitialised = false;
 

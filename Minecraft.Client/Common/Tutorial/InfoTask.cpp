@@ -7,7 +7,6 @@
 #include "TutorialConstraints.h"
 #include "InfoTask.h"
 #include "../../../Minecraft.World/Material.h"
-#include "../../Windows64/KeyboardMouseInput.h"
 #include "Common/UI/UI.h"
 
 InfoTask::InfoTask(Tutorial *tutorial, int descriptionId, int promptId /*= -1*/, bool requiresUserInput /*= false*/,

@@ -2,11 +2,7 @@
 #include <cstdio>
 #include <cstring>
 #include <filesystem>
-#if defined(_WINDOWS64) || defined(_WIN32)
-#include <stdlib.h>
-#else
 #include <cstdlib>
-#endif
 
 #include "Minecraft.Client/Common/App_Defines.h"
 #include "Minecraft.Server/Access/Access.h"
@@ -36,7 +32,7 @@
 #include "lce_process/lce_process.h"
 #include "lce_stdin/lce_stdin.h"
 #include "lce_time/lce_time.h"
-#include "lce_win32/lce_win32.h"
+#include "lce_abi/lce_abi.h"
 #include "Minecraft.Server/Common/DedicatedServerOptions.h"
 #include "Minecraft.Server/Common/DedicatedServerRuntime.h"
 #include "Minecraft.Server/Common/FileUtils.h"
@@ -280,20 +276,12 @@ namespace
     private:
         void Set(const char *value)
         {
-#if defined(_WINDOWS64) || defined(_WIN32)
-            _putenv_s(m_name.c_str(), value);
-#else
             setenv(m_name.c_str(), value, 1);
-#endif
         }
 
         void Unset()
         {
-#if defined(_WINDOWS64) || defined(_WIN32)
-            _putenv_s(m_name.c_str(), "");
-#else
             unsetenv(m_name.c_str());
-#endif
         }
 
         std::string m_name;

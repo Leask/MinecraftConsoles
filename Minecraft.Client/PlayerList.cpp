@@ -18,9 +18,9 @@
 #include "../Minecraft.World/ArrayWithLength.h"
 #include "../Minecraft.World/net.minecraft.network.packet.h"
 #include "../Minecraft.World/net.minecraft.network.h"
-#include "Windows64/Windows64_Xuid.h"
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
-#include "Windows64/Network/WinsockNetLayer.h"
+#if defined(_NATIVE_DESKTOP)
+#include "NativeDesktop/NativeDesktop_Xuid.h"
+#include "NativeDesktop/Network/WinsockNetLayer.h"
 #endif
 #include "../Minecraft.World/Pos.h"
 #include "../Minecraft.World/ProgressListener.h"
@@ -31,13 +31,11 @@
 #include "../Minecraft.World/net.minecraft.world.level.saveddata.h"
 #include "../Minecraft.World/JavaMath.h"
 #include "../Minecraft.World/EntityIO.h"
-#if defined(_XBOX) || defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
-#include "Xbox/Network/NetworkPlayerXbox.h"
-#elif defined(__PS3__) || defined(__ORBIS__)
-#include "Common/Network/Sony/NetworkPlayerSony.h"
+#if defined(_NATIVE_DESKTOP)
+#include "NativeDesktop/Network/NetworkPlayerNative.h"
 #endif
 
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_NATIVE_DESKTOP) && defined(MINECRAFT_SERVER_BUILD)
 #include "../Minecraft.Server/Access/Access.h"
 extern bool g_Win64DedicatedServer;
 #endif
@@ -111,10 +109,10 @@ bool PlayerList::placeNewPlayer(Connection *connection, shared_ptr<ServerPlayer>
 		}
 	}
 #endif
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	if (networkPlayer != nullptr)
 	{
-		NetworkPlayerXbox* nxp = static_cast<NetworkPlayerXbox *>(networkPlayer);
+		NetworkPlayerNative* nxp = static_cast<NetworkPlayerNative *>(networkPlayer);
 		IQNetPlayer* qnp = nxp->GetQNetPlayer();
 		if (qnp != nullptr)
 		{
@@ -558,7 +556,7 @@ shared_ptr<ServerPlayer> PlayerList::getPlayerForLogin(PendingConnection *pendin
 	player->gameMode->player = player; // 4J added as had to remove this assignment from ServerPlayer ctor
 	player->setXuid( xuid ); // 4J Added
 	player->setOnlineXuid( onlineXuid ); // 4J Added
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	{
 		// Use packet-supplied identity from LoginPacket.
 		// Do not recompute from name here: mixed-version clients must stay compatible.
@@ -1011,7 +1009,7 @@ void PlayerList::tick()
 			player->connection->disconnect( DisconnectPacket::eDisconnect_Closed );
 		}
 
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 		// The old Connection's read/write threads are now dead (disconnect waits
 		// for them). Safe to recycle the smallId — no stale write thread can
 		// resolve getPlayer() to a new connection that reuses this slot.
@@ -1679,7 +1677,7 @@ bool PlayerList::isXuidBanned(PlayerUID xuid)
 		}
 	}
 
-#if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
+#if defined(_NATIVE_DESKTOP) && defined(MINECRAFT_SERVER_BUILD)
 	if (!banned && g_Win64DedicatedServer)
 	{
 		banned = ServerRuntime::Access::IsPlayerBanned(xuid);

@@ -4,16 +4,6 @@
 #include "TextureManager.h"
 #include "Texture.h"
 
-#ifdef __PS3__
-#include "PS3/SPU_Tasks/Texture_blit/Texture_blit.h"
-#include "C4JSpursJob.h"
-static const int sc_maxTextureBlits = 256;
-static Texture_blit_DataIn g_textureBlitDataIn[sc_maxTextureBlits] __attribute__((__aligned__(16)));
-static int g_currentTexBlit = 0;
-C4JSpursJobQueue::Port* g_texBlitJobQueuePort;
-// #define DISABLE_SPU_CODE
-#endif //__PS3__
-
 #define MAX_MIP_LEVELS 5
 
 Texture::Texture(const wstring &name, int mode, int width, int height, int depth, int wrapMode, int format, int minFilter, int magFilter, bool mipMap)

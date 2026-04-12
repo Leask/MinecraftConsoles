@@ -54,7 +54,7 @@
 #include "../Minecraft.World/net.minecraft.world.level.dimension.h"
 #include "../Minecraft.World/net.minecraft.world.item.h"
 #include "../Minecraft.World/Minecraft.World.h"
-#include "Windows64/Windows64_Xuid.h"
+#include "NativeDesktop/NativeDesktop_Xuid.h"
 #include "ClientConnection.h"
 #include "../Minecraft.World/HellRandomLevelSource.h"
 #include "../Minecraft.World/net.minecraft.world.entity.animal.h"
@@ -66,16 +66,12 @@
 #include "../Minecraft.World/SparseDataStorage.h"
 #include "../Minecraft.World/ChestTileEntity.h"
 #include "TextureManager.h"
-#ifdef _XBOX
-#include "Xbox/Network/NetworkPlayerXbox.h"
+#if defined(_NATIVE_DESKTOP)
+#include "NativeDesktop/Network/NetworkPlayerNative.h"
 #endif
 #include "Common/UI/IUIScene_CreativeMenu.h"
 #include "Common/UI/UIFontData.h"
 #include "DLCTexturePack.h"
-
-#ifdef __ORBIS__
-#include "Orbis/Network/PsPlusUpsellWrapper_Orbis.h"
-#endif
 
 // #define DISABLE_SPU_CODE
 // 4J Turning this on will change the graph at the bottom of the debug overlay to show the number of packets of each type added per fram
@@ -1089,8 +1085,8 @@ shared_ptr<MultiplayerLocalPlayer> Minecraft::createExtraLocalPlayer(int idx, co
 		PlayerUID playerXUIDOnline = INVALID_XUID;
 		ProfileManager.GetXUID(idx,&playerXUIDOffline,false);
 		ProfileManager.GetXUID(idx,&playerXUIDOnline,true);
-#ifdef _WINDOWS64
-		// Compatibility rule for Win64 id migration
+#if defined(_NATIVE_DESKTOP)
+		// Native desktop keeps host/self identity stable across uid.dat migration.
 		// host keeps legacy host XUID, non-host uses persistent uid.dat XUID.
 		INetworkPlayer *localNetworkPlayer = g_NetworkManager.GetLocalPlayerByUserIndex(idx);
 		if(localNetworkPlayer != nullptr && localNetworkPlayer->IsHost())
@@ -1417,7 +1413,7 @@ void Minecraft::run_middle()
 						INetworkPlayer *pHostPlayer = g_NetworkManager.GetHostPlayer();
 
 #ifdef _XBOX
-						PlayerUID xuid=((NetworkPlayerXbox *)pHostPlayer)->GetUID();
+						PlayerUID xuid=((NetworkPlayerNative *)pHostPlayer)->GetUID();
 #else
 						PlayerUID xuid=pHostPlayer->GetUID();
 #endif
@@ -4415,9 +4411,9 @@ void Minecraft::setLevel(MultiPlayerLevel *level, int message /*=-1*/, shared_pt
 				playerXUIDOnline.setForAdhoc();
 			}
 #endif
-#ifdef _WINDOWS64
-			// On Windows, the implementation has been changed to use a per-client pseudo XUID based on `uid.dat`.
-			// To maintain player data compatibility with existing worlds, the world host (the first player) will use the previous embedded pseudo XUID.
+#if defined(_NATIVE_DESKTOP)
+			// Native desktop uses a per-client pseudo XUID based on `uid.dat`.
+			// The world host keeps the embedded pseudo XUID for old save data.
 			INetworkPlayer *localNetworkPlayer = g_NetworkManager.GetLocalPlayerByUserIndex(iPrimaryPlayer);
 			if(localNetworkPlayer != nullptr && localNetworkPlayer->IsHost())
 			{
@@ -4610,8 +4606,8 @@ void Minecraft::respawnPlayer(int iPad, int dimension, int newEntityId)
 	PlayerUID playerXUIDOnline = INVALID_XUID;
 	ProfileManager.GetXUID(iTempPad,&playerXUIDOffline,false);
 	ProfileManager.GetXUID(iTempPad,&playerXUIDOnline,true);
-#ifdef _WINDOWS64
-	// Same compatibility rule as create/init paths.
+#if defined(_NATIVE_DESKTOP)
+	// Same native desktop identity rule as create/init paths.
 	INetworkPlayer *localNetworkPlayer = g_NetworkManager.GetLocalPlayerByUserIndex(iTempPad);
 	if(localNetworkPlayer != nullptr && localNetworkPlayer->IsHost())
 	{

@@ -8,17 +8,6 @@
 #include "../Minecraft.World/net.minecraft.world.level.tile.entity.h"
 #include "LevelRenderer.h"
 
-#ifdef __PS3__
-#include "PS3/SPU_Tasks/ChunkUpdate/ChunkRebuildData.h"
-#include "PS3/SPU_Tasks/ChunkUpdate/TileRenderer_SPU.h"
-#include "PS3/SPU_Tasks/CompressedTile/CompressedTileStorage_SPU.h"
-
-#include "C4JThread_SPU.h"
-#include "C4JSpursJob.h"
-//#define DISABLE_SPU_CODE
-
-#endif
-
 int Chunk::updates = 0;
 
 #ifdef _LARGE_WORLDS

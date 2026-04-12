@@ -12,11 +12,6 @@
 #include "Common/UI/UI.h"
 #include "Common/DLC/DLCAudioFile.h"
 
-#if defined _XBOX || defined _WINDOWS64
-#include "Xbox/XML/ATGXmlParser.h"
-#include "Xbox/XML/xmlFilesCallback.h"
-#endif
-
 DLCTexturePack::DLCTexturePack(DWORD id, DLCPack *pack, TexturePack *fallback) : AbstractTexturePack(id, nullptr, pack->getName(), fallback)
 {
 	m_dlcInfoPack = pack;

@@ -1,138 +1,139 @@
-# Compile Instructions
+# Build Instructions
 
-## Visual Studio
+This branch only supports macOS and Linux native builds. The archived
+Windows-compatible build is preserved on `last-windows-compatible`.
 
-1. Clone or download the repository
-1. Open the repo folder in Visual Studio 2022+.
-2. Wait for cmake to configure the project and load all assets (this may take a few minutes on the first run).
-3. Right click a folder in the solution explorer and switch to the 'CMake Targets View'
-4. Select platform and configuration from the dropdown. EG: `Windows64 - Debug` or `Windows64 - Release`
-5. Pick the startup project `Minecraft.Client.exe` or `Minecraft.Server.exe` using the debug targets dropdown
-6. Build and run the project:
-   - `Build > Build Solution` (or `Ctrl+Shift+B`)
-   - Start debugging with `F5`.
+## Requirements
 
-### Dedicated server debug arguments
+- CMake 3.24 or newer
+- Ninja with multi-config support
+- A C++17 compiler
+- POSIX shell utilities
 
-- Default debugger arguments for `Minecraft.Server`:
-  - `-port 25565 -bind 0.0.0.0 -name DedicatedServer`
-- You can override arguments in:
-  - `Project Properties > Debugging > Command Arguments`
-- `Minecraft.Server` post-build copies only the dedicated-server asset set:
-  - `Common/Media/MediaWindows64.arc`
-  - `Common/res`
-  - `Windows64/GameHDD`
+Recommended:
 
-## CMake (Windows x64)
+- macOS: Apple Clang from current Xcode command line tools
+- Linux: GCC or Clang plus standard development headers
 
-Configure (use your VS Community instance explicitly):
+## macOS Native Server
 
-Open `Developer PowerShell for VS` and run:
-
-```powershell
-cmake --preset windows64
-```
-
-Build Debug:
-
-```powershell
-cmake --build --preset windows64-debug --target Minecraft.Client
-```
-
-Build Release:
-
-```powershell
-cmake --build --preset windows64-release --target Minecraft.Client
-```
-
-Build Dedicated Server (Debug):
-
-```powershell
-cmake --build --preset windows64-debug --target Minecraft.Server
-```
-
-Build Dedicated Server (Release):
-
-```powershell
-cmake --build --preset windows64-release --target Minecraft.Server
-```
-
-Run executable:
-
-```powershell
-cd .\build\windows64\Minecraft.Client\Debug
-.\Minecraft.Client.exe
-```
-
-Run dedicated server:
-
-```powershell
-cd .\build\windows64\Minecraft.Server\Debug
-.\Minecraft.Server.exe -port 25565 -bind 0.0.0.0 -name DedicatedServer
-```
-
-## Native Porting Bootstrap (macOS / Linux)
-
-The project now includes an early native porting preset set for contributors
-working on shared platform code. This does not build the full game client yet;
-it builds native portability modules that are intended to grow into the future
-macOS/Linux runtime.
-
-Configure on macOS:
+Configure:
 
 ```bash
 cmake --preset macos-native
 ```
 
-Build the smoke test:
-
-```bash
-cmake --build --preset macos-native-debug --target Minecraft.Portability.SmokeTest
-```
-
-Run the smoke test through CTest:
-
-```bash
-ctest --preset macos-native-debug-test
-```
-
-Or use the one-step check target:
+Build and run the native smoke suite:
 
 ```bash
 cmake --build --preset macos-native-debug --target Minecraft.Portability.Check
 ```
 
-Run the smoke test from the repository root:
+Run the native server bootstrap manually:
 
 ```bash
-./build/macos-native/Portability/Debug/Minecraft.Portability.SmokeTest .
+./build/macos-native/Portability/Debug/Minecraft.Server.NativeBootstrap \
+    --bootstrap-only
 ```
 
-Equivalent Linux commands:
+Run a short shell-mode session:
+
+```bash
+./build/macos-native/Portability/Debug/Minecraft.Server.NativeBootstrap \
+    --shutdown-after-ms 250 \
+    -port 0 \
+    -bind 127.0.0.1 \
+    -name NativeShell
+```
+
+## Linux Native Server
+
+Configure:
 
 ```bash
 cmake --preset linux-native
-cmake --build --preset linux-native-debug --target Minecraft.Portability.SmokeTest
-ctest --preset linux-native-debug-test
-./build/linux-native/Portability/Debug/Minecraft.Portability.SmokeTest .
 ```
 
-The repository also includes a `Native Smoke` GitHub Actions workflow that
-runs the same native smoke preset on macOS and Linux for portability changes.
-
-The native presets now also build a bootstrap-only dedicated server shell:
+Build and run the native smoke suite:
 
 ```bash
-./build/macos-native/Portability/Debug/Minecraft.Server.NativeBootstrap --bootstrap-only
-./build/linux-native/Portability/Debug/Minecraft.Server.NativeBootstrap --bootstrap-only
+cmake --build --preset linux-native-debug --target Minecraft.Portability.Check
 ```
 
-Notes:
-- The Windows64 client and dedicated server remain the only supported gameplay
-  targets today.
-- Native presets currently exist to validate shared portability code and to
-  support iterative migration work.
-- Post-build asset copy is automatic for `Minecraft.Client` in CMake (Debug and
-  Release variants).
-- The game relies on relative paths (for example `Common\Media\...`), so
-  launching from the output directory is required.
+Run the native server bootstrap manually:
+
+```bash
+./build/linux-native/Portability/Debug/Minecraft.Server.NativeBootstrap \
+    --bootstrap-only
+```
+
+## Native Client Smoke
+
+The native client is an early macOS/Linux smoke target. It is not the primary
+shipping artifact yet.
+
+macOS:
+
+```bash
+cmake --preset macos-native-client
+cmake --build --preset macos-native-client-debug \
+    --target Minecraft.NativeDesktop.Check
+```
+
+Linux:
+
+```bash
+cmake --preset linux-native-client
+cmake --build --preset linux-native-client-debug \
+    --target Minecraft.NativeDesktop.Check
+```
+
+## Unattended Harness
+
+Use the harness for server-native runtime iterations:
+
+```bash
+tools/headless_server_native_harness.sh
+```
+
+The harness writes logs under `build/harness/` and a summary file at:
+
+```text
+build/harness/summary.txt
+```
+
+Useful overrides:
+
+| Variable | Purpose |
+|----------|---------|
+| `REMOTE_HOST` | Linux host used by the harness, default `elm` |
+| `REMOTE_ROOT` | Remote checkout path |
+| `LOCAL_BUILD_PRESET` | Local build preset |
+| `REMOTE_CONFIGURE_PRESET` | Remote configure preset |
+| `REMOTE_BUILD_DIR` | Remote build directory |
+
+## Build Presets
+
+| Preset | Purpose |
+|--------|---------|
+| `macos-native` | macOS native headless runtime configure |
+| `linux-native` | Linux native headless runtime configure |
+| `macos-native-client` | macOS native client smoke configure |
+| `linux-native-client` | Linux native client smoke configure |
+
+## Build Targets
+
+| Target | Purpose |
+|--------|---------|
+| `Minecraft.Portability.Check` | Native server/runtime smoke suite |
+| `Minecraft.Server.NativeBootstrap` | Native headless server executable |
+| `Minecraft.Portability.SmokeTest` | Shared portability smoke executable |
+| `Minecraft.NativeDesktop.Check` | Experimental native client smoke suite |
+
+## Notes
+
+- `Minecraft.Server.NativeBootstrap` is the only native server executable.
+- Server storage defaults to `NativeDesktop/GameHDD` unless overridden with
+  `--storage-root`.
+- `server.properties` is read from the executable working directory.
+- CI uses `.github/workflows/native-smoke.yml` for macOS and Linux validation.

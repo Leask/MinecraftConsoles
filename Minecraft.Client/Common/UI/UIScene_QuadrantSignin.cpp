@@ -2,9 +2,6 @@
 #include "UI.h"
 #include "UIScene_QuadrantSignin.h"
 #include "../../Minecraft.h"
-#if defined(__ORBIS__)
-#include "Common/Network/Sony/SonyHttp.h"
-#endif
 
 UIScene_QuadrantSignin::UIScene_QuadrantSignin(int iPad, void *_initData, UILayer *parentLayer) : UIScene(iPad, parentLayer)
 {
