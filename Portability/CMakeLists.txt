@@ -119,6 +119,7 @@ target_compile_definitions(Minecraft.Portability.SmokeTest PRIVATE
 target_include_directories(Minecraft.Portability.SmokeTest PRIVATE
   "${CMAKE_SOURCE_DIR}"
   "${CMAKE_SOURCE_DIR}/include"
+  "${CMAKE_SOURCE_DIR}/Minecraft.World/x64headers"
 )
 
 configure_compiler_target(Minecraft.Portability.SmokeTest)
@@ -178,6 +179,7 @@ target_compile_definitions(Minecraft.Server.NativeBootstrap PRIVATE
 target_include_directories(Minecraft.Server.NativeBootstrap PRIVATE
   "${CMAKE_SOURCE_DIR}"
   "${CMAKE_SOURCE_DIR}/include"
+  "${CMAKE_SOURCE_DIR}/Minecraft.World/x64headers"
 )
 
 configure_compiler_target(Minecraft.Server.NativeBootstrap)
