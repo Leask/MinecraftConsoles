@@ -6,7 +6,9 @@
 #include "net.minecraft.world.entity.ai.attributes.h"
 #include "net.minecraft.world.entity.monster.h"
 #include "net.minecraft.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "Silverfish.h"
 #include "SoundTypes.h"
 

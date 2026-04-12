@@ -1,5 +1,7 @@
 #include "stdafx.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Minecraft.h"
+#endif
 #include "net.minecraft.world.h"
 #include "net.minecraft.world.level.tile.h"
 #include "net.minecraft.world.entity.player.h"

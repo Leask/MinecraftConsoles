@@ -2,9 +2,11 @@
 #include "System.h"
 #include "net.minecraft.world.entity.player.h"
 #include "com.mojang.nbt.h"
+#include "ChunkSource.h"
 #include "LevelData.h"
 #include "LevelType.h"
 #include "LevelSettings.h"
+#include "../Minecraft.Client/Common/App_Defines.h"
 
 LevelData::LevelData()
 {

@@ -24,9 +24,11 @@
 #include "net.minecraft.world.scores.h"
 #include "com.mojang.nbt.h"
 #include "LivingEntity.h"
-#include "..\Minecraft.Client\Textures.h"
-#include "..\Minecraft.Client\ServerLevel.h"
-#include "..\Minecraft.Client\EntityTracker.h"
+#if !defined(_NATIVE_DESKTOP)
+#include "../Minecraft.Client/Textures.h"
+#include "../Minecraft.Client/ServerLevel.h"
+#include "../Minecraft.Client/EntityTracker.h"
+#endif
 #include "SoundTypes.h"
 #include "BasicTypeContainers.h"
 #include "ParticleTypes.h"
@@ -1172,10 +1174,12 @@ void LivingEntity::swing()
 		swingTime = -1;
 		swinging = true;
 
+#if !defined(_NATIVE_DESKTOP)
 		if (dynamic_cast<ServerLevel *>(level) != nullptr)
 		{
 			static_cast<ServerLevel *>(level)->getTracker()->broadcast(shared_from_this(), std::make_shared<AnimatePacket>(shared_from_this(), AnimatePacket::SWING));
 		}
+#endif
 	}
 }
 
@@ -1606,7 +1610,9 @@ void LivingEntity::tick()
 
 			if (!ItemInstance::matches(current, previous))
 			{
+#if !defined(_NATIVE_DESKTOP)
 				static_cast<ServerLevel *>(level)->getTracker()->broadcast(shared_from_this(), std::make_shared<SetEquippedItemPacket>(entityId, i, current));
+#endif
 				if (previous != nullptr) attributes->removeItemModifiers(previous);
 				if (current != nullptr) attributes->addItemModifiers(current);
 				lastEquipment[i] = current == nullptr ? nullptr : current->copy();
@@ -1859,6 +1865,10 @@ void LivingEntity::setJumping(bool jump)
 
 void LivingEntity::take(shared_ptr<Entity> e, int orgCount)
 {
+#if defined(_NATIVE_DESKTOP)
+	(void)e;
+	(void)orgCount;
+#else
 	if (!e->removed && !level->isClientSide)
 	{
 		EntityTracker *entityTracker = static_cast<ServerLevel *>(level)->getTracker();
@@ -1875,6 +1885,7 @@ void LivingEntity::take(shared_ptr<Entity> e, int orgCount)
 			entityTracker->broadcast(e, std::make_shared<TakeItemEntityPacket>(e->entityId, entityId));
 		}
 	}
+#endif
 }
 
 bool LivingEntity::canSee(shared_ptr<Entity> target)

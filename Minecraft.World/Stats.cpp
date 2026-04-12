@@ -8,7 +8,9 @@
 #include "ItemStat.h"
 #include "GeneralStat.h"
 #include "Stats.h"
-#include "..\Minecraft.Client\StatsCounter.h"
+#if !defined(_NATIVE_DESKTOP)
+#include "../Minecraft.Client/StatsCounter.h"
+#endif
 
 const int Stats::BLOCKS_MINED_OFFSET = 0x1000000;
 const int Stats::ITEMS_COLLECTED_OFFSET = 0x1010000;
@@ -456,7 +458,9 @@ void Stats::buildCraftableStats()
 // These stats are directly followed by the achievemnts in the profile data, so cannot be changed without migrating the profile data
 
 	//This sets up a static list of stat/leaderboard pairings, used to tell which leaderboards need an update
+#if !defined(_NATIVE_DESKTOP)
 	StatsCounter::setupStatBoards();
+#endif
 }
 
 // 4J Stu - Added this function to allow us to add news stats from TU9 onwards

@@ -4,11 +4,11 @@
 #include "GameRenderer.h"
 #include "Minecraft.h"
 #include "Textures.h"
-#include "..\Minecraft.World\net.minecraft.world.level.h"
-#include "..\Minecraft.World\net.minecraft.world.level.tile.h"
-#include "..\Minecraft.World\net.minecraft.world.level.material.h"
-#include "..\Minecraft.World\net.minecraft.h"
-#include "..\Minecraft.World\net.minecraft.world.h"
+#include "../Minecraft.World/net.minecraft.world.level.h"
+#include "../Minecraft.World/net.minecraft.world.level.tile.h"
+#include "../Minecraft.World/net.minecraft.world.level.material.h"
+#include "../Minecraft.World/net.minecraft.h"
+#include "../Minecraft.World/net.minecraft.world.h"
 #include "Tesselator.h"
 #include "EntityTileRenderer.h"
 #include "Options.h"
@@ -159,7 +159,7 @@ TileRenderer::TileRenderer( LevelSource* level, int xMin, int yMin, int zMin, un
 
 TileRenderer::~TileRenderer()
 {
-	delete cache;
+	delete [] cache;
 }
 
 TileRenderer::TileRenderer( LevelSource* level )

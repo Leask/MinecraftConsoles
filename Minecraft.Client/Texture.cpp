@@ -1,11 +1,11 @@
 #include "stdafx.h"
-#include "..\Minecraft.World\ByteBuffer.h"
+#include "../Minecraft.World/ByteBuffer.h"
 #include "Rect2i.h"
 #include "TextureManager.h"
 #include "Texture.h"
 
 #ifdef __PS3__
-#include "PS3\SPU_Tasks\Texture_blit\Texture_blit.h"
+#include "PS3/SPU_Tasks/Texture_blit/Texture_blit.h"
 #include "C4JSpursJob.h"
 static const int sc_maxTextureBlits = 256;
 static Texture_blit_DataIn g_textureBlitDataIn[sc_maxTextureBlits] __attribute__((__aligned__(16)));
@@ -134,7 +134,11 @@ void Texture::_init(const wstring &name, int mode, int width, int height, int de
 				for(unsigned int level = 1; level < m_iMipLevels; ++level)
 				{
 					int ww = width >> level;
-					int hh = height >> height;
+					int hh = height >> level;
+					if (ww <= 0 || hh <= 0)
+					{
+						break;
+					}
 
 					byteArray tempBytes = byteArray(ww * hh * depth * 4);
 					for (int index = 0; index < tempBytes.length; index++)
@@ -625,6 +629,10 @@ void Texture::transferFromImage(BufferedImage *image)
 		{
 			int ww = width >> level;
 			int hh = height >> level;
+			if (ww <= 0 || hh <= 0)
+			{
+				break;
+			}
 
 			byteArray tempBytes = byteArray(ww * hh * 4);
 			unsigned int *tempData = new unsigned int[ww * hh];

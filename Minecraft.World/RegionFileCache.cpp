@@ -14,8 +14,12 @@ bool RegionFileCache::useSplitSaves(ESavePlatform platform)
 		return true;
 	case SAVE_FILE_PLATFORM_WIN64:
 	{
+#if defined(_NATIVE_DESKTOP)
+		return false;
+#else
 		LevelGenerationOptions* lgo = app.getLevelGenerationOptions();
 		return (lgo != nullptr && lgo->isFromDLC());
+#endif
 	}
 	default:
 		return false;

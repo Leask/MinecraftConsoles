@@ -19,7 +19,9 @@
 #include "net.minecraft.world.damagesource.h"
 #include "SharedConstants.h"
 #include "Skeleton.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "SoundTypes.h"
 
 Skeleton::Skeleton(Level *level) : Monster( level )

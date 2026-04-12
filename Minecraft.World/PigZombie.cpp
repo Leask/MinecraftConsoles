@@ -11,7 +11,9 @@
 #include "net.minecraft.world.entity.item.h"
 #include "net.minecraft.world.damagesource.h"
 #include "PigZombie.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "SoundTypes.h"
 
 AttributeModifier *PigZombie::SPEED_MODIFIER_ATTACKING = (new AttributeModifier(eModifierId_MOB_PIG_ATTACKSPEED, 0.45, AttributeModifier::OPERATION_ADDITION))->setSerialize(false);

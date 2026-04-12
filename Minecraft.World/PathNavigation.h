@@ -3,6 +3,9 @@
 class Mob;
 class Level;
 class Path;
+class AttributeInstance;
+class Entity;
+class Vec3;
 
 class PathNavigation
 {

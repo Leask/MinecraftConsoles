@@ -1,13 +1,17 @@
 #pragma once
 
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 
 #include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <cerrno>
 #include <cstring>
+#ifdef _WINDOWS64
 #include <Windows.h>
+#else
+#include <lce_win32/lce_win32.h>
+#endif
 
 namespace Win64Xuid
 {

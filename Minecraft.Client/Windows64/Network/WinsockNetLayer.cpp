@@ -3,23 +3,38 @@
 
 #include "stdafx.h"
 
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 
 #include "WinsockNetLayer.h"
-#include "..\..\Common\Network\PlatformNetworkManagerStub.h"
-#include "..\..\..\Minecraft.World\Socket.h"
+#include "../../Common/Network/PlatformNetworkManagerStub.h"
+#include "../../../Minecraft.World/Socket.h"
 #include <lce_net/lce_net.h>
 #include <lce_time/lce_time.h>
 #if defined(MINECRAFT_SERVER_BUILD)
-#include "..\..\..\Minecraft.Server\Access\Access.h"
-#include "..\..\..\Minecraft.Server\ServerLogManager.h"
+#include "../../../Minecraft.Server/Access/Access.h"
+#include "../../../Minecraft.Server/ServerLogManager.h"
 #endif
-#include "..\..\..\Minecraft.World\DisconnectPacket.h"
-#include "..\..\Minecraft.h"
-#include "..\4JLibs\inc\4J_Profile.h"
+#include "../../../Minecraft.World/DisconnectPacket.h"
+#include "../../Minecraft.h"
+#ifdef _WINDOWS64
+#include "../4JLibs/inc/4J_Profile.h"
+#endif
 
+#if defined(_NATIVE_DESKTOP)
+#include <cerrno>
+#endif
 #include <cstdio>
 #include <string>
+
+#if defined(_NATIVE_DESKTOP)
+#define NATIVE_DESKTOP_WINSOCK_TRACE(message) \
+	std::fprintf(stderr, "NativeDesktop winsock: %s\n", message)
+#define NATIVE_DESKTOP_WINSOCK_TRACEF(format, ...) \
+	std::fprintf(stderr, "NativeDesktop winsock: " format "\n", __VA_ARGS__)
+#else
+#define NATIVE_DESKTOP_WINSOCK_TRACE(message) ((void)0)
+#define NATIVE_DESKTOP_WINSOCK_TRACEF(format, ...) ((void)0)
+#endif
 
 static bool RecvExact(SOCKET sock, BYTE* buf, int len);
 
@@ -125,8 +140,11 @@ bool WinsockNetLayer::Initialize()
 
 void WinsockNetLayer::Shutdown()
 {
+	NATIVE_DESKTOP_WINSOCK_TRACE("Shutdown begin");
 	StopAdvertising();
+	NATIVE_DESKTOP_WINSOCK_TRACE("StopAdvertising complete");
 	StopDiscovery();
+	NATIVE_DESKTOP_WINSOCK_TRACE("StopDiscovery complete");
 
 	s_active = false;
 	s_connected = false;
@@ -146,13 +164,18 @@ void WinsockNetLayer::Shutdown()
 	// Stop accept loop first so no new RecvThread can be created while shutting down.
 	if (s_acceptThread != nullptr)
 	{
+		NATIVE_DESKTOP_WINSOCK_TRACE("accept thread wait begin");
 		WaitForSingleObject(s_acceptThread, 2000);
 		CloseHandle(s_acceptThread);
 		s_acceptThread = nullptr;
+		NATIVE_DESKTOP_WINSOCK_TRACE("accept thread wait end");
 	}
 
 	std::vector<HANDLE> recvThreads;
 	EnterCriticalSection(&s_connectionsLock);
+	NATIVE_DESKTOP_WINSOCK_TRACEF(
+		"connections close begin count=%zu",
+		s_connections.size());
 	for (size_t i = 0; i < s_connections.size(); i++)
 	{
 		s_connections[i].active = false;
@@ -168,23 +191,31 @@ void WinsockNetLayer::Shutdown()
 		}
 	}
 	LeaveCriticalSection(&s_connectionsLock);
+	NATIVE_DESKTOP_WINSOCK_TRACEF(
+		"connections close end recvThreads=%zu",
+		recvThreads.size());
 
 	// Wait for all host-side receive threads to exit before destroying state.
 	for (size_t i = 0; i < recvThreads.size(); i++)
 	{
+		NATIVE_DESKTOP_WINSOCK_TRACEF("recv thread %zu wait begin", i);
 		WaitForSingleObject(recvThreads[i], 2000);
 		CloseHandle(recvThreads[i]);
+		NATIVE_DESKTOP_WINSOCK_TRACEF("recv thread %zu wait end", i);
 	}
 
 	EnterCriticalSection(&s_connectionsLock);
 	s_connections.clear();
 	LeaveCriticalSection(&s_connectionsLock);
+	NATIVE_DESKTOP_WINSOCK_TRACE("connections clear end");
 
 	if (s_clientRecvThread != nullptr)
 	{
+		NATIVE_DESKTOP_WINSOCK_TRACE("client recv thread wait begin");
 		WaitForSingleObject(s_clientRecvThread, 2000);
 		CloseHandle(s_clientRecvThread);
 		s_clientRecvThread = nullptr;
+		NATIVE_DESKTOP_WINSOCK_TRACE("client recv thread wait end");
 	}
 
 	for (int i = 0; i < XUSER_MAX_COUNT; i++)
@@ -196,15 +227,22 @@ void WinsockNetLayer::Shutdown()
 		}
 		if (s_splitScreenRecvThread[i] != nullptr)
 		{
+			NATIVE_DESKTOP_WINSOCK_TRACEF(
+				"split-screen recv thread %d wait begin",
+				i);
 			WaitForSingleObject(s_splitScreenRecvThread[i], 2000);
 			CloseHandle(s_splitScreenRecvThread[i]);
 			s_splitScreenRecvThread[i] = nullptr;
+			NATIVE_DESKTOP_WINSOCK_TRACEF(
+				"split-screen recv thread %d wait end",
+				i);
 		}
 		s_splitScreenSmallId[i] = 0xFF;
 	}
 
 	if (s_initialized)
 	{
+		NATIVE_DESKTOP_WINSOCK_TRACE("state clear begin");
 		EnterCriticalSection(&s_disconnectLock);
 		s_disconnectedSmallIds.clear();
 		LeaveCriticalSection(&s_disconnectLock);
@@ -222,7 +260,9 @@ void WinsockNetLayer::Shutdown()
 		DeleteCriticalSection(&s_smallIdToSocketLock);
 		LceNetShutdown();
 		s_initialized = false;
+		NATIVE_DESKTOP_WINSOCK_TRACE("state clear end");
 	}
+	NATIVE_DESKTOP_WINSOCK_TRACE("Shutdown end");
 }
 
 bool WinsockNetLayer::HostGame(int port, const char* bindIp)
@@ -273,6 +313,15 @@ bool WinsockNetLayer::HostGame(int port, const char* bindIp)
 		s_listenSocket = INVALID_SOCKET;
 		return false;
 	}
+#if defined(_NATIVE_DESKTOP)
+	if (!LceNetSetSocketRecvTimeout(listenHandle, 500))
+	{
+		app.DebugPrintf("listen timeout setup failed: %d\n", GetNetLastError());
+		CloseNetSocket(s_listenSocket);
+		s_listenSocket = INVALID_SOCKET;
+		return false;
+	}
+#endif
 
 	s_active = true;
 	s_connected = true;
@@ -526,6 +575,13 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 		SOCKET clientSocket = static_cast<SOCKET>(acceptedHandle);
 		if (acceptedHandle == LCE_INVALID_SOCKET)
 		{
+#if defined(_NATIVE_DESKTOP)
+			const int error = GetNetLastError();
+			if (s_active && (error == EAGAIN || error == EWOULDBLOCK))
+			{
+				continue;
+			}
+#endif
 			if (s_active)
 				app.DebugPrintf("accept() failed: %d\n", GetNetLastError());
 			break;

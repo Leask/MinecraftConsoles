@@ -114,9 +114,9 @@ public:
 #ifdef __PSVITA__
 	EUIGroup GetParentLayerGroup() {return m_parentLayer->m_parentGroup->GetGroup();}
 #endif
-#if defined(__PSVITA__) || defined(_WINDOWS64)
-	UILayer *GetParentLayer() {return m_parentLayer;}
-	vector<UIControl *> *GetControls() {return &m_controls;}
+#if defined(__PSVITA__) || defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+    UILayer *GetParentLayer() {return m_parentLayer;}
+    vector<UIControl *> *GetControls() {return &m_controls;}
 #endif
 
 protected:

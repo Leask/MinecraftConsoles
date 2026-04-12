@@ -15,7 +15,9 @@
 #include "Skeleton.h"
 #include "Creeper.h"
 #include "Arrow.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "SoundTypes.h"
 
 

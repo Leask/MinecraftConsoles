@@ -1,7 +1,7 @@
 #pragma once
 using namespace std;
 
-#include "..\Minecraft.World\Icon.h"
+#include "../Minecraft.World/Icon.h"
 class Texture;
 
 class StitchedTexture : public Icon
@@ -46,7 +46,7 @@ protected:
 public:
 	static StitchedTexture *create(const wstring &name);
 	
-	~StitchedTexture();
+	virtual ~StitchedTexture();
 protected:
 	StitchedTexture(const wstring &name, const wstring &filename);
 

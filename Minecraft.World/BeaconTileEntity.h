@@ -1,6 +1,9 @@
 #pragma once
 #include "TileEntity.h"
 #include "Container.h"
+#include "SharedConstants.h"
+
+class MobEffect;
 
 class BeaconTileEntity : public TileEntity, public Container
 {

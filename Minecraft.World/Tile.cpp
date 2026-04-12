@@ -242,6 +242,14 @@ void Tile::ReleaseThreadStorage()
 
 void Tile::staticCtor()
 {
+#ifdef _NATIVE_DESKTOP
+#define NATIVE_DESKTOP_TILE_TRACE(name) \
+	fprintf(stderr, "NativeDesktop Tile::staticCtor: %s\n", name)
+#else
+#define NATIVE_DESKTOP_TILE_TRACE(name) ((void)0)
+#endif
+
+	NATIVE_DESKTOP_TILE_TRACE("sound types begin");
 	Tile::SOUND_NORMAL = new Tile::SoundType(eMaterialSoundType_STONE, 1, 1);
 	Tile::SOUND_WOOD = new Tile::SoundType(eMaterialSoundType_WOOD, 1, 1);
 	Tile::SOUND_GRAVEL = new Tile::SoundType(eMaterialSoundType_GRAVEL, 1, 1);
@@ -255,20 +263,33 @@ void Tile::staticCtor()
 	Tile::SOUND_LADDER = new Tile::SoundType(eMaterialSoundType_LADDER, 1, 1,eSoundType_DIG_WOOD);
 	Tile::SOUND_ANVIL = new Tile::SoundType(eMaterialSoundType_ANVIL, 0.3f, 1, eSoundType_DIG_STONE, eSoundType_RANDOM_ANVIL_LAND);
 
+	NATIVE_DESKTOP_TILE_TRACE("tile table begin");
 	Tile::tiles = new Tile *[TILE_NUM_COUNT];
 	memset( tiles, 0, sizeof( Tile *)*TILE_NUM_COUNT );
 
+	NATIVE_DESKTOP_TILE_TRACE("base tiles begin");
 	Tile::stone = (new StoneTile(1))										->setDestroyTime(1.5f)->setExplodeable(10)->setSoundType(Tile::SOUND_STONE)->setIconName(L"stone")->setDescriptionId(IDS_TILE_STONE)->setUseDescriptionId(IDS_DESC_STONE);
+	NATIVE_DESKTOP_TILE_TRACE("stone complete");
 	Tile::grass = static_cast<GrassTile *>((new GrassTile(2))->setDestroyTime(0.6f)->setSoundType(Tile::SOUND_GRASS)->setIconName(L"grass")->setDescriptionId(IDS_TILE_GRASS)->setUseDescriptionId(IDS_DESC_GRASS));
+	NATIVE_DESKTOP_TILE_TRACE("grass complete");
 	Tile::dirt = (new DirtTile(3))											->setDestroyTime(0.5f)->setSoundType(Tile::SOUND_GRAVEL)->setIconName(L"dirt")->setDescriptionId(IDS_TILE_DIRT)->setUseDescriptionId(IDS_DESC_DIRT);
+	NATIVE_DESKTOP_TILE_TRACE("dirt complete");
 	Tile::cobblestone = (new Tile(4, Material::stone))						->setBaseItemTypeAndMaterial(Item::eBaseItemType_structblock,	Item::eMaterial_stone)->setDestroyTime(2.0f)->setExplodeable(10)->setSoundType(Tile::SOUND_STONE)->setIconName(L"cobblestone")->setDescriptionId(IDS_TILE_STONE_BRICK)->setUseDescriptionId(IDS_DESC_STONE_BRICK);
+	NATIVE_DESKTOP_TILE_TRACE("cobblestone complete");
 	Tile::wood = (new WoodTile(5))											->setBaseItemTypeAndMaterial(Item::eBaseItemType_structwoodstuff,	Item::eMaterial_wood)->setDestroyTime(2.0f)->setExplodeable(5)->setSoundType(Tile::SOUND_WOOD)->setIconName(L"planks")->setDescriptionId(IDS_TILE_OAKWOOD_PLANKS)->sendTileData()->setUseDescriptionId(IDS_DESC_WOODENPLANKS);
+	NATIVE_DESKTOP_TILE_TRACE("wood complete");
 	Tile::sapling = (new Sapling(6))										->setDestroyTime(0.0f)->setSoundType(Tile::SOUND_GRASS)->setIconName(L"sapling")->setDescriptionId(IDS_TILE_SAPLING)->sendTileData()->setUseDescriptionId(IDS_DESC_SAPLING)->disableMipmap();
+	NATIVE_DESKTOP_TILE_TRACE("sapling complete");
 	Tile::unbreakable = (new Tile(7, Material::stone))						->setIndestructible()->setExplodeable(6000000)->setSoundType(Tile::SOUND_STONE)->setIconName(L"bedrock")->setDescriptionId(IDS_TILE_BEDROCK)->setNotCollectStatistics()->setUseDescriptionId(IDS_DESC_BEDROCK);
+	NATIVE_DESKTOP_TILE_TRACE("unbreakable complete");
 	Tile::water = static_cast<LiquidTile *>((new LiquidTileDynamic(8, Material::water))->setDestroyTime(100.0f)->setLightBlock(3)->setIconName(L"water_flow")->setDescriptionId(IDS_TILE_WATER)->setNotCollectStatistics()->sendTileData()->setUseDescriptionId(IDS_DESC_WATER));
+	NATIVE_DESKTOP_TILE_TRACE("water complete");
 	Tile::calmWater = (new LiquidTileStatic(9, Material::water))			->setDestroyTime(100.0f)->setLightBlock(3)->setIconName(L"water_still")->setDescriptionId(IDS_TILE_WATER)->setNotCollectStatistics()->sendTileData()->setUseDescriptionId(IDS_DESC_WATER);
+	NATIVE_DESKTOP_TILE_TRACE("calm water complete");
 	Tile::lava = static_cast<LiquidTile *>((new LiquidTileDynamic(10, Material::lava))->setDestroyTime(00.0f)->setLightEmission(1.0f)->setLightBlock(255)->setIconName(L"lava_flow")->setDescriptionId(IDS_TILE_LAVA)->setNotCollectStatistics()->sendTileData()->setUseDescriptionId(IDS_DESC_LAVA));
+	NATIVE_DESKTOP_TILE_TRACE("lava complete");
 
+	NATIVE_DESKTOP_TILE_TRACE("early liquid tiles complete");
 	Tile::calmLava = (new LiquidTileStatic(11, Material::lava))	->setDestroyTime(100.0f)->setLightEmission(1.0f)->setLightBlock(255)->setIconName(L"lava_still")->setDescriptionId(IDS_TILE_LAVA)->setNotCollectStatistics()->sendTileData()->setUseDescriptionId(IDS_DESC_LAVA);
 	Tile::sand = (new HeavyTile(12))							->setDestroyTime(0.5f)->setSoundType(Tile::SOUND_SAND)->setIconName(L"sand")->setDescriptionId(IDS_TILE_SAND)->setUseDescriptionId(IDS_DESC_SAND);
 	Tile::gravel = (new GravelTile(13))							->setDestroyTime(0.6f)->setSoundType(Tile::SOUND_GRAVEL)->setIconName(L"gravel")->setDescriptionId(IDS_TILE_GRAVEL)->setUseDescriptionId(IDS_DESC_GRAVEL);
@@ -1518,6 +1539,9 @@ Tile::SoundType::SoundType(eMATERIALSOUND_TYPE eMaterialSound, float volume, flo
 	case eMaterialSoundType_LADDER:
 		this->iStepSound=eSoundType_STEP_LADDER;
 		break;
+	case eMaterialSoundType_ANVIL:
+		this->iStepSound=eSoundType_STEP_METAL;
+		break;
 	default:
 		app.DebugPrintf("NO STEP SOUND!\n");
 
@@ -1559,7 +1583,8 @@ int Tile::SoundType::getPlaceSound() const
 4J: These are necessary on the PS3.
 (and 4 and Vita).
 */
-#if (defined __PS3__ || defined __ORBIS__ || defined __PSVITA__)
+#if (defined __PS3__ || defined __ORBIS__ || defined __PSVITA__ || \
+    defined _NATIVE_DESKTOP)
 const int Tile::stone_Id;
 const int Tile::grass_Id;
 const int Tile::dirt_Id;

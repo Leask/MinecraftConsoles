@@ -1,7 +1,9 @@
 #include "stdafx.h"
 #include "ClockItem.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Minecraft.h"
 #include "..\Minecraft.Client\MultiPlayerLocalPlayer.h"
+#endif
 #include "net.minecraft.world.h"
 
 #ifdef __PSVITA__
@@ -19,12 +21,19 @@ ClockItem::ClockItem(int id) : Item(id)
 Icon *ClockItem::getIcon(int auxValue)
 {
 	Icon *icon = Item::getIcon(auxValue);
+#if defined(_NATIVE_DESKTOP)
+	if (icons != nullptr && auxValue == 0)
+	{
+		icon = icons[0];
+	}
+#else
 	Minecraft *pMinecraft = Minecraft::GetInstance();
 
 	if( pMinecraft->player != nullptr && auxValue == 0 )
 	{
 		icon = icons[pMinecraft->player->GetXboxPad()];
 	}
+#endif
 	return icon;
 }
 

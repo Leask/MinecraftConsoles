@@ -5,8 +5,10 @@
 #include "PistonExtensionTile.h"
 #include "Facing.h"
 #include "net.minecraft.world.level.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Minecraft.h"
 #include "..\Minecraft.Client\MultiPlayerLevel.h"
+#endif
 #include "net.minecraft.world.h"
 #include "LevelChunk.h"
 #include "Dimension.h"

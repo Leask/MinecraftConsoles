@@ -5,6 +5,8 @@ using namespace std;
 class Icon
 {
 public:
+	virtual ~Icon() = default;
+
 	static const int TYPE_TERRAIN = 0;
 	static const int TYPE_ITEM = 1;
 

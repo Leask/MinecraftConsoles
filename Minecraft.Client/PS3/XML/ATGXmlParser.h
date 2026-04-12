@@ -5,7 +5,7 @@
 // You are encouraged to incorporate this code into your titles. 
 
 //-------------------------------------------------------------------------------------
-//  AtgXmlParser.h
+//  ATGXmlParser.h
 //
 //  XMLParser and SAX interface declaration
 //

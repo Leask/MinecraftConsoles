@@ -659,6 +659,8 @@ int main(int argc, char* argv[])
     std::filesystem::remove_all(
         "build/portability-ban-smoke",
         cleanupError);
+    cleanupError.clear();
+    std::filesystem::create_directories("build", cleanupError);
     char firstFile[4096] = {};
     bool createdDirectory = false;
     const bool smokeDirectoryReady = CreateDirectoryIfMissing(

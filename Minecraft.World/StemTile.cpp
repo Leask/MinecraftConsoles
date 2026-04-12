@@ -3,8 +3,10 @@
 #include "net.minecraft.world.entity.item.h"
 #include "net.minecraft.world.level.h"
 #include "net.minecraft.world.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Minecraft.h"
 #include "..\Minecraft.Client\Common\Colours\ColourTable.h"
+#endif
 #include "StemTile.h"
 
 const wstring StemTile::TEXTURE_ANGLED = L"stem_bent";

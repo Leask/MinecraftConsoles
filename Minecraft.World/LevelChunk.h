@@ -15,7 +15,9 @@ class EntitySelector;
 #include "Entity.h"
 #include "Level.h"
 
+#if !defined(_NATIVE_DESKTOP)
 #define SHARING_ENABLED
+#endif
 class TileCompressData_SPU;
 
 #if 0//__PSVITA__

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "net.minecraft.world.entity.h"
 #include "net.minecraft.world.phys.h"
+#include "Pos.h"
 #include "RandomPos.h"
 
 Vec3 *RandomPos::tempDir = Vec3::newPermanent(0, 0, 0);

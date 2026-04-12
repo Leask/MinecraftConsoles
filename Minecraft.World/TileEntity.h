@@ -2,11 +2,13 @@
 using namespace std;
 
 #include "HashExtension.h"
-#include "..\Minecraft.World\JavaIntHash.h"
+#include "JavaIntHash.h"
 
 class Level;
 class Packet;
 class CompoundTag;
+class Tile;
+class TileEntity;
 
 typedef TileEntity *(*tileEntityCreateFn)();
 

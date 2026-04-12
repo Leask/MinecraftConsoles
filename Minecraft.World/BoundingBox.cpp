@@ -1,4 +1,7 @@
 #include "stdafx.h"
+
+#include <climits>
+
 #include "BoundingBox.h"
 #include "Direction.h"
 #include "JavaMath.h"

@@ -3,8 +3,10 @@
 #include "net.minecraft.world.damagesource.h"
 #include "net.minecraft.world.entity.h"
 #include "net.minecraft.world.level.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\ServerPlayer.h"
 #include "..\Minecraft.Client\PlayerConnection.h"
+#endif
 #include "ThrownEnderpearl.h"
 
 
@@ -48,6 +50,19 @@ void ThrownEnderpearl::onHit(HitResult *res)
 		// Fix for #67486 - TCR #001: BAS Game Stability: Customer Encountered: TU8: Code: Gameplay: The title crashes on Host's console when Client Player leaves the game before the Ender Pearl thrown by him touches the ground.
 		// If the owner has been removed, then ignore
 
+#if defined(_NATIVE_DESKTOP)
+		shared_ptr<LivingEntity> owner = getOwner();
+		if (owner != nullptr && !owner->removed && owner->level == this->level)
+		{
+			if (owner->isRiding())
+			{
+				owner->ride(nullptr);
+			}
+			owner->teleportTo(x, y, z);
+			owner->fallDistance = 0;
+			owner->hurt(DamageSource::fall, 5);
+		}
+#else
 		// 4J-JEV: Cheap type check first.
 		if ( (getOwner() != nullptr) && getOwner()->instanceof(eTYPE_SERVERPLAYER) )
 		{
@@ -66,6 +81,7 @@ void ThrownEnderpearl::onHit(HitResult *res)
 				}
 			}
 		}
+#endif
 		remove();
 	}
 }

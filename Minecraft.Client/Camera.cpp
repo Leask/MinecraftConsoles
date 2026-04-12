@@ -1,10 +1,10 @@
 #include "stdafx.h"
 #include "Camera.h"
 #include "MemoryTracker.h"
-#include "..\Minecraft.World\net.minecraft.world.entity.player.h"
-#include "..\Minecraft.World\net.minecraft.world.level.h"
-#include "..\Minecraft.World\net.minecraft.world.level.tile.h"
-#include "..\Minecraft.World\TilePos.h"
+#include "../Minecraft.World/net.minecraft.world.entity.player.h"
+#include "../Minecraft.World/net.minecraft.world.level.h"
+#include "../Minecraft.World/net.minecraft.world.level.tile.h"
+#include "../Minecraft.World/TilePos.h"
 
 float Camera::xPlayerOffs = 0.0f;
 float Camera::yPlayerOffs = 0.0f;
@@ -38,6 +38,11 @@ void Camera::prepare(shared_ptr<Player> player, bool mirror)
     zPlayerOffs = position->get(2);
 	*/
 
+#if defined(_NATIVE_DESKTOP)
+	xPlayerOffs = 0.0f;
+	yPlayerOffs = 0.0f;
+	zPlayerOffs = 0.0f;
+#else
 	// Xbox conversion here... note that we don't bother getting the viewport as this is just working out how to get a (0,0,0) point in clip space to pass into the inverted
 	// combined model/view/projection matrix, so we just need to get this matrix and get its translation as an equivalent.
 	XMMATRIX _modelview, _proj, _final, _invert;
@@ -73,6 +78,7 @@ void Camera::prepare(shared_ptr<Player> player, bool mirror)
 	xPlayerOffs = trans.x / trans.w;
 	yPlayerOffs = trans.y / trans.w;
 	zPlayerOffs = trans.z / trans.w;
+#endif
 #endif
 
     int flipCamera = mirror ? 1 : 0;

@@ -14,7 +14,9 @@
 #include "net.minecraft.world.item.trading.h"
 #include "net.minecraft.world.level.tile.h"
 #include "net.minecraft.world.level.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "Villager.h"
 #include "AbstractContainerMenu.h"
 

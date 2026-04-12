@@ -31,7 +31,7 @@ protected:
 
 public:
 	Dimension();
-	~Dimension();
+	virtual ~Dimension();
 	virtual ChunkSource *createRandomLevelSource() const;
 	virtual ChunkSource *createFlatLevelSource() const;
 	virtual ChunkStorage *createStorage(File dir);

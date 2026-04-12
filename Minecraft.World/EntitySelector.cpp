@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include "Container.h"
+#include "Entity.h"
 #include "EntitySelector.h"
+#include "ItemInstance.h"
+#include "LivingEntity.h"
+#include "Mob.h"
 
 const EntitySelector *EntitySelector::ENTITY_STILL_ALIVE = new AliveEntitySelector();
 const EntitySelector *EntitySelector::CONTAINER_ENTITY_SELECTOR = new ContainerEntitySelector(); 

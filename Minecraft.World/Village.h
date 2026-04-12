@@ -1,5 +1,13 @@
 #pragma once
 
+class CompoundTag;
+class DoorInfo;
+class Level;
+class LivingEntity;
+class Player;
+class Pos;
+class Vec3;
+
 class Village
 {
 private:

@@ -41,7 +41,7 @@ public:
 
 	~ResourceLocation()
 	{
-		delete m_texture.data;
+		delete [] m_texture.data;
 	}
 
 	_TEXTURE_NAME getTexture()

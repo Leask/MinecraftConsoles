@@ -2,7 +2,9 @@
 #include "WaterLilyTile.h"
 #include "net.minecraft.world.level.h"
 #include "net.minecraft.world.entity.item.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Minecraft.h"
+#endif
 #include "AABB.h"
 
 WaterlilyTile::WaterlilyTile(int id) : Bush(id)

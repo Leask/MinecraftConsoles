@@ -2,6 +2,8 @@
 
 #include "AttributeInstance.h"
 
+class BaseAttributeMap;
+
 class ModifiableAttributeInstance : public AttributeInstance
 {
 private:

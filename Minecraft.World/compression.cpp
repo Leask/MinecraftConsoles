@@ -571,7 +571,7 @@ HRESULT Compression::DecompressWithType(void *pDestination, unsigned int *pDestS
 			*pDestSize = uncompr.length;
 
 			// Delete uncompressed data
-			delete uncompr.data;
+			delete [] uncompr.data;
 			return S_OK;
 		}
 		else break; // Cannot decompress when destination is nullptr
@@ -650,4 +650,3 @@ void Compression::SetDecompressionType(ESavePlatform platform)
 }
 
 /*Compression gCompression;*/
-

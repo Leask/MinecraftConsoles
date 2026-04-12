@@ -19,11 +19,13 @@
 #include "net.minecraft.world.item.alchemy.h"
 #include "net.minecraft.world.item.enchantment.h"
 #include "net.minecraft.world.h"
-#include "..\Minecraft.Client\ServerLevel.h"
-#include "..\Minecraft.Client\EntityTracker.h"
+#if !defined(_NATIVE_DESKTOP)
+#include "../Minecraft.Client/ServerLevel.h"
+#include "../Minecraft.Client/EntityTracker.h"
+#include "../Minecraft.Client/Textures.h"
+#endif
 #include "com.mojang.nbt.h"
 #include "Mob.h"
-#include "..\Minecraft.Client\Textures.h"
 #include "SoundTypes.h"
 #include "BasicTypeContainers.h"
 #include "ParticleTypes.h"
@@ -980,11 +982,13 @@ void Mob::dropLeash(bool synch, bool createItemDrop)
 			spawnAtLocation(Item::lead_Id, 1);
 		}
 
+#if !defined(_NATIVE_DESKTOP)
 		ServerLevel *serverLevel = dynamic_cast<ServerLevel *>(level);
 		if (!level->isClientSide && synch && serverLevel != nullptr)
 		{
 			serverLevel->getTracker()->broadcast(shared_from_this(), std::make_shared<SetEntityLinkPacket>(SetEntityLinkPacket::LEASH, shared_from_this(), nullptr));
 		}
+#endif
 	}
 }
 
@@ -1008,11 +1012,15 @@ void Mob::setLeashedTo(shared_ptr<Entity> holder, bool synch)
 	_isLeashed = true;
 	leashHolder = holder;
 
+#if !defined(_NATIVE_DESKTOP)
 	ServerLevel *serverLevel = dynamic_cast<ServerLevel *>(level);
 	if (!level->isClientSide && synch && serverLevel)
 	{
 		serverLevel->getTracker()->broadcast(shared_from_this(), std::make_shared<SetEntityLinkPacket>(SetEntityLinkPacket::LEASH, shared_from_this(), leashHolder));
 	}
+#else
+	(void)synch;
+#endif
 }
 
 void Mob::restoreLeashFromSave()

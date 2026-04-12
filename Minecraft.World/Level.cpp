@@ -29,16 +29,20 @@
 
 #include "ConsoleSaveFile.h"
 #include <xuiapp.h>
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Minecraft.h"
 #include "..\Minecraft.Client\LevelRenderer.h"
+#endif
 #include "SoundTypes.h"
 #include "SparseLightStorage.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
 #include "..\Minecraft.Client\TexturePackRepository.h"
 #include "..\Minecraft.Client\DLCTexturePack.h"
 #include "..\Minecraft.Client\Common\DLC\DLCPack.h"
 #include "..\Minecraft.Client\PS3\PS3Extras\ShutdownManager.h"
 #include "..\Minecraft.Client\MinecraftServer.h"
+#endif
 
 
 DWORD Level::tlsIdx = TlsAlloc();
@@ -727,7 +731,7 @@ Level::~Level()
 	delete dimension;
 	delete chunkSource;
 	delete levelData;
-	delete toCheckLevel;
+	delete [] toCheckLevel;
 	delete scoreboard;
 	delete villageSiege;
 
@@ -1927,7 +1931,17 @@ AABBList *Level::getCubes(shared_ptr<Entity> source, AABB *box, bool noEntities/
 		// 4J - now add in collision for any blocks which have actually been removed, but haven't had their render data updated to reflect this yet. This is to stop the player
 		// being able to move the view position inside a tile which is (visually) still there, and see out of the world. This is particularly a problem when moving upwards in
 		// creative mode as the player can get very close to the edge of tiles whilst looking upwards and can therefore very quickly move inside one.
-		Minecraft::GetInstance()->levelRenderer->destroyedTileManager->addAABBs( this, box, &boxes);
+#if !defined(_NATIVE_DESKTOP)
+        Minecraft* minecraft = Minecraft::GetInstance();
+        if (minecraft != nullptr && minecraft->levelRenderer != nullptr &&
+            minecraft->levelRenderer->destroyedTileManager != nullptr)
+        {
+            minecraft->levelRenderer->destroyedTileManager->addAABBs(
+                this,
+                box,
+                &boxes);
+        }
+#endif
 
 		// 4J - added
 		if( noEntities ) return &boxes;
@@ -4248,10 +4262,12 @@ void Level::setBlocksAndData(int x, int y, int z, int xs, int ys, int zs, byteAr
 			// This is quite expensive so only actually do it if we are hosting, online, and the update will actually
 			// change something
 			bool forceUnshare = false;
+#if !defined(_NATIVE_DESKTOP)
 			if( g_NetworkManager.IsHost() && isClientSide )
 			{
 				forceUnshare = lc->testSetBlocksAndData(data, x0, y0, z0, x1, y1, z1, p);
 			}
+#endif
 			if( forceUnshare )
 			{
 				int size = (x1 - x0 ) * ( y1 - y0 ) * ( z1 - z0 );
@@ -4263,10 +4279,12 @@ void Level::setBlocksAndData(int x, int y, int z, int xs, int ys, int zs, byteAr
 			setTilesDirty(xc * 16 + x0, y0, zc * 16 + z0, xc * 16 + x1, y1, zc * 16 + z1);
 
 			PIXBeginNamedEvent(0,"Chunk data sharing\n");
+#if !defined(_NATIVE_DESKTOP)
 			if( g_NetworkManager.IsHost() && isClientSide )
 			{
 				lc->startSharingTilesAndData();
 			}
+#endif
 			PIXEndNamedEvent();
 		}
 	}

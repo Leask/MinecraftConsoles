@@ -28,9 +28,14 @@ function(setup_asset_folder_copy TARGET_NAME ASSET_FOLDER_PAIRS)
     "MediaXbox.arc" # Seems to be missing?
   )
 
+  set(EFFECTIVE_PLATFORM_NAME "${PLATFORM_NAME}")
+  if(PLATFORM_NAME STREQUAL "NativeDesktop")
+    set(EFFECTIVE_PLATFORM_NAME "Windows64")
+  endif()
+
   # Exclude all platform media files except the one for the current platform
   foreach(media_file IN LISTS PLATFORM_MEDIA_FILES)
-    if(NOT media_file MATCHES "Media${PLATFORM_NAME}\\.arc")
+    if(NOT media_file MATCHES "Media${EFFECTIVE_PLATFORM_NAME}\\.arc")
       list(APPEND ASSET_EXCLUDE_FILES "${media_file}")
     endif()
   endforeach()

@@ -26,7 +26,11 @@ private:
 #endif
 
 public:
+#if defined(_NATIVE_DESKTOP)
+	static const int tick(Level *level, bool spawnEnemies, bool spawnFriendlies, bool spawnPersistent);
+#else
 	static const int tick(ServerLevel *level, bool spawnEnemies, bool spawnFriendlies, bool spawnPersistent);
+#endif
 	static bool isSpawnPositionOk(MobCategory *category, Level *level, int x, int y, int z);
 
 public:

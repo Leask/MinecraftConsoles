@@ -14,9 +14,11 @@
 #include "net.minecraft.world.phys.h"
 #include "SynchedEntityData.h"
 #include "StringHelpers.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
 #include "..\Minecraft.Client\Minecraft.h"
 #include "..\Minecraft.Client\MultiPlayerLocalPlayer.h"
+#endif
 #include "GenericStats.h"
 #include "Ocelot.h"
 

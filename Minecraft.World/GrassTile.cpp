@@ -1,5 +1,7 @@
 #include "stdafx.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Minecraft.h"
+#endif
 #include "GrassTile.h"
 #include "net.minecraft.world.level.h"
 #include "net.minecraft.world.level.biome.h"
@@ -8,7 +10,9 @@
 
 // AP - included for PSVita Alpha cut out optimisation
 #include "IntBuffer.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Tesselator.h"
+#endif
 
 GrassTile::GrassTile(int id) : Tile(id, Material::grass)
 {

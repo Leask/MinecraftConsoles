@@ -1,66 +1,66 @@
 ﻿#include "stdafx.h"
-#include "..\..\Minecraft.World\net.minecraft.world.entity.item.h"
-#include "..\..\Minecraft.World\net.minecraft.world.entity.player.h"
-#include "..\..\Minecraft.World\net.minecraft.world.level.tile.entity.h"
-#include "..\..\Minecraft.World\net.minecraft.world.phys.h"
-#include "..\..\Minecraft.World\InputOutputStream.h"
-#include "..\..\Minecraft.World\compression.h"
-#include "..\Options.h"
-#include "..\MinecraftServer.h"
-#include "..\MultiPlayerLevel.h"
-#include "..\GameRenderer.h"
-#include "..\ProgressRenderer.h"
-#include "..\LevelRenderer.h"
-#include "..\MobSkinMemTextureProcessor.h"
-#include "..\Minecraft.h"
-#include "..\ClientConnection.h"
-#include "..\MultiPlayerLocalPlayer.h"
-#include "..\LocalPlayer.h"
-#include "..\..\Minecraft.World\Player.h"
-#include "..\..\Minecraft.World\Inventory.h"
-#include "..\..\Minecraft.World\Level.h"
-#include "..\..\Minecraft.World\FurnaceTileEntity.h"
-#include "..\..\Minecraft.World\Container.h"
-#include "..\..\Minecraft.World\DispenserTileEntity.h"
-#include "..\..\Minecraft.World\SignTileEntity.h"
-#include "..\StatsCounter.h"
-#include "..\GameMode.h"
-#include "..\Xbox\Social\SocialManager.h"
-#include "Tutorial\TutorialMode.h"
+#include "../../Minecraft.World/net.minecraft.world.entity.item.h"
+#include "../../Minecraft.World/net.minecraft.world.entity.player.h"
+#include "../../Minecraft.World/net.minecraft.world.level.tile.entity.h"
+#include "../../Minecraft.World/net.minecraft.world.phys.h"
+#include "../../Minecraft.World/InputOutputStream.h"
+#include "../../Minecraft.World/compression.h"
+#include "../Options.h"
+#include "../MinecraftServer.h"
+#include "../MultiPlayerLevel.h"
+#include "../GameRenderer.h"
+#include "../ProgressRenderer.h"
+#include "../LevelRenderer.h"
+#include "../MobSkinMemTextureProcessor.h"
+#include "../Minecraft.h"
+#include "../ClientConnection.h"
+#include "../MultiPlayerLocalPlayer.h"
+#include "../LocalPlayer.h"
+#include "../../Minecraft.World/Player.h"
+#include "../../Minecraft.World/Inventory.h"
+#include "../../Minecraft.World/Level.h"
+#include "../../Minecraft.World/FurnaceTileEntity.h"
+#include "../../Minecraft.World/Container.h"
+#include "../../Minecraft.World/DispenserTileEntity.h"
+#include "../../Minecraft.World/SignTileEntity.h"
+#include "../StatsCounter.h"
+#include "../GameMode.h"
+#include "../Xbox/Social/SocialManager.h"
+#include "Tutorial/TutorialMode.h"
 #if defined _XBOX || defined _WINDOWS64
-#include "..\Xbox\XML\ATGXmlParser.h"
-#include "..\Xbox\XML\xmlFilesCallback.h"
+#include "../Xbox/XML/ATGXmlParser.h"
+#include "../Xbox/XML/xmlFilesCallback.h"
 #endif
 #include "Minecraft_Macros.h"
-#include "..\PlayerList.h"
-#include "..\ServerPlayer.h"
-#include "GameRules\ConsoleGameRules.h"
-#include "GameRules\ConsoleSchematicFile.h"
-#include "..\User.h"
-#include "..\..\Minecraft.World\LevelData.h"
+#include "../PlayerList.h"
+#include "../ServerPlayer.h"
+#include "GameRules/ConsoleGameRules.h"
+#include "GameRules/ConsoleSchematicFile.h"
+#include "../User.h"
+#include "../../Minecraft.World/LevelData.h"
 #if defined(_WINDOWS64) && defined(MINECRAFT_SERVER_BUILD)
-#include "..\..\Minecraft.Server\ServerLogManager.h"
+#include "../../Minecraft.Server/ServerLogManager.h"
 #endif
-#include "..\..\Minecraft.World\net.minecraft.world.entity.player.h"
-#include "..\EntityRenderDispatcher.h"
-#include "..\..\Minecraft.World\compression.h"
-#include "..\TexturePackRepository.h"
-#include "..\DLCTexturePack.h"
-#include "DLC\DLCPack.h"
-#include "..\StringTable.h"
+#include "../../Minecraft.World/net.minecraft.world.entity.player.h"
+#include "../EntityRenderDispatcher.h"
+#include "../../Minecraft.World/compression.h"
+#include "../TexturePackRepository.h"
+#include "../DLCTexturePack.h"
+#include "DLC/DLCPack.h"
+#include "../StringTable.h"
 #ifndef _XBOX
-#include "..\ArchiveFile.h"
+#include "../ArchiveFile.h"
 #endif
-#include "..\Minecraft.h"
+#include "../Minecraft.h"
 #ifdef _XBOX
-#include "..\Xbox\GameConfig\Minecraft.spa.h"
-#include "..\Xbox\Network\NetworkPlayerXbox.h"
-#include "XUI\XUI_TextEntry.h"
-#include "XUI\XUI_XZP_Icons.h"
-#include "XUI\XUI_PauseMenu.h"
+#include "../Xbox/GameConfig/Minecraft.spa.h"
+#include "../Xbox/Network/NetworkPlayerXbox.h"
+#include "XUI/XUI_TextEntry.h"
+#include "XUI/XUI_XZP_Icons.h"
+#include "XUI/XUI_PauseMenu.h"
 #else
-#include "UI\UI.h"
-#include "UI\UIScene_PauseMenu.h"
+#include "UI/UI.h"
+#include "UI/UIScene_PauseMenu.h"
 #endif
 #ifdef __PS3__
 #include <sys/tty.h>
@@ -69,7 +69,7 @@
 #include <save_data_dialog.h>
 #endif
 
-#include "..\Common\Leaderboards\LeaderboardManager.h"
+#include "../Common/Leaderboards/LeaderboardManager.h"
 
 //CMinecraftApp app;
 unsigned int CMinecraftApp::m_uiLastSignInData = 0;
@@ -104,6 +104,7 @@ CMinecraftApp::CMinecraftApp()
 		m_eTMSAction[i]=eTMSAction_Idle;
 		m_eXuiAction[i]=eAppAction_Idle;
 		m_eXuiActionParam[i] = nullptr;
+		GameSettingsA[i] = nullptr;
 		//m_dwAdditionalModelParts[i] = 0;
 
 		if(FAILED(XUserGetSigninInfo(i,XUSER_GET_SIGNIN_INFO_OFFLINE_XUID_ONLY ,&m_currentSigninInfo[i])))
@@ -817,10 +818,105 @@ static void Win64_LoadSettings(GAME_SETTINGS *gs)
 }
 #endif
 
+#if defined _NATIVE_DESKTOP
+namespace
+{
+    GAME_SETTINGS g_NativeDesktopGameSettings[XUSER_MAX_COUNT] = {};
+    bool g_NativeDesktopGameSettingsSeeded[XUSER_MAX_COUNT] = {};
+
+    void NativeDesktopSeedGameSettings(GAME_SETTINGS *settings)
+    {
+        if (settings == nullptr)
+        {
+            return;
+        }
+
+        ZeroMemory(settings, sizeof(GAME_SETTINGS));
+        settings->ucMusicVolume = DEFAULT_VOLUME_LEVEL;
+        settings->ucSoundFXVolume = DEFAULT_VOLUME_LEVEL;
+        settings->ucSensitivity = 100;
+        settings->ucGamma = 50;
+        settings->ucFov = 0;
+        settings->ucMenuSensitivity = 100;
+        settings->ucInterfaceOpacity = 80;
+
+        settings->usBitmaskValues |= 0x0001; // difficulty: easy
+        settings->usBitmaskValues |= 0x0004; // view bob
+        settings->usBitmaskValues |= 0x0008; // gamertags visible
+        settings->usBitmaskValues |= 0x0200; // splitscreen gamertags
+        settings->usBitmaskValues |= 0x0400; // hints
+        settings->usBitmaskValues |= 0x1000; // autosave interval 2
+        settings->usBitmaskValues |= 0x8000; // tooltips
+
+        settings->uiBitmaskValues = 0;
+        settings->uiBitmaskValues |= GAMESETTING_CLOUDS;
+        settings->uiBitmaskValues |= GAMESETTING_ONLINE;
+        settings->uiBitmaskValues |= GAMESETTING_FRIENDSOFFRIENDS;
+        settings->uiBitmaskValues |= GAMESETTING_DISPLAYUPDATEMSG;
+        settings->uiBitmaskValues |= GAMESETTING_DISPLAYHUD;
+        settings->uiBitmaskValues |= GAMESETTING_DISPLAYHAND;
+        settings->uiBitmaskValues |= GAMESETTING_CUSTOMSKINANIM;
+        settings->uiBitmaskValues |= GAMESETTING_DEATHMESSAGES;
+        settings->uiBitmaskValues |= (GAMESETTING_UISIZE & 0x00000800);
+        settings->uiBitmaskValues |=
+            (GAMESETTING_UISIZE_SPLITSCREEN & 0x00004000);
+        settings->uiBitmaskValues |= GAMESETTING_ANIMATEDCHARACTER;
+        settings->uiBitmaskValues |= 16 << 16; // render distance
+
+        for (int i = 0; i < MAX_FAVORITE_SKINS; ++i)
+        {
+            settings->uiFavoriteSkinA[i] = 0xFFFFFFFF;
+        }
+        settings->ucCurrentFavoriteSkinPos = 0;
+        settings->uiMashUpPackWorldsDisplay = 0xFFFFFFFF;
+        settings->ucLanguage = MINECRAFT_LANGUAGE_DEFAULT;
+        settings->ucLocale = MINECRAFT_LANGUAGE_DEFAULT;
+        settings->bSettingsChanged = false;
+    }
+
+    GAME_SETTINGS *NativeDesktopFallbackGameSettings(int pad)
+    {
+        if (pad < 0 || pad >= XUSER_MAX_COUNT)
+        {
+            pad = 0;
+        }
+
+        if (!g_NativeDesktopGameSettingsSeeded[pad])
+        {
+            NativeDesktopSeedGameSettings(&g_NativeDesktopGameSettings[pad]);
+            g_NativeDesktopGameSettingsSeeded[pad] = true;
+        }
+        return &g_NativeDesktopGameSettings[pad];
+    }
+
+    GAME_SETTINGS *NativeDesktopProfileGameSettings(int pad)
+    {
+        GAME_SETTINGS *settings = static_cast<GAME_SETTINGS *>(
+            ProfileManager.GetGameDefinedProfileData(pad));
+        if (settings == nullptr)
+        {
+            settings = NativeDesktopFallbackGameSettings(pad);
+        }
+
+        if (!g_NativeDesktopGameSettingsSeeded[pad])
+        {
+            NativeDesktopSeedGameSettings(settings);
+            g_NativeDesktopGameSettingsSeeded[pad] = true;
+        }
+        return settings;
+    }
+}
+#endif
+
 void CMinecraftApp::InitGameSettings()
 {
 	for(int i=0;i<XUSER_MAX_COUNT;i++)
 	{
+#if defined _NATIVE_DESKTOP
+		GameSettingsA[i]=NativeDesktopProfileGameSettings(i);
+		GameSettingsA[i]->bSettingsChanged=false;
+		continue;
+#endif
 #if (defined __PS3__ || defined __ORBIS__ || defined _DURANGO  || defined __PSVITA__)
 		GameSettingsA[i]=(GAME_SETTINGS *)StorageManager.GetGameDefinedProfileData(i);
 #else
@@ -1853,6 +1949,16 @@ unsigned char CMinecraftApp::GetMinecraftLocale(int iPad)
 void CMinecraftApp::SetGameSettings(int iPad,eGameSetting eVal,unsigned char ucVal)
 {
 	//Minecraft *pMinecraft=Minecraft::GetInstance();
+#if defined _NATIVE_DESKTOP
+	if(iPad < 0 || iPad >= XUSER_MAX_COUNT)
+	{
+		iPad = 0;
+	}
+	if(GameSettingsA[iPad]==nullptr)
+	{
+		GameSettingsA[iPad]=NativeDesktopFallbackGameSettings(iPad);
+	}
+#endif
 
 	switch(eVal)
 	{
@@ -2340,6 +2446,17 @@ unsigned char CMinecraftApp::GetGameSettings(eGameSetting eVal)
 
 unsigned char CMinecraftApp::GetGameSettings(int iPad,eGameSetting eVal)
 {
+#if defined _NATIVE_DESKTOP
+	if(iPad < 0 || iPad >= XUSER_MAX_COUNT)
+	{
+		iPad = 0;
+	}
+	if(GameSettingsA[iPad]==nullptr)
+	{
+		GameSettingsA[iPad]=NativeDesktopFallbackGameSettings(iPad);
+	}
+#endif
+
 	switch(eVal)
 	{
 	case eGameSetting_MusicVolume:
@@ -2872,7 +2989,7 @@ void CMinecraftApp::HandleXuiActions(void)
 
 					LoadingInputParams *loadingParams = new LoadingInputParams();
 					loadingParams->func = &UIScene_PauseMenu::SaveWorldThreadProc;
-					loadingParams->lpParam = static_cast<LPVOID>(false);
+					loadingParams->lpParam = nullptr;
 
 					// 4J-JEV - PS4: Fix for #5708 - [ONLINE] - If the user pulls their network cable out while saving the title will hang.
 					loadingParams->waitForThreadToDelete = true;
@@ -4425,6 +4542,8 @@ void CMinecraftApp::loadMediaArchive()
 	mediapath = L"Common\\Media\\MediaPS3.arc";
 #elif _WINDOWS64
 	mediapath = L"Common\\Media\\MediaWindows64.arc";
+#elif defined(_NATIVE_DESKTOP)
+	mediapath = L"Common/Media/MediaWindows64.arc";
 #elif __ORBIS__
 	mediapath = L"Common\\Media\\MediaOrbis.arc";
 #elif _DURANGO
@@ -4492,7 +4611,7 @@ void CMinecraftApp::loadStringTable()
 	{
 		byteArray locFile = m_mediaArchive->getFile(localisationFile);
 		m_stringTable = new StringTable(locFile.data, locFile.length);
-		delete locFile.data;
+		delete[] locFile.data;
 	}
 	else
 	{
@@ -5575,7 +5694,8 @@ void CMinecraftApp::HandleDLC(DLCPack *pack)
 {
 	DWORD dwFilesProcessed = 0;
 #ifndef _XBOX
-#if defined(__PS3__) || defined(__ORBIS__) || defined(_WINDOWS64) || defined (__PSVITA__)
+#if defined(__PS3__) || defined(__ORBIS__) || defined(_WINDOWS64) || \
+	defined (__PSVITA__) || defined(_NATIVE_DESKTOP)
 	std::vector<std::string> dlcFilenames;
 #elif defined _DURANGO
 	std::vector<std::wstring> dlcFilenames;
@@ -6878,6 +6998,11 @@ unordered_map<PlayerUID, MOJANG_DATA *, PlayerUID::Hash> CMinecraftApp::MojangDa
 unordered_map<int, char * >  CMinecraftApp::DLCTextures_PackID;
 unordered_map<string, DLC_INFO * >  CMinecraftApp::DLCInfo;
 unordered_map<wstring, ULONGLONG >  CMinecraftApp::DLCInfo_SkinName;
+#elif defined(_NATIVE_DESKTOP)
+unordered_map<PlayerUID, MOJANG_DATA *> CMinecraftApp::MojangData;
+unordered_map<int, char * >  CMinecraftApp::DLCTextures_PackID;
+unordered_map<string, DLC_INFO * >  CMinecraftApp::DLCInfo;
+unordered_map<wstring, ULONGLONG >  CMinecraftApp::DLCInfo_SkinName;
 #elif defined(_DURANGO)
 unordered_map<PlayerUID,MOJANG_DATA *, PlayerUID::Hash > CMinecraftApp::MojangData;
 unordered_map<int, wstring >  CMinecraftApp::DLCTextures_PackID; // for mash-up packs & texture packs
@@ -7158,7 +7283,8 @@ HRESULT CMinecraftApp::RegisterDLCData(char *pchDLCName, unsigned int uiSortInde
 
 
 
-#if defined( __PS3__) || defined(__ORBIS__) || defined(__PSVITA__)
+#if defined( __PS3__) || defined(__ORBIS__) || \
+	defined(__PSVITA__) || defined(_NATIVE_DESKTOP)
 bool CMinecraftApp::GetDLCFullOfferIDForSkinID(const wstring &FirstSkin,ULONGLONG *pullVal)
 {
 	auto it = DLCInfo_SkinName.find(FirstSkin);
@@ -7426,7 +7552,8 @@ DLC_INFO *CMinecraftApp::GetDLCInfoForProductName(WCHAR *pwchProductName)
 	return nullptr;
 }
 
-#elif defined(__PS3__) || defined(__ORBIS__) || defined (__PSVITA__)
+#elif defined(__PS3__) || defined(__ORBIS__) || \
+	defined (__PSVITA__) || defined(_NATIVE_DESKTOP)
 #else
 
 DLC_INFO *CMinecraftApp::GetDLCInfoForFullOfferID(ULONGLONG ullOfferID_Full)
@@ -8586,7 +8713,8 @@ unsigned int CMinecraftApp::AddDLCRequest(eDLCMarketplaceType eType, bool bPromo
 
 unsigned int CMinecraftApp::AddTMSPPFileTypeRequest(eDLCContentType eType, bool bPromote)
 {
-#if !defined(__PS3__) && !defined(__ORBIS__) && !defined(__PSVITA__)
+#if !defined(__PS3__) && !defined(__ORBIS__) && !defined(__PSVITA__) && \
+	!defined(_NATIVE_DESKTOP)
 	// lock access
 	EnterCriticalSection(&csTMSPPDownloadQueue);
 
@@ -8881,7 +9009,8 @@ bool CMinecraftApp::RetrieveNextDLCContent()
 	return false;
 }
 
-#if !defined(__PS3__) && !defined(__ORBIS__) && !defined(__PSVITA__)
+#if !defined(__PS3__) && !defined(__ORBIS__) && !defined(__PSVITA__) && \
+	!defined(_NATIVE_DESKTOP)
 #ifdef _XBOX_ONE
 int CMinecraftApp::TMSPPFileReturned(LPVOID pParam,int iPad,int iUserData,LPVOID lpvData, WCHAR* wchFilename)
 {
@@ -9501,7 +9630,8 @@ byteArray CMinecraftApp::getArchiveFile(const wstring &filename)
 
 // DLC
 
-#if defined(__PS3__) || defined(__ORBIS__) || defined (__PSVITA__)
+#if defined(__PS3__) || defined(__ORBIS__) || \
+	defined (__PSVITA__) || defined(_NATIVE_DESKTOP)
 int CMinecraftApp::GetDLCInfoCount()
 {
 	return (int)DLCInfo.size();

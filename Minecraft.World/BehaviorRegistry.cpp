@@ -1,6 +1,7 @@
 #include "stdafx.h"
 
 #include "BehaviorRegistry.h"
+#include "DispenseItemBehavior.h"
 
 BehaviorRegistry::BehaviorRegistry(DispenseItemBehavior *defaultValue)
 {

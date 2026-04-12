@@ -1,5 +1,7 @@
 #include "stdafx.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Minecraft.h"
+#endif
 #include "net.minecraft.world.effect.h"
 #include "JavaMath.h"
 #include "SharedConstants.h"

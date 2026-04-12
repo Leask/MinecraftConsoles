@@ -22,6 +22,8 @@ private:
 	unordered_map<wstring, PlayerTeam *> teamsByPlayer;
 
 public:
+	virtual ~Scoreboard() = default;
+
 	Objective *getObjective(const wstring &name);
 	Objective *addObjective(const wstring &name, ObjectiveCriteria *criteria);
 	vector<Objective *> *findObjectiveFor(ObjectiveCriteria *criteria);

@@ -4,7 +4,9 @@
 #include "net.minecraft.world.item.h"
 #include "net.minecraft.world.entity.player.h"
 #include "net.minecraft.world.entity.item.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "MushroomCow.h"
 #include "MobCategory.h"
 #include "AABB.h"

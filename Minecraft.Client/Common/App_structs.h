@@ -162,7 +162,8 @@ MOJANG_DATA;
 typedef struct  
 {
 	eDLCContentType eDLCType;
-#if defined( __PS3__) || defined(__ORBIS__) || defined (__PSVITA__)
+#if defined( __PS3__) || defined(__ORBIS__) || \
+    defined (__PSVITA__) || defined(_NATIVE_DESKTOP)
 	char chImageURL[256];//SCE_NP_COMMERCE2_URL_LEN
 #else
 

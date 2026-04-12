@@ -5,12 +5,12 @@
 #include "ServerChunkCache.h"
 #include "ServerPlayer.h"
 #include "MinecraftServer.h"
-#include "..\Minecraft.World\net.minecraft.network.packet.h"
-#include "..\Minecraft.World\net.minecraft.world.level.h"
-#include "..\Minecraft.World\net.minecraft.world.level.chunk.h"
-#include "..\Minecraft.World\net.minecraft.world.level.tile.h"
-#include "..\Minecraft.World\ArrayWithLength.h"
-#include "..\Minecraft.World\System.h"
+#include "../Minecraft.World/net.minecraft.network.packet.h"
+#include "../Minecraft.World/net.minecraft.world.level.h"
+#include "../Minecraft.World/net.minecraft.world.level.chunk.h"
+#include "../Minecraft.World/net.minecraft.world.level.tile.h"
+#include "../Minecraft.World/ArrayWithLength.h"
+#include "../Minecraft.World/System.h"
 #include "PlayerList.h"
 #include <unordered_set>
 
@@ -32,7 +32,7 @@ PlayerChunkMap::PlayerChunk::PlayerChunk(int x, int z, PlayerChunkMap *pcm) : po
 
 PlayerChunkMap::PlayerChunk::~PlayerChunk()
 {
-	delete changedTiles.data;
+	delete [] changedTiles.data;
 }
 
 // 4J added - construct an an array of flags that indicate which entities are still waiting to have network packets sent out to say that they have been removed

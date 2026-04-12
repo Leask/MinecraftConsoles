@@ -14,7 +14,9 @@
 #include "net.minecraft.world.entity.player.h"
 #include "net.minecraft.world.entity.global.h"
 #include "Pig.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "MobCategory.h"
 
 

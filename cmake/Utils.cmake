@@ -13,10 +13,16 @@ endfunction()
 # Copy any needed redist files to the output directory
 function(add_copyredist_target TARGET_NAME)
   set(COPY_SCRIPT "${CMAKE_SOURCE_DIR}/cmake/CopyFolderScript.cmake")
+  set(REDIST_SOURCE "${CMAKE_SOURCE_DIR}/Minecraft.Client/${PLATFORM_NAME}/Iggy/lib/redist64")
+
+  if(NOT EXISTS "${REDIST_SOURCE}")
+    message(STATUS "Skipping redist copy for ${TARGET_NAME}: ${REDIST_SOURCE} does not exist")
+    return()
+  endif()
 
   add_custom_target(CopyRedist_${TARGET_NAME} ALL
     COMMAND ${CMAKE_COMMAND}
-      "-DCOPY_SOURCE=${CMAKE_SOURCE_DIR}/Minecraft.Client/${PLATFORM_NAME}/Iggy/lib/redist64"
+      "-DCOPY_SOURCE=${REDIST_SOURCE}"
       "-DCOPY_DEST=$<TARGET_FILE_DIR:${TARGET_NAME}>"
       -P "${COPY_SCRIPT}"
     COMMENT "Copying redist files..."

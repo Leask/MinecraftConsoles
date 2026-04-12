@@ -8,7 +8,9 @@
 #include "net.minecraft.world.level.h"
 #include "net.minecraft.world.item.h"
 #include "Chicken.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "SoundTypes.h"
 #include "MobCategory.h"
 

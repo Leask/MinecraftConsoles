@@ -2,6 +2,10 @@
 
 #include "WeighedRandom.h"
 
+class Container;
+class DispenserTileEntity;
+class ItemInstance;
+
 class WeighedTreasure : public WeighedRandomItem
 {
 private:

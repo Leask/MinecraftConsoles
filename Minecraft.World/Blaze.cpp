@@ -9,7 +9,9 @@
 #include "net.minecraft.world.entity.monster.h"
 #include "net.minecraft.world.entity.projectile.h"
 #include "SharedConstants.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\Textures.h"
+#endif
 #include "Blaze.h"
 #include "SoundTypes.h"
 

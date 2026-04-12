@@ -1,0 +1,95 @@
+if(NOT DEFINED EXECUTABLE)
+  message(FATAL_ERROR "EXECUTABLE is required")
+endif()
+
+if(NOT EXISTS "${EXECUTABLE}")
+  message(FATAL_ERROR "NativeDesktop client executable does not exist: ${EXECUTABLE}")
+endif()
+
+if(NOT DEFINED BOOTSTRAP_FRAMES)
+  set(BOOTSTRAP_FRAMES 3)
+endif()
+if(NOT DEFINED GAMEPLAY_FRAMES)
+  set(GAMEPLAY_FRAMES 10)
+endif()
+if(NOT DEFINED WAIT_MS)
+  set(WAIT_MS 90000)
+endif()
+
+if(BOOTSTRAP_FRAMES LESS 1)
+  message(FATAL_ERROR "BOOTSTRAP_FRAMES must be greater than zero")
+endif()
+if(GAMEPLAY_FRAMES LESS 1)
+  message(FATAL_ERROR "GAMEPLAY_FRAMES must be greater than zero")
+endif()
+if(WAIT_MS LESS 1000)
+  message(FATAL_ERROR "WAIT_MS must be at least 1000")
+endif()
+
+get_filename_component(EXECUTABLE_DIR "${EXECUTABLE}" DIRECTORY)
+
+function(native_desktop_output_tail output_var input)
+  string(LENGTH "${input}" input_length)
+  set(max_output_length 12000)
+  if(input_length GREATER max_output_length)
+    math(EXPR tail_offset "${input_length} - ${max_output_length}")
+    string(SUBSTRING "${input}" ${tail_offset} ${max_output_length} tail)
+    set(
+      "${output_var}"
+      "... output truncated to last ${max_output_length} characters ...\n${tail}"
+      PARENT_SCOPE)
+  else()
+    set("${output_var}" "${input}" PARENT_SCOPE)
+  endif()
+endfunction()
+
+execute_process(
+  COMMAND
+    ${CMAKE_COMMAND} -E env
+    "MINECRAFT_NATIVE_DESKTOP_BOOTSTRAP_FRAMES=${BOOTSTRAP_FRAMES}"
+    "MINECRAFT_NATIVE_DESKTOP_GAMEPLAY_FRAMES=${GAMEPLAY_FRAMES}"
+    "MINECRAFT_NATIVE_DESKTOP_WAIT_MS=${WAIT_MS}"
+    "${EXECUTABLE}"
+  WORKING_DIRECTORY "${EXECUTABLE_DIR}"
+  TIMEOUT 120
+  RESULT_VARIABLE smoke_result
+  OUTPUT_VARIABLE smoke_output
+  ERROR_VARIABLE smoke_error
+)
+
+set(combined_output "${smoke_output}\n${smoke_error}")
+
+if(NOT smoke_result EQUAL 0)
+  native_desktop_output_tail(smoke_output_tail "${smoke_output}")
+  native_desktop_output_tail(smoke_error_tail "${smoke_error}")
+  message(FATAL_ERROR
+    "NativeDesktop client startup smoke failed with exit ${smoke_result}\n"
+    "stdout:\n${smoke_output_tail}\n"
+    "stderr:\n${smoke_error_tail}\n")
+endif()
+
+math(EXPR expected_gameplay_frame "${GAMEPLAY_FRAMES} - 1")
+
+set(expected_markers
+  "NativeDesktop bootstrap: Minecraft::main ready"
+  "NativeDesktop bootstrap: ui ready"
+  "NativeDesktop gameplay: network thread started"
+  "NativeDesktop network: StartNetworkGame result=1"
+  "NativeDesktop gameplay: ready after"
+  "NativeDesktop gameplay: frame ${expected_gameplay_frame} end"
+  "NativeDesktop gameplay: complete"
+  "NativeDesktop bootstrap: loop complete"
+)
+
+foreach(expected_marker IN LISTS expected_markers)
+  string(FIND "${combined_output}" "${expected_marker}" marker_index)
+  if(marker_index LESS 0)
+    native_desktop_output_tail(combined_output_tail "${combined_output}")
+    message(FATAL_ERROR
+      "NativeDesktop client startup smoke output did not contain marker: "
+      "${expected_marker}\n"
+      "output:\n${combined_output_tail}\n")
+  endif()
+endforeach()
+
+message(STATUS "NativeDesktop client startup smoke passed")

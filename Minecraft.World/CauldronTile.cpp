@@ -6,7 +6,9 @@
 #include "net.minecraft.world.entity.item.h"
 #include "net.minecraft.world.entity.player.h"
 #include "net.minecraft.world.h"
+#if !defined(_NATIVE_DESKTOP)
 #include "..\Minecraft.Client\ServerPlayer.h"
+#endif
 
 const wstring CauldronTile::TEXTURE_INSIDE = L"cauldron_inner";
 const wstring CauldronTile::TEXTURE_BOTTOM = L"cauldron_bottom";
@@ -120,18 +122,20 @@ bool CauldronTile::use(Level *level, int x, int y, int z, shared_ptr<Player> pla
 		if (fillLevel > 0)
 		{
 			shared_ptr<ItemInstance> potion = std::make_shared<ItemInstance>(Item::potion, 1, 0);
-			if (!player->inventory->add(potion))
-			{
-				level->addEntity(std::make_shared<ItemEntity>(level, x + 0.5, y + 1.5, z + 0.5, potion));
-			}
-			// 4J Stu - Brought forward change to update inventory when filling bottles with water
-			else if (player->instanceof(eTYPE_SERVERPLAYER))
-			{
-				dynamic_pointer_cast<ServerPlayer>( player )->refreshContainer(player->inventoryMenu);
-			}
-			// 4J-PB - don't lose the water in creative mode
-			if (player->abilities.instabuild==false)
-			{
+				if (!player->inventory->add(potion))
+				{
+					level->addEntity(std::make_shared<ItemEntity>(level, x + 0.5, y + 1.5, z + 0.5, potion));
+				}
+				// 4J Stu - Brought forward change to update inventory when filling bottles with water
+#if !defined(_NATIVE_DESKTOP)
+				else if (player->instanceof(eTYPE_SERVERPLAYER))
+				{
+					dynamic_pointer_cast<ServerPlayer>( player )->refreshContainer(player->inventoryMenu);
+				}
+#endif
+				// 4J-PB - don't lose the water in creative mode
+				if (player->abilities.instabuild==false)
+				{
 				item->count--;
 				if (item->count <= 0)
 				{

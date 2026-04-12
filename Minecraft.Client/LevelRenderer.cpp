@@ -41,33 +41,33 @@
 #include "Lighting.h"
 #include "Options.h"
 #include "MultiPlayerChunkCache.h"
-#include "..\Minecraft.World\ParticleTypes.h"
-#include "..\Minecraft.World\IntCache.h"
-#include "..\Minecraft.World\IntBuffer.h"
-#include "..\Minecraft.World\JavaMath.h"
-#include "..\Minecraft.World\net.minecraft.world.level.h"
-#include "..\Minecraft.World\net.minecraft.world.level.dimension.h"
-#include "..\Minecraft.World\net.minecraft.world.level.tile.h"
-#include "..\Minecraft.World\net.minecraft.world.phys.h"
-#include "..\Minecraft.World\net.minecraft.world.entity.player.h"
-#include "..\Minecraft.World\net.minecraft.world.item.h"
-#include "..\Minecraft.World\System.h"
-#include "..\Minecraft.World\StringHelpers.h"
-#include "..\Minecraft.World\net.minecraft.world.level.chunk.h"
-#include "..\Minecraft.World\net.minecraft.world.entity.projectile.h"
-#include "..\Minecraft.World\net.minecraft.world.h"
-#include "MultiplayerLocalPlayer.h"
+#include "../Minecraft.World/ParticleTypes.h"
+#include "../Minecraft.World/IntCache.h"
+#include "../Minecraft.World/IntBuffer.h"
+#include "../Minecraft.World/JavaMath.h"
+#include "../Minecraft.World/net.minecraft.world.level.h"
+#include "../Minecraft.World/net.minecraft.world.level.dimension.h"
+#include "../Minecraft.World/net.minecraft.world.level.tile.h"
+#include "../Minecraft.World/net.minecraft.world.phys.h"
+#include "../Minecraft.World/net.minecraft.world.entity.player.h"
+#include "../Minecraft.World/net.minecraft.world.item.h"
+#include "../Minecraft.World/System.h"
+#include "../Minecraft.World/StringHelpers.h"
+#include "../Minecraft.World/net.minecraft.world.level.chunk.h"
+#include "../Minecraft.World/net.minecraft.world.entity.projectile.h"
+#include "../Minecraft.World/net.minecraft.world.h"
+#include "MultiPlayerLocalPlayer.h"
 #include "MultiPlayerLevel.h"
-#include "..\Minecraft.World\SoundTypes.h"
+#include "../Minecraft.World/SoundTypes.h"
 #include "FrustumCuller.h"
-#include "..\Minecraft.World\BasicTypeContainers.h"
+#include "../Minecraft.World/BasicTypeContainers.h"
 #include "Common/UI/UIScene_SettingsGraphicsMenu.h"	
 
 //#define DISABLE_SPU_CODE
 
 #ifdef __PS3__
-#include "PS3\SPU_Tasks\LevelRenderer_cull\LevelRenderer_cull.h"
-#include "PS3\SPU_Tasks\LevelRenderer_FindNearestChunk\LevelRenderer_FindNearestChunk.h"
+#include "PS3/SPU_Tasks/LevelRenderer_cull/LevelRenderer_cull.h"
+#include "PS3/SPU_Tasks/LevelRenderer_FindNearestChunk/LevelRenderer_FindNearestChunk.h"
 #include "C4JSpursJob.h"
 
 static LevelRenderer_cull_DataIn g_cullDataIn[4] __attribute__((__aligned__(16)));
@@ -374,7 +374,7 @@ void LevelRenderer::setLevel(int playerIndex, MultiPlayerLevel *level)
 				chunks[playerIndex][i].chunk->_delete();
 				delete chunks[playerIndex][i].chunk;
 			}
-			delete chunks[playerIndex].data;
+			delete [] chunks[playerIndex].data;
 			chunks[playerIndex].data = nullptr;
 			chunks[playerIndex].length = 0;
 			//			delete sortedChunks[playerIndex];	// 4J - removed - not sorting our chunks anymore
@@ -451,7 +451,7 @@ void LevelRenderer::allChanged(int playerIndex)
 			chunks[playerIndex][i].chunk->_delete();
 			delete chunks[playerIndex][i].chunk;
 		}
-		delete chunks[playerIndex].data;
+		delete [] chunks[playerIndex].data;
 		//		delete sortedChunks[playerIndex];	// 4J - removed - not sorting our chunks anymore
 	}
 
@@ -3791,4 +3791,3 @@ int LevelRenderer::checkAllPresentChunks(bool *faultFound)
 	}
 	return presentCount;
 }
-

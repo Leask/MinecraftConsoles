@@ -5,23 +5,23 @@ using namespace std;
 #include "Audio/Consoles_SoundEngine.h"
 
 #include <xuiapp.h>
-#include ".\Tutorial\TutorialEnum.h"
+#include "./Tutorial/TutorialEnum.h"
 
 #ifdef _XBOX
-#include ".\XUI\XUI_Helper.h"
-#include ".\XUI\XUI_HelpCredits.h"
+#include "./XUI/XUI_Helper.h"
+#include "./XUI/XUI_HelpCredits.h"
 #endif
-#include "UI\UIStructs.h"
+#include "UI/UIStructs.h"
 
-#include "..\..\Minecraft.World\DisconnectPacket.h"
+#include "../../Minecraft.World/DisconnectPacket.h"
 #include <xsocialpost.h>
 
-#include "..\StringTable.h"
-#include ".\DLC\DLCManager.h"
-#include ".\GameRules\ConsoleGameRulesConstants.h"
-#include ".\GameRules\GameRuleManager.h"
-#include "..\SkinBox.h"
-#include "..\ArchiveFile.h"
+#include "../StringTable.h"
+#include "./DLC/DLCManager.h"
+#include "./GameRules/ConsoleGameRulesConstants.h"
+#include "./GameRules/GameRuleManager.h"
+#include "../SkinBox.h"
+#include "../ArchiveFile.h"
 
 typedef struct _JoinFromInviteData
 {
@@ -594,7 +594,8 @@ public:
 	MOJANG_DATA *GetMojangDataForXuid(PlayerUID xuid);
 	static HRESULT RegisterConfigValues(WCHAR *pType, int iValue);
 
-#if defined(__PS3__) || defined(__ORBIS__) || defined(__PSVITA__)
+#if defined(__PS3__) || defined(__ORBIS__) || \
+	defined(__PSVITA__) || defined(_NATIVE_DESKTOP)
 	HRESULT RegisterDLCData(char *pchDLCName, unsigned int uiSortIndex, char *pchImageURL);
 	bool GetDLCFullOfferIDForSkinID(const wstring &FirstSkin,ULONGLONG *pullVal);
 	DLC_INFO *GetDLCInfoForTrialOfferID(ULONGLONG ullOfferID_Trial);
@@ -633,6 +634,11 @@ private:
 
 #if defined(__PS3__) || defined(__ORBIS__) || defined (__PSVITA__)
 	static unordered_map<PlayerUID,MOJANG_DATA *, PlayerUID::Hash > MojangData;
+	static unordered_map<int, char * >  DLCTextures_PackID; // for mash-up packs & texture packs
+	static unordered_map<string,DLC_INFO * > DLCInfo;
+	static unordered_map<wstring, ULONGLONG >  DLCInfo_SkinName; // skin name, full offer id
+#elif defined(_NATIVE_DESKTOP)
+	static unordered_map<PlayerUID,MOJANG_DATA * > MojangData;
 	static unordered_map<int, char * >  DLCTextures_PackID; // for mash-up packs & texture packs
 	static unordered_map<string,DLC_INFO * > DLCInfo;
 	static unordered_map<wstring, ULONGLONG >  DLCInfo_SkinName; // skin name, full offer id
@@ -772,7 +778,8 @@ public:
 	void			ClearTMSPPFilesRetrieved();
 	unsigned int	AddTMSPPFileTypeRequest(eDLCContentType eType, bool bPromote=false);
 	int				GetDLCInfoTexturesOffersCount();
-#if defined( __PS3__) || defined(__ORBIS__) || defined(__PSVITA__)
+#if defined( __PS3__) || defined(__ORBIS__) || \
+	defined(__PSVITA__) || defined(_NATIVE_DESKTOP)
 	DLC_INFO *GetDLCInfo(int iIndex);
 	DLC_INFO *GetDLCInfo(char *);
 	DLC_INFO *GetDLCInfoFromTPackID(int iTPID);

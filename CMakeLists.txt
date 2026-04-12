@@ -136,14 +136,20 @@ endif()
 # ---
 set(BUILDVER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/cmake/GenerateBuildVer.cmake")
 set(BUILDVER_OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generated/Common/BuildVer.h")
+get_filename_component(BUILDVER_OUTPUT_DIR "${BUILDVER_OUTPUT}" DIRECTORY)
 
-add_custom_target(GenerateBuildVer
+add_custom_command(
+  OUTPUT "${BUILDVER_OUTPUT}"
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${BUILDVER_OUTPUT_DIR}"
   COMMAND ${CMAKE_COMMAND}
     "-DOUTPUT_FILE=${BUILDVER_OUTPUT}"
     -P "${BUILDVER_SCRIPT}"
+  DEPENDS "${BUILDVER_SCRIPT}"
   COMMENT "Generating BuildVer.h..."
   VERBATIM
 )
+
+add_custom_target(GenerateBuildVer DEPENDS "${BUILDVER_OUTPUT}")
 
 if(TARGET Minecraft.World)
   add_dependencies(Minecraft.World GenerateBuildVer)
@@ -153,6 +159,14 @@ if(TARGET Minecraft.Client)
 endif()
 if(TARGET Minecraft.Server)
   add_dependencies(Minecraft.Server GenerateBuildVer)
+endif()
+
+if(TARGET Minecraft.Server.NativeBootstrap AND TARGET Minecraft.World)
+  target_link_libraries(Minecraft.Server.NativeBootstrap PRIVATE Minecraft.World)
+endif()
+
+if(TARGET Minecraft.Portability.Check AND TARGET Minecraft.World)
+  add_dependencies(Minecraft.Portability.Check Minecraft.World)
 endif()
 
 # ---

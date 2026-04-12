@@ -5,6 +5,9 @@
 class MerchantContainer;
 class MerchantRecipeList;
 class MerchantRecipe;
+class Container;
+class ItemInstance;
+class Player;
 
 class ClientSideMerchant : public Merchant, public enable_shared_from_this<ClientSideMerchant>
 {

@@ -308,7 +308,7 @@ if(BUILD_TESTING)
   )
   set_tests_properties(minecraft_portability_smoke PROPERTIES
     LABELS "native;portability;smoke"
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    WORKING_DIRECTORY "$<TARGET_FILE_DIR:Minecraft.Portability.SmokeTest>"
   )
   set_tests_properties(minecraft_native_server_bootstrap PROPERTIES
     LABELS "native;server;bootstrap"

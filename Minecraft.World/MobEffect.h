@@ -6,6 +6,7 @@ using namespace std;
 class Mob;
 class MobEffectInstance;
 class Attribute;
+class BaseAttributeMap;
 
 class MobEffect
 {

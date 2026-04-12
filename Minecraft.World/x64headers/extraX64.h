@@ -11,7 +11,17 @@
 
 #define MULTITHREAD_ENABLE
 
+#ifdef _NATIVE_DESKTOP
+#ifndef MINECRAFT_NATIVE_BYTE_DEFINED
+typedef unsigned char mc_byte;
+#define MINECRAFT_NATIVE_BYTE_DEFINED
+#endif
+#ifndef byte
+#define byte mc_byte
+#endif
+#else
 typedef unsigned char byte;
+#endif
 
 const int XUSER_INDEX_ANY = 255;
 const int XUSER_INDEX_FOCUS = 254;
@@ -332,10 +342,13 @@ public:
 #define PIXSetMarkerDeprecated(a, b, ...) PIXSetMarker(a, L ## b, __VA_ARGS__)
 #define PIXAddNamedCounter(a, b) PIXReportCounter( L ## b, a)
 #else
+#ifndef LCE_WIN32_PIX_STUBS_DEFINED
+#define LCE_WIN32_PIX_STUBS_DEFINED
 inline void PIXAddNamedCounter(int, const char*, ...) {}
 inline void PIXBeginNamedEvent(int, const char*, ...) {}
 inline void PIXEndNamedEvent() {}
 inline void PIXSetMarkerDeprecated(int, const char*, ...) {}
+#endif
 #endif
 
 void XSetThreadProcessor(HANDLE a, int b);

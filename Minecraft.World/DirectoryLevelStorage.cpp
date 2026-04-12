@@ -14,6 +14,19 @@
 
 const wstring DirectoryLevelStorage::sc_szPlayerDir(L"players/");
 
+namespace
+{
+	wstring PlayerUIDToWString(PlayerUID xuid)
+	{
+#if defined(__PS3__) || defined(__ORBIS__) || defined(__PSVITA__) || \
+	defined(_DURANGO)
+		return xuid.toString();
+#else
+		return std::to_wstring(xuid);
+#endif
+	}
+}
+
 _MapDataMappings::_MapDataMappings()
 {
 #ifndef _DURANGO
@@ -180,7 +193,7 @@ DirectoryLevelStorage::~DirectoryLevelStorage()
 	}
 
 #ifdef _LARGE_WORLDS
-	delete m_usedMappings.data;
+	delete [] m_usedMappings.data;
 #endif
 }
 
@@ -280,18 +293,15 @@ LevelData *DirectoryLevelStorage::prepareLevel()
 			ByteArrayInputStream bais(data);
 			DataInputStream dis(&bais);
 			const int count = dis.readInt();
-			app.DebugPrintf("Loading %d mappings\n", count);
-			for(unsigned int i = 0; i < count; ++i)
-			{
-				PlayerUID playerUid = dis.readPlayerUID();
-#ifdef _WINDOWS64
-				app.DebugPrintf("  -- %d\n", playerUid);
-#else
-				app.DebugPrintf("  -- %ls\n", playerUid.toString().c_str());
-#endif
-				m_playerMappings[playerUid].readMappings(&dis);
-			}
-			dis.readFully(m_usedMappings);
+				app.DebugPrintf("Loading %d mappings\n", count);
+				for(unsigned int i = 0; i < count; ++i)
+				{
+					PlayerUID playerUid = dis.readPlayerUID();
+					const wstring playerUidText = PlayerUIDToWString(playerUid);
+					app.DebugPrintf("  -- %ls\n", playerUidText.c_str());
+					m_playerMappings[playerUid].readMappings(&dis);
+				}
+				dis.readFully(m_usedMappings);
 #else
 
 			if(getSaveFile()->getSaveVersion() < END_DIMENSION_MAP_MAPPINGS_SAVE_VERSION)
@@ -681,17 +691,14 @@ void DirectoryLevelStorage::saveMapIdLookup()
 		ByteArrayOutputStream baos;
 		DataOutputStream dos(&baos);
 		dos.writeInt(m_playerMappings.size());
-		app.DebugPrintf("Saving %d mappings\n", m_playerMappings.size());
-		for ( auto& it : m_playerMappings )
-		{
-#ifdef _WINDOWS64
-			app.DebugPrintf("  -- %d\n", it.first);
-#else
-			app.DebugPrintf("  -- %ls\n", it.first.toString().c_str());
-#endif
-			dos.writePlayerUID(it.first);
-			it.second.writeMappings(&dos);
-		}
+			app.DebugPrintf("Saving %d mappings\n", m_playerMappings.size());
+			for ( auto& it : m_playerMappings )
+			{
+				const wstring playerUidText = PlayerUIDToWString(it.first);
+				app.DebugPrintf("  -- %ls\n", playerUidText.c_str());
+				dos.writePlayerUID(it.first);
+				it.second.writeMappings(&dos);
+			}
 		dos.write(m_usedMappings);
 		m_saveFile->writeFile(	fileEntry,
 			baos.buf.data, // data buffer
