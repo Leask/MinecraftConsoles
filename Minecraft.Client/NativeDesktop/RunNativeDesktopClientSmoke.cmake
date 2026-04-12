@@ -92,4 +92,43 @@ foreach(expected_marker IN LISTS expected_markers)
   endif()
 endforeach()
 
+set(expected_summary_markers
+  "NativeDesktop runtime summary:"
+  "bootstrapFrames=${BOOTSTRAP_FRAMES}/${BOOTSTRAP_FRAMES}"
+  "gameplayThreadStarted=1"
+  "gameplayReady=1"
+  "gameplayFrames=${GAMEPLAY_FRAMES}/${GAMEPLAY_FRAMES}"
+  "shutdownRequested=1"
+  "leaveGameComplete=1"
+  "networkThreadStopped=1"
+  "shutdownComplete=1"
+  "loopComplete=1"
+)
+
+foreach(expected_summary_marker IN LISTS expected_summary_markers)
+  string(FIND
+    "${combined_output}"
+    "${expected_summary_marker}"
+    summary_marker_index)
+  if(summary_marker_index LESS 0)
+    native_desktop_output_tail(combined_output_tail "${combined_output}")
+    message(FATAL_ERROR
+      "NativeDesktop client startup smoke output did not contain summary "
+      "marker: ${expected_summary_marker}\n"
+      "output:\n${combined_output_tail}\n")
+  endif()
+endforeach()
+
+string(REGEX MATCH
+  "gameplayReadyAfterMs=[0-9]+"
+  gameplay_ready_after_marker
+  "${combined_output}")
+if(gameplay_ready_after_marker STREQUAL "")
+  native_desktop_output_tail(combined_output_tail "${combined_output}")
+  message(FATAL_ERROR
+    "NativeDesktop client startup smoke output did not contain a valid "
+    "gameplayReadyAfterMs summary value\n"
+    "output:\n${combined_output_tail}\n")
+endif()
+
 message(STATUS "NativeDesktop client startup smoke passed")

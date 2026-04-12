@@ -675,6 +675,22 @@ namespace
         int gameplayWaitMs = kDefaultNativeDesktopGameplayWaitMs;
     };
 
+    struct NativeDesktopRuntimeSummary
+    {
+        int bootstrapFramesRequested = 0;
+        int bootstrapFramesCompleted = 0;
+        int gameplayFramesRequested = 0;
+        int gameplayFramesCompleted = 0;
+        int gameplayReadyAfterMs = -1;
+        bool gameplayThreadStarted = false;
+        bool gameplayReady = false;
+        bool shutdownRequested = false;
+        bool leaveGameComplete = false;
+        bool networkThreadStopped = false;
+        bool shutdownComplete = false;
+        bool loopComplete = false;
+    };
+
     int NativeDesktopReadIntSetting(
         const char* name,
         int defaultValue,
@@ -768,8 +784,15 @@ namespace
         bool isIdle() override { return true; }
     };
 
-    void NativeDesktopRunBootstrapFrames(int frameCount)
+    void NativeDesktopRunBootstrapFrames(
+        int frameCount,
+        NativeDesktopRuntimeSummary* summary)
     {
+        if (summary != nullptr)
+        {
+            summary->bootstrapFramesRequested = frameCount;
+        }
+
         for (int frame = 0; frame < frameCount; ++frame)
         {
             std::fprintf(
@@ -782,6 +805,10 @@ namespace
                 stderr,
                 "NativeDesktop bootstrap: frame %d end\n",
                 frame);
+            if (summary != nullptr)
+            {
+                summary->bootstrapFramesCompleted += 1;
+            }
         }
     }
 
@@ -819,7 +846,8 @@ namespace
         param->settings = app.GetGameHostOption(eGameHostOption_All);
     }
 
-    C4JThread* NativeDesktopStartLocalGame()
+    C4JThread* NativeDesktopStartLocalGame(
+        NativeDesktopRuntimeSummary* summary)
     {
         Minecraft* minecraft = Minecraft::GetInstance();
         if (minecraft == nullptr || minecraft->user == nullptr)
@@ -862,12 +890,17 @@ namespace
             256 * 1024);
         thread->Run();
         std::fprintf(stderr, "NativeDesktop gameplay: network thread started\n");
+        if (summary != nullptr)
+        {
+            summary->gameplayThreadStarted = true;
+        }
         return thread;
     }
 
     bool NativeDesktopWaitForGameplay(
         C4JThread* networkThread,
-        int gameplayWaitMs)
+        int gameplayWaitMs,
+        NativeDesktopRuntimeSummary* summary)
     {
         int elapsedMs = 0;
         while (elapsedMs < gameplayWaitMs)
@@ -884,6 +917,11 @@ namespace
                     stderr,
                     "NativeDesktop gameplay: ready after %d ms\n",
                     elapsedMs);
+                if (summary != nullptr)
+                {
+                    summary->gameplayReady = true;
+                    summary->gameplayReadyAfterMs = elapsedMs;
+                }
                 return true;
             }
 
@@ -905,8 +943,15 @@ namespace
         return false;
     }
 
-    void NativeDesktopRunGameplayFrames(int frameCount)
+    void NativeDesktopRunGameplayFrames(
+        int frameCount,
+        NativeDesktopRuntimeSummary* summary)
     {
+        if (summary != nullptr)
+        {
+            summary->gameplayFramesRequested = frameCount;
+        }
+
         Minecraft* minecraft = Minecraft::GetInstance();
         for (int frame = 0; frame < frameCount; ++frame)
         {
@@ -926,6 +971,10 @@ namespace
                 stderr,
                 "NativeDesktop gameplay: frame %d end\n",
                 frame);
+            if (summary != nullptr)
+            {
+                summary->gameplayFramesCompleted += 1;
+            }
         }
     }
 
@@ -974,9 +1023,15 @@ namespace
         return false;
     }
 
-    bool NativeDesktopShutdownLocalGame(C4JThread* gameplayThread)
+    bool NativeDesktopShutdownLocalGame(
+        C4JThread* gameplayThread,
+        NativeDesktopRuntimeSummary* summary)
     {
         std::fprintf(stderr, "NativeDesktop gameplay: shutdown begin\n");
+        if (summary != nullptr)
+        {
+            summary->shutdownRequested = true;
+        }
         MinecraftServer::HaltServer();
 
         if (!g_NetworkManager.LeaveGame(false))
@@ -985,10 +1040,18 @@ namespace
             return false;
         }
         std::fprintf(stderr, "NativeDesktop gameplay: leave game complete\n");
+        if (summary != nullptr)
+        {
+            summary->leaveGameComplete = true;
+        }
 
         bool networkStopped = NativeDesktopWaitForGameplayThread(
             gameplayThread,
             kNativeDesktopShutdownWaitMs);
+        if (summary != nullptr)
+        {
+            summary->networkThreadStopped = networkStopped;
+        }
 
         if (networkStopped && gameplayThread != nullptr)
         {
@@ -1003,7 +1066,41 @@ namespace
 
         g_NetworkManager.LeaveGame(false);
         std::fprintf(stderr, "NativeDesktop gameplay: shutdown complete\n");
+        if (summary != nullptr)
+        {
+            summary->shutdownComplete = true;
+        }
         return true;
+    }
+
+    void NativeDesktopPrintRuntimeSummary(
+        const NativeDesktopRuntimeSummary& summary)
+    {
+        std::fprintf(
+            stderr,
+            "NativeDesktop runtime summary: "
+            "bootstrapFrames=%d/%d "
+            "gameplayThreadStarted=%d "
+            "gameplayReady=%d "
+            "gameplayReadyAfterMs=%d "
+            "gameplayFrames=%d/%d "
+            "shutdownRequested=%d "
+            "leaveGameComplete=%d "
+            "networkThreadStopped=%d "
+            "shutdownComplete=%d "
+            "loopComplete=%d\n",
+            summary.bootstrapFramesCompleted,
+            summary.bootstrapFramesRequested,
+            summary.gameplayThreadStarted ? 1 : 0,
+            summary.gameplayReady ? 1 : 0,
+            summary.gameplayReadyAfterMs,
+            summary.gameplayFramesCompleted,
+            summary.gameplayFramesRequested,
+            summary.shutdownRequested ? 1 : 0,
+            summary.leaveGameComplete ? 1 : 0,
+            summary.networkThreadStopped ? 1 : 0,
+            summary.shutdownComplete ? 1 : 0,
+            summary.loopComplete ? 1 : 0);
     }
 
     void NativeDesktopInitialiseProfile()
@@ -1071,6 +1168,7 @@ int main(int argc, char** argv)
 
     std::fprintf(stderr, "NativeDesktop bootstrap: start\n");
     NativeDesktopRuntimeConfig runtimeConfig = NativeDesktopLoadRuntimeConfig();
+    NativeDesktopRuntimeSummary runtimeSummary;
     std::fprintf(
         stderr,
         "NativeDesktop bootstrap: config bootstrapFrames=%d "
@@ -1099,21 +1197,30 @@ int main(int argc, char** argv)
     }
     ui.init(g_iScreenWidth, g_iScreenHeight);
     std::fprintf(stderr, "NativeDesktop bootstrap: ui ready\n");
-    NativeDesktopRunBootstrapFrames(runtimeConfig.bootstrapFrames);
-    C4JThread* gameplayThread = NativeDesktopStartLocalGame();
+    NativeDesktopRunBootstrapFrames(
+        runtimeConfig.bootstrapFrames,
+        &runtimeSummary);
+    C4JThread* gameplayThread = NativeDesktopStartLocalGame(&runtimeSummary);
     if (gameplayThread == nullptr ||
         !NativeDesktopWaitForGameplay(
             gameplayThread,
-            runtimeConfig.gameplayWaitMs))
+            runtimeConfig.gameplayWaitMs,
+            &runtimeSummary))
     {
-        (void)NativeDesktopShutdownLocalGame(gameplayThread);
+        (void)NativeDesktopShutdownLocalGame(gameplayThread, &runtimeSummary);
+        NativeDesktopPrintRuntimeSummary(runtimeSummary);
         return 1;
     }
-    NativeDesktopRunGameplayFrames(runtimeConfig.gameplayFrames);
-    if (!NativeDesktopShutdownLocalGame(gameplayThread))
+    NativeDesktopRunGameplayFrames(
+        runtimeConfig.gameplayFrames,
+        &runtimeSummary);
+    if (!NativeDesktopShutdownLocalGame(gameplayThread, &runtimeSummary))
     {
+        NativeDesktopPrintRuntimeSummary(runtimeSummary);
         return 1;
     }
+    runtimeSummary.loopComplete = true;
+    NativeDesktopPrintRuntimeSummary(runtimeSummary);
     std::fprintf(stderr, "NativeDesktop gameplay: complete\n");
     std::fprintf(stderr, "NativeDesktop bootstrap: loop complete\n");
     app.DebugPrintf("Minecraft NativeDesktop client bootstrap initialized.\n");
