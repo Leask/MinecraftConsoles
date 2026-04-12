@@ -287,6 +287,14 @@ void ItemInHandRenderer::renderItem(shared_ptr<LivingEntity> mob, shared_ptr<Ite
         float xo = 0.0f;
         float yo = 0.3f;
 
+		if (mob->getAnimOverrideBitmask() & (1 << HumanoidModel::eAnim_SmallModel))
+		{
+			if (mob->isRiding() && mob->riding != nullptr)
+			{
+				yo += 0.3f;
+			}
+		}
+
         glEnable(GL_RESCALE_NORMAL);
         glTranslatef(-xo, -yo, 0);
         float s = 1.5f;
@@ -952,4 +960,3 @@ void ItemInHandRenderer::itemUsed()
 {
 	height = 0;
 }
-

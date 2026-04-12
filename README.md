@@ -190,12 +190,14 @@ docker compose -f docker-compose.dedicated-server.yml up -d --build
 
 Useful environment variables:
 - `XVFB_DISPLAY` (default: `:99`)
-- `XVFB_SCREEN` (default: `64x64x16`, tiny virtual display used by Wine)
+- `XVFB_SCREEN` (default: `720x1280x16`, minimum virtual display used by Wine)
+- `SERVER_BIND_IP` (default: `0.0.0.0`)
+- `SERVER_PORT` (default: `25565`)
 
 Fixed server runtime behavior in container:
 - executable path: `/srv/mc/Minecraft.Server.exe`
-- bind IP: `0.0.0.0`
-- server port: `25565`
+- bind IP: configured by `SERVER_BIND_IP`
+- server port: configured by `SERVER_PORT`
 
 Persistent files are bind-mounted to host:
 - `./server-data/server.properties` -> `/srv/mc/server.properties`

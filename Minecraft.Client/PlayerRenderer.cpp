@@ -14,6 +14,8 @@
 #include "../Minecraft.World/net.minecraft.h"
 #include "../Minecraft.World/StringHelpers.h"
 
+#include <algorithm>
+
 static unsigned int nametagColorForIndex(int index)
 {
 	static const unsigned int s_firstColors[] = {
@@ -199,10 +201,19 @@ void PlayerRenderer::render(shared_ptr<Entity> _mob, double x, double y, double 
     armorParts1->sneaking = armorParts2->sneaking = humanoidModel->sneaking = mob->isSneaking();
 
     double yp = y - mob->heightOffset;
-    if (mob->isSneaking() && !mob->instanceof(eTYPE_LOCALPLAYER))
+    if (mob->isSneaking())
 	{
         yp -= 2 / 16.0f;
     }
+
+	if (mob->getAnimOverrideBitmask() & (1 << HumanoidModel::eAnim_SmallModel))
+	{
+		if (mob->isRiding() && mob->riding != nullptr &&
+			mob->riding->instanceof(eTYPE_BOAT))
+		{
+			yp += 0.25f;
+		}
+	}
 
 	// Check if an idle animation is needed
 	if(mob->getAnimOverrideBitmask()&(1<<HumanoidModel::eAnim_HasIdle))
@@ -518,6 +529,31 @@ void PlayerRenderer::renderHand()
 	if((humanoidModel->m_uiAnimOverrideBitmask&(1<<HumanoidModel::eAnim_DisableRenderArm0))==0)
 	{
 		humanoidModel->arm0->render(1 / 16.0f,true);
+	}
+
+	vector<ModelPart*>* additionalModelParts =
+		Minecraft::GetInstance()->player->GetAdditionalModelParts();
+	if (additionalModelParts == nullptr)
+		return;
+
+	vector<ModelPart*> armChildren = humanoidModel->arm0->children;
+	for (ModelPart *part : armChildren)
+	{
+		if (part == nullptr)
+			continue;
+		if (std::find(additionalModelParts->begin(), additionalModelParts->end(), part) ==
+			additionalModelParts->end())
+		{
+			continue;
+		}
+
+		glPushMatrix();
+		glTranslatef(-5 * 0.0625f, 2 * 0.0625f, 0);
+		glRotatef(0.1f * (180.0f / PI), 0, 0, 1);
+		part->visible = true;
+		part->render(1.0f / 16.0f, true);
+		part->visible = false;
+		glPopMatrix();
 	}
 }
 
