@@ -156,8 +156,9 @@ Status: next.
 Direction:
 
 - make the client runtime summary the canonical startup health contract
-  (startup milestones, final phase, exit code, and runtime health are now
-  smoke-checked)
+  (startup milestones, final phase, exit code, runtime health, observed
+  gameplay world/player readiness, screen/menu state observation, and QNet
+  gameplay lineage are now smoke-checked)
 - replace remaining active `_WINDOWS64` UI/input branches with
   `_NATIVE_DESKTOP` branches
   (native keyboard scene, direct text edit, KBM mouse UI dispatch, and the
@@ -171,6 +172,8 @@ Direction:
   movement, and look state for `Screen`/UI/gameplay consumers;
   client smoke now injects a deterministic native desktop input replay script
   and validates the runtime input lineage in the summary;
+  native desktop summary now captures high-water gameplay, world/player, UI,
+  and QNet observations so smoke fails if startup only reaches a shallow shell;
   native Iggy stubs now expose deterministic control visibility/geometry so
   mouse hit-testing and crafting H-slot dispatch can run on macOS/Linux)
 - isolate Direct3D-shaped renderer structs behind native renderer-neutral names

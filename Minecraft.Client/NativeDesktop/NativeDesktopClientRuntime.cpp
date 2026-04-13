@@ -705,6 +705,16 @@ namespace
         bool shutdownComplete = false;
         bool loopComplete = false;
         bool runtimeHealthy = false;
+        bool gameplayGameStarted = false;
+        bool gameplayLevelReady = false;
+        bool gameplayPlayerReady = false;
+        bool gameplayScreenCleared = false;
+        bool gameplayMenuStateObserved = false;
+        bool gameplayMenuClosed = false;
+        bool qnetHostObserved = false;
+        bool qnetGameplayObserved = false;
+        int qnetPlayerCountMax = 0;
+        int qnetLastState = -1;
         int exitCode = 1;
         const char* phase = "starting";
         const char* failure = "none";
@@ -1250,6 +1260,59 @@ namespace
         return static_cast<int>(parsed);
     }
 
+    void NativeDesktopUpdateRuntimeObservation(
+        NativeDesktopRuntimeSummary* summary)
+    {
+        if (summary == nullptr)
+        {
+            return;
+        }
+
+        Minecraft* minecraft = Minecraft::GetInstance();
+        const bool gameStarted = app.GetGameStarted();
+        const bool levelReady =
+            minecraft != nullptr && minecraft->level != nullptr;
+        const bool playerReady =
+            minecraft != nullptr && minecraft->player != nullptr;
+        const bool screenCleared =
+            gameStarted &&
+            minecraft != nullptr &&
+            minecraft->getScreen() == nullptr;
+        int primaryPad = ProfileManager.GetPrimaryPad();
+        if (primaryPad < 0 || primaryPad >= XUSER_MAX_COUNT)
+        {
+            primaryPad = 0;
+        }
+        const bool menuStateObserved =
+            summary->uiReady &&
+            gameStarted;
+        const bool menuClosed =
+            menuStateObserved && !ui.GetMenuDisplayed(primaryPad);
+        const QNET_STATE qnetState = ::_iQNetStubState;
+
+        summary->gameplayGameStarted =
+            summary->gameplayGameStarted || gameStarted;
+        summary->gameplayLevelReady =
+            summary->gameplayLevelReady || levelReady;
+        summary->gameplayPlayerReady =
+            summary->gameplayPlayerReady || playerReady;
+        summary->gameplayScreenCleared =
+            summary->gameplayScreenCleared || screenCleared;
+        summary->gameplayMenuStateObserved =
+            summary->gameplayMenuStateObserved || menuStateObserved;
+        summary->gameplayMenuClosed =
+            summary->gameplayMenuClosed || menuClosed;
+        summary->qnetHostObserved =
+            summary->qnetHostObserved || IQNet::s_isHosting;
+        summary->qnetGameplayObserved =
+            summary->qnetGameplayObserved ||
+            qnetState == QNET_STATE_GAME_PLAY;
+        summary->qnetPlayerCountMax = std::max(
+            summary->qnetPlayerCountMax,
+            static_cast<int>(IQNet::s_playerCount));
+        summary->qnetLastState = static_cast<int>(qnetState);
+    }
+
     NativeDesktopRuntimeConfig NativeDesktopLoadRuntimeConfig()
     {
         NativeDesktopRuntimeConfig config;
@@ -1363,6 +1426,7 @@ namespace
         ui.render();
         g_NetworkManager.DoWork();
         g_KBMInput.EndFrame();
+        NativeDesktopUpdateRuntimeObservation(summary);
     }
 
     void NativeDesktopConfigureLocalWorld(NetworkGameInitData* param)
@@ -1517,6 +1581,7 @@ namespace
             ui.render();
             g_NetworkManager.DoWork();
             g_KBMInput.EndFrame();
+            NativeDesktopUpdateRuntimeObservation(summary);
             std::fprintf(
                 stderr,
                 "NativeDesktop gameplay: frame %d end\n",
@@ -1653,6 +1718,16 @@ namespace
             "shutdownComplete=%d "
             "loopComplete=%d "
             "runtimeHealthy=%d "
+            "runtime.gameStarted=%d "
+            "runtime.levelReady=%d "
+            "runtime.playerReady=%d "
+            "runtime.screenCleared=%d "
+            "runtime.menuObserved=%d "
+            "runtime.menuClosed=%d "
+            "qnet.hostObserved=%d "
+            "qnet.gameplayObserved=%d "
+            "qnet.playersMax=%d "
+            "qnet.lastState=%d "
             "input.scriptLoaded=%d "
             "input.scriptEvents=%d "
             "input.invalidEvents=%d "
@@ -1688,6 +1763,16 @@ namespace
             summary.shutdownComplete ? 1 : 0,
             summary.loopComplete ? 1 : 0,
             summary.runtimeHealthy ? 1 : 0,
+            summary.gameplayGameStarted ? 1 : 0,
+            summary.gameplayLevelReady ? 1 : 0,
+            summary.gameplayPlayerReady ? 1 : 0,
+            summary.gameplayScreenCleared ? 1 : 0,
+            summary.gameplayMenuStateObserved ? 1 : 0,
+            summary.gameplayMenuClosed ? 1 : 0,
+            summary.qnetHostObserved ? 1 : 0,
+            summary.qnetGameplayObserved ? 1 : 0,
+            summary.qnetPlayerCountMax,
+            summary.qnetLastState,
             summary.inputScriptLoaded ? 1 : 0,
             summary.inputScriptEvents,
             summary.inputInvalidEvents,
@@ -1711,6 +1796,7 @@ namespace
             summary->exitCode = exitCode;
             summary->phase = phase;
             summary->failure = failure;
+            NativeDesktopUpdateRuntimeObservation(summary);
             g_NativeDesktopInputReplay.UpdateSummary(summary);
             summary->runtimeHealthy =
                 exitCode == 0 &&
