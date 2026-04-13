@@ -28,6 +28,17 @@ endif()
 
 get_filename_component(EXECUTABLE_DIR "${EXECUTABLE}" DIRECTORY)
 
+set(INPUT_SCRIPT "bootstrap:0:focus:true")
+string(APPEND INPUT_SCRIPT "|bootstrap:0:mouse-move:80,60")
+string(APPEND INPUT_SCRIPT "|gameplay:0:mouse-move:320,240")
+string(APPEND INPUT_SCRIPT "|gameplay:0:mouse-down:middle")
+string(APPEND INPUT_SCRIPT "|gameplay:1:mouse-up:middle")
+string(APPEND INPUT_SCRIPT "|gameplay:2:mouse-delta:4,-2")
+string(APPEND INPUT_SCRIPT "|gameplay:3:wheel:120")
+string(APPEND INPUT_SCRIPT "|gameplay:4:char:x")
+string(APPEND INPUT_SCRIPT "|gameplay:5:key-down:w")
+string(APPEND INPUT_SCRIPT "|gameplay:6:key-up:w")
+
 function(native_desktop_output_tail output_var input)
   string(LENGTH "${input}" input_length)
   set(max_output_length 12000)
@@ -49,6 +60,7 @@ execute_process(
     "MINECRAFT_NATIVE_DESKTOP_BOOTSTRAP_FRAMES=${BOOTSTRAP_FRAMES}"
     "MINECRAFT_NATIVE_DESKTOP_GAMEPLAY_FRAMES=${GAMEPLAY_FRAMES}"
     "MINECRAFT_NATIVE_DESKTOP_WAIT_MS=${WAIT_MS}"
+    "MINECRAFT_NATIVE_DESKTOP_INPUT_SCRIPT=${INPUT_SCRIPT}"
     "${EXECUTABLE}"
   WORKING_DIRECTORY "${EXECUTABLE_DIR}"
   TIMEOUT 120
@@ -117,6 +129,15 @@ set(expected_summary_markers
   "shutdownComplete=1"
   "loopComplete=1"
   "runtimeHealthy=1"
+  "input.scriptLoaded=1"
+  "input.scriptEvents=10"
+  "input.invalidEvents=0"
+  "input.appliedEvents=10"
+  "input.lastAppliedPhase=gameplay"
+  "input.lastAppliedFrame=6"
+  "input.any=1"
+  "input.kbmActive=1"
+  "input.mouse=320,240"
 )
 
 foreach(expected_summary_marker IN LISTS expected_summary_markers)

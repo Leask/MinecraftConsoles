@@ -1,9 +1,13 @@
 #include "stdafx.h"
 
+#include <algorithm>
 #include <cerrno>
+#include <cctype>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
+#include <string>
+#include <vector>
 
 #include "../Minecraft.h"
 #include "../MinecraftServer.h"
@@ -673,6 +677,7 @@ namespace
         int bootstrapFrames = kDefaultNativeDesktopBootstrapFrames;
         int gameplayFrames = kDefaultNativeDesktopGameplayFrames;
         int gameplayWaitMs = kDefaultNativeDesktopGameplayWaitMs;
+        std::string inputScript;
     };
 
     struct NativeDesktopRuntimeSummary
@@ -703,7 +708,515 @@ namespace
         int exitCode = 1;
         const char* phase = "starting";
         const char* failure = "none";
+        bool inputScriptLoaded = false;
+        int inputScriptEvents = 0;
+        int inputInvalidEvents = 0;
+        int inputAppliedEvents = 0;
+        const char* inputLastAppliedPhase = "none";
+        int inputLastAppliedFrame = -1;
+        bool inputHasAny = false;
+        bool inputKbmActive = false;
+        int inputMouseX = 0;
+        int inputMouseY = 0;
     };
+
+    enum class NativeDesktopInputFramePhase
+    {
+        Bootstrap,
+        Frontend,
+        Gameplay
+    };
+
+    const char* NativeDesktopInputFramePhaseName(
+        NativeDesktopInputFramePhase phase)
+    {
+        switch (phase)
+        {
+        case NativeDesktopInputFramePhase::Bootstrap:
+            return "bootstrap";
+        case NativeDesktopInputFramePhase::Frontend:
+            return "frontend";
+        case NativeDesktopInputFramePhase::Gameplay:
+            return "gameplay";
+        }
+        return "unknown";
+    }
+
+    enum class NativeDesktopInputEventType
+    {
+        KeyDown,
+        KeyUp,
+        MouseDown,
+        MouseUp,
+        MouseMove,
+        MouseDelta,
+        MouseWheel,
+        Character,
+        Focus
+    };
+
+    struct NativeDesktopInputEvent
+    {
+        NativeDesktopInputFramePhase phase =
+            NativeDesktopInputFramePhase::Bootstrap;
+        NativeDesktopInputEventType type = NativeDesktopInputEventType::KeyDown;
+        int frame = 0;
+        int firstValue = 0;
+        int secondValue = 0;
+        wchar_t character = 0;
+        bool applied = false;
+    };
+
+    std::string NativeDesktopTrim(std::string value)
+    {
+        auto isNotSpace = [](unsigned char c)
+        {
+            return std::isspace(c) == 0;
+        };
+
+        value.erase(
+            value.begin(),
+            std::find_if(value.begin(), value.end(), isNotSpace));
+        value.erase(
+            std::find_if(value.rbegin(), value.rend(), isNotSpace).base(),
+            value.end());
+        return value;
+    }
+
+    std::string NativeDesktopLower(std::string value)
+    {
+        std::transform(
+            value.begin(),
+            value.end(),
+            value.begin(),
+            [](unsigned char c)
+            {
+                return static_cast<char>(std::tolower(c));
+            });
+        return value;
+    }
+
+    std::vector<std::string> NativeDesktopSplit(
+        const std::string& value,
+        char separator)
+    {
+        std::vector<std::string> parts;
+        std::size_t start = 0;
+        while (start <= value.size())
+        {
+            const std::size_t end = value.find(separator, start);
+            if (end == std::string::npos)
+            {
+                parts.push_back(value.substr(start));
+                break;
+            }
+            parts.push_back(value.substr(start, end - start));
+            start = end + 1;
+        }
+        return parts;
+    }
+
+    bool NativeDesktopParseInt(const std::string& text, int* outValue)
+    {
+        if (outValue == nullptr || text.empty())
+        {
+            return false;
+        }
+
+        errno = 0;
+        char* end = nullptr;
+        long parsed = std::strtol(text.c_str(), &end, 10);
+        if (errno != 0 || end == text.c_str() || *end != '\0')
+        {
+            return false;
+        }
+
+        *outValue = static_cast<int>(parsed);
+        return true;
+    }
+
+    bool NativeDesktopParsePair(
+        const std::string& text,
+        int* firstValue,
+        int* secondValue)
+    {
+        std::vector<std::string> values = NativeDesktopSplit(text, ',');
+        if (values.size() != 2)
+        {
+            return false;
+        }
+
+        return NativeDesktopParseInt(
+            NativeDesktopTrim(values[0]),
+            firstValue) &&
+            NativeDesktopParseInt(
+                NativeDesktopTrim(values[1]),
+                secondValue);
+    }
+
+    bool NativeDesktopParseInputPhase(
+        const std::string& text,
+        NativeDesktopInputFramePhase* phase)
+    {
+        if (phase == nullptr)
+        {
+            return false;
+        }
+
+        const std::string lower = NativeDesktopLower(NativeDesktopTrim(text));
+        if (lower == "bootstrap" || lower == "b")
+        {
+            *phase = NativeDesktopInputFramePhase::Bootstrap;
+            return true;
+        }
+        if (lower == "frontend" || lower == "f")
+        {
+            *phase = NativeDesktopInputFramePhase::Frontend;
+            return true;
+        }
+        if (lower == "gameplay" || lower == "g")
+        {
+            *phase = NativeDesktopInputFramePhase::Gameplay;
+            return true;
+        }
+        return false;
+    }
+
+    bool NativeDesktopParseKeyName(const std::string& text, int* key)
+    {
+        if (key == nullptr)
+        {
+            return false;
+        }
+
+        const std::string trimmed = NativeDesktopTrim(text);
+        if (trimmed.size() == 1)
+        {
+            unsigned char c = static_cast<unsigned char>(trimmed[0]);
+            *key = static_cast<int>(std::toupper(c));
+            return true;
+        }
+
+        const std::string lower = NativeDesktopLower(trimmed);
+        if (lower == "backspace") { *key = VK_BACK; return true; }
+        if (lower == "tab") { *key = VK_TAB; return true; }
+        if (lower == "enter" || lower == "return") { *key = VK_RETURN; return true; }
+        if (lower == "shift") { *key = VK_SHIFT; return true; }
+        if (lower == "lshift") { *key = VK_LSHIFT; return true; }
+        if (lower == "rshift") { *key = VK_RSHIFT; return true; }
+        if (lower == "control" || lower == "ctrl") { *key = VK_CONTROL; return true; }
+        if (lower == "lcontrol" || lower == "lctrl") { *key = VK_LCONTROL; return true; }
+        if (lower == "rcontrol" || lower == "rctrl") { *key = VK_RCONTROL; return true; }
+        if (lower == "alt") { *key = VK_MENU; return true; }
+        if (lower == "lalt") { *key = VK_LMENU; return true; }
+        if (lower == "ralt") { *key = VK_RMENU; return true; }
+        if (lower == "escape" || lower == "esc") { *key = VK_ESCAPE; return true; }
+        if (lower == "left") { *key = VK_LEFT; return true; }
+        if (lower == "right") { *key = VK_RIGHT; return true; }
+        if (lower == "up") { *key = VK_UP; return true; }
+        if (lower == "down") { *key = VK_DOWN; return true; }
+        if (lower == "delete" || lower == "del") { *key = VK_DELETE; return true; }
+        if (lower == "home") { *key = VK_HOME; return true; }
+        if (lower == "end") { *key = VK_END; return true; }
+        if (lower == "space") { *key = VK_SPACE; return true; }
+        if (lower == "pageup") { *key = VK_PRIOR; return true; }
+        if (lower == "pagedown") { *key = VK_NEXT; return true; }
+        if (lower == "f1") { *key = VK_F1; return true; }
+        if (lower == "f2") { *key = VK_F2; return true; }
+        if (lower == "f3") { *key = VK_F3; return true; }
+        if (lower == "f4") { *key = VK_F4; return true; }
+        if (lower == "f5") { *key = VK_F5; return true; }
+        if (lower == "f6") { *key = VK_F6; return true; }
+        if (lower == "f8") { *key = VK_F8; return true; }
+        if (lower == "f9") { *key = VK_F9; return true; }
+        if (lower == "f11") { *key = VK_F11; return true; }
+        return false;
+    }
+
+    bool NativeDesktopParseMouseButton(const std::string& text, int* button)
+    {
+        if (button == nullptr)
+        {
+            return false;
+        }
+
+        const std::string lower = NativeDesktopLower(NativeDesktopTrim(text));
+        if (lower == "left" || lower == "0")
+        {
+            *button = KeyboardMouseInput::MOUSE_LEFT;
+            return true;
+        }
+        if (lower == "right" || lower == "1")
+        {
+            *button = KeyboardMouseInput::MOUSE_RIGHT;
+            return true;
+        }
+        if (lower == "middle" || lower == "2")
+        {
+            *button = KeyboardMouseInput::MOUSE_MIDDLE;
+            return true;
+        }
+        return false;
+    }
+
+    bool NativeDesktopParseBool(const std::string& text, bool* value)
+    {
+        if (value == nullptr)
+        {
+            return false;
+        }
+
+        const std::string lower = NativeDesktopLower(NativeDesktopTrim(text));
+        if (lower == "1" || lower == "true" || lower == "focused")
+        {
+            *value = true;
+            return true;
+        }
+        if (lower == "0" || lower == "false" || lower == "blurred")
+        {
+            *value = false;
+            return true;
+        }
+        return false;
+    }
+
+    bool NativeDesktopParseInputEvent(
+        const std::string& token,
+        NativeDesktopInputEvent* event)
+    {
+        if (event == nullptr)
+        {
+            return false;
+        }
+
+        std::vector<std::string> parts = NativeDesktopSplit(token, ':');
+        if (parts.size() != 4 ||
+            !NativeDesktopParseInputPhase(parts[0], &event->phase) ||
+            !NativeDesktopParseInt(NativeDesktopTrim(parts[1]), &event->frame) ||
+            event->frame < 0)
+        {
+            return false;
+        }
+
+        const std::string type = NativeDesktopLower(NativeDesktopTrim(parts[2]));
+        const std::string value = NativeDesktopTrim(parts[3]);
+        if (type == "key-down" || type == "keydown" || type == "key_down")
+        {
+            event->type = NativeDesktopInputEventType::KeyDown;
+            return NativeDesktopParseKeyName(value, &event->firstValue);
+        }
+        if (type == "key-up" || type == "keyup" || type == "key_up")
+        {
+            event->type = NativeDesktopInputEventType::KeyUp;
+            return NativeDesktopParseKeyName(value, &event->firstValue);
+        }
+        if (type == "mouse-down" ||
+            type == "mousedown" ||
+            type == "mouse_down")
+        {
+            event->type = NativeDesktopInputEventType::MouseDown;
+            return NativeDesktopParseMouseButton(value, &event->firstValue);
+        }
+        if (type == "mouse-up" || type == "mouseup" || type == "mouse_up")
+        {
+            event->type = NativeDesktopInputEventType::MouseUp;
+            return NativeDesktopParseMouseButton(value, &event->firstValue);
+        }
+        if (type == "mouse-move" ||
+            type == "mousemove" ||
+            type == "mouse_move")
+        {
+            event->type = NativeDesktopInputEventType::MouseMove;
+            return NativeDesktopParsePair(
+                value,
+                &event->firstValue,
+                &event->secondValue);
+        }
+        if (type == "mouse-delta" ||
+            type == "mousedelta" ||
+            type == "mouse_delta")
+        {
+            event->type = NativeDesktopInputEventType::MouseDelta;
+            return NativeDesktopParsePair(
+                value,
+                &event->firstValue,
+                &event->secondValue);
+        }
+        if (type == "wheel" || type == "mouse-wheel" || type == "mouse_wheel")
+        {
+            event->type = NativeDesktopInputEventType::MouseWheel;
+            return NativeDesktopParseInt(value, &event->firstValue);
+        }
+        if (type == "char" || type == "character")
+        {
+            if (value.empty())
+            {
+                return false;
+            }
+            event->type = NativeDesktopInputEventType::Character;
+            event->character = static_cast<unsigned char>(value[0]);
+            return true;
+        }
+        if (type == "focus")
+        {
+            bool focused = false;
+            if (!NativeDesktopParseBool(value, &focused))
+            {
+                return false;
+            }
+            event->type = NativeDesktopInputEventType::Focus;
+            event->firstValue = focused ? 1 : 0;
+            return true;
+        }
+
+        return false;
+    }
+
+    class NativeDesktopInputReplay
+    {
+    public:
+        void Load(const std::string& script)
+        {
+            m_events.clear();
+            m_invalidEvents = 0;
+            m_appliedEvents = 0;
+            m_lastAppliedPhase = "none";
+            m_lastAppliedFrame = -1;
+
+            std::string normalized = script;
+            std::replace(normalized.begin(), normalized.end(), ';', '|');
+            for (const std::string& rawToken :
+                NativeDesktopSplit(normalized, '|'))
+            {
+                const std::string token = NativeDesktopTrim(rawToken);
+                if (token.empty())
+                {
+                    continue;
+                }
+
+                NativeDesktopInputEvent event;
+                if (!NativeDesktopParseInputEvent(token, &event))
+                {
+                    ++m_invalidEvents;
+                    std::fprintf(
+                        stderr,
+                        "NativeDesktop input: ignored script token: %s\n",
+                        token.c_str());
+                    continue;
+                }
+                m_events.push_back(event);
+            }
+
+            m_scriptLoaded = !m_events.empty();
+            std::fprintf(
+                stderr,
+                "NativeDesktop input: scriptLoaded=%d events=%zu invalid=%d\n",
+                m_scriptLoaded ? 1 : 0,
+                m_events.size(),
+                m_invalidEvents);
+        }
+
+        void Apply(
+            NativeDesktopInputFramePhase phase,
+            int frame,
+            NativeDesktopRuntimeSummary* summary)
+        {
+            int appliedThisFrame = 0;
+            for (NativeDesktopInputEvent& event : m_events)
+            {
+                if (event.applied ||
+                    event.phase != phase ||
+                    event.frame != frame)
+                {
+                    continue;
+                }
+
+                ApplyEvent(event);
+                event.applied = true;
+                ++m_appliedEvents;
+                ++appliedThisFrame;
+                m_lastAppliedPhase = NativeDesktopInputFramePhaseName(phase);
+                m_lastAppliedFrame = frame;
+            }
+
+            if (appliedThisFrame > 0)
+            {
+                std::fprintf(
+                    stderr,
+                    "NativeDesktop input: applied phase=%s frame=%d "
+                    "count=%d total=%d\n",
+                    NativeDesktopInputFramePhaseName(phase),
+                    frame,
+                    appliedThisFrame,
+                    m_appliedEvents);
+            }
+            UpdateSummary(summary);
+        }
+
+        void UpdateSummary(NativeDesktopRuntimeSummary* summary) const
+        {
+            if (summary == nullptr)
+            {
+                return;
+            }
+
+            summary->inputScriptLoaded = m_scriptLoaded;
+            summary->inputScriptEvents =
+                static_cast<int>(m_events.size());
+            summary->inputInvalidEvents = m_invalidEvents;
+            summary->inputAppliedEvents = m_appliedEvents;
+            summary->inputLastAppliedPhase = m_lastAppliedPhase;
+            summary->inputLastAppliedFrame = m_lastAppliedFrame;
+            summary->inputHasAny = g_KBMInput.HasAnyInput();
+            summary->inputKbmActive = g_KBMInput.IsKBMActive();
+            summary->inputMouseX = g_KBMInput.GetMouseX();
+            summary->inputMouseY = g_KBMInput.GetMouseY();
+        }
+
+    private:
+        static void ApplyEvent(const NativeDesktopInputEvent& event)
+        {
+            switch (event.type)
+            {
+            case NativeDesktopInputEventType::KeyDown:
+                g_KBMInput.OnKeyDown(event.firstValue);
+                break;
+            case NativeDesktopInputEventType::KeyUp:
+                g_KBMInput.OnKeyUp(event.firstValue);
+                break;
+            case NativeDesktopInputEventType::MouseDown:
+                g_KBMInput.OnMouseButtonDown(event.firstValue);
+                break;
+            case NativeDesktopInputEventType::MouseUp:
+                g_KBMInput.OnMouseButtonUp(event.firstValue);
+                break;
+            case NativeDesktopInputEventType::MouseMove:
+                g_KBMInput.OnMouseMove(event.firstValue, event.secondValue);
+                break;
+            case NativeDesktopInputEventType::MouseDelta:
+                g_KBMInput.OnRawMouseDelta(event.firstValue, event.secondValue);
+                break;
+            case NativeDesktopInputEventType::MouseWheel:
+                g_KBMInput.OnMouseWheel(event.firstValue);
+                break;
+            case NativeDesktopInputEventType::Character:
+                g_KBMInput.OnChar(event.character);
+                break;
+            case NativeDesktopInputEventType::Focus:
+                g_KBMInput.SetWindowFocused(event.firstValue != 0);
+                break;
+            }
+        }
+
+        std::vector<NativeDesktopInputEvent> m_events;
+        bool m_scriptLoaded = false;
+        int m_invalidEvents = 0;
+        int m_appliedEvents = 0;
+        const char* m_lastAppliedPhase = "none";
+        int m_lastAppliedFrame = -1;
+    };
+
+    NativeDesktopInputReplay g_NativeDesktopInputReplay;
 
     int NativeDesktopReadIntSetting(
         const char* name,
@@ -755,6 +1268,12 @@ namespace
             kDefaultNativeDesktopGameplayWaitMs,
             1000,
             300000);
+        const char* inputScript =
+            std::getenv("MINECRAFT_NATIVE_DESKTOP_INPUT_SCRIPT");
+        if (inputScript != nullptr)
+        {
+            config.inputScript = inputScript;
+        }
         return config;
     }
 
@@ -813,6 +1332,10 @@ namespace
                 stderr,
                 "NativeDesktop bootstrap: frame %d begin\n",
                 frame);
+            g_NativeDesktopInputReplay.Apply(
+                NativeDesktopInputFramePhase::Bootstrap,
+                frame,
+                summary);
             ui.tick();
             ui.render();
             g_KBMInput.EndFrame();
@@ -827,8 +1350,14 @@ namespace
         }
     }
 
-    void NativeDesktopRunFrontendFrame()
+    void NativeDesktopRunFrontendFrame(
+        int frame,
+        NativeDesktopRuntimeSummary* summary)
     {
+        g_NativeDesktopInputReplay.Apply(
+            NativeDesktopInputFramePhase::Frontend,
+            frame,
+            summary);
         g_NetworkManager.DoWork();
         ui.tick();
         ui.render();
@@ -921,7 +1450,7 @@ namespace
         int elapsedMs = 0;
         while (elapsedMs < gameplayWaitMs)
         {
-            NativeDesktopRunFrontendFrame();
+            NativeDesktopRunFrontendFrame(elapsedMs / 50, summary);
 
             Minecraft* minecraft = Minecraft::GetInstance();
             if (app.GetGameStarted() &&
@@ -975,6 +1504,10 @@ namespace
                 stderr,
                 "NativeDesktop gameplay: frame %d begin\n",
                 frame);
+            g_NativeDesktopInputReplay.Apply(
+                NativeDesktopInputFramePhase::Gameplay,
+                frame,
+                summary);
             g_NetworkManager.DoWork();
             if (minecraft != nullptr)
             {
@@ -1119,7 +1652,16 @@ namespace
             "networkThreadStopped=%d "
             "shutdownComplete=%d "
             "loopComplete=%d "
-            "runtimeHealthy=%d\n",
+            "runtimeHealthy=%d "
+            "input.scriptLoaded=%d "
+            "input.scriptEvents=%d "
+            "input.invalidEvents=%d "
+            "input.appliedEvents=%d "
+            "input.lastAppliedPhase=%s "
+            "input.lastAppliedFrame=%d "
+            "input.any=%d "
+            "input.kbmActive=%d "
+            "input.mouse=%d,%d\n",
             summary.phase,
             summary.failure,
             summary.exitCode,
@@ -1145,7 +1687,17 @@ namespace
             summary.networkThreadStopped ? 1 : 0,
             summary.shutdownComplete ? 1 : 0,
             summary.loopComplete ? 1 : 0,
-            summary.runtimeHealthy ? 1 : 0);
+            summary.runtimeHealthy ? 1 : 0,
+            summary.inputScriptLoaded ? 1 : 0,
+            summary.inputScriptEvents,
+            summary.inputInvalidEvents,
+            summary.inputAppliedEvents,
+            summary.inputLastAppliedPhase,
+            summary.inputLastAppliedFrame,
+            summary.inputHasAny ? 1 : 0,
+            summary.inputKbmActive ? 1 : 0,
+            summary.inputMouseX,
+            summary.inputMouseY);
     }
 
     int NativeDesktopFinishRuntime(
@@ -1159,6 +1711,7 @@ namespace
             summary->exitCode = exitCode;
             summary->phase = phase;
             summary->failure = failure;
+            g_NativeDesktopInputReplay.UpdateSummary(summary);
             summary->runtimeHealthy =
                 exitCode == 0 &&
                 summary->startupComplete &&
@@ -1236,6 +1789,8 @@ int main(int argc, char** argv)
     std::fprintf(stderr, "NativeDesktop bootstrap: start\n");
     NativeDesktopRuntimeConfig runtimeConfig = NativeDesktopLoadRuntimeConfig();
     NativeDesktopRuntimeSummary runtimeSummary;
+    g_NativeDesktopInputReplay.Load(runtimeConfig.inputScript);
+    g_NativeDesktopInputReplay.UpdateSummary(&runtimeSummary);
     std::fprintf(
         stderr,
         "NativeDesktop bootstrap: config bootstrapFrames=%d "
