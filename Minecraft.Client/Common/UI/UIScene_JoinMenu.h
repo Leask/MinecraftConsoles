@@ -62,7 +62,7 @@ private:
 	bool m_friendInfoUpdatedOK;
 	bool m_friendInfoUpdatedERROR;
 
-#ifdef _WINDOWS64
+	#if defined(_NATIVE_DESKTOP)
 	int m_serverIndex; // Index in servers.db, -1 if not a saved server
 	enum eEditServerPhase { eEditServer_Idle, eEditServer_IP, eEditServer_Port, eEditServer_Name };
 	eEditServerPhase m_editServerPhase;
@@ -70,7 +70,7 @@ private:
 	wstring m_editServerPort;
 	int m_editServerButtonIndex;
 	int m_deleteServerButtonIndex;
-#endif
+	#endif
 
 public:
 	UIScene_JoinMenu(int iPad, void *initData, UILayer *parentLayer);
@@ -106,12 +106,12 @@ protected:
 	static int StartGame_SignInReturned(void *pParam, bool, int);
 	static void JoinGame(UIScene_JoinMenu* pClass);
 
-#ifdef _WINDOWS64
+	#if defined(_NATIVE_DESKTOP)
 	void BeginEditServer();
 	void BeginDeleteServer();
 	static int EditServerKeyboardCallback(LPVOID lpParam, bool bRes);
 	static int DeleteServerDialogReturned(void *pParam, int iPad, C4JStorage::EMessageResult result);
 	void UpdateServerInFile(const wstring& newIP, const wstring& newPort, const wstring& newName);
 	void RemoveServerFromFile();
-#endif
+	#endif
 };

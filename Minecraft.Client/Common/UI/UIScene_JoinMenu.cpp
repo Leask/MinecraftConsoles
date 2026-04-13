@@ -21,7 +21,7 @@ UIScene_JoinMenu::UIScene_JoinMenu(int iPad, void *_initData, UILayer *parentLay
 	m_friendInfoUpdatedOK = false;
 	m_friendInfoUpdatedERROR = false;
 	m_friendInfoRequestIssued = false;
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	m_serverIndex = initData->serverIndex;
 	m_editServerPhase = eEditServer_Idle;
 	m_editServerButtonIndex = -1;
@@ -45,7 +45,7 @@ void UIScene_JoinMenu::updateTooltips()
 		iA = IDS_TOOLTIPS_SELECT;
 	}
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	if (m_serverIndex >= 0)
 	{
 		iX = IDS_TOOLTIPS_DELETE;
@@ -122,7 +122,7 @@ void UIScene_JoinMenu::tick()
 		}
 #endif
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 		if (m_serverIndex >= 0)
 		{
 			m_editServerButtonIndex = m_buttonListPlayers.getItemCount();
@@ -304,7 +304,7 @@ void UIScene_JoinMenu::handleInput(int iPad, int key, bool repeat, bool pressed,
 		}
 		break;
 #endif
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	case ACTION_MENU_X:
 		if(pressed && m_serverIndex >= 0)
 		{
@@ -325,7 +325,7 @@ void UIScene_JoinMenu::handleInput(int iPad, int key, bool repeat, bool pressed,
 		{
 			sendInputToMovie(key, repeat, pressed, released);
 		}
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 		else if (pressed && m_serverIndex >= 0)
 		{
 			int sel = m_buttonListPlayers.getCurrentSelection();
@@ -369,7 +369,7 @@ void UIScene_JoinMenu::handlePress(F64 controlId, F64 childId)
 		}
 		break;
 	case eControl_GamePlayers:
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 		if (m_serverIndex >= 0)
 		{
 			int sel = (int)childId;
@@ -698,7 +698,7 @@ void UIScene_JoinMenu::handleTimerComplete(int id)
 	};
 }
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 void UIScene_JoinMenu::BeginDeleteServer()
 {
 	m_bIgnoreInput = true;
@@ -971,4 +971,4 @@ void UIScene_JoinMenu::RemoveServerFromFile()
 		fclose(file);
 	}
 }
-#endif // _WINDOWS64
+#endif // _NATIVE_DESKTOP

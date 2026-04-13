@@ -515,7 +515,7 @@ void UIScene_LoadOrJoinMenu::Initialise()
 {
     m_iSaveListIndex = 0;
 	m_iGameListIndex = 0;
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	m_addServerPhase = eAddServer_Idle;
 #endif
 
@@ -1480,7 +1480,7 @@ void UIScene_LoadOrJoinMenu::handleFocusChange(F64 controlId, F64 childId)
 	{
 	case eControl_GamesList:
 		m_iGameListIndex = childId;
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 		// Offset past the "Add Server" button so m_iGameListIndex is a session index
 		m_iGameListIndex -= 1;
 #endif
@@ -1611,7 +1611,7 @@ void UIScene_LoadOrJoinMenu::handlePress(F64 controlId, F64 childId)
         break;
     case eControl_GamesList:
         {
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
             if (static_cast<int>(childId) == ADD_SERVER_BUTTON_INDEX)
             {
                 ui.PlayUISFX(eSFX_Press);
@@ -1628,7 +1628,7 @@ void UIScene_LoadOrJoinMenu::handlePress(F64 controlId, F64 childId)
 
 			{
 				int nIndex = static_cast<int>(childId);
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 				// Offset by 1 because the "Add Server" button is at index 0
 				nIndex -= 1;
 #endif
@@ -1771,7 +1771,7 @@ void UIScene_LoadOrJoinMenu::CheckAndJoinGame(int gameIndex)
 
 		m_initData->iPad = 0;;
 		m_initData->selectedSession = m_currentSessions->at( gameIndex );
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 		{
 
 			int serverDbCount = 0;
@@ -1939,7 +1939,7 @@ void UIScene_LoadOrJoinMenu::UpdateGamesList()
     if(DoesGamesListHaveFocus() && m_buttonListGames.getItemCount() > 0)
     {
         unsigned int nIndex = m_buttonListGames.getCurrentSelection();
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
         // Offset past the "Add Server" button
         if (nIndex > 0)
             pSelectedSession = m_currentSessions->at( nIndex - 1 );
@@ -2027,7 +2027,7 @@ void UIScene_LoadOrJoinMenu::UpdateGamesList()
     // clear out the games list and re-fill
     m_buttonListGames.clearList();
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
     // Always add the "Add Server" button as the first entry in the games list
     m_buttonListGames.addItem(wstring(L"Add Server"));
 #endif
@@ -2097,7 +2097,7 @@ void UIScene_LoadOrJoinMenu::UpdateGamesList()
 
             if(memcmp( &selectedSessionId, &sessionInfo->sessionId, sizeof(SessionID) ) == 0)
             {
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
                 // Offset past the "Add Server" button
                 m_buttonListGames.setCurrentSelection(sessionIndex + 1);
 #else
@@ -4139,7 +4139,7 @@ int UIScene_LoadOrJoinMenu::CopySaveErrorDialogFinishedCallback(void *pParam,int
 }
 
 #endif // _XBOX_ONE
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 // adding servers bellow
 
 void UIScene_LoadOrJoinMenu::BeginAddServer()
@@ -4303,4 +4303,4 @@ void UIScene_LoadOrJoinMenu::AppendServerToFile(const wstring& ip, const wstring
         fclose(file);
     }
 }
-#endif // _WINDOWS64
+#endif // _NATIVE_DESKTOP
