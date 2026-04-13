@@ -257,7 +257,7 @@ void UIScene_LaunchMoreOptionsMenu::handleDestroy()
 void UIScene_LaunchMoreOptionsMenu::handleInput(int iPad, int key, bool repeat, bool pressed, bool released, bool &handled)
 {
 	if(m_bIgnoreInput) return;
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	if (isDirectEditBlocking()) return;
 #endif
 
@@ -339,7 +339,7 @@ void UIScene_LaunchMoreOptionsMenu::handleTouchInput(unsigned int iPad, S32 x, S
 }
 #endif
 
-#if defined(__PSVITA__) || defined(_WINDOWS64)
+#if defined(__PSVITA__) || defined(_NATIVE_DESKTOP)
 UIControl* UIScene_LaunchMoreOptionsMenu::GetMainPanel()
 {
 	if(m_tabIndex == 0)
@@ -553,7 +553,7 @@ int UIScene_LaunchMoreOptionsMenu::KeyboardCompleteSeedCallback(LPVOID lpParam,b
 	pClass->m_bIgnoreInput=false;
 	if (bRes)
 	{
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 		uint16_t pchText[128];
 		ZeroMemory(pchText, 128 * sizeof(uint16_t));
 		NativeDesktop_GetKeyboardText(pchText, 128);
@@ -576,7 +576,7 @@ int UIScene_LaunchMoreOptionsMenu::KeyboardCompleteSeedCallback(LPVOID lpParam,b
 	return 0;
 }
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 void UIScene_LaunchMoreOptionsMenu::getDirectEditInputs(vector<UIControl_TextInput*> &inputs)
 {
 	inputs.push_back(&m_editSeed);
@@ -592,7 +592,7 @@ void UIScene_LaunchMoreOptionsMenu::onDirectEditFinished(UIControl_TextInput *in
 void UIScene_LaunchMoreOptionsMenu::handlePress(F64 controlId, F64 childId)
 {
 	if(m_bIgnoreInput) return;
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	if (isDirectEditBlocking()) return;
 #endif
 
@@ -600,7 +600,7 @@ void UIScene_LaunchMoreOptionsMenu::handlePress(F64 controlId, F64 childId)
 	{
 	case eControl_EditSeed:
 		{
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 			if (g_KBMInput.IsKBMActive())
 			{
 				m_editSeed.beginDirectEdit(60);

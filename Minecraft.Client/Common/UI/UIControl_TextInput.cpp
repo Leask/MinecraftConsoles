@@ -8,7 +8,7 @@ UIControl_TextInput::UIControl_TextInput()
 	m_bHasFocus = false;
 	m_bHasCaret = false;
 	m_bCaretChecked = false;
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	m_bDirectEditing = false;
 	m_iCursorPos = 0;
 	m_iCharLimit = 0;
@@ -138,7 +138,7 @@ void UIControl_TextInput::setCaretIndex(int index)
 	IggyResult out = IggyPlayerCallMethodRS ( m_parentScene->getMovie() , &result, getIggyValuePath() , m_funcSetCaretIndex , 1 , value );
 }
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 
 void UIControl_TextInput::beginDirectEdit(int charLimit)
 {

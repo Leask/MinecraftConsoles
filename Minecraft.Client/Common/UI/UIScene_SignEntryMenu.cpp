@@ -19,7 +19,7 @@ UIScene_SignEntryMenu::UIScene_SignEntryMenu(int iPad, void *_initData, UILayer 
 	m_bConfirmed = false;
 	m_bIgnoreInput = false;
 	m_iSignCursorFrame = 0;
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	m_iActiveDirectEditLine = -1;
 	m_bNeedsInitialEdit = true;
 	m_bSkipTickNav = false;
@@ -84,7 +84,7 @@ void UIScene_SignEntryMenu::tick()
 {
 	UIScene::tick();
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	// On first tick, auto-start editing line 1 if KBM is active (Java-style flow)
 	if (m_bNeedsInitialEdit)
 	{
@@ -134,7 +134,7 @@ void UIScene_SignEntryMenu::tick()
 	m_iSignCursorFrame++;
 	if (m_iSignCursorFrame / 6 % 2 == 0)
 	{
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 		if (m_iActiveDirectEditLine >= 0)
 			m_sign->SetSelectedLine(m_iActiveDirectEditLine);
 		else
@@ -187,7 +187,7 @@ void UIScene_SignEntryMenu::tick()
 void UIScene_SignEntryMenu::handleInput(int iPad, int key, bool repeat, bool pressed, bool released, bool &handled)
 {
 	if(m_bConfirmed || m_bIgnoreInput) return;
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	if (isDirectEditBlocking()) { handled = true; return; }
 #endif
 
@@ -221,7 +221,7 @@ void UIScene_SignEntryMenu::handleInput(int iPad, int key, bool repeat, bool pre
 	case ACTION_MENU_UP:
 	case ACTION_MENU_DOWN:
 		sendInputToMovie(key, repeat, pressed, released);
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 		// Auto-start editing if focus moved to a line (e.g. UP from Confirm)
 		if (g_KBMInput.IsKBMActive())
 		{
@@ -242,7 +242,7 @@ void UIScene_SignEntryMenu::handleInput(int iPad, int key, bool repeat, bool pre
 	}
 }
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 void UIScene_SignEntryMenu::getDirectEditInputs(vector<UIControl_TextInput*> &inputs)
 {
 	for (int i = 0; i < 4; i++)
@@ -313,7 +313,7 @@ int UIScene_SignEntryMenu::KeyboardCompleteCallback(LPVOID lpParam,bool bRes)
 	pClass->m_bIgnoreInput = false;
 	if (bRes)
 	{
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 		uint16_t pchText[128];
 		ZeroMemory(pchText, 128 * sizeof(uint16_t));
 		NativeDesktop_GetKeyboardText(pchText, 128);
@@ -330,7 +330,7 @@ int UIScene_SignEntryMenu::KeyboardCompleteCallback(LPVOID lpParam,bool bRes)
 
 void UIScene_SignEntryMenu::handlePress(F64 controlId, F64 childId)
 {
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	if (isDirectEditBlocking()) return;
 #endif
 	switch(static_cast<int>(controlId))
@@ -346,7 +346,7 @@ void UIScene_SignEntryMenu::handlePress(F64 controlId, F64 childId)
 	case eControl_Line4:
 		{
 			m_iEditingLine = static_cast<int>(controlId);
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 			if (g_KBMInput.IsKBMActive())
 			{
 				// Only start editing from keyboard (Enter on focused line), not mouse clicks

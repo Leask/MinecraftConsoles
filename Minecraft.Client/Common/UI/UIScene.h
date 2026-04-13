@@ -114,7 +114,7 @@ public:
 #ifdef __PSVITA__
 	EUIGroup GetParentLayerGroup() {return m_parentLayer->m_parentGroup->GetGroup();}
 #endif
-#if defined(__PSVITA__) || defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(__PSVITA__) || defined(_NATIVE_DESKTOP)
     UILayer *GetParentLayer() {return m_parentLayer;}
     vector<UIControl *> *GetControls() {return &m_controls;}
 #endif
@@ -146,7 +146,7 @@ public:
 	virtual void tick();
 
 	IggyName registerFastName(const wstring &name);
-#if defined(__PSVITA__) || defined(_WINDOWS64)
+#if defined(__PSVITA__) || defined(_NATIVE_DESKTOP)
 	void SetFocusToElement(int iID);
 #endif
 #ifdef __PSVITA__
@@ -184,7 +184,7 @@ public:
 	// returns main panel if controls are not living in the root
 	virtual UIControl* GetMainPanel();
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	// Direct edit support: scenes override to register their text inputs.
 	// Base class handles tickDirectEdit in tick(), click-outside-to-deselect
 	// in handleMouseClick(), and provides isDirectEditBlocking() for guards.

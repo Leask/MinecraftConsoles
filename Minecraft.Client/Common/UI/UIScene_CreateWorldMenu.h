@@ -78,7 +78,7 @@ protected:
 public:
 	// INPUT
 	virtual void handleInput(int iPad, int key, bool repeat, bool pressed, bool released, bool &handled);
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	virtual void getDirectEditInputs(vector<UIControl_TextInput*> &inputs);
 	virtual void onDirectEditFinished(UIControl_TextInput *input, UIControl_TextInput::EDirectEditResult result);
 #endif

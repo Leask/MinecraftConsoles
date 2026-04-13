@@ -24,7 +24,7 @@ DWORD UIController::m_dwTrialTimerLimitSecs=DYNAMIC_CONFIG_DEFAULT_TRIAL_TIME;
 
 // GetViewportRect and Fit16x9 are now in UISplitScreenHelpers.h
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 static UIControl_Slider *FindSliderById(UIScene *pScene, int sliderId)
 {
 	vector<UIControl *> *controls = pScene->GetControls();
@@ -166,7 +166,7 @@ UIController::UIController()
 #endif
 
 	// 4J Stu - This is a bit of a hack until we change the Minecraft initialisation to store the proper screen size for other platforms
-#if defined _WINDOWS64 || defined _DURANGO || defined __ORBIS__
+#if defined(_NATIVE_DESKTOP) || defined(_DURANGO) || defined(__ORBIS__)
 	m_fScreenWidth = 1920.0f;
 	m_fScreenHeight = 1080.0f;
 	m_bScreenWidthSetup = false;
@@ -819,7 +819,7 @@ void UIController::tickInput()
 		else
 #endif
 		{
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
             m_mouseClickConsumedByScene = false;
             if (!g_KBMInput.IsMouseGrabbed() && g_KBMInput.IsKBMActive())
             {
@@ -1384,7 +1384,7 @@ void UIController::handleKeyPress(unsigned int iPad, unsigned int key)
 	pressed = InputManager.ButtonPressed(iPad,key); // Toggle
 	released = InputManager.ButtonReleased(iPad,key); // Toggle
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	if (iPad == 0)
 	{
 		int vk = 0;
@@ -1730,7 +1730,7 @@ void UIController::setupCustomDrawGameState()
 	m_customRenderingClearRect.top = LONG_MAX;
 	m_customRenderingClearRect.bottom = LONG_MIN;
 
-#if defined _WINDOWS64 || _DURANGO
+#if defined(_NATIVE_DESKTOP) || defined(_DURANGO)
 	PIXBeginNamedEvent(0,"StartFrame");
 	RenderManager.StartFrame();
 	PIXEndNamedEvent();
@@ -1891,8 +1891,8 @@ GDrawTexture * RADLINK UIController::TextureSubstitutionCreateCallback ( void * 
 			*height = 64;
 	#endif
 
-	#if defined _WINDOWS64
-            // Only set the size to 96x96 for 1080p on Windows
+	#if defined(_NATIVE_DESKTOP)
+            // Only set the size to 96x96 for 1080p native desktop scenes.
             UIScene *scene = uiController->GetTopScene(0);
             if (scene->getSceneResolution() == UIScene::eSceneResolution_1080)
             {

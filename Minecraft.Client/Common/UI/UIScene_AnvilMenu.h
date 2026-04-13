@@ -55,7 +55,7 @@ protected:
 
 	virtual UIControl *getSection(ESceneSection eSection);
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	virtual void getDirectEditInputs(vector<UIControl_TextInput*> &inputs);
 	virtual void onDirectEditFinished(UIControl_TextInput *input, UIControl_TextInput::EDirectEditResult result);
 #endif

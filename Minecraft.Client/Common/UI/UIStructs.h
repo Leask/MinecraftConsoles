@@ -280,13 +280,13 @@ typedef struct _JoinMenuInitData
 {
 	FriendSessionInfo *selectedSession;
 	int iPad;
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	int serverIndex; // Index of the server in servers.db, -1 if not a saved server
 #endif
 } JoinMenuInitData;
 
 // Native keyboard (NativeDesktop replacement for InputManager.RequestKeyboard WinAPI dialog)
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 typedef struct _UIKeyboardInitData
 {
 	const wchar_t* title;
@@ -307,21 +307,14 @@ inline void NativeDesktop_GetKeyboardText(uint16_t* outBuf, int maxChars)
 	wcsncpy_s((wchar_t*)outBuf, maxChars, g_NativeDesktopKeyboardResult, _TRUNCATE);
 }
 
-// Returns true if any XInput controller is currently connected.
-// Used to decide whether to show the in-game keyboard UI or fall back to PC input.
-#include <Xinput.h>
+// Returns true if any native controller backend is currently connected.
+// The current native desktop backend has KBM input only, so keep controller
+// detection explicit instead of retaining the old XInput dependency.
 inline bool NativeDesktop_IsControllerConnected()
 {
-	XINPUT_STATE state;
-	for (DWORD i = 0; i < XUSER_MAX_COUNT; i++)
-	{
-		memset(&state, 0, sizeof(state));
-		if (XInputGetState(i, &state) == ERROR_SUCCESS)
-			return true;
-	}
 	return false;
 }
-#endif // _WINDOWS64
+#endif // _NATIVE_DESKTOP
 
 // More Options
 typedef struct _LaunchMoreOptionsMenuInitData

@@ -11,7 +11,7 @@ private:
 	bool m_bHasCaret;
 	bool m_bCaretChecked;
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	bool m_bDirectEditing;
 	wstring m_textBeforeEdit;
 	wstring m_editBuffer;
@@ -36,7 +36,7 @@ public:
 	void setCaretVisible(bool visible);
 	void setCaretIndex(int index);
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	enum EDirectEditResult
 	{
 		eDirectEdit_Continue,

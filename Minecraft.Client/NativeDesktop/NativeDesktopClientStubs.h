@@ -64,6 +64,8 @@ public:
 #define VK_F8 0x77
 #define VK_F9 0x78
 #define VK_F11 0x7A
+#define VK_PRIOR 0x21
+#define VK_NEXT 0x22
 #define VK_ADD 0x6B
 #define VK_SUBTRACT 0x6D
 #endif
@@ -602,7 +604,7 @@ const S32 IGGY_GLYPH_INVALID = -1;
 const U32 IGGY_FONTFLAG_none = 0;
 const U32 IGGY_FONTFLAG_all = ~0U;
 const S32 IGGY_TTC_INDEX_none = 0;
-const S32 IGGY_FOCUS_NULL = 0;
+const IggyFocusHandle IGGY_FOCUS_NULL = nullptr;
 const S32 IGGYEXP_MIN_STORAGE = 1024;
 
 inline void IggyInit(IggyAllocator* allocator) { (void)allocator; }
@@ -679,6 +681,7 @@ inline void IggySetTextureSubstitutionCallbacks(
     (void)destroyFunc;
     (void)data;
 }
+inline void gdraw_D3D11_setViewport_4J() {}
 inline IggyProperties* IggyPlayerProperties(Iggy* player)
 {
     static IggyProperties properties;

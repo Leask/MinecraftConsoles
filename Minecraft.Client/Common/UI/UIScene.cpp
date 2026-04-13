@@ -242,7 +242,7 @@ void UIScene::initialiseMovie()
 	m_bUpdateOpacity = true;
 }
 
-#if defined(__PSVITA__) || defined(_WINDOWS64)
+#if defined(__PSVITA__) || defined(_NATIVE_DESKTOP)
 void UIScene::SetFocusToElement(int iID)
 {
 	IggyDataValue result;
@@ -292,7 +292,7 @@ void UIScene::loadMovie()
 #elif defined __PSVITA__
 	moviePath.append(L"Vita.swf");
 	m_loadedResolution = eSceneResolution_Vita;
-#elif defined _WINDOWS64
+#elif defined _NATIVE_DESKTOP
 	if(ui.getScreenHeight() > 720.0f)
 	{
 		moviePath.append(L"1080.swf");
@@ -353,7 +353,7 @@ void UIScene::loadMovie()
 	// display size here differs from what render() passes to SetDisplaySize,
 	// Iggy can cache glyph rasterizations at one scale during init and then
 	// reuse them at a different scale during draw, producing mixed glyph sizes.
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	{
 		S32 fitW, fitH, fitOffX, fitOffY;
 		Fit16x9(ui.getScreenWidth(), ui.getScreenHeight(), fitW, fitH, fitOffX, fitOffY);
@@ -366,7 +366,7 @@ void UIScene::loadMovie()
 	IggyPlayerInitializeAndTickRS ( swf );
 	int64_t afterTick = ui.iggyAllocCount;
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	// Flush Iggy's internal font caches so all glyphs get rasterized fresh
 	// at the current display scale on the first Draw. Without this, stale
 	// cache entries from a previous scene (loaded at a different display size)
@@ -472,7 +472,7 @@ void UIScene::tick()
 		m_hasTickedOnce = true;
 	}
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	{
 		vector<UIControl_TextInput*> inputs;
 		getDirectEditInputs(inputs);
@@ -491,7 +491,7 @@ UIControl* UIScene::GetMainPanel()
 	return nullptr;
 }
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 bool UIScene::isDirectEditBlocking()
 {
 	vector<UIControl_TextInput*> inputs;
@@ -1063,7 +1063,7 @@ void UIScene::sendInputToMovie(int key, bool repeat, bool pressed, bool released
 		return;
 	}
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	// If a navigation key is pressed with no focused element, focus the first
 	// available one so arrow keys work even when the mouse is over empty space.
 	if(pressed && (iggyKeyCode == IGGY_KEYCODE_UP || iggyKeyCode == IGGY_KEYCODE_DOWN ||

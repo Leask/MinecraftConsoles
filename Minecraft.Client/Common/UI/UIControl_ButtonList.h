@@ -37,7 +37,7 @@ public:
 
 	void setButtonLabel(int iButtonId, const wstring &label);
 
-#if defined(__PSVITA__) || defined(_WINDOWS64)
+#if defined(__PSVITA__) || defined(_NATIVE_DESKTOP)
 	void SetTouchFocus(S32 iX, S32 iY, bool bRepeat);
 	bool CanTouchTrigger(S32 iX, S32 iY);
 #endif

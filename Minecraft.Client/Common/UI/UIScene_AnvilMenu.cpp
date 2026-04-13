@@ -96,7 +96,7 @@ void UIScene_AnvilMenu::tick()
 {
 	UIScene_AbstractContainerMenu::tick();
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	// Live update: sync item name per-keystroke while editing (like Java edition)
 	if (m_textInputAnvil.isDirectEditing())
 	{
@@ -319,7 +319,7 @@ UIControl *UIScene_AnvilMenu::getSection(ESceneSection eSection)
 	return control;
 }
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 void UIScene_AnvilMenu::getDirectEditInputs(vector<UIControl_TextInput*> &inputs)
 {
 	inputs.push_back(&m_textInputAnvil);
@@ -339,7 +339,7 @@ int UIScene_AnvilMenu::KeyboardCompleteCallback(LPVOID lpParam,bool bRes)
 
 	if (bRes)
 	{
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 		uint16_t pchText[128];
 		ZeroMemory(pchText, 128 * sizeof(uint16_t));
 		NativeDesktop_GetKeyboardText(pchText, 128);
@@ -360,7 +360,7 @@ int UIScene_AnvilMenu::KeyboardCompleteCallback(LPVOID lpParam,bool bRes)
 
 void UIScene_AnvilMenu::handleEditNamePressed()
 {
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	if (isDirectEditBlocking())
 		return;
 
