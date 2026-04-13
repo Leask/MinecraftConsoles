@@ -161,6 +161,8 @@ Direction:
 - replace remaining active `_WINDOWS64` UI/input branches with
   `_NATIVE_DESKTOP` branches
 - isolate Direct3D-shaped renderer structs behind native renderer-neutral names
+  (`NativeDesktopRendererRect` now fronts the clear-rect path used by the
+  shared UI controller)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

@@ -1143,13 +1143,15 @@ struct STRING_VERIFY_RESPONSE
     BOOL bFailed;
 };
 
-struct D3D11_RECT
+struct NativeDesktopRendererRect
 {
     LONG left;
     LONG top;
     LONG right;
     LONG bottom;
 };
+
+using D3D11_RECT = NativeDesktopRendererRect;
 
 const int MAP_STYLE_0 = 0;
 const int MAP_STYLE_1 = 1;

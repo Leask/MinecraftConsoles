@@ -173,7 +173,7 @@ private:
 	int m_accumulatedTicks;
 	uint64_t m_lastUiSfx; // Tracks time (ms) of last UI sound effect
 
-	D3D11_RECT m_customRenderingClearRect;
+	NativeDesktopRendererRect m_customRenderingClearRect;
 
 	unordered_map<size_t, UIScene *> m_registeredCallbackScenes; // A collection of scenes and unique id's that are used in async callbacks so we can safely handle when they get destroyed
 	CRITICAL_SECTION m_registeredCallbackScenesCS;;
