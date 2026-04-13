@@ -1450,7 +1450,7 @@ int UIScene_LoadMenu::LoadDataComplete(void *pParam)
 			else
 			{
 #ifdef _WINDOWS64
-				// On Windows64, IsSignedInLive() returns true as a stub but Xbox Live is
+				// On NativeDesktop, IsSignedInLive() returns true as a stub but Xbox Live is
 				// not available. Skip QuadrantSignin and proceed directly with local play.
 				DWORD dwLocalUsersMask = CGameNetworkManager::GetLocalPlayerMask(ProfileManager.GetPrimaryPad());
 				StartGameFromSave(pClass, dwLocalUsersMask);
@@ -1626,8 +1626,8 @@ void UIScene_LoadMenu::StartGameFromSave(UIScene_LoadMenu* pClass, DWORD dwLocal
 
 #ifdef _WINDOWS64
 	{
-		extern wchar_t g_Win64UsernameW[17];
-		Minecraft::GetInstance()->user->name = g_Win64UsernameW;
+		extern wchar_t g_NativeDesktopUsernameW[17];
+		Minecraft::GetInstance()->user->name = g_NativeDesktopUsernameW;
 	}
 #endif
 #ifndef _XBOX

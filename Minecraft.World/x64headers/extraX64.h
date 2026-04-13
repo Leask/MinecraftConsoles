@@ -177,7 +177,7 @@ private:
 	ULONG_PTR m_customData;
 };
 
-void Win64_SetupRemoteQNetPlayer(IQNetPlayer* player, BYTE smallId, bool isHost, bool isLocal);
+void NativeDesktop_SetupRemoteQNetPlayer(IQNetPlayer* player, BYTE smallId, bool isHost, bool isLocal);
 
 const int QNET_GETSENDQUEUESIZE_SECONDARY_TYPE = 0;
 const int QNET_GETSENDQUEUESIZE_MESSAGES = 0;

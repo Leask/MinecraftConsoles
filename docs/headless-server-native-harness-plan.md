@@ -15,7 +15,8 @@ The harness validates one product surface:
 - a summary artifact under `build/harness/summary.txt`
 
 No Windows runtime, Wine packaging, or desktop compatibility path is part of
-this plan. The archived compatibility line is `last-windows-compatible`.
+this plan. Windows compatibility maintenance has stopped on `main`; the
+archived compatibility line is `last-windows-compatible`.
 
 ## Operating Rules
 
@@ -90,6 +91,7 @@ Scope:
 - move native-generated headers out of removed platform directories
 - make CMake fail early on unsupported host platforms
 - keep docs focused on macOS/Linux native development only
+- remove stale generated project documents tied to removed platforms
 
 Exit criteria:
 
@@ -99,7 +101,7 @@ Exit criteria:
 - macOS native smoke is green after the cutover
 - Linux native smoke is green or blocked only by remote toolchain availability
 
-Status: in progress.
+Status: complete for the current native-only cutover.
 
 ## Current Focus
 

@@ -316,7 +316,7 @@ int UIScene_SignEntryMenu::KeyboardCompleteCallback(LPVOID lpParam,bool bRes)
 #ifdef _WINDOWS64
 		uint16_t pchText[128];
 		ZeroMemory(pchText, 128 * sizeof(uint16_t));
-		Win64_GetKeyboardText(pchText, 128);
+		NativeDesktop_GetKeyboardText(pchText, 128);
 		pClass->m_textInputLines[pClass->m_iEditingLine].setLabel(reinterpret_cast<wchar_t *>(pchText));
 #else
 		uint16_t pchText[128];

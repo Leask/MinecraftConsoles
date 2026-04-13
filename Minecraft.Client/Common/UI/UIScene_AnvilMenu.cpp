@@ -342,7 +342,7 @@ int UIScene_AnvilMenu::KeyboardCompleteCallback(LPVOID lpParam,bool bRes)
 #ifdef _WINDOWS64
 		uint16_t pchText[128];
 		ZeroMemory(pchText, 128 * sizeof(uint16_t));
-		Win64_GetKeyboardText(pchText, 128);
+		NativeDesktop_GetKeyboardText(pchText, 128);
 		pClass->setEditNameValue(reinterpret_cast<wchar_t *>(pchText));
 		pClass->m_itemName = reinterpret_cast<wchar_t *>(pchText);
 		pClass->updateItemName();

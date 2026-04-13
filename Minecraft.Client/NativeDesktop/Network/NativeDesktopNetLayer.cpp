@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 
-#include "WinsockNetLayer.h"
+#include "NativeDesktopNetLayer.h"
 #include "../../Common/Network/PlatformNetworkManagerStub.h"
 #include "../../../Minecraft.World/Socket.h"
 #include <lce_net/lce_net.h>
@@ -19,10 +19,10 @@
 #include <cstdio>
 #include <string>
 
-#define NATIVE_DESKTOP_WINSOCK_TRACE(message) \
-	std::fprintf(stderr, "NativeDesktop winsock: %s\n", message)
-#define NATIVE_DESKTOP_WINSOCK_TRACEF(format, ...) \
-	std::fprintf(stderr, "NativeDesktop winsock: " format "\n", __VA_ARGS__)
+#define NATIVE_DESKTOP_NET_TRACE(message) \
+	std::fprintf(stderr, "NativeDesktop network: %s\n", message)
+#define NATIVE_DESKTOP_NET_TRACEF(format, ...) \
+	std::fprintf(stderr, "NativeDesktop network: " format "\n", __VA_ARGS__)
 
 static bool RecvExact(SOCKET sock, BYTE* buf, int len);
 
@@ -42,60 +42,60 @@ void CloseNetSocket(SOCKET socketHandle)
 }
 }
 
-SOCKET WinsockNetLayer::s_listenSocket = INVALID_SOCKET;
-SOCKET WinsockNetLayer::s_hostConnectionSocket = INVALID_SOCKET;
-HANDLE WinsockNetLayer::s_acceptThread = nullptr;
-HANDLE WinsockNetLayer::s_clientRecvThread = nullptr;
+SOCKET NativeDesktopNetLayer::s_listenSocket = INVALID_SOCKET;
+SOCKET NativeDesktopNetLayer::s_hostConnectionSocket = INVALID_SOCKET;
+HANDLE NativeDesktopNetLayer::s_acceptThread = nullptr;
+HANDLE NativeDesktopNetLayer::s_clientRecvThread = nullptr;
 
-bool WinsockNetLayer::s_isHost = false;
-bool WinsockNetLayer::s_connected = false;
-bool WinsockNetLayer::s_active = false;
-bool WinsockNetLayer::s_initialized = false;
+bool NativeDesktopNetLayer::s_isHost = false;
+bool NativeDesktopNetLayer::s_connected = false;
+bool NativeDesktopNetLayer::s_active = false;
+bool NativeDesktopNetLayer::s_initialized = false;
 
-BYTE WinsockNetLayer::s_localSmallId = 0;
-BYTE WinsockNetLayer::s_hostSmallId = 0;
-unsigned int WinsockNetLayer::s_nextSmallId = XUSER_MAX_COUNT;
+BYTE NativeDesktopNetLayer::s_localSmallId = 0;
+BYTE NativeDesktopNetLayer::s_hostSmallId = 0;
+unsigned int NativeDesktopNetLayer::s_nextSmallId = XUSER_MAX_COUNT;
 
-CRITICAL_SECTION WinsockNetLayer::s_sendLock;
-CRITICAL_SECTION WinsockNetLayer::s_connectionsLock;
+CRITICAL_SECTION NativeDesktopNetLayer::s_sendLock;
+CRITICAL_SECTION NativeDesktopNetLayer::s_connectionsLock;
 
-std::vector<Win64RemoteConnection> WinsockNetLayer::s_connections;
+std::vector<NativeDesktopRemoteConnection> NativeDesktopNetLayer::s_connections;
 
-SOCKET WinsockNetLayer::s_advertiseSock = INVALID_SOCKET;
-HANDLE WinsockNetLayer::s_advertiseThread = nullptr;
-volatile bool WinsockNetLayer::s_advertising = false;
-Win64LANBroadcast WinsockNetLayer::s_advertiseData = {};
-CRITICAL_SECTION WinsockNetLayer::s_advertiseLock;
-int WinsockNetLayer::s_hostGamePort = WIN64_NET_DEFAULT_PORT;
+SOCKET NativeDesktopNetLayer::s_advertiseSock = INVALID_SOCKET;
+HANDLE NativeDesktopNetLayer::s_advertiseThread = nullptr;
+volatile bool NativeDesktopNetLayer::s_advertising = false;
+NativeDesktopLANBroadcast NativeDesktopNetLayer::s_advertiseData = {};
+CRITICAL_SECTION NativeDesktopNetLayer::s_advertiseLock;
+int NativeDesktopNetLayer::s_hostGamePort = NATIVE_DESKTOP_NET_DEFAULT_PORT;
 
-SOCKET WinsockNetLayer::s_discoverySock = INVALID_SOCKET;
-HANDLE WinsockNetLayer::s_discoveryThread = nullptr;
-volatile bool WinsockNetLayer::s_discovering = false;
-CRITICAL_SECTION WinsockNetLayer::s_discoveryLock;
-std::vector<Win64LANSession> WinsockNetLayer::s_discoveredSessions;
+SOCKET NativeDesktopNetLayer::s_discoverySock = INVALID_SOCKET;
+HANDLE NativeDesktopNetLayer::s_discoveryThread = nullptr;
+volatile bool NativeDesktopNetLayer::s_discovering = false;
+CRITICAL_SECTION NativeDesktopNetLayer::s_discoveryLock;
+std::vector<NativeDesktopLANSession> NativeDesktopNetLayer::s_discoveredSessions;
 
-CRITICAL_SECTION WinsockNetLayer::s_disconnectLock;
-std::vector<BYTE> WinsockNetLayer::s_disconnectedSmallIds;
+CRITICAL_SECTION NativeDesktopNetLayer::s_disconnectLock;
+std::vector<BYTE> NativeDesktopNetLayer::s_disconnectedSmallIds;
 
-CRITICAL_SECTION WinsockNetLayer::s_freeSmallIdLock;
-std::vector<BYTE> WinsockNetLayer::s_freeSmallIds;
-SOCKET WinsockNetLayer::s_smallIdToSocket[256];
-CRITICAL_SECTION WinsockNetLayer::s_smallIdToSocketLock;
+CRITICAL_SECTION NativeDesktopNetLayer::s_freeSmallIdLock;
+std::vector<BYTE> NativeDesktopNetLayer::s_freeSmallIds;
+SOCKET NativeDesktopNetLayer::s_smallIdToSocket[256];
+CRITICAL_SECTION NativeDesktopNetLayer::s_smallIdToSocketLock;
 
-SOCKET WinsockNetLayer::s_splitScreenSocket[XUSER_MAX_COUNT] = { INVALID_SOCKET, INVALID_SOCKET, INVALID_SOCKET, INVALID_SOCKET };
-BYTE WinsockNetLayer::s_splitScreenSmallId[XUSER_MAX_COUNT] = { 0xFF, 0xFF, 0xFF, 0xFF };
-HANDLE WinsockNetLayer::s_splitScreenRecvThread[XUSER_MAX_COUNT] = {nullptr, nullptr, nullptr, nullptr};
+SOCKET NativeDesktopNetLayer::s_splitScreenSocket[XUSER_MAX_COUNT] = { INVALID_SOCKET, INVALID_SOCKET, INVALID_SOCKET, INVALID_SOCKET };
+BYTE NativeDesktopNetLayer::s_splitScreenSmallId[XUSER_MAX_COUNT] = { 0xFF, 0xFF, 0xFF, 0xFF };
+HANDLE NativeDesktopNetLayer::s_splitScreenRecvThread[XUSER_MAX_COUNT] = {nullptr, nullptr, nullptr, nullptr};
 
-bool g_Win64MultiplayerHost = false;
-bool g_Win64MultiplayerJoin = false;
-int g_Win64MultiplayerPort = WIN64_NET_DEFAULT_PORT;
-char g_Win64MultiplayerIP[256] = "127.0.0.1";
-bool g_Win64DedicatedServer = false;
-int g_Win64DedicatedServerPort = WIN64_NET_DEFAULT_PORT;
-char g_Win64DedicatedServerBindIP[256] = "";
-bool g_Win64DedicatedServerLanAdvertise = true;
+bool g_NativeDesktopMultiplayerHost = false;
+bool g_NativeDesktopMultiplayerJoin = false;
+int g_NativeDesktopMultiplayerPort = NATIVE_DESKTOP_NET_DEFAULT_PORT;
+char g_NativeDesktopMultiplayerIP[256] = "127.0.0.1";
+bool g_NativeDesktopDedicatedServer = false;
+int g_NativeDesktopDedicatedServerPort = NATIVE_DESKTOP_NET_DEFAULT_PORT;
+char g_NativeDesktopDedicatedServerBindIP[256] = "";
+bool g_NativeDesktopDedicatedServerLanAdvertise = true;
 
-bool WinsockNetLayer::Initialize()
+bool NativeDesktopNetLayer::Initialize()
 {
 	if (s_initialized) return true;
 
@@ -118,7 +118,7 @@ bool WinsockNetLayer::Initialize()
 	s_initialized = true;
 
 	// Dedicated Server does not use LAN session discovery and therefore does not initiate discovery.
-	if (!g_Win64DedicatedServer)
+	if (!g_NativeDesktopDedicatedServer)
 	{
 		StartDiscovery();
 	}
@@ -126,13 +126,13 @@ bool WinsockNetLayer::Initialize()
 	return true;
 }
 
-void WinsockNetLayer::Shutdown()
+void NativeDesktopNetLayer::Shutdown()
 {
-	NATIVE_DESKTOP_WINSOCK_TRACE("Shutdown begin");
+	NATIVE_DESKTOP_NET_TRACE("Shutdown begin");
 	StopAdvertising();
-	NATIVE_DESKTOP_WINSOCK_TRACE("StopAdvertising complete");
+	NATIVE_DESKTOP_NET_TRACE("StopAdvertising complete");
 	StopDiscovery();
-	NATIVE_DESKTOP_WINSOCK_TRACE("StopDiscovery complete");
+	NATIVE_DESKTOP_NET_TRACE("StopDiscovery complete");
 
 	s_active = false;
 	s_connected = false;
@@ -152,16 +152,16 @@ void WinsockNetLayer::Shutdown()
 	// Stop accept loop first so no new RecvThread can be created while shutting down.
 	if (s_acceptThread != nullptr)
 	{
-		NATIVE_DESKTOP_WINSOCK_TRACE("accept thread wait begin");
+		NATIVE_DESKTOP_NET_TRACE("accept thread wait begin");
 		WaitForSingleObject(s_acceptThread, 2000);
 		CloseHandle(s_acceptThread);
 		s_acceptThread = nullptr;
-		NATIVE_DESKTOP_WINSOCK_TRACE("accept thread wait end");
+		NATIVE_DESKTOP_NET_TRACE("accept thread wait end");
 	}
 
 	std::vector<HANDLE> recvThreads;
 	EnterCriticalSection(&s_connectionsLock);
-	NATIVE_DESKTOP_WINSOCK_TRACEF(
+	NATIVE_DESKTOP_NET_TRACEF(
 		"connections close begin count=%zu",
 		s_connections.size());
 	for (size_t i = 0; i < s_connections.size(); i++)
@@ -179,31 +179,31 @@ void WinsockNetLayer::Shutdown()
 		}
 	}
 	LeaveCriticalSection(&s_connectionsLock);
-	NATIVE_DESKTOP_WINSOCK_TRACEF(
+	NATIVE_DESKTOP_NET_TRACEF(
 		"connections close end recvThreads=%zu",
 		recvThreads.size());
 
 	// Wait for all host-side receive threads to exit before destroying state.
 	for (size_t i = 0; i < recvThreads.size(); i++)
 	{
-		NATIVE_DESKTOP_WINSOCK_TRACEF("recv thread %zu wait begin", i);
+		NATIVE_DESKTOP_NET_TRACEF("recv thread %zu wait begin", i);
 		WaitForSingleObject(recvThreads[i], 2000);
 		CloseHandle(recvThreads[i]);
-		NATIVE_DESKTOP_WINSOCK_TRACEF("recv thread %zu wait end", i);
+		NATIVE_DESKTOP_NET_TRACEF("recv thread %zu wait end", i);
 	}
 
 	EnterCriticalSection(&s_connectionsLock);
 	s_connections.clear();
 	LeaveCriticalSection(&s_connectionsLock);
-	NATIVE_DESKTOP_WINSOCK_TRACE("connections clear end");
+	NATIVE_DESKTOP_NET_TRACE("connections clear end");
 
 	if (s_clientRecvThread != nullptr)
 	{
-		NATIVE_DESKTOP_WINSOCK_TRACE("client recv thread wait begin");
+		NATIVE_DESKTOP_NET_TRACE("client recv thread wait begin");
 		WaitForSingleObject(s_clientRecvThread, 2000);
 		CloseHandle(s_clientRecvThread);
 		s_clientRecvThread = nullptr;
-		NATIVE_DESKTOP_WINSOCK_TRACE("client recv thread wait end");
+		NATIVE_DESKTOP_NET_TRACE("client recv thread wait end");
 	}
 
 	for (int i = 0; i < XUSER_MAX_COUNT; i++)
@@ -215,13 +215,13 @@ void WinsockNetLayer::Shutdown()
 		}
 		if (s_splitScreenRecvThread[i] != nullptr)
 		{
-			NATIVE_DESKTOP_WINSOCK_TRACEF(
+			NATIVE_DESKTOP_NET_TRACEF(
 				"split-screen recv thread %d wait begin",
 				i);
 			WaitForSingleObject(s_splitScreenRecvThread[i], 2000);
 			CloseHandle(s_splitScreenRecvThread[i]);
 			s_splitScreenRecvThread[i] = nullptr;
-			NATIVE_DESKTOP_WINSOCK_TRACEF(
+			NATIVE_DESKTOP_NET_TRACEF(
 				"split-screen recv thread %d wait end",
 				i);
 		}
@@ -230,7 +230,7 @@ void WinsockNetLayer::Shutdown()
 
 	if (s_initialized)
 	{
-		NATIVE_DESKTOP_WINSOCK_TRACE("state clear begin");
+		NATIVE_DESKTOP_NET_TRACE("state clear begin");
 		EnterCriticalSection(&s_disconnectLock);
 		s_disconnectedSmallIds.clear();
 		LeaveCriticalSection(&s_disconnectLock);
@@ -248,12 +248,12 @@ void WinsockNetLayer::Shutdown()
 		DeleteCriticalSection(&s_smallIdToSocketLock);
 		LceNetShutdown();
 		s_initialized = false;
-		NATIVE_DESKTOP_WINSOCK_TRACE("state clear end");
+		NATIVE_DESKTOP_NET_TRACE("state clear end");
 	}
-	NATIVE_DESKTOP_WINSOCK_TRACE("Shutdown end");
+	NATIVE_DESKTOP_NET_TRACE("Shutdown end");
 }
 
-bool WinsockNetLayer::HostGame(int port, const char* bindIp)
+bool NativeDesktopNetLayer::HostGame(int port, const char* bindIp)
 {
 	if (!s_initialized && !Initialize()) return false;
 
@@ -315,13 +315,13 @@ bool WinsockNetLayer::HostGame(int port, const char* bindIp)
 
 	s_acceptThread = CreateThread(nullptr, 0, AcceptThreadProc, nullptr, 0, nullptr);
 
-	app.DebugPrintf("Win64 LAN: Hosting on %s:%d\n",
+	app.DebugPrintf("NativeDesktop LAN: Hosting on %s:%d\n",
 		resolvedBindIp != nullptr ? resolvedBindIp : "*",
 		port);
 	return true;
 }
 
-bool WinsockNetLayer::JoinGame(const char* ip, int port)
+bool NativeDesktopNetLayer::JoinGame(const char* ip, int port)
 {
 	if (!s_initialized && !Initialize()) return false;
 
@@ -390,7 +390,7 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 			continue;
 		}
 
-		if (assignBuf[0] == WIN64_SMALLID_REJECT)
+		if (assignBuf[0] == NATIVE_DESKTOP_SMALLID_REJECT)
 		{
 			BYTE rejectBuf[5];
 			if (!RecvExact(s_hostConnectionSocket, rejectBuf, 5))
@@ -423,10 +423,10 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 
 	// Save the host IP and port so JoinSplitScreen can connect to the same host
 	// regardless of how the connection was initiated (UI vs command line).
-	strncpy_s(g_Win64MultiplayerIP, sizeof(g_Win64MultiplayerIP), resolvedIp, _TRUNCATE);
-	g_Win64MultiplayerPort = port;
+	strncpy_s(g_NativeDesktopMultiplayerIP, sizeof(g_NativeDesktopMultiplayerIP), resolvedIp, _TRUNCATE);
+	g_NativeDesktopMultiplayerPort = port;
 
-	app.DebugPrintf("Win64 LAN: Connected to %s:%d, assigned smallId=%d\n", resolvedIp, port, s_localSmallId);
+	app.DebugPrintf("NativeDesktop LAN: Connected to %s:%d, assigned smallId=%d\n", resolvedIp, port, s_localSmallId);
 
 	s_active = true;
 	s_connected = true;
@@ -436,9 +436,9 @@ bool WinsockNetLayer::JoinGame(const char* ip, int port)
 	return true;
 }
 
-bool WinsockNetLayer::SendOnSocket(SOCKET sock, const void* data, int dataSize)
+bool NativeDesktopNetLayer::SendOnSocket(SOCKET sock, const void* data, int dataSize)
 {
-	if (sock == INVALID_SOCKET || dataSize <= 0 || dataSize > WIN64_NET_MAX_PACKET_SIZE) return false;
+	if (sock == INVALID_SOCKET || dataSize <= 0 || dataSize > NATIVE_DESKTOP_NET_MAX_PACKET_SIZE) return false;
 
 	// TODO: s_sendLock is a single global lock for ALL sockets. If one client's
 	// send() blocks (TCP window full, slow WiFi), every other write thread stalls
@@ -467,7 +467,7 @@ bool WinsockNetLayer::SendOnSocket(SOCKET sock, const void* data, int dataSize)
 	return sentPayload;
 }
 
-bool WinsockNetLayer::SendToSmallId(BYTE targetSmallId, const void* data, int dataSize)
+bool NativeDesktopNetLayer::SendToSmallId(BYTE targetSmallId, const void* data, int dataSize)
 {
 	if (!s_active) return false;
 
@@ -483,7 +483,7 @@ bool WinsockNetLayer::SendToSmallId(BYTE targetSmallId, const void* data, int da
 	}
 }
 
-SOCKET WinsockNetLayer::GetSocketForSmallId(BYTE smallId)
+SOCKET NativeDesktopNetLayer::GetSocketForSmallId(BYTE smallId)
 {
 	EnterCriticalSection(&s_smallIdToSocketLock);
 	SOCKET sock = s_smallIdToSocket[smallId];
@@ -491,7 +491,7 @@ SOCKET WinsockNetLayer::GetSocketForSmallId(BYTE smallId)
 	return sock;
 }
 
-void WinsockNetLayer::ClearSocketForSmallId(BYTE smallId)
+void NativeDesktopNetLayer::ClearSocketForSmallId(BYTE smallId)
 {
 	EnterCriticalSection(&s_smallIdToSocketLock);
 	s_smallIdToSocket[smallId] = INVALID_SOCKET;
@@ -502,7 +502,7 @@ void WinsockNetLayer::ClearSocketForSmallId(BYTE smallId)
 static void SendRejectWithReason(SOCKET clientSocket, DisconnectPacket::eDisconnectReason reason)
 {
 	BYTE buf[6];
-	buf[0] = WIN64_SMALLID_REJECT;
+	buf[0] = NATIVE_DESKTOP_SMALLID_REJECT;
 	buf[1] = (BYTE)255; // DisconnectPacket packet id
 	int r = (int)reason;
 	buf[2] = (BYTE)((r >> 24) & 0xff);
@@ -517,7 +517,7 @@ static bool RecvExact(SOCKET sock, BYTE* buf, int len)
 	return LceNetRecvAll(static_cast<LceSocketHandle>(sock), buf, len);
 }
 
-void WinsockNetLayer::HandleDataReceived(BYTE fromSmallId, BYTE toSmallId, unsigned char* data, unsigned int dataSize)
+void NativeDesktopNetLayer::HandleDataReceived(BYTE fromSmallId, BYTE toSmallId, unsigned char* data, unsigned int dataSize)
 {
 	INetworkPlayer* pPlayerFrom = g_NetworkManager.GetPlayerBySmallId(fromSmallId);
 	INetworkPlayer* pPlayerTo = g_NetworkManager.GetPlayerBySmallId(toSmallId);
@@ -547,7 +547,7 @@ void WinsockNetLayer::HandleDataReceived(BYTE fromSmallId, BYTE toSmallId, unsig
 	}
 }
 
-DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
+DWORD WINAPI NativeDesktopNetLayer::AcceptThreadProc(LPVOID param)
 {
 	while (s_active)
 	{
@@ -580,7 +580,7 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 		const std::string remoteIp = remoteIpBuffer;
 		const bool hasRemoteIp = !remoteIp.empty();
 		const char *remoteIpForLog = hasRemoteIp ? remoteIp.c_str() : "unknown";
-		if (g_Win64DedicatedServer)
+		if (g_NativeDesktopDedicatedServer)
 		{
 			ServerRuntime::ServerLogManager::OnIncomingTcpConnection(remoteIpForLog);
 			if (hasRemoteIp && ServerRuntime::Access::IsIpBanned(remoteIp))
@@ -597,14 +597,14 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 		if (_iQNetStubState != QNET_STATE_GAME_PLAY)
 		{
 #if defined(MINECRAFT_SERVER_BUILD)
-			if (g_Win64DedicatedServer)
+			if (g_NativeDesktopDedicatedServer)
 			{
 				ServerRuntime::ServerLogManager::OnRejectedTcpConnection(remoteIpForLog, ServerRuntime::ServerLogManager::eTcpRejectReason_GameNotReady);
 			}
 			else
 #endif
 			{
-				app.DebugPrintf("Win64 LAN: Rejecting connection, game not ready\n");
+				app.DebugPrintf("NativeDesktop LAN: Rejecting connection, game not ready\n");
 			}
 			CloseNetSocket(clientSocket);
 			continue;
@@ -614,14 +614,14 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 		if (g_pPlatformNetworkManager != nullptr && !g_pPlatformNetworkManager->CanAcceptMoreConnections())
 		{
 #if defined(MINECRAFT_SERVER_BUILD)
-			if (g_Win64DedicatedServer)
+			if (g_NativeDesktopDedicatedServer)
 			{
 				ServerRuntime::ServerLogManager::OnRejectedTcpConnection(remoteIpForLog, ServerRuntime::ServerLogManager::eTcpRejectReason_ServerFull);
 			}
 			else
 #endif
 			{
-				app.DebugPrintf("Win64 LAN: Rejecting connection, server at max players\n");
+				app.DebugPrintf("NativeDesktop LAN: Rejecting connection, server at max players\n");
 			}
 			SendRejectWithReason(clientSocket, DisconnectPacket::eDisconnect_ServerFull);
 			CloseNetSocket(clientSocket);
@@ -643,14 +643,14 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 		{
 			LeaveCriticalSection(&s_freeSmallIdLock);
 #if defined(MINECRAFT_SERVER_BUILD)
-			if (g_Win64DedicatedServer)
+			if (g_NativeDesktopDedicatedServer)
 			{
 				ServerRuntime::ServerLogManager::OnRejectedTcpConnection(remoteIpForLog, ServerRuntime::ServerLogManager::eTcpRejectReason_ServerFull);
 			}
 			else
 #endif
 			{
-				app.DebugPrintf("Win64 LAN: Server full, rejecting connection\n");
+				app.DebugPrintf("NativeDesktop LAN: Server full, rejecting connection\n");
 			}
 			SendRejectWithReason(clientSocket, DisconnectPacket::eDisconnect_ServerFull);
 			CloseNetSocket(clientSocket);
@@ -667,7 +667,7 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 			continue;
 		}
 
-		Win64RemoteConnection conn;
+		NativeDesktopRemoteConnection conn;
 		conn.tcpSocket = clientSocket;
 		conn.smallId = assignedSmallId;
 		conn.active = true;
@@ -679,14 +679,14 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 		LeaveCriticalSection(&s_connectionsLock);
 
 #if defined(MINECRAFT_SERVER_BUILD)
-		if (g_Win64DedicatedServer)
+		if (g_NativeDesktopDedicatedServer)
 		{
 			ServerRuntime::ServerLogManager::OnAcceptedTcpConnection(assignedSmallId, remoteIpForLog);
 		}
 		else
 #endif
 		{
-			app.DebugPrintf("Win64 LAN: Client connected, assigned smallId=%d\n", assignedSmallId);
+			app.DebugPrintf("NativeDesktop LAN: Client connected, assigned smallId=%d\n", assignedSmallId);
 		}
 
 		EnterCriticalSection(&s_smallIdToSocketLock);
@@ -695,8 +695,8 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 
 		IQNetPlayer* qnetPlayer = &IQNet::m_player[assignedSmallId];
 
-		extern void Win64_SetupRemoteQNetPlayer(IQNetPlayer * player, BYTE smallId, bool isHost, bool isLocal);
-		Win64_SetupRemoteQNetPlayer(qnetPlayer, assignedSmallId, false, false);
+		extern void NativeDesktop_SetupRemoteQNetPlayer(IQNetPlayer * player, BYTE smallId, bool isHost, bool isLocal);
+		NativeDesktop_SetupRemoteQNetPlayer(qnetPlayer, assignedSmallId, false, false);
 
 		extern CPlatformNetworkManagerStub* g_pPlatformNetworkManager;
 		g_pPlatformNetworkManager->NotifyPlayerJoined(qnetPlayer);
@@ -713,7 +713,7 @@ DWORD WINAPI WinsockNetLayer::AcceptThreadProc(LPVOID param)
 	return 0;
 }
 
-DWORD WINAPI WinsockNetLayer::RecvThreadProc(LPVOID param)
+DWORD WINAPI NativeDesktopNetLayer::RecvThreadProc(LPVOID param)
 {
 	DWORD connIdx = *static_cast<DWORD *>(param);
 	delete static_cast<DWORD *>(param);
@@ -729,14 +729,14 @@ DWORD WINAPI WinsockNetLayer::RecvThreadProc(LPVOID param)
 	LeaveCriticalSection(&s_connectionsLock);
 
 	std::vector<BYTE> recvBuf;
-	recvBuf.resize(WIN64_NET_RECV_BUFFER_SIZE);
+	recvBuf.resize(NATIVE_DESKTOP_NET_RECV_BUFFER_SIZE);
 
 	while (s_active)
 	{
 		BYTE header[4];
 		if (!RecvExact(sock, header, 4))
 		{
-			app.DebugPrintf("Win64 LAN: Client smallId=%d disconnected (header)\n", clientSmallId);
+			app.DebugPrintf("NativeDesktop LAN: Client smallId=%d disconnected (header)\n", clientSmallId);
 			break;
 		}
 
@@ -746,24 +746,24 @@ DWORD WINAPI WinsockNetLayer::RecvThreadProc(LPVOID param)
 			(static_cast<uint32_t>(header[2]) << 8) |
 			static_cast<uint32_t>(header[3]);
 
-		if (packetSize <= 0 || packetSize > WIN64_NET_MAX_PACKET_SIZE)
+		if (packetSize <= 0 || packetSize > NATIVE_DESKTOP_NET_MAX_PACKET_SIZE)
 		{
-			app.DebugPrintf("Win64 LAN: Invalid packet size %d from client smallId=%d (max=%d)\n",
+			app.DebugPrintf("NativeDesktop LAN: Invalid packet size %d from client smallId=%d (max=%d)\n",
 				packetSize,
 				clientSmallId,
-				(int)WIN64_NET_MAX_PACKET_SIZE);
+				(int)NATIVE_DESKTOP_NET_MAX_PACKET_SIZE);
 			break;
 		}
 
 		if (static_cast<int>(recvBuf.size()) < packetSize)
 		{
 			recvBuf.resize(packetSize);
-			app.DebugPrintf("Win64 LAN: Resized host recv buffer to %d bytes for client smallId=%d\n", packetSize, clientSmallId);
+			app.DebugPrintf("NativeDesktop LAN: Resized host recv buffer to %d bytes for client smallId=%d\n", packetSize, clientSmallId);
 		}
 
 		if (!RecvExact(sock, &recvBuf[0], packetSize))
 		{
-			app.DebugPrintf("Win64 LAN: Client smallId=%d disconnected (body)\n", clientSmallId);
+			app.DebugPrintf("NativeDesktop LAN: Client smallId=%d disconnected (body)\n", clientSmallId);
 			break;
 		}
 
@@ -793,7 +793,7 @@ DWORD WINAPI WinsockNetLayer::RecvThreadProc(LPVOID param)
 	return 0;
 }
 
-bool WinsockNetLayer::PopDisconnectedSmallId(BYTE* outSmallId)
+bool NativeDesktopNetLayer::PopDisconnectedSmallId(BYTE* outSmallId)
 {
 	bool found = false;
 	EnterCriticalSection(&s_disconnectLock);
@@ -807,7 +807,7 @@ bool WinsockNetLayer::PopDisconnectedSmallId(BYTE* outSmallId)
 	return found;
 }
 
-void WinsockNetLayer::PushFreeSmallId(BYTE smallId)
+void NativeDesktopNetLayer::PushFreeSmallId(BYTE smallId)
 {
 	// SmallIds 0..(XUSER_MAX_COUNT-1) are permanently reserved for the host's
 	// local pads and must never be recycled to remote clients.
@@ -828,7 +828,7 @@ void WinsockNetLayer::PushFreeSmallId(BYTE smallId)
 	LeaveCriticalSection(&s_freeSmallIdLock);
 }
 
-void WinsockNetLayer::CloseConnectionBySmallId(BYTE smallId)
+void NativeDesktopNetLayer::CloseConnectionBySmallId(BYTE smallId)
 {
 	EnterCriticalSection(&s_connectionsLock);
 	for (size_t i = 0; i < s_connections.size(); i++)
@@ -837,20 +837,20 @@ void WinsockNetLayer::CloseConnectionBySmallId(BYTE smallId)
 		{
 			CloseNetSocket(s_connections[i].tcpSocket);
 			s_connections[i].tcpSocket = INVALID_SOCKET;
-			app.DebugPrintf("Win64 LAN: Force-closed TCP connection for smallId=%d\n", smallId);
+			app.DebugPrintf("NativeDesktop LAN: Force-closed TCP connection for smallId=%d\n", smallId);
 			break;
 		}
 	}
 	LeaveCriticalSection(&s_connectionsLock);
 }
 
-BYTE WinsockNetLayer::GetSplitScreenSmallId(int padIndex)
+BYTE NativeDesktopNetLayer::GetSplitScreenSmallId(int padIndex)
 {
 	if (padIndex <= 0 || padIndex >= XUSER_MAX_COUNT) return 0xFF;
 	return s_splitScreenSmallId[padIndex];
 }
 
-SOCKET WinsockNetLayer::GetLocalSocket(BYTE senderSmallId)
+SOCKET NativeDesktopNetLayer::GetLocalSocket(BYTE senderSmallId)
 {
 	if (senderSmallId == s_localSmallId)
 		return s_hostConnectionSocket;
@@ -862,7 +862,7 @@ SOCKET WinsockNetLayer::GetLocalSocket(BYTE senderSmallId)
 	return INVALID_SOCKET;
 }
 
-bool WinsockNetLayer::JoinSplitScreen(int padIndex, BYTE* outSmallId)
+bool NativeDesktopNetLayer::JoinSplitScreen(int padIndex, BYTE* outSmallId)
 {
 	if (!s_active || s_isHost || padIndex <= 0 || padIndex >= XUSER_MAX_COUNT)
 		return false;
@@ -874,12 +874,12 @@ bool WinsockNetLayer::JoinSplitScreen(int padIndex, BYTE* outSmallId)
 
 	char resolvedIp[64] = {};
 	if (!LceNetResolveIpv4(
-		g_Win64MultiplayerIP,
-		g_Win64MultiplayerPort,
+		g_NativeDesktopMultiplayerIP,
+		g_NativeDesktopMultiplayerPort,
 		resolvedIp,
 		sizeof(resolvedIp)))
 	{
-		app.DebugPrintf("Win64 LAN: Split-screen resolve failed for %s:%d\n", g_Win64MultiplayerIP, g_Win64MultiplayerPort);
+		app.DebugPrintf("NativeDesktop LAN: Split-screen resolve failed for %s:%d\n", g_NativeDesktopMultiplayerIP, g_NativeDesktopMultiplayerPort);
 		return false;
 	}
 
@@ -892,9 +892,9 @@ bool WinsockNetLayer::JoinSplitScreen(int padIndex, BYTE* outSmallId)
 
 	LceNetSetSocketNoDelay(splitHandle, true);
 
-	if (!LceNetConnectIpv4(splitHandle, resolvedIp, g_Win64MultiplayerPort))
+	if (!LceNetConnectIpv4(splitHandle, resolvedIp, g_NativeDesktopMultiplayerPort))
 	{
-		app.DebugPrintf("Win64 LAN: Split-screen connect() failed: %d\n", GetNetLastError());
+		app.DebugPrintf("NativeDesktop LAN: Split-screen connect() failed: %d\n", GetNetLastError());
 		CloseNetSocket(sock);
 		return false;
 	}
@@ -902,16 +902,16 @@ bool WinsockNetLayer::JoinSplitScreen(int padIndex, BYTE* outSmallId)
 	BYTE assignBuf[1];
 	if (!RecvExact(sock, assignBuf, 1))
 	{
-		app.DebugPrintf("Win64 LAN: Split-screen failed to receive smallId\n");
+		app.DebugPrintf("NativeDesktop LAN: Split-screen failed to receive smallId\n");
 		CloseNetSocket(sock);
 		return false;
 	}
 
-	if (assignBuf[0] == WIN64_SMALLID_REJECT)
+	if (assignBuf[0] == NATIVE_DESKTOP_SMALLID_REJECT)
 	{
 		BYTE rejectBuf[5];
 		RecvExact(sock, rejectBuf, 5);
-		app.DebugPrintf("Win64 LAN: Split-screen connection rejected\n");
+		app.DebugPrintf("NativeDesktop LAN: Split-screen connection rejected\n");
 		CloseNetSocket(sock);
 		return false;
 	}
@@ -921,7 +921,7 @@ bool WinsockNetLayer::JoinSplitScreen(int padIndex, BYTE* outSmallId)
 	s_splitScreenSmallId[padIndex] = assignedSmallId;
 	*outSmallId = assignedSmallId;
 
-	app.DebugPrintf("Win64 LAN: Split-screen pad %d connected, assigned smallId=%d\n", padIndex, assignedSmallId);
+	app.DebugPrintf("NativeDesktop LAN: Split-screen pad %d connected, assigned smallId=%d\n", padIndex, assignedSmallId);
 
 	int* threadParam = new int;
 	*threadParam = padIndex;
@@ -932,14 +932,14 @@ bool WinsockNetLayer::JoinSplitScreen(int padIndex, BYTE* outSmallId)
 		CloseNetSocket(sock);
 		s_splitScreenSocket[padIndex] = INVALID_SOCKET;
 		s_splitScreenSmallId[padIndex] = 0xFF;
-		app.DebugPrintf("Win64 LAN: CreateThread failed for split-screen pad %d\n", padIndex);
+		app.DebugPrintf("NativeDesktop LAN: CreateThread failed for split-screen pad %d\n", padIndex);
 		return false;
 	}
 
 	return true;
 }
 
-void WinsockNetLayer::CloseSplitScreenConnection(int padIndex)
+void NativeDesktopNetLayer::CloseSplitScreenConnection(int padIndex)
 {
 	if (padIndex <= 0 || padIndex >= XUSER_MAX_COUNT) return;
 
@@ -957,7 +957,7 @@ void WinsockNetLayer::CloseSplitScreenConnection(int padIndex)
 	}
 }
 
-DWORD WINAPI WinsockNetLayer::SplitScreenRecvThreadProc(LPVOID param)
+DWORD WINAPI NativeDesktopNetLayer::SplitScreenRecvThreadProc(LPVOID param)
 {
 	int padIndex = *(int*)param;
 	delete (int*)param;
@@ -965,22 +965,22 @@ DWORD WINAPI WinsockNetLayer::SplitScreenRecvThreadProc(LPVOID param)
 	SOCKET sock = s_splitScreenSocket[padIndex];
 	BYTE localSmallId = s_splitScreenSmallId[padIndex];
 	std::vector<BYTE> recvBuf;
-	recvBuf.resize(WIN64_NET_RECV_BUFFER_SIZE);
+	recvBuf.resize(NATIVE_DESKTOP_NET_RECV_BUFFER_SIZE);
 
 	while (s_active && s_splitScreenSocket[padIndex] != INVALID_SOCKET)
 	{
 		BYTE header[4];
 		if (!RecvExact(sock, header, 4))
 		{
-			app.DebugPrintf("Win64 LAN: Split-screen pad %d disconnected from host\n", padIndex);
+			app.DebugPrintf("NativeDesktop LAN: Split-screen pad %d disconnected from host\n", padIndex);
 			break;
 		}
 
 		int packetSize = ((uint32_t)header[0] << 24) | ((uint32_t)header[1] << 16) |
 			((uint32_t)header[2] << 8) | ((uint32_t)header[3]);
-		if (packetSize <= 0 || packetSize > WIN64_NET_MAX_PACKET_SIZE)
+		if (packetSize <= 0 || packetSize > NATIVE_DESKTOP_NET_MAX_PACKET_SIZE)
 		{
-			app.DebugPrintf("Win64 LAN: Split-screen pad %d invalid packet size %d\n", padIndex, packetSize);
+			app.DebugPrintf("NativeDesktop LAN: Split-screen pad %d invalid packet size %d\n", padIndex, packetSize);
 			break;
 		}
 
@@ -989,7 +989,7 @@ DWORD WINAPI WinsockNetLayer::SplitScreenRecvThreadProc(LPVOID param)
 
 		if (!RecvExact(sock, &recvBuf[0], packetSize))
 		{
-			app.DebugPrintf("Win64 LAN: Split-screen pad %d disconnected from host (body)\n", padIndex);
+			app.DebugPrintf("NativeDesktop LAN: Split-screen pad %d disconnected from host (body)\n", padIndex);
 			break;
 		}
 
@@ -1003,39 +1003,39 @@ DWORD WINAPI WinsockNetLayer::SplitScreenRecvThreadProc(LPVOID param)
 	return 0;
 }
 
-DWORD WINAPI WinsockNetLayer::ClientRecvThreadProc(LPVOID param)
+DWORD WINAPI NativeDesktopNetLayer::ClientRecvThreadProc(LPVOID param)
 {
 	std::vector<BYTE> recvBuf;
-	recvBuf.resize(WIN64_NET_RECV_BUFFER_SIZE);
+	recvBuf.resize(NATIVE_DESKTOP_NET_RECV_BUFFER_SIZE);
 
 	while (s_active && s_hostConnectionSocket != INVALID_SOCKET)
 	{
 		BYTE header[4];
 		if (!RecvExact(s_hostConnectionSocket, header, 4))
 		{
-			app.DebugPrintf("Win64 LAN: Disconnected from host (header)\n");
+			app.DebugPrintf("NativeDesktop LAN: Disconnected from host (header)\n");
 			break;
 		}
 
 		int packetSize = (header[0] << 24) | (header[1] << 16) | (header[2] << 8) | header[3];
 
-		if (packetSize <= 0 || packetSize > WIN64_NET_MAX_PACKET_SIZE)
+		if (packetSize <= 0 || packetSize > NATIVE_DESKTOP_NET_MAX_PACKET_SIZE)
 		{
-			app.DebugPrintf("Win64 LAN: Invalid packet size %d from host (max=%d)\n",
+			app.DebugPrintf("NativeDesktop LAN: Invalid packet size %d from host (max=%d)\n",
 				packetSize,
-				(int)WIN64_NET_MAX_PACKET_SIZE);
+				(int)NATIVE_DESKTOP_NET_MAX_PACKET_SIZE);
 			break;
 		}
 
 		if (static_cast<int>(recvBuf.size()) < packetSize)
 		{
 			recvBuf.resize(packetSize);
-			app.DebugPrintf("Win64 LAN: Resized client recv buffer to %d bytes\n", packetSize);
+			app.DebugPrintf("NativeDesktop LAN: Resized client recv buffer to %d bytes\n", packetSize);
 		}
 
 		if (!RecvExact(s_hostConnectionSocket, &recvBuf[0], packetSize))
 		{
-			app.DebugPrintf("Win64 LAN: Disconnected from host (body)\n");
+			app.DebugPrintf("NativeDesktop LAN: Disconnected from host (body)\n");
 			break;
 		}
 
@@ -1046,7 +1046,7 @@ DWORD WINAPI WinsockNetLayer::ClientRecvThreadProc(LPVOID param)
 	return 0;
 }
 
-bool WinsockNetLayer::StartAdvertising(int gamePort, const wchar_t* hostName, unsigned int gameSettings, unsigned int texPackId, unsigned char subTexId, unsigned short netVer)
+bool NativeDesktopNetLayer::StartAdvertising(int gamePort, const wchar_t* hostName, unsigned int gameSettings, unsigned int texPackId, unsigned char subTexId, unsigned short netVer)
 {
 	if (s_advertising) return true;
 	if (!s_initialized) return false;
@@ -1067,7 +1067,7 @@ bool WinsockNetLayer::StartAdvertising(int gamePort, const wchar_t* hostName, un
 	LeaveCriticalSection(&s_advertiseLock);
 	if (!broadcastReady)
 	{
-		app.DebugPrintf("Win64 LAN: Failed to build advertise payload for port %d\n",
+		app.DebugPrintf("NativeDesktop LAN: Failed to build advertise payload for port %d\n",
 			gamePort);
 		return false;
 	}
@@ -1075,14 +1075,14 @@ bool WinsockNetLayer::StartAdvertising(int gamePort, const wchar_t* hostName, un
 	const LceSocketHandle advertiseSocket = LceNetOpenUdpSocket();
 	if (advertiseSocket == LCE_INVALID_SOCKET)
 	{
-		app.DebugPrintf("Win64 LAN: Failed to create advertise socket: %d\n", GetNetLastError());
+		app.DebugPrintf("NativeDesktop LAN: Failed to create advertise socket: %d\n", GetNetLastError());
 		return false;
 	}
 	s_advertiseSock = static_cast<SOCKET>(advertiseSocket);
 
 	if (!LceNetSetSocketBroadcast(advertiseSocket, true))
 	{
-		app.DebugPrintf("Win64 LAN: Failed to enable broadcast on advertise socket: %d\n",
+		app.DebugPrintf("NativeDesktop LAN: Failed to enable broadcast on advertise socket: %d\n",
 			GetNetLastError());
 		CloseNetSocket(s_advertiseSock);
 		s_advertiseSock = INVALID_SOCKET;
@@ -1092,12 +1092,12 @@ bool WinsockNetLayer::StartAdvertising(int gamePort, const wchar_t* hostName, un
 	s_advertising = true;
 	s_advertiseThread = CreateThread(nullptr, 0, AdvertiseThreadProc, nullptr, 0, nullptr);
 
-	app.DebugPrintf("Win64 LAN: Started advertising on UDP port %d\n",
+	app.DebugPrintf("NativeDesktop LAN: Started advertising on UDP port %d\n",
 		LCE_LAN_DISCOVERY_PORT);
 	return true;
 }
 
-void WinsockNetLayer::StopAdvertising()
+void NativeDesktopNetLayer::StopAdvertising()
 {
 	s_advertising = false;
 
@@ -1115,33 +1115,33 @@ void WinsockNetLayer::StopAdvertising()
 	}
 }
 
-void WinsockNetLayer::UpdateAdvertisePlayerCount(BYTE count)
+void NativeDesktopNetLayer::UpdateAdvertisePlayerCount(BYTE count)
 {
 	EnterCriticalSection(&s_advertiseLock);
 	s_advertiseData.playerCount = count;
 	LeaveCriticalSection(&s_advertiseLock);
 }
 
-void WinsockNetLayer::UpdateAdvertiseMaxPlayers(BYTE maxPlayers)
+void NativeDesktopNetLayer::UpdateAdvertiseMaxPlayers(BYTE maxPlayers)
 {
 	EnterCriticalSection(&s_advertiseLock);
 	s_advertiseData.maxPlayers = maxPlayers;
 	LeaveCriticalSection(&s_advertiseLock);
 }
 
-void WinsockNetLayer::UpdateAdvertiseJoinable(bool joinable)
+void NativeDesktopNetLayer::UpdateAdvertiseJoinable(bool joinable)
 {
 	EnterCriticalSection(&s_advertiseLock);
 	s_advertiseData.isJoinable = joinable ? 1 : 0;
 	LeaveCriticalSection(&s_advertiseLock);
 }
 
-DWORD WINAPI WinsockNetLayer::AdvertiseThreadProc(LPVOID param)
+DWORD WINAPI NativeDesktopNetLayer::AdvertiseThreadProc(LPVOID param)
 {
 	while (s_advertising)
 	{
 		EnterCriticalSection(&s_advertiseLock);
-		Win64LANBroadcast data = s_advertiseData;
+		NativeDesktopLANBroadcast data = s_advertiseData;
 		LeaveCriticalSection(&s_advertiseLock);
 
 		const int sent = LceNetSendToIpv4(
@@ -1153,7 +1153,7 @@ DWORD WINAPI WinsockNetLayer::AdvertiseThreadProc(LPVOID param)
 
 		if (sent < 0 && s_advertising)
 		{
-			app.DebugPrintf("Win64 LAN: Broadcast sendto failed: %d\n", GetNetLastError());
+			app.DebugPrintf("NativeDesktop LAN: Broadcast sendto failed: %d\n", GetNetLastError());
 		}
 
 		Sleep(1000);
@@ -1162,7 +1162,7 @@ DWORD WINAPI WinsockNetLayer::AdvertiseThreadProc(LPVOID param)
 	return 0;
 }
 
-bool WinsockNetLayer::StartDiscovery()
+bool NativeDesktopNetLayer::StartDiscovery()
 {
 	if (s_discovering) return true;
 	if (!s_initialized) return false;
@@ -1170,7 +1170,7 @@ bool WinsockNetLayer::StartDiscovery()
 	const LceSocketHandle discoverySocket = LceNetOpenUdpSocket();
 	if (discoverySocket == LCE_INVALID_SOCKET)
 	{
-		app.DebugPrintf("Win64 LAN: Failed to create discovery socket: %d\n", GetNetLastError());
+		app.DebugPrintf("NativeDesktop LAN: Failed to create discovery socket: %d\n", GetNetLastError());
 		return false;
 	}
 	s_discoverySock = static_cast<SOCKET>(discoverySocket);
@@ -1178,7 +1178,7 @@ bool WinsockNetLayer::StartDiscovery()
 	if (!LceNetSetSocketReuseAddress(discoverySocket, true) ||
 		!LceNetBindIpv4(discoverySocket, nullptr, LCE_LAN_DISCOVERY_PORT))
 	{
-		app.DebugPrintf("Win64 LAN: Discovery bind failed: %d\n", GetNetLastError());
+		app.DebugPrintf("NativeDesktop LAN: Discovery bind failed: %d\n", GetNetLastError());
 		CloseNetSocket(s_discoverySock);
 		s_discoverySock = INVALID_SOCKET;
 		return false;
@@ -1186,7 +1186,7 @@ bool WinsockNetLayer::StartDiscovery()
 
 	if (!LceNetSetSocketRecvTimeout(discoverySocket, 500))
 	{
-		app.DebugPrintf("Win64 LAN: Discovery timeout setup failed: %d\n",
+		app.DebugPrintf("NativeDesktop LAN: Discovery timeout setup failed: %d\n",
 			GetNetLastError());
 		CloseNetSocket(s_discoverySock);
 		s_discoverySock = INVALID_SOCKET;
@@ -1196,12 +1196,12 @@ bool WinsockNetLayer::StartDiscovery()
 	s_discovering = true;
 	s_discoveryThread = CreateThread(nullptr, 0, DiscoveryThreadProc, nullptr, 0, nullptr);
 
-	app.DebugPrintf("Win64 LAN: Listening for LAN games on UDP port %d\n",
+	app.DebugPrintf("NativeDesktop LAN: Listening for LAN games on UDP port %d\n",
 		LCE_LAN_DISCOVERY_PORT);
 	return true;
 }
 
-void WinsockNetLayer::StopDiscovery()
+void NativeDesktopNetLayer::StopDiscovery()
 {
 	s_discovering = false;
 
@@ -1223,16 +1223,16 @@ void WinsockNetLayer::StopDiscovery()
 	LeaveCriticalSection(&s_discoveryLock);
 }
 
-std::vector<Win64LANSession> WinsockNetLayer::GetDiscoveredSessions()
+std::vector<NativeDesktopLANSession> NativeDesktopNetLayer::GetDiscoveredSessions()
 {
-	std::vector<Win64LANSession> result;
+	std::vector<NativeDesktopLANSession> result;
 	EnterCriticalSection(&s_discoveryLock);
 	result = s_discoveredSessions;
 	LeaveCriticalSection(&s_discoveryLock);
 	return result;
 }
 
-DWORD WINAPI WinsockNetLayer::DiscoveryThreadProc(LPVOID param)
+DWORD WINAPI NativeDesktopNetLayer::DiscoveryThreadProc(LPVOID param)
 {
 	char recvBuf[512];
 
@@ -1253,11 +1253,11 @@ DWORD WINAPI WinsockNetLayer::DiscoveryThreadProc(LPVOID param)
 			continue;
 		}
 
-		if (recvLen < static_cast<int>(sizeof(Win64LANBroadcast)))
+		if (recvLen < static_cast<int>(sizeof(NativeDesktopLANBroadcast)))
 			continue;
 
 		const std::uint64_t nowMs = LceGetMonotonicMilliseconds();
-		Win64LANSession session = {};
+		NativeDesktopLANSession session = {};
 		if (!LceLanDecodeBroadcast(
 			recvBuf,
 			static_cast<std::size_t>(recvLen),
@@ -1273,10 +1273,10 @@ DWORD WINAPI WinsockNetLayer::DiscoveryThreadProc(LPVOID param)
 		LceLanUpsertSession(session, &s_discoveredSessions, &addedSession);
 		if (addedSession)
 		{
-			app.DebugPrintf("Win64 LAN: Discovered game \"%ls\" at %s:%d\n",
+			app.DebugPrintf("NativeDesktop LAN: Discovered game \"%ls\" at %s:%d\n",
 				session.hostName, session.hostIP, session.hostPort);
 		}
-		std::vector<Win64LANSession> expiredSessions;
+		std::vector<NativeDesktopLANSession> expiredSessions;
 		LceLanPruneExpiredSessions(
 			nowMs,
 			LCE_LAN_SESSION_TIMEOUT_MS,
@@ -1284,7 +1284,7 @@ DWORD WINAPI WinsockNetLayer::DiscoveryThreadProc(LPVOID param)
 			&expiredSessions);
 		for (size_t i = 0; i < expiredSessions.size(); ++i)
 		{
-			app.DebugPrintf("Win64 LAN: Session \"%ls\" at %s timed out\n",
+			app.DebugPrintf("NativeDesktop LAN: Session \"%ls\" at %s timed out\n",
 				expiredSessions[i].hostName, expiredSessions[i].hostIP);
 		}
 		LeaveCriticalSection(&s_discoveryLock);

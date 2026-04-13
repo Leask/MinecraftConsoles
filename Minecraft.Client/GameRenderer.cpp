@@ -1167,7 +1167,7 @@ void GameRenderer::render(float a, bool bFirst)
         return;
     anaglyph3d = mc->options->anaglyph3d;
 
-	glViewport(0, 0, mc->width, mc->height);	// 4J - added (no-op on Win64, viewport set by StateSetViewport)
+	glViewport(0, 0, mc->width, mc->height);	// 4J - added (native desktop viewport is set by StateSetViewport)
 	ScreenSizeCalculator ssc(mc->options, mc->width, mc->height);
 	const int screenWidth = ssc.getWidth();
 	const int screenHeight = ssc.getHeight();

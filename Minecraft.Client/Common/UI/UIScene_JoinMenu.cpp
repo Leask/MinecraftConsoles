@@ -759,7 +759,7 @@ int UIScene_JoinMenu::EditServerKeyboardCallback(LPVOID lpParam, bool bRes)
 
 	uint16_t ui16Text[256];
 	ZeroMemory(ui16Text, sizeof(ui16Text));
-	Win64_GetKeyboardText(ui16Text, 256);
+	NativeDesktop_GetKeyboardText(ui16Text, 256);
 
 	wchar_t wBuf[256] = {};
 	for (int k = 0; k < 255 && ui16Text[k]; k++)

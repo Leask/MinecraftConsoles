@@ -20,7 +20,7 @@
 #include "../Minecraft.World/net.minecraft.network.h"
 #if defined(_NATIVE_DESKTOP)
 #include "NativeDesktop/NativeDesktop_Xuid.h"
-#include "NativeDesktop/Network/WinsockNetLayer.h"
+#include "NativeDesktop/Network/NativeDesktopNetLayer.h"
 #endif
 #include "../Minecraft.World/Pos.h"
 #include "../Minecraft.World/ProgressListener.h"
@@ -37,7 +37,7 @@
 
 #if defined(_NATIVE_DESKTOP) && defined(MINECRAFT_SERVER_BUILD)
 #include "../Minecraft.Server/Access/Access.h"
-extern bool g_Win64DedicatedServer;
+extern bool g_NativeDesktopDedicatedServer;
 #endif
 
 // 4J - this class is fairly substantially altered as there didn't seem any point in porting code for banning, whitelisting, ops etc.
@@ -570,7 +570,7 @@ shared_ptr<ServerPlayer> PlayerList::getPlayerForLogin(PendingConnection *pendin
 			// This preserves pre-migration host playerdata in existing worlds.
 			if (np->IsHost())
 			{
-				player->setXuid(Win64Xuid::GetLegacyEmbeddedHostXuid());
+				player->setXuid(NativeDesktopXuid::GetLegacyEmbeddedHostXuid());
 			}
 		}
 	}
@@ -1013,8 +1013,8 @@ void PlayerList::tick()
 		// The old Connection's read/write threads are now dead (disconnect waits
 		// for them). Safe to recycle the smallId — no stale write thread can
 		// resolve getPlayer() to a new connection that reuses this slot.
-		WinsockNetLayer::PushFreeSmallId(smallId);
-		WinsockNetLayer::ClearSocketForSmallId(smallId);
+		NativeDesktopNetLayer::PushFreeSmallId(smallId);
+		NativeDesktopNetLayer::ClearSocketForSmallId(smallId);
 #endif
 	}
 	LeaveCriticalSection(&m_closePlayersCS);
@@ -1678,7 +1678,7 @@ bool PlayerList::isXuidBanned(PlayerUID xuid)
 	}
 
 #if defined(_NATIVE_DESKTOP) && defined(MINECRAFT_SERVER_BUILD)
-	if (!banned && g_Win64DedicatedServer)
+	if (!banned && g_NativeDesktopDedicatedServer)
 	{
 		banned = ServerRuntime::Access::IsPlayerBanned(xuid);
 	}

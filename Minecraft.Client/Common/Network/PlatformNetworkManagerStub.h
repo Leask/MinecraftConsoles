@@ -163,7 +163,7 @@ public:
 	virtual void GetFullFriendSessionInfo( FriendSessionInfo *foundSession, void (* FriendSessionUpdatedFn)(bool success, void *pParam), void *pParam );
 	virtual void ForceFriendsSessionRefresh();
 
-	// Win64: used by accept thread to reject connections when server is at max players (so we don't assign smallId > max).
+	// NativeDesktop: used by accept thread to reject connections when server is at max players (so we don't assign smallId > max).
 	bool CanAcceptMoreConnections();
 
 public:

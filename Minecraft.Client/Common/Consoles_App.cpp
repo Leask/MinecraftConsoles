@@ -765,18 +765,18 @@ bool CMinecraftApp::LoadBeaconMenu(int iPad ,shared_ptr<Inventory> inventory, sh
 //////////////////////////////////////////////
 
 #ifdef _WINDOWS64
-static void Win64_GetSettingsPath(char *outPath, DWORD size)
+static void NativeDesktop_GetSettingsPath(char *outPath, DWORD size)
 {
     GetModuleFileNameA(nullptr, outPath, size);
     char *lastSlash = strrchr(outPath, '\\');
     if (lastSlash) *(lastSlash + 1) = '\0';
     strncat_s(outPath, size, "settings.dat", _TRUNCATE);
 }
-static void Win64_SaveSettings(GAME_SETTINGS *gs)
+static void NativeDesktop_SaveSettings(GAME_SETTINGS *gs)
 {
     if (!gs) return;
     char filePath[MAX_PATH] = {};
-    Win64_GetSettingsPath(filePath, MAX_PATH);
+    NativeDesktop_GetSettingsPath(filePath, MAX_PATH);
     FILE *f = nullptr;
     if (fopen_s(&f, filePath, "wb") == 0 && f)
     {
@@ -784,11 +784,11 @@ static void Win64_SaveSettings(GAME_SETTINGS *gs)
         fclose(f);
     }
 }
-static void Win64_LoadSettings(GAME_SETTINGS *gs)
+static void NativeDesktop_LoadSettings(GAME_SETTINGS *gs)
 {
     if (!gs) return;
     char filePath[MAX_PATH] = {};
-    Win64_GetSettingsPath(filePath, MAX_PATH);
+    NativeDesktop_GetSettingsPath(filePath, MAX_PATH);
     FILE *f = nullptr;
     if (fopen_s(&f, filePath, "rb") == 0 && f)
     {
@@ -915,7 +915,7 @@ void CMinecraftApp::InitGameSettings()
 		// clear this for now - it will come from reading the system values
 		memset(pProfileSettings,0,sizeof(C_4JProfile::PROFILESETTINGS));
 		SetDefaultOptions(pProfileSettings,i);
-		Win64_LoadSettings(GameSettingsA[i]);
+		NativeDesktop_LoadSettings(GameSettingsA[i]);
 		ApplyGameSettingsChanged(i);
 #elif defined __PS3__ || defined __ORBIS__ || defined _DURANGO  || defined __PSVITA__
 		C4JStorage::PROFILESETTINGS *pProfileSettings=StorageManager.GetDashboardProfileSettings(i);
@@ -2581,7 +2581,7 @@ void CMinecraftApp::CheckGameSettingsChanged(bool bOverride5MinuteTimer, int iPa
 #else
 				ProfileManager.WriteToProfile(i,true, bOverride5MinuteTimer);
 #ifdef _WINDOWS64
-				Win64_SaveSettings(GameSettingsA[i]);
+				NativeDesktop_SaveSettings(GameSettingsA[i]);
 #endif
 #endif
 				GameSettingsA[i]->bSettingsChanged=false;
@@ -2597,7 +2597,7 @@ void CMinecraftApp::CheckGameSettingsChanged(bool bOverride5MinuteTimer, int iPa
 #else
 			ProfileManager.WriteToProfile(iPad,true, bOverride5MinuteTimer);
 #ifdef _WINDOWS64
-			Win64_SaveSettings(GameSettingsA[iPad]);
+			NativeDesktop_SaveSettings(GameSettingsA[iPad]);
 #endif
 #endif
 			GameSettingsA[iPad]->bSettingsChanged=false;

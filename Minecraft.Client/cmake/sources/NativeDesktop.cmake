@@ -33,8 +33,8 @@ source_group("Common/UI" FILES ${_MINECRAFT_CLIENT_NATIVE_DESKTOP_UI})
 set(_MINECRAFT_CLIENT_NATIVE_DESKTOP_NETWORK
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/Network/PlatformNetworkManagerStub.cpp"
   "${CMAKE_CURRENT_SOURCE_DIR}/Common/Network/PlatformNetworkManagerStub.h"
-  "${BASE_DIR}/Network/WinsockNetLayer.cpp"
-  "${BASE_DIR}/Network/WinsockNetLayer.h"
+  "${BASE_DIR}/Network/NativeDesktopNetLayer.cpp"
+  "${BASE_DIR}/Network/NativeDesktopNetLayer.h"
   "${BASE_DIR}/Network/NetworkPlayerNative.cpp"
   "${BASE_DIR}/Network/NetworkPlayerNative.h"
 )

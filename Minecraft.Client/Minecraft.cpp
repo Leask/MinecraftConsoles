@@ -237,7 +237,7 @@ Minecraft::Minecraft(Component *mouseComponent, Canvas *parent, MinecraftApplet 
 	m_inFullTutorialBits = 0; // 4J Added
 	reloadTextures = false;
 
-	// initialise the audio before any textures are loaded - to avoid the problem in win64 of the Miles audio causing the codec for textures to be unloaded
+	// initialise the audio before any textures are loaded - to avoid the problem in native desktop of the Miles audio causing the codec for textures to be unloaded
 
 	// 4J-PB - Removed it from here on Orbis due to it causing a crash with the network init.
 	// We should work out why...
@@ -1091,11 +1091,11 @@ shared_ptr<MultiplayerLocalPlayer> Minecraft::createExtraLocalPlayer(int idx, co
 		INetworkPlayer *localNetworkPlayer = g_NetworkManager.GetLocalPlayerByUserIndex(idx);
 		if(localNetworkPlayer != nullptr && localNetworkPlayer->IsHost())
 		{
-			playerXUIDOffline = Win64Xuid::GetLegacyEmbeddedHostXuid();
+			playerXUIDOffline = NativeDesktopXuid::GetLegacyEmbeddedHostXuid();
 		}
 		else
 		{
-			playerXUIDOffline = Win64Xuid::ResolvePersistentXuid();
+			playerXUIDOffline = NativeDesktopXuid::ResolvePersistentXuid();
 		}
 #endif
 		localplayers[idx]->setXuid(playerXUIDOffline);
@@ -4417,11 +4417,11 @@ void Minecraft::setLevel(MultiPlayerLevel *level, int message /*=-1*/, shared_pt
 			INetworkPlayer *localNetworkPlayer = g_NetworkManager.GetLocalPlayerByUserIndex(iPrimaryPlayer);
 			if(localNetworkPlayer != nullptr && localNetworkPlayer->IsHost())
 			{
-				playerXUIDOffline = Win64Xuid::GetLegacyEmbeddedHostXuid();
+				playerXUIDOffline = NativeDesktopXuid::GetLegacyEmbeddedHostXuid();
 			}
 			else
 			{
-				playerXUIDOffline = Win64Xuid::ResolvePersistentXuid();
+				playerXUIDOffline = NativeDesktopXuid::ResolvePersistentXuid();
 			}
 #endif
 			player->setXuid(playerXUIDOffline);
@@ -4611,11 +4611,11 @@ void Minecraft::respawnPlayer(int iPad, int dimension, int newEntityId)
 	INetworkPlayer *localNetworkPlayer = g_NetworkManager.GetLocalPlayerByUserIndex(iTempPad);
 	if(localNetworkPlayer != nullptr && localNetworkPlayer->IsHost())
 	{
-		playerXUIDOffline = Win64Xuid::GetLegacyEmbeddedHostXuid();
+		playerXUIDOffline = NativeDesktopXuid::GetLegacyEmbeddedHostXuid();
 	}
 	else
 	{
-		playerXUIDOffline = Win64Xuid::ResolvePersistentXuid();
+		playerXUIDOffline = NativeDesktopXuid::ResolvePersistentXuid();
 	}
 #endif
 	player->setXuid(playerXUIDOffline);

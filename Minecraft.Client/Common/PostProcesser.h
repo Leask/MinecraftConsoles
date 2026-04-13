@@ -29,8 +29,6 @@ private:
     PostProcesser();
     ~PostProcesser();
 
-    static bool IsRunningUnderWine();
-
     ID3D11Texture2D* m_pGammaOffscreenTex = nullptr;
     ID3D11ShaderResourceView* m_pGammaOffscreenSRV = nullptr;
     ID3D11RenderTargetView* m_pGammaOffscreenRTV = nullptr;
@@ -44,7 +42,6 @@ private:
 
     bool m_initialized = false;
     float m_gamma = 1.0f;
-    bool m_wineMode = false;
     D3D11_VIEWPORT m_customViewport;
     bool m_useCustomViewport = false;
     UINT m_gammaTexWidth = 0;
@@ -66,10 +63,6 @@ private:
 #if defined(_NATIVE_DESKTOP)
 inline PostProcesser::PostProcesser() = default;
 inline PostProcesser::~PostProcesser() = default;
-inline bool PostProcesser::IsRunningUnderWine()
-{
-    return false;
-}
 inline void PostProcesser::Init()
 {
     m_initialized = true;

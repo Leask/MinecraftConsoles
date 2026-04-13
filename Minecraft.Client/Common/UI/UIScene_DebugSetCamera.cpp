@@ -195,7 +195,7 @@ int UIScene_DebugSetCamera::KeyboardCompleteCallback(LPVOID lpParam,bool bRes)
 	uint16_t pchText[2048];
 	ZeroMemory(pchText, 2048 * sizeof(uint16_t));
 #ifdef _WINDOWS64
-	Win64_GetKeyboardText(pchText, 2048);
+	NativeDesktop_GetKeyboardText(pchText, 2048);
 #else
     InputManager.GetText(pchText);
 #endif

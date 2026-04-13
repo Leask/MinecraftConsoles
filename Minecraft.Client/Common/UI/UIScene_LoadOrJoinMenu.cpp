@@ -753,7 +753,7 @@ void UIScene_LoadOrJoinMenu::tick()
                     wchar_t wFilename[MAX_SAVEFILENAME_LENGTH];
                     ZeroMemory(wFilename, sizeof(wFilename));
                     mbstowcs(wFilename, m_pSaveDetails->SaveInfoA[origIdx].UTF8SaveFilename, MAX_SAVEFILENAME_LENGTH - 1);
-                    wstring filePath = wstring(L"Windows64\\GameHDD\\") + wstring(wFilename) + wstring(L"\\saveData.ms");
+                    wstring filePath = wstring(L"NativeDesktop\\GameHDD\\") + wstring(wFilename) + wstring(L"\\saveData.ms");
 
                     HANDLE hFile = CreateFileW(filePath.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
                     DWORD fileSize = 0;
@@ -1407,7 +1407,7 @@ int UIScene_LoadOrJoinMenu::KeyboardCompleteWorldNameCallback(LPVOID lpParam,boo
         uint16_t ui16Text[128];
         ZeroMemory(ui16Text, 128 * sizeof(uint16_t) );
 #ifdef _WINDOWS64
-        Win64_GetKeyboardText(ui16Text, 128);
+        NativeDesktop_GetKeyboardText(ui16Text, 128);
 #else
         InputManager.GetText(ui16Text);
 #endif
@@ -1431,10 +1431,10 @@ int UIScene_LoadOrJoinMenu::KeyboardCompleteWorldNameCallback(LPVOID lpParam,boo
                 char narrowName[128] = {};
                 wcstombs(narrowName, wNewName, 127);
 
-                // Build the sidecar path: Windows64\GameHDD\{folder}\worldname.txt
+                // Build the sidecar path: NativeDesktop\GameHDD\{folder}\worldname.txt
                 wchar_t wFilename[MAX_SAVEFILENAME_LENGTH] = {};
                 mbstowcs(wFilename, pClass->m_saveDetails[listPos].UTF8SaveFilename, MAX_SAVEFILENAME_LENGTH - 1);
-                wstring sidecarPath = wstring(L"Windows64\\GameHDD\\") + wstring(wFilename) + wstring(L"\\worldname.txt");
+                wstring sidecarPath = wstring(L"NativeDesktop\\GameHDD\\") + wstring(wFilename) + wstring(L"\\worldname.txt");
 
                 FILE *fw = nullptr;
                 if (_wfopen_s(&fw, sidecarPath.c_str(), L"w") == 0 && fw)
@@ -2376,7 +2376,7 @@ void UIScene_LoadOrJoinMenu::LoadSaveFromCloud()
 #endif //SONY_REMOTE_STORAGE_DOWNLOAD
 
 #ifdef _WINDOWS64
-static bool Win64_DeleteSaveDirectory(const wchar_t* wPath)
+static bool NativeDesktop_DeleteSaveDirectory(const wchar_t* wPath)
 {
     wchar_t wSearch[MAX_PATH];
     swprintf_s(wSearch, MAX_PATH, L"%s\\*", wPath);
@@ -2390,7 +2390,7 @@ static bool Win64_DeleteSaveDirectory(const wchar_t* wPath)
             wchar_t wChild[MAX_PATH];
             swprintf_s(wChild, MAX_PATH, L"%s\\%s", wPath, fd.cFileName);
             if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-                Win64_DeleteSaveDirectory(wChild);
+                NativeDesktop_DeleteSaveDirectory(wChild);
             else
                 DeleteFileW(wChild);
         } while (FindNextFileW(hFind, &fd));
@@ -2426,8 +2426,8 @@ int UIScene_LoadOrJoinMenu::DeleteSaveDialogReturned(void *pParam,int iPad,C4JSt
                     wchar_t wFilename[MAX_SAVEFILENAME_LENGTH] = {};
                     mbstowcs_s(nullptr, wFilename, MAX_SAVEFILENAME_LENGTH, pClass->m_saveDetails[displayIdx].UTF8SaveFilename, MAX_SAVEFILENAME_LENGTH - 1);
                     wchar_t wFolderPath[MAX_PATH] = {};
-                    swprintf_s(wFolderPath, MAX_PATH, L"Windows64\\GameHDD\\%s", wFilename);
-                    bSuccess = Win64_DeleteSaveDirectory(wFolderPath);
+                    swprintf_s(wFolderPath, MAX_PATH, L"NativeDesktop\\GameHDD\\%s", wFilename);
+                    bSuccess = NativeDesktop_DeleteSaveDirectory(wFolderPath);
                 }
                 UIScene_LoadOrJoinMenu::DeleteSaveDataReturned((LPVOID)pClass->GetCallbackUniqueId(), bSuccess);
             }
@@ -4171,7 +4171,7 @@ int UIScene_LoadOrJoinMenu::AddServerKeyboardCallback(LPVOID lpParam, bool bRes)
 
     uint16_t ui16Text[256];
     ZeroMemory(ui16Text, sizeof(ui16Text));
-    Win64_GetKeyboardText(ui16Text, 256);
+    NativeDesktop_GetKeyboardText(ui16Text, 256);
 
     wchar_t wBuf[256] = {};
     for (int k = 0; k < 255 && ui16Text[k]; k++)

@@ -5,9 +5,8 @@ IF YOUR PR CHANGES THE GAME BEHAVIOR VISIBLY, REMEMBER TO ATTACH A GAMEPLAY FOOT
 
 ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
 
-We will NOT accept PRs with code authored by AI. If your code
-was written by an AI, your PR will be closed. Do not submit
-vibe coded PRs.
+AI-assisted or automated changes must be disclosed. The submitter
+is responsible for understanding, reviewing, and validating the result.
 
 ⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️
 
@@ -19,6 +18,11 @@ PRs that do not fulfill the informational intent of this PR template will be clo
 
 ## Description
 <!-- Briefly describe the changes this PR introduces. -->
+
+## Native Scope Check
+<!-- Confirm this targets macOS/Linux native paths only. Windows compatibility
+     work, Wine/Docker runtime paths, Direct3D build paths, and removed console
+     toolchains are out of scope for main. -->
 
 ## Changes
 
@@ -35,7 +39,8 @@ PRs that do not fulfill the informational intent of this PR template will be clo
 <!-- Detail exactly how the issue was resolved (specific code changes, algorithms, logic flows). -->
 
 ### AI Use Disclosure
-<!-- Explain, if any, AI was used to solve this problem. Note that we do not accept code written by any LLM in this repo. -->
+<!-- Explain if AI or automation was used. The submitter remains responsible
+     for review, design explanation, and native validation. -->
 
 ## Related Issues
 - Fixes #[issue-number]

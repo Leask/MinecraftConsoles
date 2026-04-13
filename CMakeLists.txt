@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
   message(FATAL_ERROR
-    "Windows builds are no longer supported on main. "
+    "Windows compatibility maintenance has stopped on main. "
     "Use the last-windows-compatible branch for the archived Windows build."
   )
 endif()
@@ -122,15 +122,6 @@ endif()
 
 if(TARGET Minecraft.Portability.Check AND TARGET Minecraft.World)
   add_dependencies(Minecraft.Portability.Check Minecraft.World)
-endif()
-
-# ---
-# Project organisation
-# ---
-if(TARGET Minecraft.Client)
-  set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT Minecraft.Client)
-elseif(TARGET Minecraft.Portability.SmokeTest)
-  set_property(DIRECTORY PROPERTY VS_STARTUP_PROJECT Minecraft.Portability.SmokeTest)
 endif()
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

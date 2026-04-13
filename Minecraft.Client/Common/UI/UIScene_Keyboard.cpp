@@ -5,8 +5,8 @@
 
 #ifdef _WINDOWS64
 // Global buffer that stores the text entered in the native keyboard scene.
-// Callbacks retrieve it via Win64_GetKeyboardText() declared in UIStructs.h.
-wchar_t g_Win64KeyboardResult[256] = {};
+// Callbacks retrieve it via NativeDesktop_GetKeyboardText() declared in UIStructs.h.
+wchar_t g_NativeDesktopKeyboardResult[256] = {};
 #endif
 
 #define KEYBOARD_DONE_TIMER_ID 0
@@ -18,10 +18,10 @@ UIScene_Keyboard::UIScene_Keyboard(int iPad, void *initData, UILayer *parentLaye
 	initialiseMovie();
 
 #ifdef _WINDOWS64
-	m_win64Callback = nullptr;
-	m_win64CallbackParam = nullptr;
-	m_win64TextBuffer = L"";
-	m_win64MaxChars = 25;
+	m_nativeDesktopCallback = nullptr;
+	m_nativeDesktopCallbackParam = nullptr;
+	m_nativeDesktopTextBuffer = L"";
+	m_nativeDesktopMaxChars = 25;
 
 	const wchar_t* titleText = L"Enter text";
 	const wchar_t* defaultText = L"";
@@ -30,24 +30,24 @@ UIScene_Keyboard::UIScene_Keyboard(int iPad, void *initData, UILayer *parentLaye
 	if (initData)
 	{
 		UIKeyboardInitData* kbData = static_cast<UIKeyboardInitData *>(initData);
-		m_win64Callback = kbData->callback;
-		m_win64CallbackParam = kbData->lpParam;
+		m_nativeDesktopCallback = kbData->callback;
+		m_nativeDesktopCallbackParam = kbData->lpParam;
 		if (kbData->title)       titleText        = kbData->title;
 		if (kbData->defaultText) defaultText      = kbData->defaultText;
-		m_win64MaxChars = kbData->maxChars;
+		m_nativeDesktopMaxChars = kbData->maxChars;
 		m_bPCMode = kbData->pcMode;
 	}
 
-	m_win64TextBuffer = defaultText;
-	m_iCursorPos = (int)m_win64TextBuffer.length();
+	m_nativeDesktopTextBuffer = defaultText;
+	m_iCursorPos = (int)m_nativeDesktopTextBuffer.length();
 
 	m_EnterTextLabel.init(titleText);
 	m_KeyboardTextInput.init(defaultText, -1);
-	m_KeyboardTextInput.SetCharLimit(m_win64MaxChars);
+	m_KeyboardTextInput.SetCharLimit(m_nativeDesktopMaxChars);
 
 	// Clear any leftover typed characters from a previous keyboard session
 	g_KBMInput.ClearCharBuffer();
-	g_Win64KeyboardResult[0] = L'\0';
+	g_NativeDesktopKeyboardResult[0] = L'\0';
 #else
 	m_EnterTextLabel.init(L"Enter Sign Text");
 
@@ -175,7 +175,7 @@ void UIScene_Keyboard::tick()
 	{
 		const wchar_t* flashText = m_KeyboardTextInput.getLabel();
 		if (flashText)
-			m_win64TextBuffer = flashText;
+			m_nativeDesktopTextBuffer = flashText;
 	}
 
 	// Accumulate physical keyboard chars into our own buffer, then push to Flash via setLabel.
@@ -191,14 +191,14 @@ void UIScene_Keyboard::tick()
 			{
 				if (m_iCursorPos > 0)
 				{
-					m_win64TextBuffer.erase(m_iCursorPos - 1, 1);
+					m_nativeDesktopTextBuffer.erase(m_iCursorPos - 1, 1);
 					m_iCursorPos--;
 					changed = true;
 				}
 			}
-			else if (!m_win64TextBuffer.empty())
+			else if (!m_nativeDesktopTextBuffer.empty())
 			{
-				m_win64TextBuffer.pop_back();
+				m_nativeDesktopTextBuffer.pop_back();
 				changed = true;
 			}
 		}
@@ -210,16 +210,16 @@ void UIScene_Keyboard::tick()
 				m_bKeyboardDonePressed = true;
 			}
 		}
-		else if (static_cast<int>(m_win64TextBuffer.length()) < m_win64MaxChars)
+		else if (static_cast<int>(m_nativeDesktopTextBuffer.length()) < m_nativeDesktopMaxChars)
 		{
 			if (m_bPCMode)
 			{
-				m_win64TextBuffer.insert(m_iCursorPos, 1, ch);
+				m_nativeDesktopTextBuffer.insert(m_iCursorPos, 1, ch);
 				m_iCursorPos++;
 			}
 			else
 			{
-				m_win64TextBuffer += ch;
+				m_nativeDesktopTextBuffer += ch;
 			}
 			changed = true;
 		}
@@ -236,7 +236,7 @@ void UIScene_Keyboard::tick()
 		{
 			if (pc >= 0x20) // Keep printable characters
 			{
-				if (static_cast<int>(m_win64TextBuffer.length() + sanitized.length()) >= m_win64MaxChars)
+				if (static_cast<int>(m_nativeDesktopTextBuffer.length() + sanitized.length()) >= m_nativeDesktopMaxChars)
 					break;
 				sanitized += pc;
 			}
@@ -246,12 +246,12 @@ void UIScene_Keyboard::tick()
 		{
 			if (m_bPCMode)
 			{
-				m_win64TextBuffer.insert(m_iCursorPos, sanitized);
+				m_nativeDesktopTextBuffer.insert(m_iCursorPos, sanitized);
 				m_iCursorPos += (int)sanitized.length();
 			}
 			else
 			{
-				m_win64TextBuffer += sanitized;
+				m_nativeDesktopTextBuffer += sanitized;
 			}
 			changed = true;
 		}
@@ -262,21 +262,21 @@ void UIScene_Keyboard::tick()
 		// Arrow keys, Home, End, Delete for cursor movement
 		if (g_KBMInput.IsKeyPressed(VK_LEFT) && m_iCursorPos > 0)
 			m_iCursorPos--;
-		if (g_KBMInput.IsKeyPressed(VK_RIGHT) && m_iCursorPos < (int)m_win64TextBuffer.length())
+		if (g_KBMInput.IsKeyPressed(VK_RIGHT) && m_iCursorPos < (int)m_nativeDesktopTextBuffer.length())
 			m_iCursorPos++;
 		if (g_KBMInput.IsKeyPressed(VK_HOME))
 			m_iCursorPos = 0;
 		if (g_KBMInput.IsKeyPressed(VK_END))
-			m_iCursorPos = (int)m_win64TextBuffer.length();
-		if (g_KBMInput.IsKeyPressed(VK_DELETE) && m_iCursorPos < (int)m_win64TextBuffer.length())
+			m_iCursorPos = (int)m_nativeDesktopTextBuffer.length();
+		if (g_KBMInput.IsKeyPressed(VK_DELETE) && m_iCursorPos < (int)m_nativeDesktopTextBuffer.length())
 		{
-			m_win64TextBuffer.erase(m_iCursorPos, 1);
+			m_nativeDesktopTextBuffer.erase(m_iCursorPos, 1);
 			changed = true;
 		}
 	}
 
 	if (changed)
-		m_KeyboardTextInput.setLabel(m_win64TextBuffer.c_str(), true /*instant*/);
+		m_KeyboardTextInput.setLabel(m_nativeDesktopTextBuffer.c_str(), true /*instant*/);
 
 	if (m_bPCMode)
 	{
@@ -299,8 +299,8 @@ void UIScene_Keyboard::handleInput(int iPad, int key, bool repeat, bool pressed,
 #ifdef _WINDOWS64
 			{
 				// Cache before navigateBack() destroys this scene
-				int(*cb)(LPVOID, const bool) = m_win64Callback;
-				LPVOID cbParam = m_win64CallbackParam;
+				int(*cb)(LPVOID, const bool) = m_nativeDesktopCallback;
+				LPVOID cbParam = m_nativeDesktopCallbackParam;
 				navigateBack();
 				if (cb)
 					cb(cbParam, false);
@@ -413,12 +413,12 @@ void UIScene_Keyboard::KeyboardDonePressed()
 	const wchar_t* finalText = m_KeyboardTextInput.getLabel();
 	app.DebugPrintf("UI Keyboard - DONE - [%ls]\n", finalText);
 
-	// Store the typed text so callbacks can retrieve it via Win64_GetKeyboardText()
-	wcsncpy_s(g_Win64KeyboardResult, 256, finalText, _TRUNCATE);
+	// Store the typed text so callbacks can retrieve it via NativeDesktop_GetKeyboardText()
+	wcsncpy_s(g_NativeDesktopKeyboardResult, 256, finalText, _TRUNCATE);
 
 	// Cache callback and param before navigateBack() which destroys this scene
-	int(*cb)(LPVOID, const bool) = m_win64Callback;
-	LPVOID cbParam = m_win64CallbackParam;
+	int(*cb)(LPVOID, const bool) = m_nativeDesktopCallback;
+	LPVOID cbParam = m_nativeDesktopCallbackParam;
 
 	// Navigate back so the scene stack is restored before the callback runs
 	navigateBack();

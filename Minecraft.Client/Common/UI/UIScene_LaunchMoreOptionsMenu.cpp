@@ -556,7 +556,7 @@ int UIScene_LaunchMoreOptionsMenu::KeyboardCompleteSeedCallback(LPVOID lpParam,b
 #ifdef _WINDOWS64
 		uint16_t pchText[128];
 		ZeroMemory(pchText, 128 * sizeof(uint16_t));
-		Win64_GetKeyboardText(pchText, 128);
+		NativeDesktop_GetKeyboardText(pchText, 128);
 		pClass->m_editSeed.setLabel(reinterpret_cast<wchar_t *>(pchText));
 		pClass->m_params->seed =
 			static_cast<wstring>(reinterpret_cast<wchar_t *>(pchText));

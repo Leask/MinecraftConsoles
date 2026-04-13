@@ -32,7 +32,7 @@
 #include "../Minecraft.World/net.minecraft.world.item.enchantment.h"
 #include "../Minecraft.World/net.minecraft.world.damagesource.h"
 #if defined(_NATIVE_DESKTOP)
-#include "NativeDesktop/Network/WinsockNetLayer.h"
+#include "NativeDesktop/Network/NativeDesktopNetLayer.h"
 #endif
 #include <sstream>
 #ifdef SPLIT_SAVES
@@ -92,7 +92,7 @@ unordered_map<wstring, int> MinecraftServer::ironTimers;
 static bool ShouldUseDedicatedServerProperties()
 {
 #if defined(_NATIVE_DESKTOP)
-	return g_Win64DedicatedServer;
+	return g_NativeDesktopDedicatedServer;
 #else
 	return false;
 #endif
@@ -695,7 +695,7 @@ bool MinecraftServer::initServer(int64_t seed, NetworkGameInitData *initData, DW
 #if defined(_NATIVE_DESKTOP)
 	{
 		int maxP = getPlayerList()->getMaxPlayers();
-		WinsockNetLayer::UpdateAdvertiseMaxPlayers((BYTE)(maxP > 255 ? 255 : maxP));
+		NativeDesktopNetLayer::UpdateAdvertiseMaxPlayers((BYTE)(maxP > 255 ? 255 : maxP));
 	}
 #endif
 

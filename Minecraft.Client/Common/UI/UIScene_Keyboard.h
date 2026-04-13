@@ -8,10 +8,10 @@ private:
 	bool m_bKeyboardDonePressed;
 
 #ifdef _WINDOWS64
-	int(*m_win64Callback)(LPVOID, const bool);
-	LPVOID m_win64CallbackParam;
-	wstring m_win64TextBuffer;
-	int m_win64MaxChars;
+	int(*m_nativeDesktopCallback)(LPVOID, const bool);
+	LPVOID m_nativeDesktopCallbackParam;
+	wstring m_nativeDesktopTextBuffer;
+	int m_nativeDesktopMaxChars;
 	bool m_bPCMode; // Hides on-screen keyboard buttons; physical keyboard only
 	int m_iCursorPos;
 #endif

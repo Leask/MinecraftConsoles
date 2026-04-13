@@ -330,7 +330,7 @@ rrbool UIBitmapFont::GetGlyphBitmap(S32 glyph,F32 pixel_scale,IggyBitmapCharacte
 	bitmap->oversample = 0;
 
 #ifdef _WINDOWS64
-	// On Windows64 the window can be any size, producing fractional
+	// On NativeDesktop the window can be any size, producing fractional
 	// pixel_scale values that don't align to integer multiples of
 	// truePixelScale.  The original console code cached glyphs with a
 	// broad [truePixelScale, 99] range in the "normal" branch, which

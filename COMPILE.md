@@ -1,7 +1,8 @@
 # Build Instructions
 
-This branch only supports macOS and Linux native builds. The archived
-Windows-compatible build is preserved on `last-windows-compatible`.
+This branch only supports macOS and Linux native builds. Windows compatibility
+maintenance has stopped on `main`; Windows build instructions are no longer
+kept here. The archived compatibility line is `last-windows-compatible`.
 
 ## Requirements
 

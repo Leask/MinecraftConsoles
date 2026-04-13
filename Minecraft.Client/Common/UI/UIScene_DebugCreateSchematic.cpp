@@ -242,7 +242,7 @@ int UIScene_DebugCreateSchematic::KeyboardCompleteCallback(LPVOID lpParam,bool b
 #ifdef _WINDOWS64
 	uint16_t pchText[128];
 	ZeroMemory(pchText, 128 * sizeof(uint16_t));
-	Win64_GetKeyboardText(pchText, 128);
+	NativeDesktop_GetKeyboardText(pchText, 128);
 #else
 	uint16_t pchText[128];
 	ZeroMemory(pchText, 128 * sizeof(uint16_t) );

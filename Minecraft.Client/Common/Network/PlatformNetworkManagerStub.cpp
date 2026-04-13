@@ -4,7 +4,7 @@
 #include "PlatformNetworkManagerStub.h"
 #include "../../NativeDesktop/Network/NetworkPlayerNative.h"
 #if defined(_NATIVE_DESKTOP)
-#include "../../NativeDesktop/Network/WinsockNetLayer.h"
+#include "../../NativeDesktop/Network/NativeDesktopNetLayer.h"
 #include "../../NativeDesktop/NativeDesktop_Xuid.h"
 #include "../../Minecraft.h"
 #include "../../User.h"
@@ -238,14 +238,14 @@ void CPlatformNetworkManagerStub::DoWork()
 	{
 		_iQNetStubState = QNET_STATE_GAME_PLAY;
 		if (m_pIQNet->IsHost())
-			WinsockNetLayer::UpdateAdvertiseJoinable(true);
+			NativeDesktopNetLayer::UpdateAdvertiseJoinable(true);
 	}
 	if (_iQNetStubState == QNET_STATE_IDLE)
 		TickSearch();
 	if (_iQNetStubState == QNET_STATE_GAME_PLAY && m_pIQNet->IsHost())
 	{
 		BYTE disconnectedSmallId;
-		while (WinsockNetLayer::PopDisconnectedSmallId(&disconnectedSmallId))
+		while (NativeDesktopNetLayer::PopDisconnectedSmallId(&disconnectedSmallId))
 		{
 			IQNetPlayer* qnetPlayer = m_pIQNet->GetPlayerBySmallId(disconnectedSmallId);
 			if (qnetPlayer != nullptr && qnetPlayer->m_smallId == disconnectedSmallId)
@@ -286,7 +286,7 @@ void CPlatformNetworkManagerStub::DoWork()
 	// The processing from the Xbox version will be reused.
 	if (_iQNetStubState == QNET_STATE_GAME_PLAY && !m_pIQNet->IsHost() && !m_bLeavingGame)
 	{
-		if (!WinsockNetLayer::IsConnected())
+		if (!NativeDesktopNetLayer::IsConnected())
 		{
 			if (!m_bLeaveGameOnTick)
 			{
@@ -359,8 +359,8 @@ bool CPlatformNetworkManagerStub::RemoveLocalPlayerByUserIndex( int userIndex )
 			NotifyPlayerLeaving(qp);
 		}
 
-		// Close the split-screen TCP connection and reset WinsockNetLayer state
-		WinsockNetLayer::CloseSplitScreenConnection(userIndex);
+		// Close the split-screen TCP connection and reset NativeDesktopNetLayer state
+		NativeDesktopNetLayer::CloseSplitScreenConnection(userIndex);
 
 		// Clear the IQNet slot so it can be reused on rejoin
 		qp->m_smallId = 0;
@@ -403,7 +403,7 @@ bool CPlatformNetworkManagerStub::LeaveGame(bool bMigrateHost)
 
 #if defined(_NATIVE_DESKTOP)
 	NATIVE_DESKTOP_PLATFORM_TRACE("StopAdvertising begin");
-	WinsockNetLayer::StopAdvertising();
+	NativeDesktopNetLayer::StopAdvertising();
 	NATIVE_DESKTOP_PLATFORM_TRACE("StopAdvertising end");
 #endif
 
@@ -447,12 +447,12 @@ bool CPlatformNetworkManagerStub::LeaveGame(bool bMigrateHost)
 	NATIVE_DESKTOP_PLATFORM_TRACE("SystemFlagReset end");
 
 #if defined(_NATIVE_DESKTOP)
-	NATIVE_DESKTOP_PLATFORM_TRACE("Winsock shutdown begin");
-	WinsockNetLayer::Shutdown();
-	NATIVE_DESKTOP_PLATFORM_TRACE("Winsock shutdown end");
-	NATIVE_DESKTOP_PLATFORM_TRACE("Winsock initialize begin");
-	WinsockNetLayer::Initialize();
-	NATIVE_DESKTOP_PLATFORM_TRACE("Winsock initialize end");
+	NATIVE_DESKTOP_PLATFORM_TRACE("NativeDesktop network shutdown begin");
+	NativeDesktopNetLayer::Shutdown();
+	NATIVE_DESKTOP_PLATFORM_TRACE("NativeDesktop network shutdown end");
+	NATIVE_DESKTOP_PLATFORM_TRACE("NativeDesktop network initialize begin");
+	NativeDesktopNetLayer::Initialize();
+	NATIVE_DESKTOP_PLATFORM_TRACE("NativeDesktop network initialize end");
 #endif
 
 	NATIVE_DESKTOP_PLATFORM_TRACE("LeaveGame end");
@@ -485,43 +485,43 @@ void CPlatformNetworkManagerStub::HostGame(int localUsersMask, bool bOnlineGame,
 	IQNet::m_player[0].m_isRemote = false;
 	// world host is pinned to legacy host XUID to keep old player data compatibility.
 	IQNet::m_player[0].m_isHostPlayer = true;
-	IQNet::m_player[0].m_resolvedXuid = Win64Xuid::GetLegacyEmbeddedHostXuid();
+	IQNet::m_player[0].m_resolvedXuid = NativeDesktopXuid::GetLegacyEmbeddedHostXuid();
 	IQNet::s_playerCount = 1;
 #endif
 
 	_HostGame( localUsersMask, publicSlots, privateSlots );
 
 #if defined(_NATIVE_DESKTOP)
-	int port = WIN64_NET_DEFAULT_PORT;
+	int port = NATIVE_DESKTOP_NET_DEFAULT_PORT;
 	const char* bindIp = nullptr;
-	if (g_Win64DedicatedServer)
+	if (g_NativeDesktopDedicatedServer)
 	{
-		if (g_Win64DedicatedServerPort > 0)
-			port = g_Win64DedicatedServerPort;
-		if (g_Win64DedicatedServerBindIP[0] != 0)
-			bindIp = g_Win64DedicatedServerBindIP;
+		if (g_NativeDesktopDedicatedServerPort > 0)
+			port = g_NativeDesktopDedicatedServerPort;
+		if (g_NativeDesktopDedicatedServerBindIP[0] != 0)
+			bindIp = g_NativeDesktopDedicatedServerBindIP;
 	}
-	if (!WinsockNetLayer::IsActive())
-		WinsockNetLayer::HostGame(port, bindIp);
+	if (!NativeDesktopNetLayer::IsActive())
+		NativeDesktopNetLayer::HostGame(port, bindIp);
 
-	if (WinsockNetLayer::IsActive())
+	if (NativeDesktopNetLayer::IsActive())
 	{
 		// For Dedicated Server, refer to `lan-advertise` in `server.properties`
 		bool enableLanAdvertising = true;
-		if (g_Win64DedicatedServer)
+		if (g_NativeDesktopDedicatedServer)
 		{
-			enableLanAdvertising = g_Win64DedicatedServerLanAdvertise;
+			enableLanAdvertising = g_NativeDesktopDedicatedServerLanAdvertise;
 		}
 
 		if (enableLanAdvertising)
 		{
 			const wchar_t* hostName = IQNet::m_player[0].m_gamertag;
 			unsigned int settings = app.GetGameHostOption(eGameHostOption_All);
-			WinsockNetLayer::StartAdvertising(port, hostName, settings, 0, 0, MINECRAFT_NET_VERSION);
+			NativeDesktopNetLayer::StartAdvertising(port, hostName, settings, 0, 0, MINECRAFT_NET_VERSION);
 		}
 		else
 		{
-			WinsockNetLayer::StopAdvertising();
+			NativeDesktopNetLayer::StopAdvertising();
 		}
 	}
 #endif
@@ -558,24 +558,24 @@ int CPlatformNetworkManagerStub::JoinGame(FriendSessionInfo* searchResult, int l
 	IQNet::m_player[0].m_isRemote = true;
 	IQNet::m_player[0].m_isHostPlayer = true;
 	// Remote host still maps to legacy host XUID in mixed old/new sessions.
-	IQNet::m_player[0].m_resolvedXuid = Win64Xuid::GetLegacyEmbeddedHostXuid();
+	IQNet::m_player[0].m_resolvedXuid = NativeDesktopXuid::GetLegacyEmbeddedHostXuid();
 	wcsncpy_s(IQNet::m_player[0].m_gamertag, 32, searchResult->data.hostName, _TRUNCATE);
 
-	WinsockNetLayer::StopDiscovery();
+	NativeDesktopNetLayer::StopDiscovery();
 
-	if (!WinsockNetLayer::JoinGame(hostIP, hostPort))
+	if (!NativeDesktopNetLayer::JoinGame(hostIP, hostPort))
 	{
-		app.DebugPrintf("Win64 LAN: Failed to connect to %s:%d\n", hostIP, hostPort);
+		app.DebugPrintf("NativeDesktop LAN: Failed to connect to %s:%d\n", hostIP, hostPort);
 		return CGameNetworkManager::JOINGAME_FAIL_GENERAL;
 	}
 
-	BYTE localSmallId = WinsockNetLayer::GetLocalSmallId();
+	BYTE localSmallId = NativeDesktopNetLayer::GetLocalSmallId();
 
 	IQNet::m_player[localSmallId].m_smallId = localSmallId;
 	IQNet::m_player[localSmallId].m_isRemote = false;
 	IQNet::m_player[localSmallId].m_isHostPlayer = false;
 	// Local non-host identity is the persistent uid.dat XUID.
-	IQNet::m_player[localSmallId].m_resolvedXuid = Win64Xuid::ResolvePersistentXuid();
+	IQNet::m_player[localSmallId].m_resolvedXuid = NativeDesktopXuid::ResolvePersistentXuid();
 
 	Minecraft* pMinecraft = Minecraft::GetInstance();
 	wcscpy_s(IQNet::m_player[localSmallId].m_gamertag, 32, pMinecraft->user->name.c_str());
@@ -866,7 +866,7 @@ void CPlatformNetworkManagerStub::TickSearch()
 void CPlatformNetworkManagerStub::SearchForGames()
 {
 #if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
-	std::vector<Win64LANSession> lanSessions = WinsockNetLayer::GetDiscoveredSessions();
+	std::vector<NativeDesktopLANSession> lanSessions = NativeDesktopNetLayer::GetDiscoveredSessions();
 
 	//THEY GET DELETED HERE DAMMIT
 	for (size_t i = 0; i < friendsSessions[0].size(); i++)

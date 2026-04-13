@@ -823,7 +823,7 @@ void ClientConnection::handleAddPlayer(shared_ptr<AddPlayerPacket> packet)
 		}
 	}
 #ifdef _WINDOWS64
-	// Win64 keeps local-player identity separate from network smallId; also guard against creating
+	// NativeDesktop keeps local-player identity separate from network smallId; also guard against creating
 	// a duplicate remote player for a local slot by checking the username directly.
 	for (unsigned int idx = 0; idx < XUSER_MAX_COUNT; ++idx)
 	{
@@ -835,7 +835,7 @@ void ClientConnection::handleAddPlayer(shared_ptr<AddPlayerPacket> packet)
 	}
 #endif
 /*#ifdef _WINDOWS64
-	// On Windows64 all XUIDs are INVALID_XUID so the XUID check above never fires.
+	// On NativeDesktop all XUIDs are INVALID_XUID so the XUID check above never fires.
 	// packet->m_playerIndex is the server-assigned sequential index (set via LoginPacket),
 	// NOT the controller slot — so we must scan all local player slots and match by
 	// their stored server index rather than using it directly as an array subscript.
@@ -877,11 +877,11 @@ void ClientConnection::handleAddPlayer(shared_ptr<AddPlayerPacket> packet)
 	{
 		IQNetPlayer* matchedQNetPlayer = nullptr;
 		PlayerUID pktXuid = player->getXuid();
-		const PlayerUID WIN64_XUID_BASE = (PlayerUID)0xe000d45248242f2e;
+		const PlayerUID NATIVE_DESKTOP_XUID_BASE = (PlayerUID)0xe000d45248242f2e;
 		// Legacy compatibility path for peers still using embedded smallId XUIDs.
-		if (pktXuid >= WIN64_XUID_BASE && pktXuid < WIN64_XUID_BASE + MINECRAFT_NET_MAX_PLAYERS)
+		if (pktXuid >= NATIVE_DESKTOP_XUID_BASE && pktXuid < NATIVE_DESKTOP_XUID_BASE + MINECRAFT_NET_MAX_PLAYERS)
 		{
-			BYTE smallId = (BYTE)(pktXuid - WIN64_XUID_BASE);
+			BYTE smallId = (BYTE)(pktXuid - NATIVE_DESKTOP_XUID_BASE);
 			INetworkPlayer* np = g_NetworkManager.GetPlayerBySmallId(smallId);
 			if (np != nullptr)
 			{
@@ -890,7 +890,7 @@ void ClientConnection::handleAddPlayer(shared_ptr<AddPlayerPacket> packet)
 			}
 		}
 
-		// Current Win64 path: identify QNet player by name and attach packet XUID.
+		// Current NativeDesktop path: identify QNet player by name and attach packet XUID.
 		if (matchedQNetPlayer == nullptr)
 		{
 			for (int i = 0; i < MINECRAFT_NET_MAX_PLAYERS; ++i)

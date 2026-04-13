@@ -13,7 +13,7 @@
 #include "../Common/UI/UIStructs.h"
 #include "../Common/Leaderboards/LeaderboardManager.h"
 #include "../Common/Network/GameNetworkManager.h"
-#include "Network/WinsockNetLayer.h"
+#include "Network/NativeDesktopNetLayer.h"
 #include "NativeDesktop_Xuid.h"
 #include "SocialManager.h"
 #include "../../Minecraft.World/AABB.h"
@@ -36,8 +36,8 @@ HWND g_hWnd = nullptr;
 
 const int IUIScene_CreativeMenu::TabSpec::MAX_SIZE;
 
-char g_Win64Username[17] = "Player";
-wchar_t g_Win64UsernameW[17] = L"Player";
+char g_NativeDesktopUsername[17] = "Player";
+wchar_t g_NativeDesktopUsernameW[17] = L"Player";
 
 void MemSect(int sect)
 {
@@ -76,8 +76,8 @@ DWORD XUserGetSigninInfo(
         return E_FAIL;
     }
 
-    pSigninInfo->xuid = Win64Xuid::DeriveXuidForPad(
-        Win64Xuid::ResolvePersistentXuid(),
+    pSigninInfo->xuid = NativeDesktopXuid::DeriveXuidForPad(
+        NativeDesktopXuid::ResolvePersistentXuid(),
         static_cast<int>(dwUserIndex));
     pSigninInfo->dwGuestNumber = 0;
     return ERROR_SUCCESS;
@@ -146,19 +146,19 @@ void IQNetPlayer::SendData(
         return;
     }
 
-    if (WinsockNetLayer::IsActive())
+    if (NativeDesktopNetLayer::IsActive())
     {
-        if (!WinsockNetLayer::IsHosting() && !m_isRemote)
+        if (!NativeDesktopNetLayer::IsHosting() && !m_isRemote)
         {
-            SOCKET socket = WinsockNetLayer::GetLocalSocket(m_smallId);
+            SOCKET socket = NativeDesktopNetLayer::GetLocalSocket(m_smallId);
             if (socket != INVALID_SOCKET)
             {
-                WinsockNetLayer::SendOnSocket(socket, pvData, dwDataSize);
+                NativeDesktopNetLayer::SendOnSocket(socket, pvData, dwDataSize);
             }
         }
         else
         {
-            WinsockNetLayer::SendToSmallId(player->m_smallId, pvData, dwDataSize);
+            NativeDesktopNetLayer::SendToSmallId(player->m_smallId, pvData, dwDataSize);
         }
     }
 }
@@ -202,7 +202,7 @@ PlayerUID IQNetPlayer::GetXuid()
         return m_resolvedXuid;
     }
     return static_cast<PlayerUID>(
-        Win64Xuid::GetLegacyEmbeddedBaseXuid() + m_smallId);
+        NativeDesktopXuid::GetLegacyEmbeddedBaseXuid() + m_smallId);
 }
 
 LPCWSTR IQNetPlayer::GetGamertag()
@@ -257,7 +257,7 @@ bool IQNet::s_isHosting = true;
 
 QNET_STATE _iQNetStubState = QNET_STATE_IDLE;
 
-void Win64_SetupRemoteQNetPlayer(
+void NativeDesktop_SetupRemoteQNetPlayer(
     IQNetPlayer* player,
     BYTE smallId,
     bool isHost,
@@ -290,12 +290,12 @@ HRESULT IQNet::AddLocalPlayerByUserIndex(DWORD dwUserIndex)
     player.m_smallId = static_cast<BYTE>(dwUserIndex);
     player.m_isRemote = false;
     player.m_isHostPlayer = dwUserIndex == 0;
-    player.m_resolvedXuid = Win64Xuid::DeriveXuidForPad(
-        Win64Xuid::ResolvePersistentXuid(),
+    player.m_resolvedXuid = NativeDesktopXuid::DeriveXuidForPad(
+        NativeDesktopXuid::ResolvePersistentXuid(),
         static_cast<int>(dwUserIndex));
     if (dwUserIndex == 0)
     {
-        wcscpy_s(player.m_gamertag, 32, g_Win64UsernameW);
+        wcscpy_s(player.m_gamertag, 32, g_NativeDesktopUsernameW);
     }
     else
     {
@@ -303,7 +303,7 @@ HRESULT IQNet::AddLocalPlayerByUserIndex(DWORD dwUserIndex)
             player.m_gamertag,
             32,
             L"%ls(%u)",
-            g_Win64UsernameW,
+            g_NativeDesktopUsernameW,
             static_cast<unsigned>(dwUserIndex + 1));
     }
 
@@ -390,8 +390,8 @@ void IQNet::HostGame()
     m_player[0].m_smallId = 0;
     m_player[0].m_isRemote = false;
     m_player[0].m_isHostPlayer = true;
-    m_player[0].m_resolvedXuid = Win64Xuid::GetLegacyEmbeddedHostXuid();
-    wcscpy_s(m_player[0].m_gamertag, 32, g_Win64UsernameW);
+    m_player[0].m_resolvedXuid = NativeDesktopXuid::GetLegacyEmbeddedHostXuid();
+    wcscpy_s(m_player[0].m_gamertag, 32, g_NativeDesktopUsernameW);
     s_playerCount = 1;
 }
 
@@ -862,7 +862,7 @@ namespace
         app.setLevelGenerationOptions(nullptr);
         app.ReleaseSaveThumbnail();
         ProfileManager.SetLockedProfile(0);
-        minecraft->user->name = g_Win64UsernameW;
+        minecraft->user->name = g_NativeDesktopUsernameW;
         MinecraftServer::resetFlags();
         app.SetTutorialMode(false);
         app.SetCorruptSaveDeleted(false);
@@ -1181,7 +1181,7 @@ int main(int argc, char** argv)
     std::fprintf(stderr, "NativeDesktop bootstrap: media archive ready\n");
     app.loadStringTable();
     std::fprintf(stderr, "NativeDesktop bootstrap: string table ready\n");
-    Win64Xuid::ResolvePersistentXuid();
+    NativeDesktopXuid::ResolvePersistentXuid();
     std::fprintf(stderr, "NativeDesktop bootstrap: xuid ready\n");
     NativeDesktopInitialiseProfile();
     std::fprintf(stderr, "NativeDesktop bootstrap: profile ready\n");

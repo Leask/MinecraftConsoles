@@ -761,7 +761,7 @@ int UIScene_CreateWorldMenu::KeyboardCompleteWorldNameCallback(LPVOID lpParam,bo
 		uint16_t pchText[128];
 		ZeroMemory(pchText, 128 * sizeof(uint16_t) );
 #ifdef _WINDOWS64
-		Win64_GetKeyboardText(pchText, 128);
+		NativeDesktop_GetKeyboardText(pchText, 128);
 #else
 		InputManager.GetText(pchText);
 #endif
@@ -994,7 +994,7 @@ void UIScene_CreateWorldMenu::checkStateAndStartGame()
 			else
 			{
 #ifdef _WINDOWS64
-				// On Windows64, Xbox Live is unavailable. Skip QuadrantSignin and start directly.
+				// On NativeDesktop, Xbox Live is unavailable. Skip QuadrantSignin and start directly.
 				CreateGame(this, 0);
 #else
 				//ProfileManager.RequestSignInUI(false, false, false, true, false,&CScene_MultiGameCreate::StartGame_SignInReturned, this,ProfileManager.GetPrimaryPad());
@@ -1384,7 +1384,7 @@ int UIScene_CreateWorldMenu::ConfirmCreateReturned(void *pParam,int iPad,C4JStor
 		if(isClientSide && app.IsLocalMultiplayerAvailable())
 		{
 #ifdef _WINDOWS64
-			// On Windows64, Xbox Live is unavailable. Skip QuadrantSignin and start directly.
+			// On NativeDesktop, Xbox Live is unavailable. Skip QuadrantSignin and start directly.
 			CreateGame(pClass, 0);
 			return 0;
 #else

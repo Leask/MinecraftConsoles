@@ -10,6 +10,10 @@ Edition codebase. Starting from this branch, `main` no longer carries Windows
 build support, release automation, Wine/Docker runtime support, or Windows
 compatibility goals.
 
+Windows compatibility maintenance has stopped on `main`. Any remaining
+Windows-like symbol names are legacy ABI terminology used by the macOS/Linux
+native shims, not a supported Windows runtime path.
+
 The last branch that intentionally preserves the previous Windows-compatible
 state is:
 
@@ -38,6 +42,8 @@ The project direction is:
 
 The old Windows client, Windows dedicated server, Direct3D path, Wine Docker
 server, and Windows release workflows are intentionally out of scope for `main`.
+Do not treat code cleanup that preserves those removed paths as a supported
+maintenance goal.
 
 ## Platform Status
 
@@ -225,6 +231,8 @@ cmake --build --preset linux-native-client-debug \
 - `main` is macOS/Linux native-only.
 - Do not add Windows presets, Windows release workflows, Wine runtime scripts,
   or Direct3D-backed build paths back to `main`.
+- Do not maintain Windows compatibility in new code. If legacy ABI names remain,
+  keep them isolated behind native macOS/Linux abstractions.
 - Keep `Minecraft.Server.NativeBootstrap` as the only native server entry point.
 - Route save, autosave, stop, and halt through the native worker/session flow.
 - Validate native runtime work with `Minecraft.Portability.Check`.

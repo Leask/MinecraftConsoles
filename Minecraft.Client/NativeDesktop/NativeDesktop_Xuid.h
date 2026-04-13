@@ -7,7 +7,7 @@
 #include <cstring>
 #include <lce_abi/lce_abi.h>
 
-namespace Win64Xuid
+namespace NativeDesktopXuid
 {
 	inline PlayerUID GetLegacyEmbeddedBaseXuid()
 	{
@@ -23,7 +23,7 @@ namespace Win64Xuid
 
 	inline bool IsLegacyEmbeddedRange(PlayerUID xuid)
 	{
-		// Old Win64 XUIDs were not persistent and always lived in this narrow base+smallId range.
+		// Old NativeDesktop XUIDs were not persistent and always lived in this narrow base+smallId range.
 		// Treat them as legacy/non-persistent so uid.dat values never collide with old slot IDs.
 		const PlayerUID base = GetLegacyEmbeddedBaseXuid();
 		return xuid >= base && xuid < (base + MINECRAFT_NET_MAX_PLAYERS);

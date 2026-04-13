@@ -285,7 +285,7 @@ typedef struct _JoinMenuInitData
 #endif
 } JoinMenuInitData;
 
-// Native keyboard (Windows64 replacement for InputManager.RequestKeyboard WinAPI dialog)
+// Native keyboard (NativeDesktop replacement for InputManager.RequestKeyboard WinAPI dialog)
 #ifdef _WINDOWS64
 typedef struct _UIKeyboardInitData
 {
@@ -301,16 +301,16 @@ typedef struct _UIKeyboardInitData
 
 // Stores the text typed in UIScene_Keyboard so callbacks can retrieve it
 // without calling InputManager.GetText (which shows the WinAPI dialog result).
-extern wchar_t g_Win64KeyboardResult[256];
-inline void Win64_GetKeyboardText(uint16_t* outBuf, int maxChars)
+extern wchar_t g_NativeDesktopKeyboardResult[256];
+inline void NativeDesktop_GetKeyboardText(uint16_t* outBuf, int maxChars)
 {
-	wcsncpy_s((wchar_t*)outBuf, maxChars, g_Win64KeyboardResult, _TRUNCATE);
+	wcsncpy_s((wchar_t*)outBuf, maxChars, g_NativeDesktopKeyboardResult, _TRUNCATE);
 }
 
 // Returns true if any XInput controller is currently connected.
 // Used to decide whether to show the in-game keyboard UI or fall back to PC input.
 #include <Xinput.h>
-inline bool Win64_IsControllerConnected()
+inline bool NativeDesktop_IsControllerConnected()
 {
 	XINPUT_STATE state;
 	for (DWORD i = 0; i < XUSER_MAX_COUNT; i++)

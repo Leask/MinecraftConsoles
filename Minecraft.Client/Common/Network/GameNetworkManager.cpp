@@ -44,7 +44,7 @@
 #include "../../NativeDesktop/Network/NetworkPlayerNative.h"
 
 #if defined(_NATIVE_DESKTOP)
-#include "../../NativeDesktop/Network/WinsockNetLayer.h"
+#include "../../NativeDesktop/Network/NativeDesktopNetLayer.h"
 #include "../../NativeDesktop/NativeDesktop_Xuid.h"
 #endif
 
@@ -1556,7 +1556,7 @@ void CGameNetworkManager::CreateSocket( INetworkPlayer *pNetworkPlayer, bool loc
 			int padIdx = pNetworkPlayer->GetUserIndex();
 			BYTE assignedSmallId = 0;
 
-			if (!WinsockNetLayer::JoinSplitScreen(padIdx, &assignedSmallId))
+			if (!NativeDesktopNetLayer::JoinSplitScreen(padIdx, &assignedSmallId))
 			{
 				app.DebugPrintf("Split-screen pad %d: failed to open TCP to host\n", padIdx);
 				pMinecraft->connectionDisconnected(padIdx, DisconnectPacket::eDisconnect_ConnectionCreationFailed);
@@ -1567,7 +1567,7 @@ void CGameNetworkManager::CreateSocket( INetworkPlayer *pNetworkPlayer, bool loc
 			// The NetworkPlayerNative created by NotifyPlayerJoined already points to
 			// m_player[padIdx], so we just set the smallId for network routing.
 			IQNet::m_player[padIdx].m_smallId = assignedSmallId;
-			IQNet::m_player[padIdx].m_resolvedXuid = Win64Xuid::DeriveXuidForPad(Win64Xuid::ResolvePersistentXuid(), padIdx);
+			IQNet::m_player[padIdx].m_resolvedXuid = NativeDesktopXuid::DeriveXuidForPad(NativeDesktopXuid::ResolvePersistentXuid(), padIdx);
 
 			// Network socket (not hostLocal) — data goes through TCP via GetLocalSocket
 			socket = new Socket(pNetworkPlayer, false, false);

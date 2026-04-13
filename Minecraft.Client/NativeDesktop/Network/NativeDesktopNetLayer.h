@@ -7,17 +7,17 @@
 #include <lce_net/lce_lan.h>
 #include "../../Common/Network/NetworkPlayerInterface.h"
 
-#define WIN64_NET_DEFAULT_PORT 25565
-#define WIN64_NET_MAX_CLIENTS 255
-#define WIN64_SMALLID_REJECT 0xFF
-#define WIN64_NET_RECV_BUFFER_SIZE 65536
-#define WIN64_NET_MAX_PACKET_SIZE (4 * 1024 * 1024)
+#define NATIVE_DESKTOP_NET_DEFAULT_PORT 25565
+#define NATIVE_DESKTOP_NET_MAX_CLIENTS 255
+#define NATIVE_DESKTOP_SMALLID_REJECT 0xFF
+#define NATIVE_DESKTOP_NET_RECV_BUFFER_SIZE 65536
+#define NATIVE_DESKTOP_NET_MAX_PACKET_SIZE (4 * 1024 * 1024)
 class Socket;
 
-using Win64LANBroadcast = LceLanBroadcast;
-using Win64LANSession = LceLanSession;
+using NativeDesktopLANBroadcast = LceLanBroadcast;
+using NativeDesktopLANSession = LceLanSession;
 
-struct Win64RemoteConnection
+struct NativeDesktopRemoteConnection
 {
 	SOCKET tcpSocket;
 	BYTE smallId;
@@ -25,7 +25,7 @@ struct Win64RemoteConnection
 	volatile bool active;
 };
 
-class WinsockNetLayer
+class NativeDesktopNetLayer
 {
 public:
 	static bool Initialize();
@@ -66,7 +66,7 @@ public:
 
 	static bool StartDiscovery();
 	static void StopDiscovery();
-	static std::vector<Win64LANSession> GetDiscoveredSessions();
+	static std::vector<NativeDesktopLANSession> GetDiscoveredSessions();
 
 	static int GetHostPort() { return s_hostGamePort; }
 
@@ -95,12 +95,12 @@ private:
 	static CRITICAL_SECTION s_sendLock;
 	static CRITICAL_SECTION s_connectionsLock;
 
-	static std::vector<Win64RemoteConnection> s_connections;
+	static std::vector<NativeDesktopRemoteConnection> s_connections;
 
 	static SOCKET s_advertiseSock;
 	static HANDLE s_advertiseThread;
 	static volatile bool s_advertising;
-	static Win64LANBroadcast s_advertiseData;
+	static NativeDesktopLANBroadcast s_advertiseData;
 	static CRITICAL_SECTION s_advertiseLock;
 	static int s_hostGamePort;
 
@@ -108,7 +108,7 @@ private:
 	static HANDLE s_discoveryThread;
 	static volatile bool s_discovering;
 	static CRITICAL_SECTION s_discoveryLock;
-	static std::vector<Win64LANSession> s_discoveredSessions;
+	static std::vector<NativeDesktopLANSession> s_discoveredSessions;
 
 	static CRITICAL_SECTION s_disconnectLock;
 	static std::vector<BYTE> s_disconnectedSmallIds;
@@ -128,11 +128,11 @@ public:
 	static void ClearSocketForSmallId(BYTE smallId);
 };
 
-extern bool g_Win64MultiplayerHost;
-extern bool g_Win64MultiplayerJoin;
-extern int g_Win64MultiplayerPort;
-extern char g_Win64MultiplayerIP[256];
-extern bool g_Win64DedicatedServer;
-extern int g_Win64DedicatedServerPort;
-extern char g_Win64DedicatedServerBindIP[256];
-extern bool g_Win64DedicatedServerLanAdvertise;
+extern bool g_NativeDesktopMultiplayerHost;
+extern bool g_NativeDesktopMultiplayerJoin;
+extern int g_NativeDesktopMultiplayerPort;
+extern char g_NativeDesktopMultiplayerIP[256];
+extern bool g_NativeDesktopDedicatedServer;
+extern int g_NativeDesktopDedicatedServerPort;
+extern char g_NativeDesktopDedicatedServerBindIP[256];
+extern bool g_NativeDesktopDedicatedServerLanAdvertise;

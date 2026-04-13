@@ -2,9 +2,10 @@
 
 ## Goal
 
-`main` is now a macOS/Linux native-only branch. The archived
-Windows-compatible state lives on `last-windows-compatible`; new work on
-`main` must not restore that build path.
+`main` is now a macOS/Linux native-only branch. Windows compatibility
+maintenance has stopped on this line of development. The archived compatibility
+state lives on `last-windows-compatible`; new work on `main` must not restore
+or preserve that build path.
 
 The primary deliverable is:
 
@@ -32,6 +33,26 @@ Unsupported on `main`:
 - Wine-backed runtime packaging
 - renderer paths from removed platform builds
 - platform-specific release automation outside macOS/Linux native validation
+
+Cleanup rule:
+
+- delete removed-platform scripts, presets, generated project files, and
+  proprietary platform documents from `main`
+- keep only the legacy ABI terms required by current macOS/Linux native shims
+- replace those legacy ABI terms with native names only when the replacement is
+  covered by smoke tests
+
+Residual scan result:
+
+- no Windows build preset, workflow, Docker/Wine runtime path, or supported
+  Windows server/client entrypoint remains on `main`
+- active native client networking now uses `NativeDesktopNetLayer` and
+  `NativeDesktop*` names instead of the old `Win64*` native shim names
+- remaining `_WINDOWS64`, `_WIN64`, Direct3D, `SAVE_FILE_PLATFORM_WIN64`, and
+  Win32-like symbols live in dormant legacy gameplay branches, save-format
+  compatibility enums, vendor code, or native ABI shims
+- those remaining names are cleanup backlog only; new work must not expand them
+  or treat them as Windows compatibility maintenance
 
 ## Technical Direction
 
@@ -78,6 +99,7 @@ Deliverables:
 - removed Windows release workflows
 - removed Wine Docker runtime scripts
 - removed Windows64 source/resource directories from `main`
+- removed stale Visual Studio/AppWizard project documentation from `main`
 
 ### Phase 2: Headless runtime hardening
 
