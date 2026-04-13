@@ -156,6 +156,8 @@ Status: next.
 Direction:
 
 - make the client runtime summary the canonical startup health contract
+  (startup milestones, final phase, exit code, and runtime health are now
+  smoke-checked)
 - replace remaining active `_WINDOWS64` UI/input branches with
   `_NATIVE_DESKTOP` branches
 - isolate Direct3D-shaped renderer structs behind native renderer-neutral names

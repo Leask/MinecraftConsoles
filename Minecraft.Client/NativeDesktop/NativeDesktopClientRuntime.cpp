@@ -677,6 +677,16 @@ namespace
 
     struct NativeDesktopRuntimeSummary
     {
+        bool mediaArchiveReady = false;
+        bool stringTableReady = false;
+        bool xuidReady = false;
+        bool profileReady = false;
+        bool networkManagerReady = false;
+        bool qnetReady = false;
+        bool localPlayerReady = false;
+        bool minecraftRuntimeReady = false;
+        bool uiReady = false;
+        bool startupComplete = false;
         int bootstrapFramesRequested = 0;
         int bootstrapFramesCompleted = 0;
         int gameplayFramesRequested = 0;
@@ -689,6 +699,10 @@ namespace
         bool networkThreadStopped = false;
         bool shutdownComplete = false;
         bool loopComplete = false;
+        bool runtimeHealthy = false;
+        int exitCode = 1;
+        const char* phase = "starting";
+        const char* failure = "none";
     };
 
     int NativeDesktopReadIntSetting(
@@ -1079,6 +1093,19 @@ namespace
         std::fprintf(
             stderr,
             "NativeDesktop runtime summary: "
+            "phase=%s "
+            "failure=%s "
+            "exitCode=%d "
+            "startup.mediaArchive=%d "
+            "startup.stringTable=%d "
+            "startup.xuid=%d "
+            "startup.profile=%d "
+            "startup.networkManager=%d "
+            "startup.qnet=%d "
+            "startup.localPlayer=%d "
+            "startup.minecraftRuntime=%d "
+            "startup.ui=%d "
+            "startupComplete=%d "
             "bootstrapFrames=%d/%d "
             "gameplayThreadStarted=%d "
             "gameplayReady=%d "
@@ -1088,7 +1115,21 @@ namespace
             "leaveGameComplete=%d "
             "networkThreadStopped=%d "
             "shutdownComplete=%d "
-            "loopComplete=%d\n",
+            "loopComplete=%d "
+            "runtimeHealthy=%d\n",
+            summary.phase,
+            summary.failure,
+            summary.exitCode,
+            summary.mediaArchiveReady ? 1 : 0,
+            summary.stringTableReady ? 1 : 0,
+            summary.xuidReady ? 1 : 0,
+            summary.profileReady ? 1 : 0,
+            summary.networkManagerReady ? 1 : 0,
+            summary.qnetReady ? 1 : 0,
+            summary.localPlayerReady ? 1 : 0,
+            summary.minecraftRuntimeReady ? 1 : 0,
+            summary.uiReady ? 1 : 0,
+            summary.startupComplete ? 1 : 0,
             summary.bootstrapFramesCompleted,
             summary.bootstrapFramesRequested,
             summary.gameplayThreadStarted ? 1 : 0,
@@ -1100,7 +1141,30 @@ namespace
             summary.leaveGameComplete ? 1 : 0,
             summary.networkThreadStopped ? 1 : 0,
             summary.shutdownComplete ? 1 : 0,
-            summary.loopComplete ? 1 : 0);
+            summary.loopComplete ? 1 : 0,
+            summary.runtimeHealthy ? 1 : 0);
+    }
+
+    int NativeDesktopFinishRuntime(
+        NativeDesktopRuntimeSummary* summary,
+        int exitCode,
+        const char* phase,
+        const char* failure)
+    {
+        if (summary != nullptr)
+        {
+            summary->exitCode = exitCode;
+            summary->phase = phase;
+            summary->failure = failure;
+            summary->runtimeHealthy =
+                exitCode == 0 &&
+                summary->startupComplete &&
+                summary->gameplayReady &&
+                summary->shutdownComplete &&
+                summary->loopComplete;
+            NativeDesktopPrintRuntimeSummary(*summary);
+        }
+        return exitCode;
     }
 
     void NativeDesktopInitialiseProfile()
@@ -1178,24 +1242,38 @@ int main(int argc, char** argv)
         runtimeConfig.gameplayWaitMs);
     NativeDesktopSetWorkingDirectory(argv[0]);
     app.loadMediaArchive();
+    runtimeSummary.mediaArchiveReady = true;
     std::fprintf(stderr, "NativeDesktop bootstrap: media archive ready\n");
     app.loadStringTable();
+    runtimeSummary.stringTableReady = true;
     std::fprintf(stderr, "NativeDesktop bootstrap: string table ready\n");
     NativeDesktopXuid::ResolvePersistentXuid();
+    runtimeSummary.xuidReady = true;
     std::fprintf(stderr, "NativeDesktop bootstrap: xuid ready\n");
     NativeDesktopInitialiseProfile();
+    runtimeSummary.profileReady = true;
     std::fprintf(stderr, "NativeDesktop bootstrap: profile ready\n");
     g_NetworkManager.Initialise();
+    runtimeSummary.networkManagerReady = true;
     std::fprintf(stderr, "NativeDesktop bootstrap: network manager ready\n");
     IQNet qnet;
+    runtimeSummary.qnetReady = true;
     std::fprintf(stderr, "NativeDesktop bootstrap: qnet ready\n");
     qnet.AddLocalPlayerByUserIndex(0);
+    runtimeSummary.localPlayerReady = true;
     std::fprintf(stderr, "NativeDesktop bootstrap: local player ready\n");
     if (!NativeDesktopInitialiseMinecraftRuntime())
     {
-        return 1;
+        return NativeDesktopFinishRuntime(
+            &runtimeSummary,
+            1,
+            "startup",
+            "minecraftRuntime");
     }
+    runtimeSummary.minecraftRuntimeReady = true;
     ui.init(g_iScreenWidth, g_iScreenHeight);
+    runtimeSummary.uiReady = true;
+    runtimeSummary.startupComplete = true;
     std::fprintf(stderr, "NativeDesktop bootstrap: ui ready\n");
     NativeDesktopRunBootstrapFrames(
         runtimeConfig.bootstrapFrames,
@@ -1208,19 +1286,29 @@ int main(int argc, char** argv)
             &runtimeSummary))
     {
         (void)NativeDesktopShutdownLocalGame(gameplayThread, &runtimeSummary);
-        NativeDesktopPrintRuntimeSummary(runtimeSummary);
-        return 1;
+        return NativeDesktopFinishRuntime(
+            &runtimeSummary,
+            1,
+            "gameplay",
+            "gameplayReady");
     }
     NativeDesktopRunGameplayFrames(
         runtimeConfig.gameplayFrames,
         &runtimeSummary);
     if (!NativeDesktopShutdownLocalGame(gameplayThread, &runtimeSummary))
     {
-        NativeDesktopPrintRuntimeSummary(runtimeSummary);
-        return 1;
+        return NativeDesktopFinishRuntime(
+            &runtimeSummary,
+            1,
+            "shutdown",
+            "shutdown");
     }
     runtimeSummary.loopComplete = true;
-    NativeDesktopPrintRuntimeSummary(runtimeSummary);
+    NativeDesktopFinishRuntime(
+        &runtimeSummary,
+        0,
+        "complete",
+        "none");
     std::fprintf(stderr, "NativeDesktop gameplay: complete\n");
     std::fprintf(stderr, "NativeDesktop bootstrap: loop complete\n");
     app.DebugPrintf("Minecraft NativeDesktop client bootstrap initialized.\n");

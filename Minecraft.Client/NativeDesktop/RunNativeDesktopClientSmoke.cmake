@@ -94,6 +94,19 @@ endforeach()
 
 set(expected_summary_markers
   "NativeDesktop runtime summary:"
+  "phase=complete"
+  "failure=none"
+  "exitCode=0"
+  "startup.mediaArchive=1"
+  "startup.stringTable=1"
+  "startup.xuid=1"
+  "startup.profile=1"
+  "startup.networkManager=1"
+  "startup.qnet=1"
+  "startup.localPlayer=1"
+  "startup.minecraftRuntime=1"
+  "startup.ui=1"
+  "startupComplete=1"
   "bootstrapFrames=${BOOTSTRAP_FRAMES}/${BOOTSTRAP_FRAMES}"
   "gameplayThreadStarted=1"
   "gameplayReady=1"
@@ -103,6 +116,7 @@ set(expected_summary_markers
   "networkThreadStopped=1"
   "shutdownComplete=1"
   "loopComplete=1"
+  "runtimeHealthy=1"
 )
 
 foreach(expected_summary_marker IN LISTS expected_summary_markers)
