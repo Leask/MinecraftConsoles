@@ -1,9 +1,11 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <ctime>
+#include <iterator>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -103,57 +105,163 @@ public:
     static const int KEY_FULLSCREEN = VK_F11;
     static const int KEY_SCREENSHOT = VK_F2;
 
-    void Init() {}
-    void Tick() {}
-    void ClearAllState() {}
+    void Init() { ClearAllState(); }
+    void Tick() { EndFrame(); }
+    void ClearAllState()
+    {
+        std::fill(std::begin(m_keyDown), std::end(m_keyDown), false);
+        std::fill(std::begin(m_keyPressed), std::end(m_keyPressed), false);
+        std::fill(std::begin(m_keyReleased), std::end(m_keyReleased), false);
+        std::fill(
+            std::begin(m_mouseButtonDown),
+            std::end(m_mouseButtonDown),
+            false);
+        std::fill(
+            std::begin(m_mouseButtonPressed),
+            std::end(m_mouseButtonPressed),
+            false);
+        std::fill(
+            std::begin(m_mouseButtonReleased),
+            std::end(m_mouseButtonReleased),
+            false);
+        m_mouseX = 0;
+        m_mouseY = 0;
+        m_mouseDeltaX = 0;
+        m_mouseDeltaY = 0;
+        m_mouseWheel = 0;
+        m_mouseWheelConsumed = false;
+        m_pressedKey = 0;
+        m_hasAnyInput = false;
+        m_kbmActive = false;
+        m_charBuffer.clear();
+    }
+    void EndFrame()
+    {
+        std::fill(std::begin(m_keyPressed), std::end(m_keyPressed), false);
+        std::fill(std::begin(m_keyReleased), std::end(m_keyReleased), false);
+        std::fill(
+            std::begin(m_mouseButtonPressed),
+            std::end(m_mouseButtonPressed),
+            false);
+        std::fill(
+            std::begin(m_mouseButtonReleased),
+            std::end(m_mouseButtonReleased),
+            false);
+        m_pressedKey = 0;
+        m_mouseDeltaX = 0;
+        m_mouseDeltaY = 0;
+        m_mouseWheel = 0;
+        m_mouseWheelConsumed = false;
+    }
 
-    void OnKeyDown(int vkCode) { (void)vkCode; }
-    void OnKeyUp(int vkCode) { (void)vkCode; }
-    void OnMouseButtonDown(int button) { (void)button; }
-    void OnMouseButtonUp(int button) { (void)button; }
+    void OnKeyDown(int vkCode)
+    {
+        int key = NormalizeKey(vkCode);
+        if (key < 0)
+        {
+            return;
+        }
+        if (!m_keyDown[key])
+        {
+            m_keyPressed[key] = true;
+            m_pressedKey = key;
+        }
+        m_keyDown[key] = true;
+        MarkKeyboardMouseActive();
+    }
+    void OnKeyUp(int vkCode)
+    {
+        int key = NormalizeKey(vkCode);
+        if (key < 0)
+        {
+            return;
+        }
+        if (m_keyDown[key])
+        {
+            m_keyReleased[key] = true;
+        }
+        m_keyDown[key] = false;
+        MarkKeyboardMouseActive();
+    }
+    void OnMouseButtonDown(int button)
+    {
+        if (!IsValidMouseButton(button))
+        {
+            return;
+        }
+        if (!m_mouseButtonDown[button])
+        {
+            m_mouseButtonPressed[button] = true;
+        }
+        m_mouseButtonDown[button] = true;
+        MarkKeyboardMouseActive();
+    }
+    void OnMouseButtonUp(int button)
+    {
+        if (!IsValidMouseButton(button))
+        {
+            return;
+        }
+        if (m_mouseButtonDown[button])
+        {
+            m_mouseButtonReleased[button] = true;
+        }
+        m_mouseButtonDown[button] = false;
+        MarkKeyboardMouseActive();
+    }
     void OnMouseMove(int x, int y)
     {
+        m_mouseDeltaX += x - m_mouseX;
+        m_mouseDeltaY += y - m_mouseY;
         m_mouseX = x;
         m_mouseY = y;
+        MarkKeyboardMouseActive();
     }
-    void OnMouseWheel(int delta) { (void)delta; }
+    void OnMouseWheel(int delta)
+    {
+        if (delta == 0)
+        {
+            return;
+        }
+        m_mouseWheel += delta;
+        m_mouseWheelConsumed = false;
+        MarkKeyboardMouseActive();
+    }
     void OnRawMouseDelta(int dx, int dy)
     {
         m_mouseDeltaX += dx;
         m_mouseDeltaY += dy;
+        if (dx != 0 || dy != 0)
+        {
+            MarkKeyboardMouseActive();
+        }
     }
 
     bool IsKeyDown(int vkCode) const
     {
-        (void)vkCode;
-        return false;
+        return ReadKeyState(m_keyDown, vkCode);
     }
     bool IsKeyPressed(int vkCode) const
     {
-        (void)vkCode;
-        return false;
+        return ReadKeyState(m_keyPressed, vkCode);
     }
     bool IsKeyReleased(int vkCode) const
     {
-        (void)vkCode;
-        return false;
+        return ReadKeyState(m_keyReleased, vkCode);
     }
-    int GetPressedKey() const { return 0; }
+    int GetPressedKey() const { return m_pressedKey; }
 
     bool IsMouseButtonDown(int button) const
     {
-        (void)button;
-        return false;
+        return IsValidMouseButton(button) && m_mouseButtonDown[button];
     }
     bool IsMouseButtonPressed(int button) const
     {
-        (void)button;
-        return false;
+        return IsValidMouseButton(button) && m_mouseButtonPressed[button];
     }
     bool IsMouseButtonReleased(int button) const
     {
-        (void)button;
-        return false;
+        return IsValidMouseButton(button) && m_mouseButtonReleased[button];
     }
 
     int GetMouseX() const { return m_mouseX; }
@@ -161,10 +269,19 @@ public:
     int GetMouseDeltaX() const { return m_mouseDeltaX; }
     int GetMouseDeltaY() const { return m_mouseDeltaY; }
 
-    int GetMouseWheel() { return 0; }
-    int PeekMouseWheel() const { return 0; }
-    void ConsumeMouseWheel() {}
-    bool WasMouseWheelConsumed() const { return false; }
+    int GetMouseWheel()
+    {
+        int wheel = m_mouseWheel;
+        ConsumeMouseWheel();
+        return wheel;
+    }
+    int PeekMouseWheel() const { return m_mouseWheel; }
+    void ConsumeMouseWheel()
+    {
+        m_mouseWheel = 0;
+        m_mouseWheelConsumed = true;
+    }
+    bool WasMouseWheelConsumed() const { return m_mouseWheelConsumed; }
     void ConsumeMouseDelta(float& dx, float& dy)
     {
         dx = static_cast<float>(m_mouseDeltaX);
@@ -179,36 +296,135 @@ public:
     bool IsCursorHiddenForUI() const { return m_cursorHiddenForUI; }
     void SetWindowFocused(bool focused) { m_windowFocused = focused; }
     bool IsWindowFocused() const { return m_windowFocused; }
-    bool HasAnyInput() const { return false; }
+    bool HasAnyInput() const { return m_hasAnyInput; }
     void SetKBMActive(bool active) { m_kbmActive = active; }
     bool IsKBMActive() const { return m_kbmActive; }
     void SetScreenCursorHidden(bool hidden) { m_screenWantsCursorHidden = hidden; }
     bool IsScreenCursorHidden() const { return m_screenWantsCursorHidden; }
-    void OnChar(wchar_t c) { (void)c; }
+    void OnChar(wchar_t c)
+    {
+        if (c == 0)
+        {
+            return;
+        }
+        if (m_charBuffer.size() >= kMaxCharBuffer)
+        {
+            m_charBuffer.erase(m_charBuffer.begin());
+        }
+        m_charBuffer.push_back(c);
+        MarkKeyboardMouseActive();
+    }
     bool ConsumeChar(wchar_t& outChar)
     {
-        outChar = 0;
-        return false;
+        if (m_charBuffer.empty())
+        {
+            outChar = 0;
+            return false;
+        }
+        outChar = m_charBuffer.front();
+        m_charBuffer.erase(m_charBuffer.begin());
+        return true;
     }
-    void ClearCharBuffer() {}
-    float GetMoveX() const { return 0.0f; }
-    float GetMoveY() const { return 0.0f; }
+    void ClearCharBuffer() { m_charBuffer.clear(); }
+    float GetMoveX() const
+    {
+        float move = 0.0f;
+        if (IsKeyDown(KEY_RIGHT))
+        {
+            move += 1.0f;
+        }
+        if (IsKeyDown(KEY_LEFT))
+        {
+            move -= 1.0f;
+        }
+        return move;
+    }
+    float GetMoveY() const
+    {
+        float move = 0.0f;
+        if (IsKeyDown(KEY_FORWARD))
+        {
+            move += 1.0f;
+        }
+        if (IsKeyDown(KEY_BACKWARD))
+        {
+            move -= 1.0f;
+        }
+        return move;
+    }
     float GetLookX(float sensitivity) const
     {
-        (void)sensitivity;
-        return 0.0f;
+        return static_cast<float>(m_mouseDeltaX) * sensitivity;
     }
     float GetLookY(float sensitivity) const
     {
-        (void)sensitivity;
-        return 0.0f;
+        return static_cast<float>(m_mouseDeltaY) * sensitivity;
     }
 
 private:
+    static constexpr size_t kMaxCharBuffer = 64;
+
+    static int NormalizeKey(int vkCode)
+    {
+        if (vkCode >= 'a' && vkCode <= 'z')
+        {
+            vkCode = vkCode - 'a' + 'A';
+        }
+        if (vkCode < 0 || vkCode >= MAX_KEYS)
+        {
+            return -1;
+        }
+        return vkCode;
+    }
+    static bool ReadKeyState(const bool (&states)[MAX_KEYS], int vkCode)
+    {
+        int key = NormalizeKey(vkCode);
+        if (key < 0)
+        {
+            return false;
+        }
+        if (key == VK_SHIFT)
+        {
+            return states[VK_SHIFT] || states[VK_LSHIFT] || states[VK_RSHIFT];
+        }
+        if (key == VK_CONTROL)
+        {
+            return
+                states[VK_CONTROL] ||
+                states[VK_LCONTROL] ||
+                states[VK_RCONTROL];
+        }
+        if (key == VK_MENU)
+        {
+            return states[VK_MENU] || states[VK_LMENU] || states[VK_RMENU];
+        }
+        return states[key];
+    }
+    static bool IsValidMouseButton(int button)
+    {
+        return button >= 0 && button < MAX_MOUSE_BUTTONS;
+    }
+    void MarkKeyboardMouseActive()
+    {
+        m_hasAnyInput = true;
+        m_kbmActive = true;
+    }
+
+    bool m_keyDown[MAX_KEYS] = {};
+    bool m_keyPressed[MAX_KEYS] = {};
+    bool m_keyReleased[MAX_KEYS] = {};
+    bool m_mouseButtonDown[MAX_MOUSE_BUTTONS] = {};
+    bool m_mouseButtonPressed[MAX_MOUSE_BUTTONS] = {};
+    bool m_mouseButtonReleased[MAX_MOUSE_BUTTONS] = {};
+    std::vector<wchar_t> m_charBuffer;
     int m_mouseX = 0;
     int m_mouseY = 0;
     int m_mouseDeltaX = 0;
     int m_mouseDeltaY = 0;
+    int m_mouseWheel = 0;
+    int m_pressedKey = 0;
+    bool m_mouseWheelConsumed = false;
+    bool m_hasAnyInput = false;
     bool m_mouseGrabbed = false;
     bool m_cursorHiddenForUI = false;
     bool m_windowFocused = true;

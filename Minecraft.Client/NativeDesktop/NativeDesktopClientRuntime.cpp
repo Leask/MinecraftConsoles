@@ -815,6 +815,7 @@ namespace
                 frame);
             ui.tick();
             ui.render();
+            g_KBMInput.EndFrame();
             std::fprintf(
                 stderr,
                 "NativeDesktop bootstrap: frame %d end\n",
@@ -832,6 +833,7 @@ namespace
         ui.tick();
         ui.render();
         g_NetworkManager.DoWork();
+        g_KBMInput.EndFrame();
     }
 
     void NativeDesktopConfigureLocalWorld(NetworkGameInitData* param)
@@ -981,6 +983,7 @@ namespace
             ui.tick();
             ui.render();
             g_NetworkManager.DoWork();
+            g_KBMInput.EndFrame();
             std::fprintf(
                 stderr,
                 "NativeDesktop gameplay: frame %d end\n",

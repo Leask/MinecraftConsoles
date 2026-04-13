@@ -166,7 +166,9 @@ Direction:
   load/join save-list sorting, worldname sidecars, thumbnail index, and
   save rename/delete option flow now use `_NATIVE_DESKTOP`;
   slider KBM behaviour, desktop bitmap-font cache ranges, and debug menu
-  direct-edit text inputs now use `_NATIVE_DESKTOP`)
+  direct-edit text inputs now use `_NATIVE_DESKTOP`;
+  native desktop KBM input now stores per-frame key, mouse, wheel, char,
+  movement, and look state for `Screen`/UI/gameplay consumers)
 - isolate Direct3D-shaped renderer structs behind native renderer-neutral names
   (`NativeDesktopRendererRect` now fronts the clear-rect path used by the
   shared UI controller)
