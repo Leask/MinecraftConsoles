@@ -242,7 +242,7 @@ UIScene_LoadMenu::UIScene_LoadMenu(int iPad, void *initData, UILayer *parentLaye
 		m_labelGameName.init(wSaveName);
 #endif
 #endif
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 		if (params->saveDetails != nullptr && params->saveDetails->UTF8SaveName[0] != '\0')
 		{
 			wchar_t wSaveName[128];
@@ -1449,7 +1449,7 @@ int UIScene_LoadMenu::LoadDataComplete(void *pParam)
 #endif
 			else
 			{
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 				// On NativeDesktop, IsSignedInLive() returns true as a stub but Xbox Live is
 				// not available. Skip QuadrantSignin and proceed directly with local play.
 				DWORD dwLocalUsersMask = CGameNetworkManager::GetLocalPlayerMask(ProfileManager.GetPrimaryPad());
@@ -1624,7 +1624,7 @@ void UIScene_LoadMenu::StartGameFromSave(UIScene_LoadMenu* pClass, DWORD dwLocal
 
 	param->settings = app.GetGameHostOption( eGameHostOption_All );
 
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 	{
 		extern wchar_t g_NativeDesktopUsernameW[17];
 		Minecraft::GetInstance()->user->name = g_NativeDesktopUsernameW;

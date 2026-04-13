@@ -69,15 +69,18 @@ public:
 	virtual void handleTouchBoxRebuild();
 	virtual void handleTimerComplete(int id);
 #endif
-#if defined(__PSVITA__) || defined(_WINDOWS64)
+#if defined(__PSVITA__) || defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 	virtual UIControl* GetMainPanel();
 #endif
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 	virtual bool handleMouseClick(F32 x, F32 y);
 	// Cached from customDraw — H slot bounding boxes in SWF space
 	F32 m_hSlotX0, m_hSlotY0, m_hSlotY1;
 	F32 m_hSlotSpacing; // x distance between slot 0 and slot 1
 	bool m_hSlotBoundsValid;
+#if defined(_NATIVE_DESKTOP)
+	void updateNativeDesktopHSlotBounds();
+#endif
 #endif
 
 protected:

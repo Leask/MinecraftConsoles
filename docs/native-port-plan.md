@@ -170,7 +170,9 @@ Direction:
   native desktop KBM input now stores per-frame key, mouse, wheel, char,
   movement, and look state for `Screen`/UI/gameplay consumers;
   client smoke now injects a deterministic native desktop input replay script
-  and validates the runtime input lineage in the summary)
+  and validates the runtime input lineage in the summary;
+  native Iggy stubs now expose deterministic control visibility/geometry so
+  mouse hit-testing and crafting H-slot dispatch can run on macOS/Linux)
 - isolate Direct3D-shaped renderer structs behind native renderer-neutral names
   (`NativeDesktopRendererRect` now fronts the clear-rect path used by the
   shared UI controller)

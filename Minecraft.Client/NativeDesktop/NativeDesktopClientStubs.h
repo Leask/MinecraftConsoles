@@ -487,6 +487,8 @@ struct IggyValuePath
     IggyValueRef ref;
     S32 index;
     S32 type;
+    std::string nativeName;
+    rrbool nativeVisible = true;
 };
 
 struct IggyStringUTF16
@@ -1062,6 +1064,103 @@ inline IggyName IggyPlayerCreateFastName(
 
     return hash == 0 ? 1 : hash;
 }
+
+inline IggyName NativeDesktopHashIggyNameUtf8(char const* name)
+{
+    if (name == nullptr)
+    {
+        return 0;
+    }
+
+    IggyName hash = 1469598103934665603ULL;
+    while (*name != '\0')
+    {
+        hash ^= static_cast<IggyName>(
+            static_cast<unsigned char>(*name));
+        hash *= 1099511628211ULL;
+        ++name;
+    }
+
+    return hash == 0 ? 1 : hash;
+}
+
+inline bool NativeDesktopIggyMetricMatches(IggyName name, char const* metric)
+{
+    return name == NativeDesktopHashIggyNameUtf8(metric);
+}
+
+inline void NativeDesktopGetSyntheticIggyControlRect(
+    std::string const& name,
+    F64* x,
+    F64* y,
+    F64* width,
+    F64* height)
+{
+    *x = 0.0;
+    *y = 0.0;
+    *width = 0.0;
+    *height = 0.0;
+
+    if (name == "MainPanel" || name == "BackgroundPanel")
+    {
+        *width = 1280.0;
+        *height = 720.0;
+        return;
+    }
+
+    if (name == "CraftingHSlots")
+    {
+        *x = 384.0;
+        *y = 230.0;
+        *width = 512.0;
+        *height = 48.0;
+        return;
+    }
+
+    if (name == "CraftingOutput")
+    {
+        *x = 884.0;
+        *y = 340.0;
+        *width = 48.0;
+        *height = 48.0;
+        return;
+    }
+
+    if (name == "IngredientsLayout")
+    {
+        *x = 690.0;
+        *y = 318.0;
+        *width = 160.0;
+        *height = 160.0;
+        return;
+    }
+
+    if (name == "inventoryList")
+    {
+        *x = 390.0;
+        *y = 450.0;
+        *width = 500.0;
+        *height = 150.0;
+        return;
+    }
+
+    if (name == "hotbarList")
+    {
+        *x = 390.0;
+        *y = 610.0;
+        *width = 500.0;
+        *height = 48.0;
+        return;
+    }
+
+    if (name == "cursor")
+    {
+        *width = 48.0;
+        *height = 48.0;
+        return;
+    }
+}
+
 inline IggyResult IggyPlayerCallMethodRS(
     Iggy* player,
     IggyDataValue* result,
@@ -1098,11 +1197,13 @@ inline rrbool IggyValuePathMakeNameRef(
     IggyValuePath* parent,
     char const* text)
 {
-    (void)text;
     if (result != nullptr)
     {
+        result->f = parent == nullptr ? nullptr : parent->f;
         result->parent = parent;
-        result->name = 0;
+        result->name = NativeDesktopHashIggyNameUtf8(text);
+        result->nativeName = text == nullptr ? "" : text;
+        result->nativeVisible = true;
     }
     return true;
 }
@@ -1112,12 +1213,40 @@ inline IggyResult IggyValueGetF64RS(
     char const* subNameUtf8,
     F64* result)
 {
-    (void)var;
-    (void)subName;
     (void)subNameUtf8;
     if (result != nullptr)
     {
         *result = 0.0;
+        if (var != nullptr)
+        {
+            F64 x;
+            F64 y;
+            F64 width;
+            F64 height;
+            NativeDesktopGetSyntheticIggyControlRect(
+                var->nativeName,
+                &x,
+                &y,
+                &width,
+                &height);
+
+            if (NativeDesktopIggyMetricMatches(subName, "x"))
+            {
+                *result = x;
+            }
+            else if (NativeDesktopIggyMetricMatches(subName, "y"))
+            {
+                *result = y;
+            }
+            else if (NativeDesktopIggyMetricMatches(subName, "width"))
+            {
+                *result = width;
+            }
+            else if (NativeDesktopIggyMetricMatches(subName, "height"))
+            {
+                *result = height;
+            }
+        }
     }
     return IGGY_RESULT_SUCCESS;
 }
@@ -1127,12 +1256,17 @@ inline IggyResult IggyValueGetBooleanRS(
     char const* subNameUtf8,
     rrbool* result)
 {
-    (void)var;
-    (void)subName;
     (void)subNameUtf8;
     if (result != nullptr)
     {
-        *result = false;
+        if (var != nullptr && NativeDesktopIggyMetricMatches(subName, "visible"))
+        {
+            *result = var->nativeVisible;
+        }
+        else
+        {
+            *result = false;
+        }
     }
     return IGGY_RESULT_SUCCESS;
 }
@@ -1142,10 +1276,11 @@ inline rrbool IggyValueSetBooleanRS(
     char const* subNameUtf8,
     rrbool value)
 {
-    (void)var;
-    (void)subName;
     (void)subNameUtf8;
-    (void)value;
+    if (var != nullptr && NativeDesktopIggyMetricMatches(subName, "visible"))
+    {
+        var->nativeVisible = value;
+    }
     return true;
 }
 inline void IggyMakeEventKey(

@@ -6,7 +6,7 @@
 #include "UIScene_CraftingMenu.h"
 UIScene_CraftingMenu::UIScene_CraftingMenu(int iPad, void *_initData, UILayer *parentLayer) : UIScene(iPad, parentLayer)
 {
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 	m_hSlotBoundsValid = false;
 	m_hSlotX0 = m_hSlotY0 = m_hSlotY1 = 0;
 	m_hSlotSpacing = 0;
@@ -253,7 +253,7 @@ wstring UIScene_CraftingMenu::getMoviePath()
 	}
 }
 
-#if defined(__PSVITA__) || defined(_WINDOWS64)
+#if defined(__PSVITA__) || defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 UIControl* UIScene_CraftingMenu::GetMainPanel()
 {
 	return &m_controlMainPanel;
@@ -384,9 +384,33 @@ void UIScene_CraftingMenu::handleTimerComplete(int id)
 }
 #endif
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
+void UIScene_CraftingMenu::updateNativeDesktopHSlotBounds()
+{
+	F32 width = static_cast<F32>(getRenderWidth());
+	F32 height = static_cast<F32>(getRenderHeight());
+	if(width <= 0.0f) width = 1280.0f;
+	if(height <= 0.0f) height = 720.0f;
+
+	F32 slotSpacing = width / 30.0f;
+	F32 rowWidth = slotSpacing * static_cast<F32>(m_iCraftablesMaxHSlotC);
+	m_hSlotX0 = (width - rowWidth) * 0.5f;
+	m_hSlotY0 = height * 0.32f;
+	m_hSlotY1 = m_hSlotY0 + slotSpacing;
+	m_hSlotSpacing = slotSpacing;
+	m_hSlotBoundsValid = m_hSlotSpacing > 0.0f;
+}
+#endif
+
+#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
 bool UIScene_CraftingMenu::handleMouseClick(F32 x, F32 y)
 {
+#if defined(_NATIVE_DESKTOP)
+	if (!m_hSlotBoundsValid || m_hSlotSpacing <= 0)
+	{
+		updateNativeDesktopHSlotBounds();
+	}
+#endif
 	if (!m_hSlotBoundsValid || m_hSlotSpacing <= 0)
 		return false;
 
@@ -558,7 +582,7 @@ void UIScene_CraftingMenu::customDraw(IggyCustomDrawCallbackRegion *region)
 	{
 		decorations = false;
 		int iIndex = slotId - CRAFTING_H_SLOT_START;
-#ifdef _WINDOWS64
+#if defined(_WINDOWS64)
 		// Cache H slot SWF-space positions from the custom draw transform matrix
 		if (iIndex == 0 || iIndex == 1)
 		{
@@ -582,6 +606,11 @@ void UIScene_CraftingMenu::customDraw(IggyCustomDrawCallbackRegion *region)
 				m_hSlotSpacing = swfX - m_hSlotX0;
 				m_hSlotBoundsValid = (m_hSlotSpacing > 0);
 			}
+		}
+#elif defined(_NATIVE_DESKTOP)
+		if (!m_hSlotBoundsValid || m_hSlotSpacing <= 0)
+		{
+			updateNativeDesktopHSlotBounds();
 		}
 #endif
 		if(m_hSlotsInfo[iIndex].show)
