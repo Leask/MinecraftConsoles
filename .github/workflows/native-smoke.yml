@@ -9,10 +9,14 @@ on:
       - 'CMakeLists.txt'
       - 'CMakePresets.json'
       - 'COMPILE.md'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
       - 'Portability/**'
       - 'include/**'
+      - 'tools/**'
       - 'Minecraft.Server/**'
       - 'Minecraft.World/**'
+      - 'Minecraft.Client/**'
       - 'cmake/**'
   push:
     branches:
@@ -22,10 +26,14 @@ on:
       - 'CMakeLists.txt'
       - 'CMakePresets.json'
       - 'COMPILE.md'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
       - 'Portability/**'
       - 'include/**'
+      - 'tools/**'
       - 'Minecraft.Server/**'
       - 'Minecraft.World/**'
+      - 'Minecraft.Client/**'
       - 'cmake/**'
 
 jobs:
@@ -61,4 +69,38 @@ jobs:
           --target Minecraft.Portability.Check
 
       - name: Run native smoke preset
+        run: ctest --preset "${{ matrix.test_preset }}"
+
+  client-smoke:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            configure_preset: linux-native-client
+            build_preset: linux-native-client-debug
+            test_preset: linux-native-client-debug-test
+          - os: macos-latest
+            configure_preset: macos-native-client
+            build_preset: macos-native-client-debug
+            test_preset: macos-native-client-debug-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Configure
+        run: cmake --preset "${{ matrix.configure_preset }}"
+
+      - name: Build native client smoke target
+        run: >
+          cmake --build --preset "${{ matrix.build_preset }}"
+          --target Minecraft.NativeDesktop.Check
+
+      - name: Run native client smoke preset
         run: ctest --preset "${{ matrix.test_preset }}"

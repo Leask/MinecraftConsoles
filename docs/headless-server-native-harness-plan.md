@@ -6,7 +6,7 @@
 `Minecraft.Server.NativeBootstrap` runnable while native runtime ownership keeps
 shrinking.
 
-The harness validates one product surface:
+The server harness validates one product surface:
 
 - macOS native configure, build, smoke, and bootstrap checks
 - Linux native sync, configure, build, smoke, and bootstrap checks
@@ -109,3 +109,12 @@ This stage is about cutting over `main`, not re-porting the full gameplay client
 The active server-native path must stay buildable and testable first. Legacy
 gameplay names that remain as ABI shims should be isolated behind native
 headers and removed in later client convergence work.
+
+For broad `main` changes, use the higher-level native mainline harness:
+
+```bash
+tools/native_mainline_harness.sh
+```
+
+That wrapper keeps this server harness as a required gate and adds native-only
+source checks plus macOS/Linux client smoke coverage.

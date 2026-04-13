@@ -132,7 +132,7 @@ Direction:
 
 ### Phase 4: Native client convergence
 
-Status: future work.
+Status: active.
 
 Direction:
 
@@ -140,6 +140,27 @@ Direction:
 - remove legacy platform assumptions from client startup
 - build renderer and input work only through macOS/Linux abstractions
 - do not restore archived platform compatibility to make client progress faster
+
+Automation:
+
+- `tools/native_mainline_harness.sh` is the required broad-change gate
+- the mainline harness checks native-only source contracts, server runtime
+  lifecycle, local client smoke, and Linux client smoke
+- use `RUN_REMOTE_CLIENT=0` only when the Linux host is unavailable, not to
+  bypass a known failure
+
+### Phase 5: Native desktop runtime completion
+
+Status: next.
+
+Direction:
+
+- make the client runtime summary the canonical startup health contract
+- replace remaining active `_WINDOWS64` UI/input branches with
+  `_NATIVE_DESKTOP` branches
+- isolate Direct3D-shaped renderer structs behind native renderer-neutral names
+- keep every convergence step covered by `Minecraft.NativeDesktop.Check`
+- keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 
 ## Validation
 
@@ -161,6 +182,12 @@ Harness validation:
 
 ```bash
 tools/headless_server_native_harness.sh
+```
+
+Mainline validation:
+
+```bash
+tools/native_mainline_harness.sh
 ```
 
 CI validation:

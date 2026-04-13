@@ -89,7 +89,31 @@ cmake --build --preset linux-native-client-debug \
     --target Minecraft.NativeDesktop.Check
 ```
 
-## Unattended Harness
+## Mainline Harness
+
+Use the full native-only gate for broad runtime, build, or client changes:
+
+```bash
+tools/native_mainline_harness.sh
+```
+
+The mainline harness writes logs under:
+
+```text
+build/mainline-harness/
+```
+
+Useful overrides:
+
+| Variable | Purpose |
+|----------|---------|
+| `RUN_SERVER_HARNESS` | Set to `0` to skip the server harness |
+| `RUN_LOCAL_CLIENT` | Set to `0` to skip local client smoke |
+| `RUN_REMOTE_CLIENT` | Set to `0` to skip Linux client smoke |
+| `REMOTE_HOST` | Linux host used by remote checks, default `elm` |
+| `REMOTE_ROOT` | Remote checkout path |
+
+## Server Harness
 
 Use the harness for server-native runtime iterations:
 

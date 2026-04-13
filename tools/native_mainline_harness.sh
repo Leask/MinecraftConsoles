@@ -1,0 +1,254 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+log_root="${MAINLINE_HARNESS_LOG_DIR:-$repo_root/build/mainline-harness}"
+summary_file="$log_root/summary.txt"
+
+server_harness="${SERVER_HARNESS:-$repo_root/tools/headless_server_native_harness.sh}"
+server_log_root="${SERVER_HARNESS_LOG_DIR:-$log_root/server}"
+
+local_client_configure_preset="${LOCAL_CLIENT_CONFIGURE_PRESET:-macos-native-client}"
+local_client_build_preset="${LOCAL_CLIENT_BUILD_PRESET:-macos-native-client-debug}"
+local_client_target="${LOCAL_CLIENT_TARGET:-Minecraft.NativeDesktop.Check}"
+
+remote_host="${REMOTE_HOST:-elm}"
+remote_root="${REMOTE_ROOT:-/home/leask/MinecraftConsoles}"
+remote_client_configure_preset="${REMOTE_CLIENT_CONFIGURE_PRESET:-linux-native-client}"
+remote_client_build_preset="${REMOTE_CLIENT_BUILD_PRESET:-linux-native-client-debug}"
+remote_client_target="${REMOTE_CLIENT_TARGET:-Minecraft.NativeDesktop.Check}"
+
+run_server_harness="${RUN_SERVER_HARNESS:-1}"
+run_local_client="${RUN_LOCAL_CLIENT:-1}"
+run_remote_client="${RUN_REMOTE_CLIENT:-1}"
+
+current_step=''
+
+write_summary_header() {
+    local git_head
+    git_head="$(git -C "$repo_root" rev-parse HEAD)"
+
+    mkdir -p "$log_root"
+    cat > "$summary_file" <<EOF
+result=running
+started_at=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+repo_root=$repo_root
+git_head=$git_head
+log_root=$log_root
+remote_host=$remote_host
+remote_root=$remote_root
+EOF
+}
+
+append_summary_line() {
+    printf '%s\n' "$1" >> "$summary_file"
+}
+
+mark_summary_failed() {
+    local exit_code="$1"
+
+    {
+        printf 'result=failure\n'
+        printf 'failed_step=%s\n' "${current_step:-unknown}"
+        printf 'exit_code=%s\n' "$exit_code"
+        printf 'finished_at=%s\n' "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+    } >> "$summary_file"
+}
+
+mark_summary_success() {
+    {
+        printf 'goal.native_mainline=complete\n'
+        printf 'result=success\n'
+        printf 'finished_at=%s\n' "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+    } >> "$summary_file"
+}
+
+on_error() {
+    local exit_code="$?"
+    mark_summary_failed "$exit_code"
+    exit "$exit_code"
+}
+
+run_and_log() {
+    local name="$1"
+    shift
+
+    local log_file="$log_root/$name.log"
+    current_step="$name"
+    echo "==> $name"
+    append_summary_line "step.$name.log=$log_file"
+    "$@" > >(tee "$log_file") 2>&1
+    append_summary_line "step.$name=ok"
+}
+
+assert_not_exists() {
+    local path="$1"
+
+    if [[ -e "$repo_root/$path" ]]; then
+        echo "Removed-platform path still exists: $path" >&2
+        return 1
+    fi
+}
+
+assert_grep_absent() {
+    local pattern="$1"
+    shift
+
+    if rg -n -S "$pattern" "$@" > "$log_root/residual-match.txt"; then
+        echo "Unexpected residual pattern found: $pattern" >&2
+        cat "$log_root/residual-match.txt" >&2
+        return 1
+    fi
+}
+
+assert_grep_present() {
+    local pattern="$1"
+    shift
+
+    if ! rg -n -S "$pattern" "$@" >/dev/null; then
+        echo "Expected pattern not found: $pattern" >&2
+        return 1
+    fi
+}
+
+run_native_only_contract() {
+    run_and_log native-only-contract bash -c '
+        set -euo pipefail
+        cd "$1"
+        log_root="$2"
+
+        assert_not_exists() {
+            local path="$1"
+            if [[ -e "$path" ]]; then
+                echo "Removed-platform path still exists: $path" >&2
+                return 1
+            fi
+        }
+
+        assert_not_exists "Minecraft.Client/Windows64"
+        assert_not_exists "Minecraft.Server/Windows64"
+        assert_not_exists "docker"
+        assert_not_exists "docker-compose.dedicated-server.yml"
+        assert_not_exists "docker-compose.dedicated-server.mount.yml"
+        assert_not_exists "start-dedicated-server.sh"
+        assert_not_exists "docker-build-dedicated-server.sh"
+        assert_not_exists "Minecraft.Client/ReadMe.txt"
+        assert_not_exists "Minecraft.World/ReadMe.txt"
+
+        if rg -n -S "ReadMe\\.txt|VS_STARTUP_PROJECT|WinsockNetLayer|\\bWin64\\b|\\bWIN64_" \
+            CMakeLists.txt CMakePresets.json cmake Minecraft.Client/cmake \
+            Minecraft.World/cmake Minecraft.Client/NativeDesktop \
+            Minecraft.Client/Common/Network > "$log_root/native-only-residual.txt"; then
+            echo "Native-only residuals found in active build/native paths" >&2
+            cat "$log_root/native-only-residual.txt" >&2
+            exit 1
+        fi
+
+        if rg -n -S "windows64|durango|orbis|ps3|psvita|xbox|wine|docker" \
+            CMakePresets.json .github/workflows > "$log_root/native-only-ci-residual.txt"; then
+            echo "Removed-platform CI/build target residuals found" >&2
+            cat "$log_root/native-only-ci-residual.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "Windows compatibility maintenance has stopped" \
+            README.md COMPILE.md CONTRIBUTING.md docs/native-port-plan.md >/dev/null
+        git diff --check
+        echo "native-only contract checks passed"
+    ' bash "$repo_root" "$log_root"
+    append_summary_line "native_only.contract=ok"
+}
+
+run_server_runtime_harness() {
+    if [[ "$run_server_harness" != "1" ]]; then
+        append_summary_line "server.harness=skipped"
+        return 0
+    fi
+
+    run_and_log server-runtime-harness env \
+        HARNESS_LOG_DIR="$server_log_root" \
+        REMOTE_HOST="$remote_host" \
+        REMOTE_ROOT="$remote_root" \
+        "$server_harness"
+
+    if ! grep -Fq "result=success" "$server_log_root/summary.txt"; then
+        echo "server harness summary did not report success" >&2
+        cat "$server_log_root/summary.txt" >&2
+        return 1
+    fi
+
+    append_summary_line "server.harness=ok"
+    append_summary_line "server.summary=$server_log_root/summary.txt"
+}
+
+run_local_client_smoke() {
+    if [[ "$run_local_client" != "1" ]]; then
+        append_summary_line "local.client=skipped"
+        return 0
+    fi
+
+    run_and_log local-client-smoke bash -c '
+        set -euo pipefail
+        cd "$1"
+        cmake --preset "$2"
+        cmake --build --preset "$3" --target "$4"
+    ' bash \
+        "$repo_root" \
+        "$local_client_configure_preset" \
+        "$local_client_build_preset" \
+        "$local_client_target"
+    append_summary_line "local.client=ok"
+}
+
+sync_remote_tree_for_client() {
+    run_and_log remote-client-sync rsync -az --delete \
+        --exclude .git \
+        --exclude build \
+        "$repo_root/" \
+        "$remote_host:$remote_root/"
+    append_summary_line "remote.client_sync=ok"
+}
+
+run_remote_client_smoke() {
+    if [[ "$run_remote_client" != "1" ]]; then
+        append_summary_line "remote.client=skipped"
+        return 0
+    fi
+
+    sync_remote_tree_for_client
+
+    local remote_cmd
+    remote_cmd=$(
+        cat <<EOF
+set -euo pipefail
+export PATH="\$HOME/.local/bin:\$PATH"
+cd "$remote_root"
+cmake --preset "$remote_client_configure_preset"
+cmake --build --preset "$remote_client_build_preset" --target "$remote_client_target"
+EOF
+    )
+
+    run_and_log remote-client-smoke ssh "$remote_host" "$remote_cmd"
+    append_summary_line "remote.client=ok"
+}
+
+main() {
+    trap on_error ERR
+    write_summary_header
+
+    echo "Mainline harness root: $log_root"
+    echo "Repo root: $repo_root"
+    echo "Remote host: $remote_host"
+    echo "Remote root: $remote_root"
+
+    run_native_only_contract
+    run_server_runtime_harness
+    run_local_client_smoke
+    run_remote_client_smoke
+
+    mark_summary_success
+    echo "Native mainline harness completed successfully."
+}
+
+main "$@"

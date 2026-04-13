@@ -172,7 +172,26 @@ Common CLI overrides:
 | `-loglevel <level>` | Override `log-level` |
 | `-help`, `--help`, `-h` | Print usage |
 
-## Unattended Harness
+## Mainline Harness
+
+The native-only mainline gate is:
+
+```bash
+tools/native_mainline_harness.sh
+```
+
+By default it:
+
+- checks the macOS/Linux-only source contract
+- runs the full headless server harness
+- runs the macOS native client smoke target
+- syncs to Linux host `elm`
+- runs the Linux native client smoke target
+- writes a summary under `build/mainline-harness/summary.txt`
+
+Use this before pushing broad native runtime or client convergence changes.
+
+## Headless Server Harness
 
 The native server engineering harness is:
 
@@ -221,6 +240,7 @@ cmake --build --preset linux-native-client-debug \
 | `Minecraft.World/` | Shared world/gameplay code used by native smoke paths |
 | `Minecraft.Client/NativeDesktop/` | Experimental macOS/Linux native client shell |
 | `include/` | Native portability helpers and legacy ABI shims used by the native build |
+| `tools/native_mainline_harness.sh` | Full native-only mainline validation gate |
 | `tools/headless_server_native_harness.sh` | macOS/Linux unattended validation harness |
 | `docs/native-port-plan.md` | Native-only direction and phased plan |
 | `docs/headless-server-native-harness-plan.md` | Headless runtime harness notes |
@@ -236,7 +256,8 @@ cmake --build --preset linux-native-client-debug \
 - Keep `Minecraft.Server.NativeBootstrap` as the only native server entry point.
 - Route save, autosave, stop, and halt through the native worker/session flow.
 - Validate native runtime work with `Minecraft.Portability.Check`.
-- Use the full harness before stage commits when Linux validation is available.
+- Use the mainline harness before stage commits when Linux validation is
+  available.
 
 Minimum local check:
 
@@ -244,7 +265,13 @@ Minimum local check:
 cmake --build --preset macos-native-debug --target Minecraft.Portability.Check
 ```
 
-Full harness:
+Full mainline harness:
+
+```bash
+tools/native_mainline_harness.sh
+```
+
+Server-only harness:
 
 ```bash
 tools/headless_server_native_harness.sh

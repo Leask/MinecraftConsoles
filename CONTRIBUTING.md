@@ -48,7 +48,13 @@ Minimum server validation:
 cmake --build --preset macos-native-debug --target Minecraft.Portability.Check
 ```
 
-Full server-native validation when Linux is available:
+Full native-only validation when Linux is available:
+
+```bash
+tools/native_mainline_harness.sh
+```
+
+Server-only validation:
 
 ```bash
 tools/headless_server_native_harness.sh
