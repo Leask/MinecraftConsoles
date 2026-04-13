@@ -1,9 +1,5 @@
 #pragma once
 
-#ifdef _WIN64
-#include <d3d11.h>
-#endif
-
 class Minecraft;
 class Entity;
 class Random;
@@ -16,6 +12,7 @@ class SparseDataStorage;
 
 #include "../Minecraft.World/SmoothFloat.h"
 #include "../Minecraft.World/C4JThread.h"
+#include "Common/NativeRendererTypes.h"
 #include "ResourceLocation.h"
 
 class GameRenderer
@@ -84,8 +81,13 @@ private:
 public:
     void ApplyGammaPostProcess() const;
 private:
-    bool ComputeViewportForPlayer(int j, D3D11_VIEWPORT& outViewport) const;
-    uint32_t BuildPlayerViewports(D3D11_VIEWPORT* outViewports, float* outGammas, UINT maxCount) const;
+    bool ComputeViewportForPlayer(
+        int j,
+        NativeRendererViewport& outViewport) const;
+    uint32_t BuildPlayerViewports(
+        NativeRendererViewport* outViewports,
+        float* outGammas,
+        UINT maxCount) const;
 
     bool isInClouds;
 

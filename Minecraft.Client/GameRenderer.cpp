@@ -966,7 +966,9 @@ void GameRenderer::CachePlayerGammas()
         m_cachedGammaPerPlayer[j] = gamma;
 }
 
-bool GameRenderer::ComputeViewportForPlayer(int j, D3D11_VIEWPORT &outViewport) const
+bool GameRenderer::ComputeViewportForPlayer(
+    int j,
+    NativeRendererViewport& outViewport) const
 {
     extern int g_rScreenWidth;
     extern int g_rScreenHeight;
@@ -980,59 +982,62 @@ bool GameRenderer::ComputeViewportForPlayer(int j, D3D11_VIEWPORT &outViewport) 
     const float halfW = w * 0.5f;
     const float halfH = h * 0.5f;
 
-    outViewport.MinDepth = 0.0f;
-    outViewport.MaxDepth = 1.0f;
+    outViewport.minDepth = 0.0f;
+    outViewport.maxDepth = 1.0f;
 
     switch (static_cast<C4JRender::eViewportType>(player->m_iScreenSection))
     {
     case C4JRender::VIEWPORT_TYPE_SPLIT_TOP:
-        outViewport.TopLeftX = 0;     outViewport.TopLeftY = 0;
-        outViewport.Width    = w;     outViewport.Height   = halfH;
+        outViewport.x = 0;     outViewport.y = 0;
+        outViewport.width = w; outViewport.height = halfH;
         break;
     case C4JRender::VIEWPORT_TYPE_SPLIT_BOTTOM:
-        outViewport.TopLeftX = 0;     outViewport.TopLeftY = halfH;
-        outViewport.Width    = w;     outViewport.Height   = halfH;
+        outViewport.x = 0;     outViewport.y = halfH;
+        outViewport.width = w; outViewport.height = halfH;
         break;
     case C4JRender::VIEWPORT_TYPE_SPLIT_LEFT:
-        outViewport.TopLeftX = 0;     outViewport.TopLeftY = 0;
-        outViewport.Width    = halfW; outViewport.Height   = h;
+        outViewport.x = 0;         outViewport.y = 0;
+        outViewport.width = halfW; outViewport.height = h;
         break;
     case C4JRender::VIEWPORT_TYPE_SPLIT_RIGHT:
-        outViewport.TopLeftX = halfW; outViewport.TopLeftY = 0;
-        outViewport.Width    = halfW; outViewport.Height   = h;
+        outViewport.x = halfW;     outViewport.y = 0;
+        outViewport.width = halfW; outViewport.height = h;
         break;
     case C4JRender::VIEWPORT_TYPE_QUADRANT_TOP_LEFT:
-        outViewport.TopLeftX = 0;     outViewport.TopLeftY = 0;
-        outViewport.Width    = halfW; outViewport.Height   = halfH;
+        outViewport.x = 0;         outViewport.y = 0;
+        outViewport.width = halfW; outViewport.height = halfH;
         break;
     case C4JRender::VIEWPORT_TYPE_QUADRANT_TOP_RIGHT:
-        outViewport.TopLeftX = halfW; outViewport.TopLeftY = 0;
-        outViewport.Width    = halfW; outViewport.Height   = halfH;
+        outViewport.x = halfW;     outViewport.y = 0;
+        outViewport.width = halfW; outViewport.height = halfH;
         break;
     case C4JRender::VIEWPORT_TYPE_QUADRANT_BOTTOM_LEFT:
-        outViewport.TopLeftX = 0;     outViewport.TopLeftY = halfH;
-        outViewport.Width    = halfW; outViewport.Height   = halfH;
+        outViewport.x = 0;         outViewport.y = halfH;
+        outViewport.width = halfW; outViewport.height = halfH;
         break;
     case C4JRender::VIEWPORT_TYPE_QUADRANT_BOTTOM_RIGHT:
-        outViewport.TopLeftX = halfW; outViewport.TopLeftY = halfH;
-        outViewport.Width    = halfW; outViewport.Height   = halfH;
+        outViewport.x = halfW;     outViewport.y = halfH;
+        outViewport.width = halfW; outViewport.height = halfH;
         break;
     default:
-        outViewport.TopLeftX = 0;     outViewport.TopLeftY = 0;
-        outViewport.Width    = w;     outViewport.Height   = h;
+        outViewport.x = 0;     outViewport.y = 0;
+        outViewport.width = w; outViewport.height = h;
         break;
     }
     return true;
 }
 
-uint32_t GameRenderer::BuildPlayerViewports(D3D11_VIEWPORT *outViewports, float *outGammas, UINT maxCount) const
+uint32_t GameRenderer::BuildPlayerViewports(
+    NativeRendererViewport* outViewports,
+    float* outGammas,
+    UINT maxCount) const
 {
     UINT count = 0;
     for (int j = 0; j < XUSER_MAX_COUNT && j < NUM_LIGHT_TEXTURES && count < maxCount; ++j)
     {
         if (!Minecraft::GetInstance()->localplayers[j])
             continue;
-        D3D11_VIEWPORT vp;
+        NativeRendererViewport vp;
         if (!ComputeViewportForPlayer(j, vp))
             continue;
         outViewports[count] = vp;
@@ -1044,7 +1049,7 @@ uint32_t GameRenderer::BuildPlayerViewports(D3D11_VIEWPORT *outViewports, float 
 
 void GameRenderer::ApplyGammaPostProcess() const
 {
-    D3D11_VIEWPORT vps[NUM_LIGHT_TEXTURES];
+    NativeRendererViewport vps[NUM_LIGHT_TEXTURES];
     float gammas[NUM_LIGHT_TEXTURES];
     const UINT n = BuildPlayerViewports(vps, gammas, NUM_LIGHT_TEXTURES);
 

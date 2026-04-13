@@ -3,6 +3,7 @@ using namespace std;
 #include "IUIController.h"
 #include "UIEnums.h"
 #include "UIGroup.h"
+#include "../NativeRendererTypes.h"
 #include <random>
 
 class UIAbstractBitmapFont;
@@ -173,7 +174,7 @@ private:
 	int m_accumulatedTicks;
 	uint64_t m_lastUiSfx; // Tracks time (ms) of last UI sound effect
 
-	NativeDesktopRendererRect m_customRenderingClearRect;
+	NativeRendererRect m_customRenderingClearRect;
 
 	unordered_map<size_t, UIScene *> m_registeredCallbackScenes; // A collection of scenes and unique id's that are used in async callbacks so we can safely handle when they get destroyed
 	CRITICAL_SECTION m_registeredCallbackScenesCS;;

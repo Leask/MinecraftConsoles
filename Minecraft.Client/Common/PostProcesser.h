@@ -3,6 +3,7 @@
 #if !defined(_NATIVE_DESKTOP)
 #include <d3d11.h>
 #endif
+#include "NativeRendererTypes.h"
 
 class PostProcesser
 {
@@ -15,7 +16,7 @@ public:
 
     void Init();
     void Apply() const;
-    void SetViewport(const D3D11_VIEWPORT& viewport);
+    void SetViewport(const NativeRendererViewport& viewport);
     void ResetViewport();
     void CopyBackbuffer(); // Copy backbuffer once before multi-pass gamma
     void ApplyFromCopied() const; // Apply gamma using already-copied offscreen texture
@@ -42,7 +43,7 @@ private:
 
     bool m_initialized = false;
     float m_gamma = 1.0f;
-    D3D11_VIEWPORT m_customViewport;
+    NativeRendererViewport m_customViewport;
     bool m_useCustomViewport = false;
     UINT m_gammaTexWidth = 0;
     UINT m_gammaTexHeight = 0;
@@ -68,7 +69,7 @@ inline void PostProcesser::Init()
     m_initialized = true;
 }
 inline void PostProcesser::Apply() const {}
-inline void PostProcesser::SetViewport(const D3D11_VIEWPORT& viewport)
+inline void PostProcesser::SetViewport(const NativeRendererViewport& viewport)
 {
     m_customViewport = viewport;
     m_useCustomViewport = true;

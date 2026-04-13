@@ -177,8 +177,9 @@ Direction:
   native Iggy stubs now expose deterministic control visibility/geometry so
   mouse hit-testing and crafting H-slot dispatch can run on macOS/Linux)
 - isolate Direct3D-shaped renderer structs behind native renderer-neutral names
-  (`NativeDesktopRendererRect` now fronts the clear-rect path used by the
-  shared UI controller)
+  (`NativeRendererRect` now fronts the clear-rect path used by the shared UI
+  controller, and `NativeRendererViewport` now fronts the gamma post-process
+  viewport path used by `GameRenderer`)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

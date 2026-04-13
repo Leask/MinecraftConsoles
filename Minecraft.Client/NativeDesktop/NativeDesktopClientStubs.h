@@ -12,6 +12,7 @@
 
 #include <lce_abi/lce_abi.h>
 
+#include "../Common/NativeRendererTypes.h"
 #include "GameConfig/Minecraft.spa.h"
 #include "Sentient/SentientTelemetryCommon.h"
 #include "TelemetryEnum.h"
@@ -1480,15 +1481,7 @@ typedef void ID3D11Device;
 typedef void ID3D11DeviceContext;
 typedef void ID3D11Resource;
 
-struct D3D11_VIEWPORT
-{
-    float TopLeftX;
-    float TopLeftY;
-    float Width;
-    float Height;
-    float MinDepth;
-    float MaxDepth;
-};
+using D3D11_VIEWPORT = NativeRendererViewport;
 
 struct STRING_VERIFY_RESPONSE
 {
@@ -1497,15 +1490,7 @@ struct STRING_VERIFY_RESPONSE
     BOOL bFailed;
 };
 
-struct NativeDesktopRendererRect
-{
-    LONG left;
-    LONG top;
-    LONG right;
-    LONG bottom;
-};
-
-using D3D11_RECT = NativeDesktopRendererRect;
+using D3D11_RECT = NativeRendererRect;
 
 const int MAP_STYLE_0 = 0;
 const int MAP_STYLE_1 = 1;
