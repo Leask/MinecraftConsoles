@@ -56,7 +56,7 @@ UIControl_TextInput* UIScene_DebugCreateSchematic::getTextInputForControl(eContr
 	}
 }
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 void UIScene_DebugCreateSchematic::getDirectEditInputs(vector<UIControl_TextInput*> &inputs)
 {
 	inputs.push_back(&m_textInputName);
@@ -104,7 +104,7 @@ void UIScene_DebugCreateSchematic::tick()
 
 void UIScene_DebugCreateSchematic::handleInput(int iPad, int key, bool repeat, bool pressed, bool released, bool &handled)
 {
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	if (isDirectEditBlocking()) return;
 #endif
 	ui.AnimateKeyPress(iPad, key, repeat, pressed, released);
@@ -131,7 +131,7 @@ void UIScene_DebugCreateSchematic::handleInput(int iPad, int key, bool repeat, b
 
 void UIScene_DebugCreateSchematic::handlePress(F64 controlId, F64 childId)
 {
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
     if (isDirectEditBlocking())
         return;
 #endif
@@ -188,7 +188,7 @@ void UIScene_DebugCreateSchematic::handlePress(F64 controlId, F64 childId)
     case eControl_EndZ:
         {
             m_keyboardCallbackControl = static_cast<eControls>(static_cast<int>(controlId));
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
             if (g_KBMInput.IsKBMActive())
             {
                 UIControl_TextInput* input = getTextInputForControl(m_keyboardCallbackControl);
@@ -239,7 +239,7 @@ int UIScene_DebugCreateSchematic::KeyboardCompleteCallback(LPVOID lpParam,bool b
 {
 	UIScene_DebugCreateSchematic *pClass=static_cast<UIScene_DebugCreateSchematic *>(lpParam);
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	uint16_t pchText[128];
 	ZeroMemory(pchText, 128 * sizeof(uint16_t));
 	NativeDesktop_GetKeyboardText(pchText, 128);

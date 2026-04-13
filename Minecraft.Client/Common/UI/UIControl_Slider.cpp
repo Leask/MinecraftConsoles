@@ -68,7 +68,7 @@ void UIControl_Slider::init(UIString label, int id, int min, int max, int curren
 
 bool IsUsingKeyboardMouse()
 {
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 
     if (g_KBMInput.IsKBMActive()) return true;
 

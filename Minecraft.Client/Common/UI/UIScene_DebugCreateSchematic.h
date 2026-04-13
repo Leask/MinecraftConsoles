@@ -59,7 +59,7 @@ protected:
 	UI_END_MAP_ELEMENTS_AND_NAMES()
 
 	virtual wstring getMoviePath();
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	virtual void getDirectEditInputs(vector<UIControl_TextInput*> &inputs);
 	virtual void onDirectEditFinished(UIControl_TextInput *input, UIControl_TextInput::EDirectEditResult result);
 	virtual bool handleMouseClick(F32 x, F32 y);

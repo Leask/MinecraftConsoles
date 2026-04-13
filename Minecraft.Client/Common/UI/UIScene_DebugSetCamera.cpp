@@ -63,7 +63,7 @@ wstring UIScene_DebugSetCamera::getMoviePath()
 	return L"DebugSetCamera";
 }
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 UIControl_TextInput* UIScene_DebugSetCamera::getTextInputForControl(eControls ctrl)
 {
 	switch (ctrl)
@@ -113,7 +113,7 @@ void UIScene_DebugSetCamera::tick()
 
 void UIScene_DebugSetCamera::handleInput(int iPad, int key, bool repeat, bool pressed, bool released, bool &handled)
 {
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	if (isDirectEditBlocking()) { handled = true; return; }
 #endif
 	ui.AnimateKeyPress(iPad, key, repeat, pressed, released);
@@ -140,7 +140,7 @@ void UIScene_DebugSetCamera::handleInput(int iPad, int key, bool repeat, bool pr
 
 void UIScene_DebugSetCamera::handlePress(F64 controlId, F64 childId)
 {
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	if (isDirectEditBlocking()) return;
 #endif
 	switch(static_cast<int>(controlId))
@@ -156,7 +156,7 @@ void UIScene_DebugSetCamera::handlePress(F64 controlId, F64 childId)
 	case eControl_YRot:
 	case eControl_Elevation:
 		m_keyboardCallbackControl = static_cast<eControls>(static_cast<int>(controlId));
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 		if (g_KBMInput.IsKBMActive())
 		{
 			UIControl_TextInput* input = getTextInputForControl(m_keyboardCallbackControl);
@@ -194,7 +194,7 @@ int UIScene_DebugSetCamera::KeyboardCompleteCallback(LPVOID lpParam,bool bRes)
 	UIScene_DebugSetCamera *pClass=static_cast<UIScene_DebugSetCamera *>(lpParam);
 	uint16_t pchText[2048];
 	ZeroMemory(pchText, 2048 * sizeof(uint16_t));
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	NativeDesktop_GetKeyboardText(pchText, 2048);
 #else
     InputManager.GetText(pchText);
