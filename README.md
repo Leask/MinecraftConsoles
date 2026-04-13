@@ -187,6 +187,7 @@ By default it:
 - runs the macOS native client smoke target
 - syncs to Linux host `elm`
 - runs the Linux native client smoke target
+- uses clean client build directories by default
 - writes a summary under `build/mainline-harness/summary.txt`
 
 Use this before pushing broad native runtime or client convergence changes.

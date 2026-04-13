@@ -22,6 +22,7 @@ remote_client_target="${REMOTE_CLIENT_TARGET:-Minecraft.NativeDesktop.Check}"
 run_server_harness="${RUN_SERVER_HARNESS:-1}"
 run_local_client="${RUN_LOCAL_CLIENT:-1}"
 run_remote_client="${RUN_REMOTE_CLIENT:-1}"
+clean_client_builds="${CLEAN_CLIENT_BUILDS:-1}"
 
 current_step=''
 
@@ -38,6 +39,7 @@ git_head=$git_head
 log_root=$log_root
 remote_host=$remote_host
 remote_root=$remote_root
+clean_client_builds=$clean_client_builds
 EOF
 }
 
@@ -191,13 +193,17 @@ run_local_client_smoke() {
     run_and_log local-client-smoke bash -c '
         set -euo pipefail
         cd "$1"
+        if [[ "$5" == "1" ]]; then
+            rm -rf "build/$2"
+        fi
         cmake --preset "$2"
         cmake --build --preset "$3" --target "$4"
     ' bash \
         "$repo_root" \
         "$local_client_configure_preset" \
         "$local_client_build_preset" \
-        "$local_client_target"
+        "$local_client_target" \
+        "$clean_client_builds"
     append_summary_line "local.client=ok"
 }
 
@@ -224,6 +230,9 @@ run_remote_client_smoke() {
 set -euo pipefail
 export PATH="\$HOME/.local/bin:\$PATH"
 cd "$remote_root"
+if [[ "$clean_client_builds" == "1" ]]; then
+    rm -rf "build/$remote_client_configure_preset"
+fi
 cmake --preset "$remote_client_configure_preset"
 cmake --build --preset "$remote_client_build_preset" --target "$remote_client_target"
 EOF

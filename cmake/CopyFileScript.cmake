@@ -12,6 +12,8 @@ endif()
 string(REPLACE "|" ";" COPY_SOURCE "${COPY_SOURCE}")
 
 if(CMAKE_HOST_UNIX)
+  file(MAKE_DIRECTORY "${COPY_DEST}")
+
   execute_process(
     COMMAND rsync -av ${COPY_SOURCE} "${COPY_DEST}/"
     RESULT_VARIABLE rs

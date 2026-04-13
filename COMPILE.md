@@ -110,6 +110,7 @@ Useful overrides:
 | `RUN_SERVER_HARNESS` | Set to `0` to skip the server harness |
 | `RUN_LOCAL_CLIENT` | Set to `0` to skip local client smoke |
 | `RUN_REMOTE_CLIENT` | Set to `0` to skip Linux client smoke |
+| `CLEAN_CLIENT_BUILDS` | Defaults to `1` for CI-like client rebuilds |
 | `REMOTE_HOST` | Linux host used by remote checks, default `elm` |
 | `REMOTE_ROOT` | Remote checkout path |
 
