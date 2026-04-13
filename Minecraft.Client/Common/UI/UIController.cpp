@@ -820,56 +820,56 @@ void UIController::tickInput()
 #endif
 		{
 #if defined(_NATIVE_DESKTOP)
-            m_mouseClickConsumedByScene = false;
-            if (!g_KBMInput.IsMouseGrabbed() && g_KBMInput.IsKBMActive())
-            {
-                UIScene *pScene = nullptr;
-
-                // Search by layer priority across all groups (layer-first).
-                // Tooltip layer is skipped because it holds non-interactive
-                // overlays (button hints, timer) that should never capture mouse.
-                // Old group-first order found those tooltips on eUIGroup_Fullscreen
-                // before reaching in-game menus on eUIGroup_Player1.
-                static const EUILayer mouseLayers[] = {
-#ifndef _CONTENT_PACKAGE
-                    eUILayer_Debug,
-#endif
-					eUILayer_Error,
-					eUILayer_Alert,
-					eUILayer_Popup,
-					eUILayer_Fullscreen,
-					eUILayer_Scene,
-				};
-				// Only check the fullscreen group and the primary (KBM) player's group.
-			// Other splitscreen players use controllers — mouse must not affect them.
-			const int mouseGroups[] = { static_cast<int>(eUIGroup_Fullscreen), ProfileManager.GetPrimaryPad() + 1 };
-			for (int l = 0; l < _countof(mouseLayers) && !pScene; ++l)
-			{
-				for (int g = 0; g < _countof(mouseGroups) && !pScene; ++g)
+				m_mouseClickConsumedByScene = false;
+				if (!g_KBMInput.IsMouseGrabbed() && g_KBMInput.IsKBMActive())
 				{
-					pScene = m_groups[mouseGroups[g]]->GetTopScene(mouseLayers[l]);
-				}
-			}
-				if (pScene && pScene->getMovie())
-                {
-                    int rawMouseX = g_KBMInput.GetMouseX();
-                    int rawMouseY = g_KBMInput.GetMouseY();
-                    F32 mouseX = static_cast<F32>(rawMouseX);
-                    F32 mouseY = static_cast<F32>(rawMouseY);
+					UIScene *pScene = nullptr;
 
-                    extern HWND g_hWnd;
-                    if (g_hWnd)
-                    {
-                        RECT rc;
-                        GetClientRect(g_hWnd, &rc);
-                        int winW = rc.right - rc.left;
-                        int winH = rc.bottom - rc.top;
-                        if (winW > 0 && winH > 0)
-                        {
-                            mouseX = mouseX * (m_fScreenWidth / static_cast<F32>(winW));
-                            mouseY = mouseY * (m_fScreenHeight / static_cast<F32>(winH));
-                        }
-                    }
+					// Search by layer priority across all groups (layer-first).
+					// Tooltip layer is skipped because it holds non-interactive
+					// overlays (button hints, timer) that should never capture mouse.
+					// Old group-first order found those tooltips on eUIGroup_Fullscreen
+					// before reaching in-game menus on eUIGroup_Player1.
+					static const EUILayer mouseLayers[] = {
+#ifndef _CONTENT_PACKAGE
+						eUILayer_Debug,
+#endif
+						eUILayer_Error,
+						eUILayer_Alert,
+						eUILayer_Popup,
+						eUILayer_Fullscreen,
+						eUILayer_Scene,
+					};
+					// Only check the fullscreen group and the primary (KBM) player's group.
+					// Other splitscreen players use controllers; mouse must not affect them.
+					const int mouseGroups[] = {
+						static_cast<int>(eUIGroup_Fullscreen),
+						ProfileManager.GetPrimaryPad() + 1
+					};
+					for (int l = 0; l < _countof(mouseLayers) && !pScene; ++l)
+					{
+						for (int g = 0; g < _countof(mouseGroups) && !pScene; ++g)
+						{
+							pScene =
+								m_groups[mouseGroups[g]]->GetTopScene(mouseLayers[l]);
+						}
+					}
+					if (pScene && pScene->getMovie())
+					{
+					int rawMouseX = g_KBMInput.GetMouseX();
+					int rawMouseY = g_KBMInput.GetMouseY();
+					F32 mouseX = static_cast<F32>(rawMouseX);
+					F32 mouseY = static_cast<F32>(rawMouseY);
+
+					NativeRendererSize clientArea =
+						NativeDesktopGetClientAreaSize();
+					if (clientArea.width > 0 && clientArea.height > 0)
+					{
+						mouseX = mouseX *
+							(m_fScreenWidth / static_cast<F32>(clientArea.width));
+						mouseY = mouseY *
+							(m_fScreenHeight / static_cast<F32>(clientArea.height));
+					}
 
 					// Only update hover focus when the mouse has actually moved,
 					// so that mouse-wheel scrolling can change list selection
@@ -886,40 +886,47 @@ void UIController::tickInput()
 					//   3. Scale from display dimensions to SWF authoring dimensions
 					F32 sceneMouseX = static_cast<F32>(rawMouseX);
 					F32 sceneMouseY = static_cast<F32>(rawMouseY);
+					if (clientArea.width > 0 && clientArea.height > 0)
 					{
-						extern HWND g_hWnd;
-						RECT rc;
-						if (g_hWnd && GetClientRect(g_hWnd, &rc))
+						// Step 1: window pixels -> screen space
+						F32 screenX = sceneMouseX *
+							(getScreenWidth() /
+								static_cast<F32>(clientArea.width));
+						F32 screenY = sceneMouseY *
+							(getScreenHeight() /
+								static_cast<F32>(clientArea.height));
+
+						// Step 2 & 3: account for split-screen viewport
+						C4JRender::eViewportType vp =
+							pScene->GetParentLayer()->getViewport();
+						S32 displayW = 0, displayH = 0;
+						getRenderDimensions(vp, displayW, displayH);
+
+						F32 vpOriginX, vpOriginY, vpW, vpH;
+						GetViewportRect(
+							getScreenWidth(),
+							getScreenHeight(),
+							vp,
+							vpOriginX,
+							vpOriginY,
+							vpW,
+							vpH);
+						// All viewports use Fit16x9 for menu scenes
+						S32 fitW, fitH, fitOffsetX, fitOffsetY;
+						Fit16x9(vpW, vpH, fitW, fitH, fitOffsetX, fitOffsetY);
+						S32 originX = static_cast<S32>(vpOriginX) + fitOffsetX;
+						S32 originY = static_cast<S32>(vpOriginY) + fitOffsetY;
+						displayW = fitW;
+						displayH = fitH;
+
+						if (displayW > 0 && displayH > 0)
 						{
-							int winW = rc.right - rc.left;
-							int winH = rc.bottom - rc.top;
-							if (winW > 0 && winH > 0)
-							{
-								// Step 1: window pixels -> screen space
-								F32 screenX = sceneMouseX * (getScreenWidth() / static_cast<F32>(winW));
-								F32 screenY = sceneMouseY * (getScreenHeight() / static_cast<F32>(winH));
-
-								// Step 2 & 3: account for split-screen viewport
-								C4JRender::eViewportType vp = pScene->GetParentLayer()->getViewport();
-								S32 displayW = 0, displayH = 0;
-								getRenderDimensions(vp, displayW, displayH);
-
-								F32 vpOriginX, vpOriginY, vpW, vpH;
-								GetViewportRect(getScreenWidth(), getScreenHeight(), vp, vpOriginX, vpOriginY, vpW, vpH);
-								// All viewports use Fit16x9 for menu scenes
-								S32 fitW, fitH, fitOffsetX, fitOffsetY;
-								Fit16x9(vpW, vpH, fitW, fitH, fitOffsetX, fitOffsetY);
-								S32 originX = static_cast<S32>(vpOriginX) + fitOffsetX;
-								S32 originY = static_cast<S32>(vpOriginY) + fitOffsetY;
-								displayW = fitW;
-								displayH = fitH;
-
-								if (displayW > 0 && displayH > 0)
-								{
-									sceneMouseX = (screenX - originX) * (static_cast<F32>(pScene->getRenderWidth()) / static_cast<F32>(displayW));
-									sceneMouseY = (screenY - originY) * (static_cast<F32>(pScene->getRenderHeight()) / static_cast<F32>(displayH));
-								}
-							}
+							sceneMouseX = (screenX - originX) *
+								(static_cast<F32>(pScene->getRenderWidth()) /
+									static_cast<F32>(displayW));
+							sceneMouseY = (screenY - originY) *
+								(static_cast<F32>(pScene->getRenderHeight()) /
+									static_cast<F32>(displayH));
 						}
 					}
 

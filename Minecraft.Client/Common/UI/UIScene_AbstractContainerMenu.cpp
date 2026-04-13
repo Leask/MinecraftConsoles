@@ -40,7 +40,7 @@ void UIScene_AbstractContainerMenu::handleDestroy()
 {
 	app.DebugPrintf("UIScene_AbstractContainerMenu::handleDestroy\n");
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	g_KBMInput.SetScreenCursorHidden(false);
 	g_KBMInput.SetCursorHiddenForUI(false);
 #endif
@@ -80,7 +80,7 @@ void UIScene_AbstractContainerMenu::InitDataAssociations(int iPad, AbstractConta
 
 void UIScene_AbstractContainerMenu::PlatformInitialize(int iPad, int startIndex)
 {
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	g_KBMInput.SetScreenCursorHidden(true);
 	g_KBMInput.SetCursorHiddenForUI(true);
 #endif
@@ -168,7 +168,7 @@ void UIScene_AbstractContainerMenu::PlatformInitialize(int iPad, int startIndex)
 	//m_pointerControl->SetPosition( &vPointerPos );
 	m_pointerPos = vPointerPos;
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	if ((iPad == 0) && g_KBMInput.IsKBMActive())
 	{
 		m_pointerPos.x = ((m_fPanelMinX + m_fPanelMaxX) * 0.5f) - m_fPointerImageOffsetX;
@@ -259,11 +259,17 @@ void UIScene_AbstractContainerMenu::render(S32 width, S32 height, C4JRender::eVi
 
 void UIScene_AbstractContainerMenu::getMouseToSWFScale(float &scaleX, float &scaleY)
 {
+#if defined(_NATIVE_DESKTOP)
+	NativeRendererSize clientArea = NativeDesktopGetClientAreaSize();
+	int winW = clientArea.width;
+	int winH = clientArea.height;
+#else
 	extern HWND g_hWnd;
 	RECT rc;
 	GetClientRect(g_hWnd, &rc);
 	int winW = rc.right - rc.left;
 	int winH = rc.bottom - rc.top;
+#endif
 	if(winW <= 0 || winH <= 0) { scaleX = 1.0f; scaleY = 1.0f; return; }
 
 	S32 renderW, renderH;

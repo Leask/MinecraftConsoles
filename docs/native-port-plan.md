@@ -180,6 +180,9 @@ Direction:
   (`NativeRendererRect` now fronts the clear-rect path used by the shared UI
   controller, and `NativeRendererViewport` now fronts the gamma post-process
   viewport path used by `GameRenderer`)
+- keep native UI mouse geometry sourced from native desktop runtime state
+  (`NativeDesktopGetClientAreaSize` now replaces direct `HWND`/`GetClientRect`
+  reads in active mouse hit-testing and container pointer scale paths)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

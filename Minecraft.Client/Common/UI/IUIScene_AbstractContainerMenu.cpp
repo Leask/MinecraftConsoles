@@ -480,7 +480,7 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
 	}
 #endif
 
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 	if (iPad == 0 && !g_KBMInput.IsMouseGrabbed() && g_KBMInput.IsKBMActive())
 	{
 		int deltaX = g_KBMInput.GetMouseDeltaX();
@@ -717,11 +717,13 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
 
 			// If there is no stick input, and we are over a slot, then snap pointer to slot centre.
 			// 4J - TomK - only if this particular component allows so!
-#ifdef _WINDOWS64
-			if((g_KBMInput.IsMouseGrabbed() || !g_KBMInput.IsKBMActive()) && CanHaveFocus(eSectionUnderPointer))
-#else
-			if(CanHaveFocus(eSectionUnderPointer))
+			bool snapPointerToSlot = CanHaveFocus(eSectionUnderPointer);
+#if defined(_NATIVE_DESKTOP)
+			snapPointerToSlot =
+				(g_KBMInput.IsMouseGrabbed() || !g_KBMInput.IsKBMActive()) &&
+				snapPointerToSlot;
 #endif
+			if(snapPointerToSlot)
 			{
 				vPointerPos.x = vSnapPos.x;
 				vPointerPos.y = vSnapPos.y;
@@ -1473,7 +1475,7 @@ bool IUIScene_AbstractContainerMenu::handleKeyDown(int iPad, int iAction, bool b
 		}
 		break;
 	case ACTION_MENU_UP:
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 		if (g_KBMInput.WasMouseWheelConsumed())
 		{
 			handleAdditionalKeyPress(ACTION_MENU_OTHER_STICK_UP);
@@ -1486,7 +1488,7 @@ bool IUIScene_AbstractContainerMenu::handleKeyDown(int iPad, int iAction, bool b
 		}
 		break;
 	case ACTION_MENU_DOWN:
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
 		if (g_KBMInput.WasMouseWheelConsumed())
 		{
 			handleAdditionalKeyPress(ACTION_MENU_OTHER_STICK_DOWN);

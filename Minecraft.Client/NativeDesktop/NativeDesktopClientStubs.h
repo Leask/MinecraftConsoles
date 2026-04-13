@@ -435,6 +435,17 @@ private:
 
 inline KeyboardMouseInput g_KBMInput;
 
+inline NativeRendererSize NativeDesktopGetClientAreaSize()
+{
+    extern int g_iScreenWidth;
+    extern int g_iScreenHeight;
+
+    NativeRendererSize size;
+    size.width = g_iScreenWidth > 0 ? g_iScreenWidth : 1280;
+    size.height = g_iScreenHeight > 0 ? g_iScreenHeight : 720;
+    return size;
+}
+
 #ifndef RADLINK
 #define RADLINK
 #endif
