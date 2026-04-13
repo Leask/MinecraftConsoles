@@ -162,7 +162,9 @@ Direction:
   `_NATIVE_DESKTOP` branches
   (native keyboard scene, direct text edit, KBM mouse UI dispatch, and the
   create-world/sign/anvil/seed text flows now use `_NATIVE_DESKTOP`;
-  saved-server add/edit/delete/join-index flows now use `_NATIVE_DESKTOP`)
+  saved-server add/edit/delete/join-index flows now use `_NATIVE_DESKTOP`;
+  load/join save-list sorting, worldname sidecars, thumbnail index, and
+  save rename/delete option flow now use `_NATIVE_DESKTOP`)
 - isolate Direct3D-shaped renderer structs behind native renderer-neutral names
   (`NativeDesktopRendererRect` now fronts the clear-rect path used by the
   shared UI controller)
