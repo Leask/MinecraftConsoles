@@ -1,10 +1,15 @@
 #pragma once
 
+#include <chrono>
 #include <string>
 #include <cstdio>
 #include <cstdlib>
 #include <cerrno>
 #include <cstring>
+#include <filesystem>
+#include <functional>
+#include <thread>
+#include <unistd.h>
 #include <lce_abi/lce_abi.h>
 
 namespace NativeDesktopXuid
@@ -43,22 +48,19 @@ namespace NativeDesktopXuid
 
 		outPath[0] = 0;
 
-		char exePath[MAX_PATH] = {};
-		DWORD len = GetModuleFileNameA(NULL, exePath, MAX_PATH);
-		if (len == 0 || len >= MAX_PATH)
-			return false;
-
-		char* lastSlash = strrchr(exePath, '/');
-		if (lastSlash != NULL)
+		std::error_code error;
+		std::filesystem::path uidPath = std::filesystem::current_path(error);
+		if (error)
 		{
-			*(lastSlash + 1) = 0;
+			uidPath = std::filesystem::path();
 		}
+		uidPath /= "uid.dat";
 
-		if (strcpy_s(outPath, outPathSize, exePath) != 0)
-			return false;
-		if (strcat_s(outPath, outPathSize, "uid.dat") != 0)
+		const std::string pathText = uidPath.string();
+		if (pathText.empty() || pathText.size() + 1 > outPathSize)
 			return false;
 
+		memcpy(outPath, pathText.c_str(), pathText.size() + 1);
 		return true;
 	}
 
@@ -71,8 +73,8 @@ namespace NativeDesktopXuid
 		if (!BuildUidFilePath(path, MAX_PATH))
 			return false;
 
-		FILE* f = NULL;
-		if (fopen_s(&f, path, "rb") != 0 || f == NULL)
+		FILE* f = fopen(path, "rb");
+		if (f == NULL)
 			return false;
 
 		char buffer[128] = {};
@@ -104,7 +106,7 @@ namespace NativeDesktopXuid
 
 		errno = 0;
 		char* end = NULL;
-		uint64_t raw = _strtoui64(begin, &end, 0);
+		uint64_t raw = strtoull(begin, &end, 0);
 		if (begin == end || errno != 0)
 			return false;
 
@@ -129,11 +131,11 @@ namespace NativeDesktopXuid
 		if (!BuildUidFilePath(path, MAX_PATH))
 			return false;
 
-		FILE* f = NULL;
-		if (fopen_s(&f, path, "wb") != 0 || f == NULL)
+		FILE* f = fopen(path, "wb");
+		if (f == NULL)
 			return false;
 
-		int written = fprintf_s(f, "0x%016llX\n", (unsigned long long)xuid);
+		int written = fprintf(f, "0x%016llX\n", (unsigned long long)xuid);
 		fclose(f);
 		return written > 0;
 	}
@@ -149,20 +151,23 @@ namespace NativeDesktopXuid
 	inline PlayerUID GeneratePersistentUid()
 	{
 		// Avoid platform RNG dependencies: mix several native runtime values.
-		FILETIME ft = {};
-		GetSystemTimeAsFileTime(&ft);
-		uint64_t t = (((uint64_t)ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+		const auto wallNow = std::chrono::system_clock::now()
+			.time_since_epoch()
+			.count();
+		const auto steadyNow = std::chrono::steady_clock::now()
+			.time_since_epoch()
+			.count();
+		const size_t threadHash =
+			std::hash<std::thread::id>()(std::this_thread::get_id());
+		static int moduleAnchor = 0;
+		uint64_t stackAnchor = 0;
 
-		LARGE_INTEGER qpc = {};
-		QueryPerformanceCounter(&qpc);
-
-		uint64_t seed = t;
-		seed ^= (uint64_t)qpc.QuadPart;
-		seed ^= ((uint64_t)GetCurrentProcessId() << 32);
-		seed ^= (uint64_t)GetCurrentThreadId();
-		seed ^= (uint64_t)GetTickCount();
-		seed ^= (uint64_t)(size_t)&qpc;
-		seed ^= (uint64_t)(size_t)GetModuleHandleA(NULL);
+		uint64_t seed = (uint64_t)wallNow;
+		seed ^= (uint64_t)steadyNow;
+		seed ^= ((uint64_t)getpid() << 32);
+		seed ^= (uint64_t)threadHash;
+		seed ^= (uint64_t)(size_t)&stackAnchor;
+		seed ^= (uint64_t)(size_t)&moduleAnchor;
 
 		uint64_t raw = Mix64(seed) ^ Mix64(seed + 0xA0761D6478BD642FULL);
 		raw ^= 0x8F4B2D6C1A93E705ULL;

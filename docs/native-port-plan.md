@@ -189,6 +189,10 @@ Direction:
 - keep screen clipboard operations on a native desktop substitute
   (`Screen::getClipboard/setClipboard` now round-trip through the native
   desktop runtime stub, and startup smoke requires `startup.clipboard=1`)
+- keep native desktop XUID bootstrap on native path/file/time substitutes
+  (`NativeDesktop_Xuid` now uses C++17/POSIX path, I/O, clock, process and
+  thread signals, and startup smoke only reports `startup.xuid=1` for a valid
+  persisted XUID)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

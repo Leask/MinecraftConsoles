@@ -1909,9 +1909,13 @@ int main(int argc, char** argv)
         stderr,
         "NativeDesktop bootstrap: clipboard %s\n",
         runtimeSummary.clipboardReady ? "ready" : "unavailable");
-    NativeDesktopXuid::ResolvePersistentXuid();
-    runtimeSummary.xuidReady = true;
-    std::fprintf(stderr, "NativeDesktop bootstrap: xuid ready\n");
+    PlayerUID resolvedXuid = NativeDesktopXuid::ResolvePersistentXuid();
+    runtimeSummary.xuidReady =
+        NativeDesktopXuid::IsPersistedUidValid(resolvedXuid);
+    std::fprintf(
+        stderr,
+        "NativeDesktop bootstrap: xuid %s\n",
+        runtimeSummary.xuidReady ? "ready" : "unavailable");
     NativeDesktopInitialiseProfile();
     runtimeSummary.profileReady = true;
     std::fprintf(stderr, "NativeDesktop bootstrap: profile ready\n");
