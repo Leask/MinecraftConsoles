@@ -691,6 +691,7 @@ namespace
         bool localPlayerReady = false;
         bool minecraftRuntimeReady = false;
         bool uiReady = false;
+        int uiSkinLibrariesCreated = 0;
         bool startupComplete = false;
         int bootstrapFramesRequested = 0;
         int bootstrapFramesCompleted = 0;
@@ -1706,6 +1707,7 @@ namespace
             "startup.localPlayer=%d "
             "startup.minecraftRuntime=%d "
             "startup.ui=%d "
+            "startup.uiSkinLibraries=%d "
             "startupComplete=%d "
             "bootstrapFrames=%d/%d "
             "gameplayThreadStarted=%d "
@@ -1749,6 +1751,7 @@ namespace
             summary.localPlayerReady ? 1 : 0,
             summary.minecraftRuntimeReady ? 1 : 0,
             summary.uiReady ? 1 : 0,
+            summary.uiSkinLibrariesCreated,
             summary.startupComplete ? 1 : 0,
             summary.bootstrapFramesCompleted,
             summary.bootstrapFramesRequested,
@@ -1796,6 +1799,8 @@ namespace
             summary->exitCode = exitCode;
             summary->phase = phase;
             summary->failure = failure;
+            summary->uiSkinLibrariesCreated =
+                NativeDesktopGetIggyLibraryCreateCount();
             NativeDesktopUpdateRuntimeObservation(summary);
             g_NativeDesktopInputReplay.UpdateSummary(summary);
             summary->runtimeHealthy =
@@ -1917,6 +1922,8 @@ int main(int argc, char** argv)
     runtimeSummary.minecraftRuntimeReady = true;
     ui.init(g_iScreenWidth, g_iScreenHeight);
     runtimeSummary.uiReady = true;
+    runtimeSummary.uiSkinLibrariesCreated =
+        NativeDesktopGetIggyLibraryCreateCount();
     runtimeSummary.startupComplete = true;
     std::fprintf(stderr, "NativeDesktop bootstrap: ui ready\n");
     NativeDesktopRunBootstrapFrames(

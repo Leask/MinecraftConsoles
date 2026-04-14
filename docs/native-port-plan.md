@@ -183,6 +183,9 @@ Direction:
 - keep native UI mouse geometry sourced from native desktop runtime state
   (`NativeDesktopGetClientAreaSize` now replaces direct `HWND`/`GetClientRect`
   reads in active mouse hit-testing and container pointer scale paths)
+- make native desktop skin startup explicit and smoke-checked
+  (`_NATIVE_DESKTOP` now enters the desktop SWF skin-loading branch, and the
+  client summary must report a positive `startup.uiSkinLibraries` count)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

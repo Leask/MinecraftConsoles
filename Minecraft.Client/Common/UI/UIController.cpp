@@ -573,10 +573,13 @@ void UIController::loadSkins()
 	m_iggyLibraries[eLibrary_Tooltips] = loadSkin(L"skinTooltips.swf", L"skinTooltips.swf");
 	m_iggyLibraries[eLibrary_Default] = loadSkin(L"skin.swf", L"skin.swf");
 
-#elif defined _WINDOWS64
-	// HD platform skin — required by skinHD*.swf (1080p scene SWFs)
+#elif defined(_NATIVE_DESKTOP) || defined _WINDOWS64
+	// Native desktop uses the existing desktop SWF asset names from the
+	// MediaNativeDesktop archive. The names are resource IDs, not platform
+	// policy.
+	// HD platform skin; required by skinHD*.swf (1080p scene SWFs)
 	m_iggyLibraries[eLibrary_Platform] = loadSkin(L"skinHDWin.swf", L"platformskinHD.swf");
-	// Non-HD platform skin — required by skin*.swf (720p/480p scene SWFs)
+	// Non-HD platform skin; required by skin*.swf (720p/480p scene SWFs)
 	m_iggyLibraries[eLibraryFallback_Platform] = loadSkin(L"skinWin.swf", L"platformskin.swf");
 
 	// Non-HD skin set (720p/480p scenes import these)

@@ -163,6 +163,18 @@ foreach(expected_summary_marker IN LISTS expected_summary_markers)
 endforeach()
 
 string(REGEX MATCH
+  "startup[.]uiSkinLibraries=[1-9][0-9]*"
+  ui_skin_libraries_marker
+  "${combined_output}")
+if(ui_skin_libraries_marker STREQUAL "")
+  native_desktop_output_tail(combined_output_tail "${combined_output}")
+  message(FATAL_ERROR
+    "NativeDesktop client startup smoke output did not contain a positive "
+    "startup.uiSkinLibraries summary value\n"
+    "output:\n${combined_output_tail}\n")
+endif()
+
+string(REGEX MATCH
   "gameplayReadyAfterMs=[0-9]+"
   gameplay_ready_after_marker
   "${combined_output}")

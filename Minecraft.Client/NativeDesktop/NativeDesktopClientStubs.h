@@ -871,6 +871,15 @@ inline Iggy* IggyPlayerCreateFromMemory(
     player->root.f = player;
     return player;
 }
+inline int& NativeDesktopIggyLibraryCreateCount()
+{
+    static int createCount = 0;
+    return createCount;
+}
+inline int NativeDesktopGetIggyLibraryCreateCount()
+{
+    return NativeDesktopIggyLibraryCreateCount();
+}
 inline IggyLibrary IggyLibraryCreateFromMemoryUTF16(
     IggyUTF16 const* url,
     void const* data,
@@ -881,7 +890,9 @@ inline IggyLibrary IggyLibraryCreateFromMemoryUTF16(
     (void)data;
     (void)dataSizeInBytes;
     (void)config;
-    return IGGY_INVALID_LIBRARY;
+    int& createCount = NativeDesktopIggyLibraryCreateCount();
+    createCount += 1;
+    return createCount;
 }
 inline void IggyPlayerDestroy(Iggy* player) { delete player; }
 inline void IggyLibraryDestroy(IggyLibrary library) { (void)library; }
