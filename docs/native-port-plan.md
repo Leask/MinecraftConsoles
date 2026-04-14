@@ -186,6 +186,9 @@ Direction:
 - make native desktop skin startup explicit and smoke-checked
   (`_NATIVE_DESKTOP` now enters the desktop SWF skin-loading branch, and the
   client summary must report a positive `startup.uiSkinLibraries` count)
+- keep screen clipboard operations on a native desktop substitute
+  (`Screen::getClipboard/setClipboard` now round-trip through the native
+  desktop runtime stub, and startup smoke requires `startup.clipboard=1`)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

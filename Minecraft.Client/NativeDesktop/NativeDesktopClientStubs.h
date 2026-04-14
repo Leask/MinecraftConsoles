@@ -446,6 +446,22 @@ inline NativeRendererSize NativeDesktopGetClientAreaSize()
     return size;
 }
 
+inline std::wstring& NativeDesktopClipboardText()
+{
+    static std::wstring clipboardText;
+    return clipboardText;
+}
+
+inline std::wstring NativeDesktopGetClipboardText()
+{
+    return NativeDesktopClipboardText();
+}
+
+inline void NativeDesktopSetClipboardText(const std::wstring& text)
+{
+    NativeDesktopClipboardText() = text;
+}
+
 #ifndef RADLINK
 #define RADLINK
 #endif

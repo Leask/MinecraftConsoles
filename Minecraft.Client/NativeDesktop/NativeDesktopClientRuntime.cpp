@@ -11,6 +11,7 @@
 
 #include "../Minecraft.h"
 #include "../MinecraftServer.h"
+#include "../Screen.h"
 #include "../Tesselator.h"
 #include "../User.h"
 #include "../Common/UI/IUIScene_CreativeMenu.h"
@@ -684,6 +685,7 @@ namespace
     {
         bool mediaArchiveReady = false;
         bool stringTableReady = false;
+        bool clipboardReady = false;
         bool xuidReady = false;
         bool profileReady = false;
         bool networkManagerReady = false;
@@ -1700,6 +1702,7 @@ namespace
             "exitCode=%d "
             "startup.mediaArchive=%d "
             "startup.stringTable=%d "
+            "startup.clipboard=%d "
             "startup.xuid=%d "
             "startup.profile=%d "
             "startup.networkManager=%d "
@@ -1744,6 +1747,7 @@ namespace
             summary.exitCode,
             summary.mediaArchiveReady ? 1 : 0,
             summary.stringTableReady ? 1 : 0,
+            summary.clipboardReady ? 1 : 0,
             summary.xuidReady ? 1 : 0,
             summary.profileReady ? 1 : 0,
             summary.networkManagerReady ? 1 : 0,
@@ -1805,6 +1809,7 @@ namespace
             g_NativeDesktopInputReplay.UpdateSummary(summary);
             summary->runtimeHealthy =
                 exitCode == 0 &&
+                summary->clipboardReady &&
                 summary->startupComplete &&
                 summary->gameplayReady &&
                 summary->shutdownComplete &&
@@ -1896,6 +1901,14 @@ int main(int argc, char** argv)
     app.loadStringTable();
     runtimeSummary.stringTableReady = true;
     std::fprintf(stderr, "NativeDesktop bootstrap: string table ready\n");
+    const std::wstring clipboardProbe = L"NativeDesktopClipboardProbe";
+    Screen::setClipboard(clipboardProbe);
+    runtimeSummary.clipboardReady =
+        Screen::getClipboard() == clipboardProbe;
+    std::fprintf(
+        stderr,
+        "NativeDesktop bootstrap: clipboard %s\n",
+        runtimeSummary.clipboardReady ? "ready" : "unavailable");
     NativeDesktopXuid::ResolvePersistentXuid();
     runtimeSummary.xuidReady = true;
     std::fprintf(stderr, "NativeDesktop bootstrap: xuid ready\n");

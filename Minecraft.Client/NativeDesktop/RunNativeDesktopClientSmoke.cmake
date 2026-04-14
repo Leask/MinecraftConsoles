@@ -111,6 +111,7 @@ set(expected_summary_markers
   "exitCode=0"
   "startup.mediaArchive=1"
   "startup.stringTable=1"
+  "startup.clipboard=1"
   "startup.xuid=1"
   "startup.profile=1"
   "startup.networkManager=1"

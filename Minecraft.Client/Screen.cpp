@@ -43,7 +43,9 @@ void Screen::keyPressed(wchar_t eventCharacter, int eventKey)
 
 wstring Screen::getClipboard()
 {
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
+	return NativeDesktopGetClipboardText();
+#elif defined(_WINDOWS64)
 	if (!OpenClipboard(nullptr)) return wstring();
 	HANDLE h = GetClipboardData(CF_UNICODETEXT);
 	wstring out;
@@ -61,7 +63,9 @@ wstring Screen::getClipboard()
 
 void Screen::setClipboard(const wstring& str)
 {
-#ifdef _WINDOWS64
+#if defined(_NATIVE_DESKTOP)
+	NativeDesktopSetClipboardText(str);
+#elif defined(_WINDOWS64)
 	if (!OpenClipboard(nullptr)) return;
 	EmptyClipboard();
 	size_t len = (str.length() + 1) * sizeof(wchar_t);
