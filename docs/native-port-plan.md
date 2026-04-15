@@ -240,7 +240,10 @@ Direction:
   state calls; `UIScene_LoadMenu` save catalog, thumbnail, load, and corrupt
   delete actions now drive `NativeDesktopClientSaveControl` primitives, with
   the native `C4JStorage` stub only projecting that same save catalog for
-  legacy callers)
+  legacy callers; `UIScene_LoadOrJoinMenu` save listing, thumbnail loading,
+  save-disabled/space gates, and local tutorial/load-from-disk save identity
+  now read the same native save-control catalog instead of direct
+  `StorageManager` save-list state)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/

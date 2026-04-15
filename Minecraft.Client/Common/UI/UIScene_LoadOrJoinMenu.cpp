@@ -12,12 +12,101 @@
 #include "../../MinecraftServer.h"
 #include "../../TexturePackRepository.h"
 #include "../../TexturePack.h"
+#include "../../NativeDesktop/NativeDesktopClientSaveControl.h"
+#include "../../NativeDesktop/NativeDesktopClientStorageControl.h"
 #include "../Network/SessionInfo.h"
 #ifdef _NATIVE_DESKTOP
 #include <filesystem>
 
 #include "../../../Minecraft.World/NbtIo.h"
 #include "../../../Minecraft.World/compression.h"
+
+static SAVE_INFO g_NativeDesktopLoadOrJoinSaveInfoA[1] = {};
+static SAVE_DETAILS g_NativeDesktopLoadOrJoinSaveDetails = {};
+
+static PSAVE_DETAILS NativeDesktopLoadOrJoinReturnSavesInfo()
+{
+    memset(
+        &g_NativeDesktopLoadOrJoinSaveInfoA,
+        0,
+        sizeof(g_NativeDesktopLoadOrJoinSaveInfoA));
+    g_NativeDesktopLoadOrJoinSaveDetails = {};
+
+    if (NativeDesktopGetSaveCount() <= 0)
+    {
+        return &g_NativeDesktopLoadOrJoinSaveDetails;
+    }
+
+    unsigned char* thumbnailData = nullptr;
+    unsigned int thumbnailBytes = 0;
+    int blocksUsed = 0;
+    NativeDesktopGetSaveInfo(
+        0,
+        g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF8SaveTitle,
+        sizeof(g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF8SaveTitle),
+        g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF8SaveFilename,
+        sizeof(g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF8SaveFilename),
+        g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF16SaveTitle,
+        sizeof(g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF16SaveTitle) /
+            sizeof(g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF16SaveTitle[0]),
+        g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF16SaveFilename,
+        sizeof(g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF16SaveFilename) /
+            sizeof(g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF16SaveFilename[0]),
+        &g_NativeDesktopLoadOrJoinSaveInfoA[0].modifiedTime,
+        &thumbnailData,
+        &thumbnailBytes,
+        &blocksUsed);
+
+    g_NativeDesktopLoadOrJoinSaveInfoA[0].thumbnailData = thumbnailData;
+    g_NativeDesktopLoadOrJoinSaveInfoA[0].thumbnailSize = thumbnailBytes;
+    g_NativeDesktopLoadOrJoinSaveInfoA[0].blocksUsed = blocksUsed;
+    g_NativeDesktopLoadOrJoinSaveDetails.iSaveC = 1;
+    g_NativeDesktopLoadOrJoinSaveDetails.SaveInfoA =
+        g_NativeDesktopLoadOrJoinSaveInfoA;
+    g_NativeDesktopLoadOrJoinSaveDetails.pCurrentSaveInfo =
+        g_NativeDesktopLoadOrJoinSaveInfoA;
+    g_NativeDesktopLoadOrJoinSaveDetails.totalBlocksUsed = blocksUsed;
+    return &g_NativeDesktopLoadOrJoinSaveDetails;
+}
+
+static C4JStorage::ESaveGameState NativeDesktopLoadOrJoinGetSavesInfo(
+    int (*callback)(LPVOID, SAVE_DETAILS*, const bool),
+    LPVOID param)
+{
+    PSAVE_DETAILS saveDetails = NativeDesktopLoadOrJoinReturnSavesInfo();
+    if (callback != nullptr)
+    {
+        callback(param, saveDetails, true);
+    }
+    return C4JStorage::ESaveGame_Idle;
+}
+
+static void NativeDesktopLoadOrJoinClearSavesInfo()
+{
+    memset(
+        &g_NativeDesktopLoadOrJoinSaveInfoA,
+        0,
+        sizeof(g_NativeDesktopLoadOrJoinSaveInfoA));
+    g_NativeDesktopLoadOrJoinSaveDetails = {};
+}
+
+static C4JStorage::ESaveGameState NativeDesktopLoadOrJoinLoadThumbnail(
+    int saveIndex,
+    int (*callback)(LPVOID, PBYTE, DWORD),
+    LPVOID param)
+{
+    return static_cast<C4JStorage::ESaveGameState>(
+        NativeDesktopLoadSaveDataThumbnailByIndex(
+            saveIndex,
+            callback,
+            param,
+            false));
+}
+
+static bool NativeDesktopLoadOrJoinEnoughSpaceForMinSave()
+{
+    return true;
+}
 
 static std::filesystem::path NativeDesktop_MakePortablePath(
     const wstring& path)
@@ -280,7 +369,7 @@ UIScene_LoadOrJoinMenu::UIScene_LoadOrJoinMenu(int iPad, void *initData, UILayer
 
 #if defined(__PS3__) || defined(__ORBIS__) || defined(__PSVITA__) || defined(_DURANGO) || defined(_NATIVE_DESKTOP)
     // Always clear the saves when we enter this menu
-    StorageManager.ClearSavesInfo();
+    NativeDesktopLoadOrJoinClearSavesInfo();
 #endif
 
     // block input if we're waiting for DLC to install, and wipe the saves list. The end of dlc mounting custom message will fill the list again
@@ -451,13 +540,13 @@ void UIScene_LoadOrJoinMenu::updateTooltips()
     {
         if((m_iDefaultButtonsC > 0) && (m_iSaveListIndex >= m_iDefaultButtonsC))
         {
-            if(StorageManager.GetSaveDisabled())
+            if(NativeDesktopSavesAreDisabled())
             {
                 iRB=IDS_TOOLTIPS_DELETESAVE;
             }
             else
             {
-                if(StorageManager.EnoughSpaceForAMinSaveGame())
+                if(NativeDesktopLoadOrJoinEnoughSpaceForMinSave())
                 {
                     iRB=IDS_TOOLTIPS_SAVEOPTIONS;
                 }
@@ -488,7 +577,7 @@ void UIScene_LoadOrJoinMenu::updateTooltips()
     {
         iRB = -1;
     }
-    else if(StorageManager.GetSaveDisabled())
+    else if(NativeDesktopSavesAreDisabled())
     {
 #ifdef _XBOX
         iX = IDS_TOOLTIPS_SELECTDEVICE;
@@ -544,14 +633,14 @@ void UIScene_LoadOrJoinMenu::Initialise()
         m_pSavesList->SetCurSelVisible(0);
 #endif
     }
-    else if(StorageManager.GetSaveDisabled())
+    else if(NativeDesktopSavesAreDisabled())
     {
 #if defined(__PS3__) || defined(__ORBIS__) || defined (__PSVITA__)
         GetSaveInfo();
 #else
 
 #if TO_BE_IMPLEMENTED
-        if(StorageManager.GetSaveDeviceSelected(m_iPad))
+        if(NativeDesktopGetSaveDeviceSelected(m_iPad))
 #endif
         {
             // saving is disabled, but we should still be able to load from a selected save device
@@ -572,7 +661,7 @@ void UIScene_LoadOrJoinMenu::Initialise()
     else
     {
         // 4J-PB - we need to check that there is enough space left to create a copy of the save (for a rename)
-        bool bCanRename = StorageManager.EnoughSpaceForAMinSaveGame();
+        bool bCanRename = NativeDesktopLoadOrJoinEnoughSpaceForMinSave();
 
         GetSaveInfo();
     }
@@ -713,7 +802,7 @@ void UIScene_LoadOrJoinMenu::tick()
         // Display the saves if we have them
         if(!m_bSavesDisplayed)
         {
-            m_pSaveDetails=StorageManager.ReturnSavesInfo();
+            m_pSaveDetails=NativeDesktopLoadOrJoinReturnSavesInfo();
             if(m_pSaveDetails!=nullptr)
             {
                 //CD - Fix - Adding define for ORBIS/XBOXONE
@@ -824,11 +913,18 @@ void UIScene_LoadOrJoinMenu::tick()
                 m_bRetrievingSaveThumbnails = true;
                 app.DebugPrintf("Requesting the first thumbnail\n");
                 // set the save to load
-                PSAVE_DETAILS pSaveDetails=StorageManager.ReturnSavesInfo();
 #if defined(_NATIVE_DESKTOP)
-                C4JStorage::ESaveGameState eLoadStatus=StorageManager.LoadSaveDataThumbnail(&pSaveDetails->SaveInfoA[m_saveDetails[m_iRequestingThumbnailId].saveId],&LoadSaveDataThumbnailReturned,this);
+                C4JStorage::ESaveGameState eLoadStatus =
+                    NativeDesktopLoadOrJoinLoadThumbnail(
+                        m_saveDetails[m_iRequestingThumbnailId].saveId,
+                        &LoadSaveDataThumbnailReturned,
+                        this);
 #else
-                C4JStorage::ESaveGameState eLoadStatus=StorageManager.LoadSaveDataThumbnail(&pSaveDetails->SaveInfoA[(int)m_iRequestingThumbnailId],&LoadSaveDataThumbnailReturned,this);
+                C4JStorage::ESaveGameState eLoadStatus =
+                    NativeDesktopLoadOrJoinLoadThumbnail(
+                        static_cast<int>(m_iRequestingThumbnailId),
+                        &LoadSaveDataThumbnailReturned,
+                        this);
 #endif
 
                 if(eLoadStatus!=C4JStorage::ESaveGame_GetSaveThumbnail)
@@ -896,11 +992,18 @@ void UIScene_LoadOrJoinMenu::tick()
                 {
                     app.DebugPrintf("Requesting another thumbnail\n");
                     // set the save to load
-                    PSAVE_DETAILS pSaveDetails=StorageManager.ReturnSavesInfo();
 #if defined(_NATIVE_DESKTOP)
-                    C4JStorage::ESaveGameState eLoadStatus=StorageManager.LoadSaveDataThumbnail(&pSaveDetails->SaveInfoA[m_saveDetails[m_iRequestingThumbnailId].saveId],&LoadSaveDataThumbnailReturned,this);
+                    C4JStorage::ESaveGameState eLoadStatus =
+                        NativeDesktopLoadOrJoinLoadThumbnail(
+                            m_saveDetails[m_iRequestingThumbnailId].saveId,
+                            &LoadSaveDataThumbnailReturned,
+                            this);
 #else
-                    C4JStorage::ESaveGameState eLoadStatus=StorageManager.LoadSaveDataThumbnail(&pSaveDetails->SaveInfoA[(int)m_iRequestingThumbnailId],&LoadSaveDataThumbnailReturned,this);
+                    C4JStorage::ESaveGameState eLoadStatus =
+                        NativeDesktopLoadOrJoinLoadThumbnail(
+                            static_cast<int>(m_iRequestingThumbnailId),
+                            &LoadSaveDataThumbnailReturned,
+                            this);
 #endif
                     if(eLoadStatus!=C4JStorage::ESaveGame_GetSaveThumbnail)
                     {
@@ -955,7 +1058,7 @@ void UIScene_LoadOrJoinMenu::tick()
         m_bSavesDisplayed=false;
         m_iSaveInfoC=0;
         m_buttonListSaves.clearList();
-        StorageManager.ClearSavesInfo();
+        NativeDesktopLoadOrJoinClearSavesInfo();
         GetSaveInfo();
         m_iState=e_SavesIdle;
         break;
@@ -1021,10 +1124,12 @@ void UIScene_LoadOrJoinMenu::GetSaveInfo()
     {
 #ifdef __ORBIS__
 		// We need to make sure this is non-null so that we have an idea of free space
-        m_pSaveDetails=StorageManager.ReturnSavesInfo();
+        m_pSaveDetails=NativeDesktopLoadOrJoinReturnSavesInfo();
         if(m_pSaveDetails==nullptr)
         {
-            C4JStorage::ESaveGameState eSGIStatus= StorageManager.GetSavesInfo(m_iPad,nullptr,this,"save");
+            C4JStorage::ESaveGameState eSGIStatus =
+                NativeDesktopLoadOrJoinGetSavesInfo(nullptr, this);
+            (void)eSGIStatus;
         }
 #endif
 
@@ -1070,10 +1175,12 @@ void UIScene_LoadOrJoinMenu::GetSaveInfo()
         m_iSaveInfoC=0;
         m_controlSavesTimer.setVisible(true);
 
-        m_pSaveDetails=StorageManager.ReturnSavesInfo();
+        m_pSaveDetails=NativeDesktopLoadOrJoinReturnSavesInfo();
         if(m_pSaveDetails==nullptr)
         {
-            C4JStorage::ESaveGameState eSGIStatus= StorageManager.GetSavesInfo(m_iPad, nullptr,this,"save");
+            C4JStorage::ESaveGameState eSGIStatus =
+                NativeDesktopLoadOrJoinGetSavesInfo(nullptr, this);
+            (void)eSGIStatus;
         }
 
 #if TO_BE_IMPLEMENTED
@@ -1193,12 +1300,13 @@ void UIScene_LoadOrJoinMenu::handleInput(int iPad, int key, bool repeat, bool pr
 #endif
 #if defined(_NATIVE_DESKTOP)
 			// Right click on a save opens save options (same as RB / ACTION_MENU_RIGHT_SCROLL)
-			if(pressed && !repeat && ProfileManager.IsFullVersion() && !StorageManager.GetSaveDisabled())
+			if(pressed && !repeat && ProfileManager.IsFullVersion() &&
+                !NativeDesktopSavesAreDisabled())
 			{
 			if(DoesSavesListHaveFocus() && (m_iDefaultButtonsC > 0) && (m_iSaveListIndex >= m_iDefaultButtonsC))
 			{
 				m_bIgnoreInput = true;
-				if(StorageManager.EnoughSpaceForAMinSaveGame())
+				if(NativeDesktopLoadOrJoinEnoughSpaceForMinSave())
 				{
 					UINT uiIDA[3];
 					uiIDA[0]=IDS_CONFIRM_CANCEL;
@@ -1290,7 +1398,7 @@ void UIScene_LoadOrJoinMenu::handleInput(int iPad, int key, bool repeat, bool pr
                 m_bIgnoreInput = true;
 
                 // Could be delete save or Save Options
-                if(StorageManager.GetSaveDisabled())
+                if(NativeDesktopSavesAreDisabled())
                 {
                     // delete the save game
                     // Have to ask the player if they are sure they want to delete this game
@@ -1301,7 +1409,7 @@ void UIScene_LoadOrJoinMenu::handleInput(int iPad, int key, bool repeat, bool pr
                 }
                 else
                 {
-                    if(StorageManager.EnoughSpaceForAMinSaveGame())
+                    if(NativeDesktopLoadOrJoinEnoughSpaceForMinSave())
                     {
                         UINT uiIDA[4];
                         uiIDA[0]=IDS_CONFIRM_CANCEL;
@@ -1879,9 +1987,9 @@ void UIScene_LoadOrJoinMenu::LoadLevelGen(LevelGenerationOptions *levelGen)
     // clear out the app's terrain features list
     app.ClearTerrainFeaturePosition();
 
-    StorageManager.ResetSaveData();
+    NativeDesktopResetSaveData();
     // Make our next save default to the name of the level
-    StorageManager.SetSaveTitle(levelGen->getDefaultSaveName().c_str());
+    NativeDesktopSetSaveTitle(levelGen->getDefaultSaveName().c_str());
 
     bool isClientSide = false;
     bool isPrivate = false;
@@ -2273,10 +2381,10 @@ void UIScene_LoadOrJoinMenu::LoadSaveFromDisk(File *saveFile, ESavePlatform save
 {
     // we'll only be coming in here when the tutorial is loaded now
 
-    StorageManager.ResetSaveData();
+    NativeDesktopResetSaveData();
 
     // Make our next save default to the name of the level
-    StorageManager.SetSaveTitle(saveFile->getName().c_str());
+    NativeDesktopSetSaveTitle(saveFile->getName().c_str());
 
     int64_t fileSize = saveFile->length();
     FileInputStream fis(*saveFile);
@@ -2335,12 +2443,12 @@ void UIScene_LoadOrJoinMenu::LoadSaveFromCloud()
     File cloudFile(wFileName);
 
 
-    StorageManager.ResetSaveData();
+    NativeDesktopResetSaveData();
 
     // Make our next save default to the name of the level
     wchar_t wSaveName[128];
     mbstowcs(wSaveName, app.getRemoteStorage()->getSaveNameUTF8(), strlen(app.getRemoteStorage()->getSaveNameUTF8())+1); // plus null
-    StorageManager.SetSaveTitle(wSaveName);
+    NativeDesktopSetSaveTitle(wSaveName);
 
     int64_t fileSize = cloudFile.length();
     FileInputStream fis(cloudFile);
@@ -2989,12 +3097,12 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 			break;
 		case eSaveTransfer_CreateDummyFile:
 			{
-				StorageManager.ResetSaveData();
+				NativeDesktopResetSaveData();
 				byte *compData = (byte *)StorageManager.AllocateSaveData( app.getRemoteStorage()->getSaveFilesize() );
 				// Make our next save default to the name of the level
 				const char* pNameUTF8 = app.getRemoteStorage()->getSaveNameUTF8();
 				mbstowcs(wSaveName, pNameUTF8, strlen(pNameUTF8)+1); // plus null
-				StorageManager.SetSaveTitle(wSaveName);
+				NativeDesktopSetSaveTitle(wSaveName);
 				PBYTE pbThumbnailData=nullptr;
 				DWORD dwThumbnailDataSize=0;
 
@@ -3043,7 +3151,10 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 
 				app.getRemoteStorage()->waitForStorageManagerIdle();
 				app.DebugPrintf("CALL GetSavesInfo B\n");
-				C4JStorage::ESaveGameState eSGIStatus= StorageManager.GetSavesInfo(pClass->m_iPad,&UIScene_LoadOrJoinMenu::CrossSaveGetSavesInfoCallback,pClass,"save");
+				C4JStorage::ESaveGameState eSGIStatus =
+                    NativeDesktopLoadOrJoinGetSavesInfo(
+                        &UIScene_LoadOrJoinMenu::CrossSaveGetSavesInfoCallback,
+                        pClass);
 				pClass->m_eSaveTransferState = eSaveTransfer_GettingSavesInfo;
 			}
 			break;
@@ -3067,7 +3178,8 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 				pClass->m_eSaveTransferState = eSaveTransfer_Error;
 				break;
 			}
-			PSAVE_DETAILS pSaveDetails=StorageManager.ReturnSavesInfo();
+			PSAVE_DETAILS pSaveDetails =
+                NativeDesktopLoadOrJoinReturnSavesInfo();
 			int idx = pClass->m_iSaveListIndex - pClass->m_iDefaultButtonsC;
 			app.getRemoteStorage()->waitForStorageManagerIdle();
 			bool bGettingOK = app.getRemoteStorage()->getSaveData(pClass->m_downloadedUniqueFilename, SaveTransferReturned, pClass);
@@ -3112,7 +3224,8 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 				break;
 			}
 
-			PSAVE_DETAILS pSaveDetails=StorageManager.ReturnSavesInfo();
+			PSAVE_DETAILS pSaveDetails =
+                NativeDesktopLoadOrJoinReturnSavesInfo();
 			int saveInfoIndex = -1;
 			for(int i=0;i<pSaveDetails->iSaveC;i++)
 			{
@@ -3157,7 +3270,7 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 				assert(ba.length == fileSize);
 
 
-                StorageManager.ResetSaveData();
+                NativeDesktopResetSaveData();
 				{
 					PBYTE pbThumbnailData=nullptr;
 					DWORD dwThumbnailDataSize=0;
@@ -3199,7 +3312,7 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
             pSave->ConvertToLocalPlatform(); // check if we need to convert this file from PS3->PS4
             pClass->m_eSaveTransferState = eSaveTransfer_Saving;
             pMinecraft->progressRenderer->progressStage(IDS_SAVETRANSFER_STAGE_SAVING);
-			StorageManager.SetSaveTitle(wSaveName);
+			NativeDesktopSetSaveTitle(wSaveName);
 			StorageManager.SetSaveUniqueFilename(pClass->m_downloadedUniqueFilename);
 
 			app.getRemoteStorage()->waitForStorageManagerIdle();	// we need to wait for the save system to be idle here, as Flush doesn't check for it.
@@ -3257,7 +3370,8 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 						pMinecraft->progressRenderer->progressStage( m_wstrStageText );
 					}
 					// if the save file has already been created we have to delete it again if there's been an error
-					PSAVE_DETAILS pSaveDetails=StorageManager.ReturnSavesInfo();
+					PSAVE_DETAILS pSaveDetails =
+                        NativeDesktopLoadOrJoinReturnSavesInfo();
 					int saveInfoIndex = -1;
 					for(int i=0;i<pSaveDetails->iSaveC;i++)
 					{
@@ -3429,7 +3543,7 @@ int UIScene_LoadOrJoinMenu::UploadSonyCrossSaveThreadProc( LPVOID lpParameter )
     pMinecraft->progressRenderer->progressStart(IDS_TOOLTIPS_SAVETRANSFER_UPLOAD);
     pMinecraft->progressRenderer->progressStage( IDS_TOOLTIPS_SAVETRANSFER_UPLOAD );
 
-    PSAVE_DETAILS pSaveDetails=StorageManager.ReturnSavesInfo();
+    PSAVE_DETAILS pSaveDetails=NativeDesktopLoadOrJoinReturnSavesInfo();
     int idx = pClass->m_iSaveListIndex - pClass->m_iDefaultButtonsC;
     bool bSettingOK = app.getRemoteStorage()->setSaveData(&pSaveDetails->SaveInfoA[idx], SaveUploadReturned, pClass);
 
@@ -3659,7 +3773,7 @@ int UIScene_LoadOrJoinMenu::DownloadXbox360SaveThreadProc( LPVOID lpParameter )
                     DataInputStream dis(&bais);
 
                     wstring saveTitle = dis.readUTF();
-                    StorageManager.SetSaveTitle(saveTitle.c_str());
+                    NativeDesktopSetSaveTitle(saveTitle.c_str());
 
                     wstring saveUniqueName = dis.readUTF();
 

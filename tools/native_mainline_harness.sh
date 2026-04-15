@@ -322,6 +322,18 @@ run_native_only_contract() {
             Minecraft.Client/NativeDesktop/NativeDesktopClientStubs.h \
             >/dev/null
 
+        if rg -n -S "StorageManager\\.(GetSavesInfo|ReturnSavesInfo|ClearSavesInfo|LoadSaveDataThumbnail|GetSaveDisabled|EnoughSpaceForAMinSaveGame|ResetSaveData|SetSaveTitle|GetSaveDeviceSelected)\\(" \
+            Minecraft.Client/Common/UI/UIScene_LoadOrJoinMenu.cpp \
+            > "$log_root/native-client-load-or-join-save-storage.txt"; then
+            echo "Native load-or-join save-list paths still use StorageManager" >&2
+            cat "$log_root/native-client-load-or-join-save-storage.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopLoadOrJoinReturnSavesInfo|NativeDesktopLoadOrJoinGetSavesInfo|NativeDesktopLoadOrJoinLoadThumbnail|NativeDesktopSavesAreDisabled" \
+            Minecraft.Client/Common/UI/UIScene_LoadOrJoinMenu.cpp \
+            >/dev/null
+
         if rg -n -S "StorageManager\\.(GetSaveDisabled|SetSaveDisabled|DoesSaveExist|GetSaveState)\\(" \
             Minecraft.Client/ClientConnection.cpp \
             Minecraft.Client/Common/Consoles_App.cpp \
