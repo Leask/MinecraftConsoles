@@ -37,6 +37,11 @@ static UIControl_Slider *FindSliderById(UIScene *pScene, int sliderId)
 	}
 	return nullptr;
 }
+
+static DWORD NativeDesktopInputTickCount()
+{
+	return NativeDesktopGetMonotonicMilliseconds();
+}
 #endif
 
 static void RADLINK WarningCallback(void *user_callback_data, Iggy *player, IggyResult code, const char *message)
@@ -1363,7 +1368,8 @@ void UIController::handleKeyPress(unsigned int iPad, unsigned int key)
 		if(pressed)
 		{
 			// Start repeat timer
-			m_actionRepeatTimer[iPad][key] = GetTickCount() + UI_REPEAT_KEY_DELAY_MS;
+			m_actionRepeatTimer[iPad][key] =
+				NativeDesktopInputTickCount() + UI_REPEAT_KEY_DELAY_MS;
 		}
 		else if (released)
 		{
@@ -1373,7 +1379,7 @@ void UIController::handleKeyPress(unsigned int iPad, unsigned int key)
 		else if (down)
 		{
 			// Check is enough time has elapsed to be a repeat key
-			DWORD currentTime = GetTickCount();
+			DWORD currentTime = NativeDesktopInputTickCount();
 			if(m_actionRepeatTimer[iPad][key] > 0 && currentTime > m_actionRepeatTimer[iPad][key])
 			{
 				repeat = true;
@@ -1475,7 +1481,12 @@ void UIController::handleKeyPress(unsigned int iPad, unsigned int key)
 	if(pressed)
 	{
 		// Start repeat timer
+#if defined(_NATIVE_DESKTOP)
+		m_actionRepeatTimer[iPad][key] =
+			NativeDesktopInputTickCount() + UI_REPEAT_KEY_DELAY_MS;
+#else
 		m_actionRepeatTimer[iPad][key] = GetTickCount() + UI_REPEAT_KEY_DELAY_MS;
+#endif
 	}
 	else if (released)
 	{
@@ -1485,7 +1496,11 @@ void UIController::handleKeyPress(unsigned int iPad, unsigned int key)
 	else if (down)
 	{
 		// Check is enough time has elapsed to be a repeat key
+#if defined(_NATIVE_DESKTOP)
+		DWORD currentTime = NativeDesktopInputTickCount();
+#else
 		DWORD currentTime = GetTickCount();
+#endif
 		if(m_actionRepeatTimer[iPad][key] > 0 && currentTime > m_actionRepeatTimer[iPad][key])
 		{
 			repeat = true;
@@ -2189,7 +2204,11 @@ UIScene *UIController::GetTopScene(int iPad, EUILayer layer, EUIGroup group)
 size_t UIController::RegisterForCallbackId(UIScene *scene)
 {
 	EnterCriticalSection(&m_registeredCallbackScenesCS);
+#if defined(_NATIVE_DESKTOP)
+	size_t newId = NativeDesktopInputTickCount();
+#else
 	size_t newId = GetTickCount();
+#endif
 	newId &= 0xFFFFFF; // Chop off the top byte, we don't need any more accuracy than that
 	newId |= (scene->getSceneType() << 24); // Add in the scene's type to help keep this unique
 	m_registeredCallbackScenes[newId] = scene;

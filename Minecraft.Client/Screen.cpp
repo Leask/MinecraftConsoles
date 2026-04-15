@@ -165,7 +165,11 @@ void Screen::updateEvents()
 	static bool s_arrowFirstRepeat[2] = { false, false };
 	const DWORD ARROW_REPEAT_DELAY_MS = 250;
 	const DWORD ARROW_REPEAT_INTERVAL_MS = 50;
+#if defined(_NATIVE_DESKTOP)
+	DWORD now = NativeDesktopGetMonotonicMilliseconds();
+#else
 	DWORD now = GetTickCount();
+#endif
 
 	// Poll keyboard events (special keys that may not come through WM_CHAR, e.g. Escape, arrows)
 	for (int vk = 0; vk < 256; vk++)

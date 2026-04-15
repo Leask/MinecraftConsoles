@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <chrono>
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
@@ -444,6 +445,13 @@ inline NativeRendererSize NativeDesktopGetClientAreaSize()
     size.width = g_iScreenWidth > 0 ? g_iScreenWidth : 1280;
     size.height = g_iScreenHeight > 0 ? g_iScreenHeight : 720;
     return size;
+}
+
+inline DWORD NativeDesktopGetMonotonicMilliseconds()
+{
+    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch());
+    return static_cast<DWORD>(elapsed.count() & 0xFFFFFFFFu);
 }
 
 inline std::wstring& NativeDesktopClipboardText()

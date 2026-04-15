@@ -193,6 +193,9 @@ Direction:
   (`NativeDesktop_Xuid` now uses C++17/POSIX path, I/O, clock, process and
   thread signals, and startup smoke only reports `startup.xuid=1` for a valid
   persisted XUID)
+- keep native client input repeat/callback timing on a monotonic native clock
+  (`Screen` and `UIController` now use `NativeDesktopGetMonotonicMilliseconds`
+  instead of reaching for `GetTickCount` semantics on the native path)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 
