@@ -237,7 +237,10 @@ Direction:
   `StorageManager` profile calls; `UIScene_LoadMenu` save-disabled,
   save-device, new-world save-title/reset, and save telemetry id paths now
   use the native save/profile owners instead of direct `StorageManager`
-  state calls)
+  state calls; `UIScene_LoadMenu` save catalog, thumbnail, load, and corrupt
+  delete actions now drive `NativeDesktopClientSaveControl` primitives, with
+  the native `C4JStorage` stub only projecting that same save catalog for
+  legacy callers)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/

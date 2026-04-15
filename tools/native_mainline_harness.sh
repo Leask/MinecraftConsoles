@@ -302,10 +302,24 @@ run_native_only_contract() {
             exit 1
         fi
 
+        if rg -n -S "StorageManager\\.(ReturnSavesInfo|LoadSaveData|LoadSaveDataThumbnail|DeleteSaveData)\\(" \
+            Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
+            > "$log_root/native-client-load-menu-save-storage.txt"; then
+            echo "Native load-menu save lifecycle still uses StorageManager" >&2
+            cat "$log_root/native-client-load-menu-save-storage.txt" >&2
+            exit 1
+        fi
+
         rg -n -S "NativeDesktopResetSaveData|NativeDesktopSetSaveTitle|NativeDesktopGetSaveUniqueNumber" \
             Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
             Minecraft.Client/NativeDesktop/NativeDesktopClientRuntime.cpp \
             Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \
+            >/dev/null
+
+        rg -n -S "NativeDesktopLoadSaveDataByIndex|NativeDesktopLoadSaveDataThumbnailByIndex|NativeDesktopDeleteSaveDataByIndex|NativeDesktopGetSaveInfo" \
+            Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientStubs.h \
             >/dev/null
 
         if rg -n -S "StorageManager\\.(GetSaveDisabled|SetSaveDisabled|DoesSaveExist|GetSaveState)\\(" \

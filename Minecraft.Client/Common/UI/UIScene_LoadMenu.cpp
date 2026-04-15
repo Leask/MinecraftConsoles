@@ -28,6 +28,69 @@ int UIScene_LoadMenu::m_iDifficultyTitleSettingA[4]=
 	IDS_DIFFICULTY_TITLE_HARD
 };
 
+namespace
+{
+	C4JStorage::ESaveGameState NativeDesktopLoadMenuLoadSaveData(
+		int saveIndex,
+		NativeDesktopLoadSaveDataCallback callback,
+		void* param)
+	{
+		return static_cast<C4JStorage::ESaveGameState>(
+			NativeDesktopLoadSaveDataByIndex(saveIndex, callback, param));
+	}
+
+	C4JStorage::ESaveGameState NativeDesktopLoadMenuLoadSaveThumbnail(
+		int saveIndex,
+		NativeDesktopLoadSaveDataThumbnailCallback callback,
+		void* param,
+		bool force)
+	{
+		return static_cast<C4JStorage::ESaveGameState>(
+			NativeDesktopLoadSaveDataThumbnailByIndex(
+				saveIndex,
+				callback,
+				param,
+				force));
+	}
+
+	C4JStorage::ESaveGameState NativeDesktopLoadMenuDeleteSaveData(
+		int saveIndex,
+		NativeDesktopDeleteSaveDataCallback callback,
+		void* param)
+	{
+		return static_cast<C4JStorage::ESaveGameState>(
+			NativeDesktopDeleteSaveDataByIndex(saveIndex, callback, param));
+	}
+
+	void NativeDesktopDebugPrintLoadMenuSave(
+		char const* prefix,
+		int saveIndex)
+	{
+		char title[MAX_DISPLAYNAME_LENGTH];
+		char filename[MAX_SAVEFILENAME_LENGTH];
+		if (NativeDesktopGetSaveInfo(
+			saveIndex,
+			title,
+			sizeof(title),
+			filename,
+			sizeof(filename),
+			nullptr,
+			0,
+			nullptr,
+			0,
+			nullptr,
+			nullptr,
+			nullptr,
+			nullptr))
+		{
+			app.DebugPrintf("%s %s [%s]\n", prefix, title, filename);
+			return;
+		}
+
+		app.DebugPrintf("%s index %d\n", prefix, saveIndex);
+	}
+}
+
 int UIScene_LoadMenu::LoadSaveDataThumbnailReturned(LPVOID lpParam,PBYTE pbThumbnail,DWORD dwThumbnailBytes)
 {
 	UIScene_LoadMenu *pClass= static_cast<UIScene_LoadMenu *>(ui.GetSceneFromCallbackId((size_t)lpParam));
@@ -224,15 +287,24 @@ UIScene_LoadMenu::UIScene_LoadMenu(int iPad, void *initData, UILayer *parentLaye
 		else
 		{
 			app.DebugPrintf("Requesting the save thumbnail\n");
-			// set the save to load
-			PSAVE_DETAILS pSaveDetails=StorageManager.ReturnSavesInfo();
 #ifdef _DURANGO
 			// On Durango, we have an extra flag possible with LoadSaveDataThumbnail, which if true will force the loading of this thumbnail even if the save data isn't sync'd from
 			// the cloud at this stage. This could mean that there could be a pretty large delay before the callback happens, in this case.
-			C4JStorage::ESaveGameState eLoadStatus=StorageManager.LoadSaveDataThumbnail(&pSaveDetails->SaveInfoA[(int)m_iSaveGameInfoIndex],&LoadSaveDataThumbnailReturned,(LPVOID)GetCallbackUniqueId(),true);
+			C4JStorage::ESaveGameState eLoadStatus =
+				NativeDesktopLoadMenuLoadSaveThumbnail(
+					m_iSaveGameInfoIndex,
+					&LoadSaveDataThumbnailReturned,
+					(LPVOID)GetCallbackUniqueId(),
+					true);
 #else
-			C4JStorage::ESaveGameState eLoadStatus=StorageManager.LoadSaveDataThumbnail(&pSaveDetails->SaveInfoA[(int)m_iSaveGameInfoIndex],&LoadSaveDataThumbnailReturned,(LPVOID)GetCallbackUniqueId());
+			C4JStorage::ESaveGameState eLoadStatus =
+				NativeDesktopLoadMenuLoadSaveThumbnail(
+					m_iSaveGameInfoIndex,
+					&LoadSaveDataThumbnailReturned,
+					(LPVOID)GetCallbackUniqueId(),
+					false);
 #endif
+			(void)eLoadStatus;
 			m_bShowTimer = true;
 		}
 #if defined(_DURANGO)
@@ -1112,13 +1184,16 @@ void UIScene_LoadMenu::LaunchGame(void)
 					}
 					else
 					{
-
-						// set the save to load
-						PSAVE_DETAILS pSaveDetails=StorageManager.ReturnSavesInfo();
 #ifndef _DURANGO
-						app.DebugPrintf("Loading save s [%s]\n",pSaveDetails->SaveInfoA[(int)m_iSaveGameInfoIndex].UTF8SaveTitle,pSaveDetails->SaveInfoA[(int)m_iSaveGameInfoIndex].UTF8SaveFilename);
+						NativeDesktopDebugPrintLoadMenuSave(
+							"Loading save",
+							m_iSaveGameInfoIndex);
 #endif
-						C4JStorage::ESaveGameState eLoadStatus=StorageManager.LoadSaveData(&pSaveDetails->SaveInfoA[(int)m_iSaveGameInfoIndex],&LoadSaveDataReturned,this);
+						C4JStorage::ESaveGameState eLoadStatus =
+							NativeDesktopLoadMenuLoadSaveData(
+								m_iSaveGameInfoIndex,
+								&LoadSaveDataReturned,
+								this);
 
 #if TO_BE_IMPLEMENTED
 						if(eLoadStatus==C4JStorage::ELoadGame_DeviceRemoved)
@@ -1155,12 +1230,16 @@ void UIScene_LoadMenu::LaunchGame(void)
 		}
 		else
 		{
-			// set the save to load
-			PSAVE_DETAILS pSaveDetails=StorageManager.ReturnSavesInfo();
 #ifndef _DURANGO
-			app.DebugPrintf("Loading save %s [%s]\n",pSaveDetails->SaveInfoA[(int)m_iSaveGameInfoIndex].UTF8SaveTitle,pSaveDetails->SaveInfoA[(int)m_iSaveGameInfoIndex].UTF8SaveFilename);
+			NativeDesktopDebugPrintLoadMenuSave(
+				"Loading save",
+				m_iSaveGameInfoIndex);
 #endif
-			C4JStorage::ESaveGameState eLoadStatus=StorageManager.LoadSaveData(&pSaveDetails->SaveInfoA[(int)m_iSaveGameInfoIndex],&LoadSaveDataReturned,this);
+			C4JStorage::ESaveGameState eLoadStatus =
+				NativeDesktopLoadMenuLoadSaveData(
+					m_iSaveGameInfoIndex,
+					&LoadSaveDataReturned,
+					this);
 
 #if TO_BE_IMPLEMENTED
 			if(eLoadStatus==C4JStorage::ELoadGame_DeviceRemoved)
@@ -1215,12 +1294,16 @@ int UIScene_LoadMenu::ConfirmLoadReturned(void *pParam,int iPad,C4JStorage::EMes
 		}
 		else
 		{
-			// set the save to load
-			PSAVE_DETAILS pSaveDetails=StorageManager.ReturnSavesInfo();
 #ifndef _DURANGO
-			app.DebugPrintf("Loading save %s [%s]\n",pSaveDetails->SaveInfoA[(int)pClass->m_iSaveGameInfoIndex].UTF8SaveTitle,pSaveDetails->SaveInfoA[(int)pClass->m_iSaveGameInfoIndex].UTF8SaveFilename);
+			NativeDesktopDebugPrintLoadMenuSave(
+				"Loading save",
+				pClass->m_iSaveGameInfoIndex);
 #endif
-			C4JStorage::ESaveGameState eLoadStatus=StorageManager.LoadSaveData(&pSaveDetails->SaveInfoA[(int)pClass->m_iSaveGameInfoIndex],&LoadSaveDataReturned,pClass);
+			C4JStorage::ESaveGameState eLoadStatus =
+				NativeDesktopLoadMenuLoadSaveData(
+					pClass->m_iSaveGameInfoIndex,
+					&LoadSaveDataReturned,
+					pClass);
 
 #if TO_BE_IMPLEMENTED
 			if(eLoadStatus==C4JStorage::ELoadGame_DeviceRemoved)
@@ -1529,8 +1612,10 @@ int UIScene_LoadMenu::DeleteSaveDialogReturned(void *pParam,int iPad,C4JStorage:
 	// results switched for this dialog
 	if(result==C4JStorage::EMessage_ResultDecline) 
 	{
-		PSAVE_DETAILS pSaveDetails=StorageManager.ReturnSavesInfo();
-		StorageManager.DeleteSaveData(&pSaveDetails->SaveInfoA[(int)pClass->m_iSaveGameInfoIndex],UIScene_LoadMenu::DeleteSaveDataReturned,pClass);
+		NativeDesktopLoadMenuDeleteSaveData(
+			pClass->m_iSaveGameInfoIndex,
+			UIScene_LoadMenu::DeleteSaveDataReturned,
+			pClass);
 	}
 	else
 	{
@@ -1575,8 +1660,6 @@ void UIScene_LoadMenu::StartGameFromSave(UIScene_LoadMenu* pClass, DWORD dwLocal
 #endif // __PSVITA__
 
 	bool isPrivate = (app.GetGameSettings(pClass->m_iPad,eGameSetting_InviteOnly)>0)?true:false;
-
-	PSAVE_DETAILS pSaveDetails=StorageManager.ReturnSavesInfo();
 
 	NetworkGameInitData *param = new NetworkGameInitData();
 	param->seed = pClass->m_seed;

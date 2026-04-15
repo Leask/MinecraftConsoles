@@ -3268,27 +3268,35 @@ public:
     {
         (void)iPad;
         (void)pszSavePackName;
+        refreshSaveDetails();
         if (func != nullptr)
         {
             func(lpParam, &m_saveDetails, true);
         }
         return ESaveGame_Idle;
     }
-    PSAVE_DETAILS ReturnSavesInfo() { return &m_saveDetails; }
-    void ClearSavesInfo() {}
+    PSAVE_DETAILS ReturnSavesInfo()
+    {
+        refreshSaveDetails();
+        return &m_saveDetails;
+    }
+    void ClearSavesInfo()
+    {
+        std::memset(&m_saveInfoA, 0, sizeof(m_saveInfoA));
+        m_saveDetails = {};
+    }
     ESaveGameState LoadSaveDataThumbnail(
         PSAVE_INFO pSaveInfo,
         int (*func)(LPVOID, PBYTE, DWORD),
         LPVOID lpParam,
         bool force = false)
     {
-        (void)pSaveInfo;
-        (void)force;
-        if (func != nullptr)
-        {
-            func(lpParam, nullptr, 0);
-        }
-        return ESaveGame_GetSaveThumbnail;
+        return static_cast<ESaveGameState>(
+            NativeDesktopLoadSaveDataThumbnailByIndex(
+                saveInfoIndex(pSaveInfo),
+                func,
+                lpParam,
+                force));
     }
     ESaveGameState LoadSaveData(
         PSAVE_INFO pSaveInfo,
@@ -3296,14 +3304,12 @@ public:
         LPVOID lpParam,
         bool ignoreCRC = false)
     {
-        (void)pSaveInfo;
         (void)ignoreCRC;
-        if (func != nullptr)
-        {
-            func(lpParam, true, false);
-        }
-        NativeDesktopSetSaveExists(true);
-        return ESaveGame_LoadCompleteSuccess;
+        return static_cast<ESaveGameState>(
+            NativeDesktopLoadSaveDataByIndex(
+                saveInfoIndex(pSaveInfo),
+                func,
+                lpParam));
     }
     unsigned int GetSaveSize() const
     {
@@ -3404,12 +3410,11 @@ public:
     void SetSaveImages(PBYTE thumbnail, DWORD thumbnailBytes, PBYTE image,
                        DWORD imageBytes, PBYTE textData, DWORD textDataBytes)
     {
-        (void)thumbnail;
-        (void)thumbnailBytes;
         (void)image;
         (void)imageBytes;
         (void)textData;
         (void)textDataBytes;
+        NativeDesktopSetSaveImages(thumbnail, thumbnailBytes);
     }
     ESaveGameState SaveSaveData(int (*func)(LPVOID, const bool), LPVOID lpParam)
     {
@@ -3426,13 +3431,11 @@ public:
                                   int (*func)(LPVOID, const bool),
                                   LPVOID lpParam)
     {
-        (void)pSaveInfo;
-        if (func != nullptr)
-        {
-            func(lpParam, true);
-        }
-        NativeDesktopSetSaveExists(false);
-        return ESaveGame_DeleteSuccess;
+        return static_cast<ESaveGameState>(
+            NativeDesktopDeleteSaveDataByIndex(
+                saveInfoIndex(pSaveInfo),
+                func,
+                lpParam));
     }
     ESaveGameState CopySaveData(PSAVE_INFO pSaveInfo,
                                 int (*func)(LPVOID, const bool,
@@ -3796,8 +3799,61 @@ private:
         }
     }
 
+    void refreshSaveDetails()
+    {
+        std::memset(&m_saveInfoA, 0, sizeof(m_saveInfoA));
+        m_saveDetails = {};
+
+        if (NativeDesktopGetSaveCount() <= 0)
+        {
+            return;
+        }
+
+        unsigned char* thumbnailData = nullptr;
+        unsigned int thumbnailBytes = 0;
+        int blocksUsed = 0;
+        NativeDesktopGetSaveInfo(
+            0,
+            m_saveInfoA[0].UTF8SaveTitle,
+            sizeof(m_saveInfoA[0].UTF8SaveTitle),
+            m_saveInfoA[0].UTF8SaveFilename,
+            sizeof(m_saveInfoA[0].UTF8SaveFilename),
+            m_saveInfoA[0].UTF16SaveTitle,
+            sizeof(m_saveInfoA[0].UTF16SaveTitle) /
+                sizeof(m_saveInfoA[0].UTF16SaveTitle[0]),
+            m_saveInfoA[0].UTF16SaveFilename,
+            sizeof(m_saveInfoA[0].UTF16SaveFilename) /
+                sizeof(m_saveInfoA[0].UTF16SaveFilename[0]),
+            &m_saveInfoA[0].modifiedTime,
+            &thumbnailData,
+            &thumbnailBytes,
+            &blocksUsed);
+        m_saveInfoA[0].thumbnailData = thumbnailData;
+        m_saveInfoA[0].thumbnailSize = thumbnailBytes;
+        m_saveInfoA[0].blocksUsed = blocksUsed;
+        m_saveDetails.iSaveC = 1;
+        m_saveDetails.SaveInfoA = m_saveInfoA;
+        m_saveDetails.pCurrentSaveInfo = m_saveInfoA;
+        m_saveDetails.totalBlocksUsed = blocksUsed;
+    }
+
+    int saveInfoIndex(PSAVE_INFO pSaveInfo)
+    {
+        refreshSaveDetails();
+        if (pSaveInfo == nullptr || m_saveDetails.iSaveC <= 0)
+        {
+            return -1;
+        }
+        if (pSaveInfo == &m_saveInfoA[0])
+        {
+            return 0;
+        }
+        return 0;
+    }
+
     ESaveGameState m_saveState = ESaveGame_Idle;
     SAVE_DETAILS m_saveDetails = {};
+    SAVE_INFO m_saveInfoA[1] = {};
     PROFILESETTINGS m_profileSettings = {};
     XCONTENT_DATA m_content = {};
     XMARKETPLACE_CONTENTOFFER_INFO m_offer = {};
