@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <cstring>
 #include "PendingConnection.h"
 #include "PlayerConnection.h"
 #include "ServerConnection.h"
@@ -46,6 +47,16 @@ namespace
 	}
 }
 #endif
+
+namespace
+{
+	void FillNativeUniqueMapName(char (&name)[14])
+	{
+		static constexpr char kNativeMapName[] = "native";
+		std::memset(name, 0, sizeof(name));
+		std::memcpy(name, kNativeMapName, sizeof(kNativeMapName));
+	}
+}
 
 PendingConnection::PendingConnection(MinecraftServer *server, Socket *socket, const wstring& id)
 {
@@ -125,7 +136,7 @@ void PendingConnection::sendPreLoginResponse()
 	BYTE ugcFriendsOnlyBits = 0;
 	char szUniqueMapName[14];
 
-	StorageManager.GetSaveUniqueFilename(szUniqueMapName);
+	FillNativeUniqueMapName(szUniqueMapName);
 
 	PlayerList *playerList = MinecraftServer::getInstance()->getPlayers();
 	for(auto& player : playerList->players)

@@ -246,6 +246,17 @@ run_native_only_contract() {
         rg -n -S "ReadNativeDesktopNetworkFileBytes" \
             Minecraft.Client/Common/Network/GameNetworkManager.cpp >/dev/null
 
+        if rg -n -S "StorageManager\\.GetSaveUniqueFilename" \
+            Minecraft.Client/PendingConnection.cpp \
+            > "$log_root/native-client-pending-connection-storage.txt"; then
+            echo "Native pending connection pre-login still uses StorageManager map identity" >&2
+            cat "$log_root/native-client-pending-connection-storage.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "FillNativeUniqueMapName" \
+            Minecraft.Client/PendingConnection.cpp >/dev/null
+
         if rg -n -S "CreateFile\\(|GetFileSize\\(|ReadFile\\(|CloseHandle\\(|StorageManager\\.GetMountedPath|_WINDOWS64|_DURANGO" \
             Minecraft.Client/Common/DLC/DLCManager.cpp \
             > "$log_root/native-client-dlc-manager-win32-io.txt"; then
