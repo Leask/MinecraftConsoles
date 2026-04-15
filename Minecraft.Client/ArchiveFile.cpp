@@ -34,9 +34,9 @@ ArchiveFile::ArchiveFile(File file)
 	m_sourcefile = file;
 	app.DebugPrintf("Loading archive file...\n");
 #ifndef _CONTENT_PACKAGE
-	char buf[256];
-	wcstombs(buf, file.getPath().c_str(), 256);
-	app.DebugPrintf("archive file - %s\n",buf);
+	const std::string archivePath =
+		NativeDesktopWideToUtf8String(file.getPath().c_str());
+	app.DebugPrintf("archive file - %s\n", archivePath.c_str());
 #endif
 
 	if(!file.exists())
@@ -117,67 +117,23 @@ byteArray ArchiveFile::getFile(const wstring &filename)
 
 		memcpy( out.data, m_cachedData + data->ptr, data->filesize );
 #else
-
-#ifdef _UNICODE
-		HANDLE hfile = CreateFile(	m_sourcefile.getPath().c_str(), 
-			GENERIC_READ,
-			0,
-			nullptr,
-			OPEN_EXISTING,
-			FILE_ATTRIBUTE_NORMAL,
-			nullptr
-			);
-#else
-		app.DebugPrintf("Createfile archive\n");
-		HANDLE hfile = CreateFile(	wstringtofilename(m_sourcefile.getPath()), 
-			GENERIC_READ,
-			0,
-			nullptr,
-			OPEN_EXISTING,
-			FILE_ATTRIBUTE_NORMAL,
-			nullptr
-			);
-#endif
-
-		if (hfile != INVALID_HANDLE_VALUE)
+		const std::string sourcePath =
+			NativeDesktopWideToUtf8String(m_sourcefile.getPath().c_str());
+		std::vector<BYTE> fileBytes;
+		if (!NativeDesktopReadFileBytesAt(
+			sourcePath.c_str(),
+			static_cast<long>(data->ptr),
+			static_cast<std::size_t>(data->filesize),
+			&fileBytes))
 		{
-			app.DebugPrintf("hfile ok\n");
-			DWORD ok = SetFilePointer(	hfile,
-				data->ptr,
-				nullptr,
-				FILE_BEGIN
-				);
-
-			if (ok != INVALID_SET_FILE_POINTER)
-			{
-				PBYTE pbData = new BYTE[ data->filesize ];
-
-				DWORD bytesRead = -1;
-				BOOL bSuccess = ReadFile(	hfile,
-					(LPVOID) pbData,
-					data->filesize,
-					&bytesRead,
-					nullptr
-					);
-
-				if(bSuccess==FALSE)
-				{
-					app.FatalLoadError();
-				}
-				assert(bytesRead == data->filesize);
-				out = byteArray(pbData, data->filesize);
-			}
-			else
-			{
-				app.FatalLoadError();
-			}
-
-			CloseHandle(hfile);
+			app.DebugPrintf("bad archive read\n");
+			app.FatalLoadError();
 		}
 		else
 		{
-			app.DebugPrintf("bad hfile\n");
-			app.FatalLoadError();
+			PBYTE pbData = new BYTE[data->filesize];
+			std::memcpy(pbData, fileBytes.data(), fileBytes.size());
+			out = byteArray(pbData, data->filesize);
 		}
 #endif
 

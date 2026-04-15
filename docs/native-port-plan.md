@@ -204,6 +204,9 @@ Direction:
   thumbnail-only branches; `UIScene_LoadMenu` and the saved-server add/edit
   paths now use the same helpers for displayed save titles and `servers.db`
   UTF-8 round-trips)
+- keep native desktop asset/font loading on native UTF-8 file reads
+  (`ArchiveFile` and `UITTFFont` no longer use locale path conversion or
+  direct Win32-shaped file I/O in the active native client loader path)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

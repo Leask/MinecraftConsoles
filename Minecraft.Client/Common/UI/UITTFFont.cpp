@@ -6,36 +6,23 @@
 
 UITTFFont::UITTFFont(const string &name, const string &path, S32 fallbackCharacter) 
 	: m_strFontName(name)
+	, pbData(nullptr)
 {
 	app.DebugPrintf("UITTFFont opening %s\n",path.c_str());
 
-#ifdef _UNICODE
-	wstring wPath = convStringToWstring(path);
-	HANDLE file = CreateFile(wPath.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-#else
-	HANDLE file = CreateFile(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-#endif
-	if( file == INVALID_HANDLE_VALUE )
+	std::vector<BYTE> fontBytes;
+	if(!NativeDesktopReadFileBytes(path.c_str(), &fontBytes))
 	{
-		DWORD error = GetLastError();
-		app.DebugPrintf("Failed to open TTF file with error code %d (%x)\n", error, error);
+		app.DebugPrintf("Failed to open TTF file: %s\n", path.c_str());
 		assert(false);
+		app.FatalLoadError();
+		return;
 	}
 
-	DWORD dwHigh=0;
-	DWORD dwFileSize = GetFileSize(file,&dwHigh);
-
-	if(dwFileSize!=0)
+	if(!fontBytes.empty())
 	{
-		DWORD bytesRead;
-
-		pbData =  (PBYTE) new BYTE[dwFileSize];
-		BOOL bSuccess = ReadFile(file,pbData,dwFileSize,&bytesRead,nullptr);
-		if(bSuccess==FALSE)
-		{
-			app.FatalLoadError();
-		}
-		CloseHandle(file);
+		pbData =  (PBYTE) new BYTE[fontBytes.size()];
+		std::memcpy(pbData, fontBytes.data(), fontBytes.size());
 
 		IggyFontInstallTruetypeUTF8 ( (void *)pbData, IGGY_TTC_INDEX_none, m_strFontName.c_str(), -1, IGGY_FONTFLAG_none );
 

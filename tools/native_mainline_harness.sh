@@ -179,6 +179,22 @@ run_native_only_contract() {
             Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
             Minecraft.Client/Common/UI/UIScene_JoinMenu.cpp >/dev/null
 
+        if rg -n -S "CreateFile\\(|GetFileSize\\(|ReadFile\\(|SetFilePointer\\(|wcstombs" \
+            Minecraft.Client/ArchiveFile.cpp \
+            Minecraft.Client/Common/UI/UITTFFont.cpp \
+            > "$log_root/native-client-asset-loader-win32-io.txt"; then
+            echo "Native client asset/font loaders still use Win32-shaped I/O" >&2
+            cat "$log_root/native-client-asset-loader-win32-io.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopReadFileBytes" \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientStubs.h \
+            Minecraft.Client/Common/UI/UITTFFont.cpp >/dev/null
+        rg -n -S "NativeDesktopReadFileBytesAt" \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientStubs.h \
+            Minecraft.Client/ArchiveFile.cpp >/dev/null
+
         rg -n -S "Windows compatibility maintenance has stopped" \
             README.md COMPILE.md CONTRIBUTING.md docs/native-port-plan.md >/dev/null
         git diff --check

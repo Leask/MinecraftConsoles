@@ -525,6 +525,130 @@ inline bool NativeDesktopWideToUtf8Buffer(
     return true;
 }
 
+inline std::string NativeDesktopWideToUtf8String(
+    wchar_t const* sourceWide)
+{
+    if (sourceWide == nullptr || sourceWide[0] == L'\0')
+    {
+        return std::string();
+    }
+
+    const int sourceLength = static_cast<int>(std::wcslen(sourceWide));
+    const int required = WideCharToMultiByte(
+        CP_UTF8,
+        0,
+        sourceWide,
+        sourceLength,
+        nullptr,
+        0,
+        nullptr,
+        nullptr);
+    if (required <= 0)
+    {
+        return std::string();
+    }
+
+    std::string result(static_cast<std::size_t>(required), '\0');
+    const int converted = WideCharToMultiByte(
+        CP_UTF8,
+        0,
+        sourceWide,
+        sourceLength,
+        &result[0],
+        required,
+        nullptr,
+        nullptr);
+    if (converted <= 0)
+    {
+        return std::string();
+    }
+
+    return result;
+}
+
+inline bool NativeDesktopReadFileBytes(
+    char const* path,
+    std::vector<BYTE>* outBytes)
+{
+    if (path == nullptr || path[0] == '\0' || outBytes == nullptr)
+    {
+        return false;
+    }
+
+    outBytes->clear();
+
+    FILE* file = std::fopen(path, "rb");
+    if (file == nullptr)
+    {
+        return false;
+    }
+
+    bool ok = false;
+    if (std::fseek(file, 0, SEEK_END) == 0)
+    {
+        const long size = std::ftell(file);
+        if (size >= 0 && std::fseek(file, 0, SEEK_SET) == 0)
+        {
+            outBytes->resize(static_cast<std::size_t>(size));
+            const std::size_t bytesRead =
+                outBytes->empty()
+                    ? 0
+                    : std::fread(
+                        outBytes->data(),
+                        1,
+                        outBytes->size(),
+                        file);
+            ok = bytesRead == outBytes->size();
+        }
+    }
+
+    std::fclose(file);
+    if (!ok)
+    {
+        outBytes->clear();
+    }
+    return ok;
+}
+
+inline bool NativeDesktopReadFileBytesAt(
+    char const* path,
+    long offset,
+    std::size_t bytesToRead,
+    std::vector<BYTE>* outBytes)
+{
+    if (path == nullptr || path[0] == '\0' || outBytes == nullptr ||
+        offset < 0)
+    {
+        return false;
+    }
+
+    outBytes->clear();
+
+    FILE* file = std::fopen(path, "rb");
+    if (file == nullptr)
+    {
+        return false;
+    }
+
+    bool ok = false;
+    if (std::fseek(file, offset, SEEK_SET) == 0)
+    {
+        outBytes->resize(bytesToRead);
+        const std::size_t bytesRead =
+            outBytes->empty()
+                ? 0
+                : std::fread(outBytes->data(), 1, outBytes->size(), file);
+        ok = bytesRead == outBytes->size();
+    }
+
+    std::fclose(file);
+    if (!ok)
+    {
+        outBytes->clear();
+    }
+    return ok;
+}
+
 inline std::wstring& NativeDesktopClipboardText()
 {
     static std::wstring clipboardText;
