@@ -239,6 +239,10 @@ Direction:
   (`DLCTexturePack` now reads texture-pack UI payloads, game-rule files, and
   base-save bytes through normalized C stdio paths instead of Win32-shaped file
   handles)
+- keep native DLC texture-pack loading off console mount drives
+  (`DLCTexturePack` now enters its native load callback directly, and native
+  title-update texture pack roots resolve to `Common/res/TitleUpdate/DLC`
+  instead of `TPACK:`/`StorageManager` mount glue)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

@@ -10167,7 +10167,7 @@ wstring CMinecraftApp::getFilePath(DWORD packId, wstring filename, bool bAddData
 	return getRootPath(packId, false, true, mountPoint) + filename;
 }
 
-#ifdef _XBOX
+#if defined(_XBOX) || defined(_NATIVE_DESKTOP)
 // Texture packs that have their data in the TU data
 enum ETitleUpdateTexturePacks
 {
@@ -10186,7 +10186,9 @@ enum ETitleUpdateTexturePacks
 	eTUTP_Steampunk = 0x01000808, // 4J Stu - The released Steampunk pack had a sub-pack ID
 };
 
-#ifdef _TU_BUILD
+#ifdef _NATIVE_DESKTOP
+wstring titleUpdateTexturePackRoot = L"Common\\res\\TitleUpdate\\DLC\\";
+#elif defined(_TU_BUILD)
 wstring titleUpdateTexturePackRoot = L"UPDATE:\\res\\DLC\\";
 #else
 wstring titleUpdateTexturePackRoot = L"GAME:\\res\\TitleUpdate\\DLC\\";
@@ -10216,7 +10218,7 @@ wstring titleUpdateTexturePackRoot = L"CU\\DLC\\";
 wstring CMinecraftApp::getRootPath(DWORD packId, bool allowOverride, bool bAddDataFolder, wstring mountPoint)
 {
 	wstring path = mountPoint;
-#ifdef _XBOX
+#if defined(_XBOX) || defined(_NATIVE_DESKTOP)
 	if(allowOverride)
 	{
 		switch(packId)

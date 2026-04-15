@@ -312,22 +312,15 @@ void DLCTexturePack::loadData()
 
 	if(mountIndex > -1)
 	{
-#ifdef _DURANGO
-		if(StorageManager.MountInstalledDLC(ProfileManager.GetPrimaryPad(),mountIndex,&DLCTexturePack::packMounted,this,L"TPACK")!=ERROR_IO_PENDING)
-#else
-		if(StorageManager.MountInstalledDLC(ProfileManager.GetPrimaryPad(),mountIndex,&DLCTexturePack::packMounted,this,"TPACK")!=ERROR_IO_PENDING)
-#endif
-		{
-			// corrupt DLC
-			m_bHasLoadedData = true;
-			if (app.getLevelGenerationOptions()) app.getLevelGenerationOptions()->setLoadedData();
-			app.DebugPrintf("Failed to mount texture pack DLC %d for pad %d\n",mountIndex,ProfileManager.GetPrimaryPad());	
-		}
-		else
-		{
-			m_bLoadingData = true;
-			app.DebugPrintf("Attempted to mount DLC data for texture pack %d\n", mountIndex);
-		}
+		m_bLoadingData = true;
+		app.DebugPrintf(
+			"Loading native desktop texture pack DLC data %d\n",
+			mountIndex);
+		packMounted(
+			this,
+			ProfileManager.GetPrimaryPad(),
+			ERROR_SUCCESS,
+			m_dlcInfoPack->getLicenseMask());
 	}
 	else
 	{
@@ -502,14 +495,7 @@ int DLCTexturePack::packMounted(LPVOID pParam,int iPad,DWORD dwErr,DWORD dwLicen
             texturePack->loadColourTable();
         }
 
-        // 4J-PB - we need to leave the texture pack mounted if it contained streaming audio
-		if(texturePack->hasAudio()==false)
-		{
-#ifdef _XBOX
-			StorageManager.UnmountInstalledDLC("TPACK");
-#endif
 		}
-	}
 	
 	texturePack->m_bHasLoadedData = true;
 	if (app.getLevelGenerationOptions()) app.getLevelGenerationOptions()->setLoadedData();
@@ -561,16 +547,6 @@ void DLCTexturePack::loadUI()
 	}
 
 	AbstractTexturePack::loadUI();
-#ifndef _XBOX
-	if(hasAudio()==false && !ui.IsReloadingSkin())
-	{
-#ifdef _DURANGO
-		StorageManager.UnmountInstalledDLC(L"TPACK");
-#else
-		StorageManager.UnmountInstalledDLC("TPACK");
-#endif
-	}
-#endif
 }
 
 void DLCTexturePack::unloadUI()
