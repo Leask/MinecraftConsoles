@@ -173,20 +173,11 @@ foreach(expected_save_marker IN ITEMS
   endif()
 endforeach()
 
-string(REGEX MATCH "autosave-completions=([0-9]+)" remote_autosave_match
-  "${saved_world_text}")
-if(NOT remote_autosave_match)
-  message(FATAL_ERROR
-    "Remote shell save file did not contain parsable autosave count\n"
-    "save file:\n${saved_world_text}\n")
-endif()
-set(remote_autosave_completions "${CMAKE_MATCH_1}")
-if(remote_autosave_completions LESS 2)
-  message(FATAL_ERROR
-    "Remote shell expected at least 2 autosave completions, got "
-    "${remote_autosave_completions}\n"
-    "save file:\n${saved_world_text}\n")
-endif()
+assert_save_uint_at_least(
+  "${saved_world_text}"
+  "autosave-completions"
+  "1"
+  "Remote shell save file")
 
 assert_save_uint_equals(
   "${saved_world_text}"

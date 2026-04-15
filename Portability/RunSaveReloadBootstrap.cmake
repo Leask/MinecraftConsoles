@@ -133,20 +133,11 @@ foreach(expected_save_marker IN ITEMS
   endif()
 endforeach()
 
-string(REGEX MATCH "autosave-completions=([0-9]+)" create_autosave_match
-  "${saved_world_text}")
-if(NOT create_autosave_match)
-  message(FATAL_ERROR
-    "Create-save file did not contain parsable autosave count\n"
-    "save file:\n${saved_world_text}\n")
-endif()
-set(create_autosave_completions "${CMAKE_MATCH_1}")
-if(create_autosave_completions LESS 2)
-  message(FATAL_ERROR
-    "Create-save file expected at least 2 autosave completions, got "
-    "${create_autosave_completions}\n"
-    "save file:\n${saved_world_text}\n")
-endif()
+assert_save_uint_at_least(
+  "${saved_world_text}"
+  "autosave-completions"
+  "1"
+  "Create-save file")
 
 string(REGEX MATCH "worker-ticks=([0-9]+)" create_worker_ticks_match
   "${saved_world_text}")
