@@ -1545,7 +1545,7 @@ void MinecraftServer::stopServer(bool didInit)
 	// Wait for asynchronous saving processes to complete before destroying the levels, as that will ultimately delete
 	// the directory level storage & therefore the ConsoleSaveSplit instance, which needs to be around until all the sub files have completed saving.
 #if defined(_DURANGO) || defined(__ORBIS__) || defined(__PSVITA__)
-	while(StorageManager.GetSaveState() != C4JStorage::ESaveGame_Idle )
+	while(!NativeDesktopSavesAreIdle())
 	{
 		Sleep(10);
 	}

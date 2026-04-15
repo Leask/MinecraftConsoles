@@ -51,6 +51,7 @@
 #if defined(_NATIVE_DESKTOP)
 #include "NativeDesktop/Network/NetworkPlayerNative.h"
 #include "Common/Network/PlatformNetworkManagerStub.h"
+#include "NativeDesktop/NativeDesktopClientSaveControl.h"
 #endif
 
 ClientConnection::ClientConnection(Minecraft *minecraft, const wstring& ip, int port)
@@ -3848,10 +3849,10 @@ int ClientConnection::HostDisconnectReturned(void *pParam,int iPad,C4JStorage::E
 	// Give the player the option to save their game
 	// does the save exist?
 	bool bSaveExists;
-	StorageManager.DoesSaveExist(&bSaveExists);
+	bSaveExists = NativeDesktopDoesSaveExist();
 	// 4J-PB - we check if the save exists inside the libs
 	// we need to ask if they are sure they want to overwrite the existing game
-	if(bSaveExists && StorageManager.GetSaveDisabled())
+	if(bSaveExists && NativeDesktopSavesAreDisabled())
 	{
 		UINT uiIDA[2];
 		uiIDA[0]=IDS_CONFIRM_CANCEL;
@@ -3863,7 +3864,7 @@ int ClientConnection::HostDisconnectReturned(void *pParam,int iPad,C4JStorage::E
 	// Give the player the option to save their game
 	// does the save exist?
 	bool bSaveExists;
-	StorageManager.DoesSaveExist(&bSaveExists);
+	bSaveExists = NativeDesktopDoesSaveExist();
 	// 4J-PB - we check if the save exists inside the libs
 	// we need to ask if they are sure they want to overwrite the existing game
 	if(bSaveExists)
@@ -3877,7 +3878,7 @@ int ClientConnection::HostDisconnectReturned(void *pParam,int iPad,C4JStorage::E
 #endif
 	{
 #if defined(_XBOX_ONE) || defined(__ORBIS__)
-				StorageManager.SetSaveDisabled(false);
+				NativeDesktopSetSavesDisabled(false);
 #endif
 		MinecraftServer::getInstance()->setSaveOnExit( true );
 		// flag a app action of exit game
@@ -3896,7 +3897,7 @@ int ClientConnection::ExitGameAndSaveReturned(void *pParam,int iPad,C4JStorage::
 		//bool validSave = StorageManager.GetSaveUniqueNumber(&saveOrCheckpointId);
 		//SentientManager.RecordLevelSaveOrCheckpoint(ProfileManager.GetPrimaryPad(), saveOrCheckpointId);
 #if defined(_XBOX_ONE) || defined(__ORBIS__)
-				StorageManager.SetSaveDisabled(false);
+				NativeDesktopSetSavesDisabled(false);
 #endif
 		MinecraftServer::getInstance()->setSaveOnExit( true );
 	}

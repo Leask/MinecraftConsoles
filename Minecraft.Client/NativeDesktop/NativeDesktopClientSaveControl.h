@@ -2,6 +2,9 @@
 
 bool NativeDesktopSavesAreDisabled();
 void NativeDesktopSetSavesDisabled(bool disabled);
+bool NativeDesktopDoesSaveExist();
+void NativeDesktopSetSaveExists(bool exists);
+bool NativeDesktopSavesAreIdle();
 void NativeDesktopResetSaveData();
 void NativeDesktopSetSaveTitle(const wchar_t* title);
 void NativeDesktopSetSaveTitleExtraFileSuffix(const wchar_t* suffix);

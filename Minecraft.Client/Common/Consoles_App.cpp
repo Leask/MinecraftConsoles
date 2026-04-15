@@ -42,6 +42,7 @@
 #include "../../Minecraft.World/compression.h"
 #include "../TexturePackRepository.h"
 #include "../DLCTexturePack.h"
+#include "../NativeDesktop/NativeDesktopClientSaveControl.h"
 #include "DLC/DLCPack.h"
 #include "../StringTable.h"
 #ifndef _XBOX
@@ -2935,7 +2936,7 @@ void CMinecraftApp::HandleXuiActions(void)
 				{
 					// Need to run a check to see if the save exists in order to stop the dialog asking if we want to overwrite it coming up on an autosave
 					bool bSaveExists;
-					StorageManager.DoesSaveExist(&bSaveExists);
+					bSaveExists = NativeDesktopDoesSaveExist();
 
 					SetAction(i,eAppAction_Idle);
 					if(!GetChangingSessionType())
@@ -3012,7 +3013,7 @@ void CMinecraftApp::HandleXuiActions(void)
 #if defined(_XBOX_ONE) || defined(__ORBIS__)
 					app.SetXuiServerAction(ProfileManager.GetPrimaryPad(),eXuiServerAction_AutoSaveGame);
 
-					if(app.GetGameHostOption(eGameHostOption_DisableSaving)) StorageManager.SetSaveDisabled(true);
+					if(app.GetGameHostOption(eGameHostOption_DisableSaving)) NativeDesktopSetSavesDisabled(true);
 #else
 					// turn off the gamertags in splitscreen for the primary player, since they are about to be made fullscreen
 					ui.HideAllGameUIElements();
@@ -3259,7 +3260,7 @@ void CMinecraftApp::HandleXuiActions(void)
 					app.SetOptionsSaveDataDialogRunning(true);//m_bOptionsSaveDataDialogRunning = true;
 					//pClass->m_eSaveIncompleteType = saveIncompleteType;
 
-					//StorageManager.SetSaveDisabled(true);
+					// Saving was disabled by the native save-control owner.
 					//pClass->EnterSaveNotificationSection();
 
 				}
@@ -3788,7 +3789,7 @@ void CMinecraftApp::HandleXuiActions(void)
 
 #if defined(_XBOX_ONE) || defined(__ORBIS__)
 					// Show save option is saves ARE disabled
-					if(ProfileManager.IsFullVersion() && StorageManager.GetSaveDisabled() && i==ProfileManager.GetPrimaryPad() && g_NetworkManager.IsHost() && GetGameStarted() )
+					if(ProfileManager.IsFullVersion() && NativeDesktopSavesAreDisabled() && i==ProfileManager.GetPrimaryPad() && g_NetworkManager.IsHost() && GetGameStarted() )
 					{
 						uiIDA[0]=IDS_CONFIRM_CANCEL;
 						uiIDA[1]=IDS_EXIT_GAME_SAVE;
@@ -3798,7 +3799,7 @@ void CMinecraftApp::HandleXuiActions(void)
 					}
 					else
 #else
-					if(ProfileManager.IsFullVersion() && !StorageManager.GetSaveDisabled() && i==ProfileManager.GetPrimaryPad() && g_NetworkManager.IsHost() && GetGameStarted() )
+					if(ProfileManager.IsFullVersion() && !NativeDesktopSavesAreDisabled() && i==ProfileManager.GetPrimaryPad() && g_NetworkManager.IsHost() && GetGameStarted() )
 					{
 						uiIDA[0]=IDS_CONFIRM_CANCEL;
 						uiIDA[1]=IDS_EXIT_GAME_SAVE;
@@ -5541,7 +5542,7 @@ void CMinecraftApp::MountNextDLC(int iPad)
 
 			if(pParentPack->hasPurchasedFile( DLCManager::e_DLCType_Texture, L"" ))
 			{
-				StorageManager.SetSaveDisabled(false);
+				NativeDesktopSetSavesDisabled(false);
 			}
 		}
 #endif
@@ -6122,7 +6123,7 @@ int CMinecraftApp::ExitAndJoinFromInviteSaveDialogReturned(void *pParam,int iPad
 #ifndef _XBOX_ONE
 			// does the save exist?
 			bool bSaveExists;
-			StorageManager.DoesSaveExist(&bSaveExists);
+			bSaveExists = NativeDesktopDoesSaveExist();
 			// 4J-PB - we check if the save exists inside the libs
 			// we need to ask if they are sure they want to overwrite the existing game
 			if(bSaveExists)
@@ -6137,7 +6138,7 @@ int CMinecraftApp::ExitAndJoinFromInviteSaveDialogReturned(void *pParam,int iPad
 #endif
 			{
 #if defined(_XBOX_ONE) || defined(__ORBIS__)
-				StorageManager.SetSaveDisabled(false);
+				NativeDesktopSetSavesDisabled(false);
 #endif
 				MinecraftServer::getInstance()->setSaveOnExit( true );
 			}
@@ -6340,7 +6341,7 @@ int CMinecraftApp::ExitAndJoinFromInviteDeclineSaveReturned(void *pParam,int iPa
 	if(result==C4JStorage::EMessage_ResultDecline)
 	{
 #if defined(_XBOX_ONE) || defined(__ORBIS__)
-		StorageManager.SetSaveDisabled(false);
+		NativeDesktopSetSavesDisabled(false);
 #endif
 		MinecraftServer::getInstance()->setSaveOnExit( false );
 		// flag a app action of exit and join game from invite

@@ -225,7 +225,9 @@ Direction:
   `StorageManager`, and runtime/network wait loops tick native save-control
   directly instead of pumping `StorageManager`; native local-game bootstrap
   also resets save data and sets the active save title through the same
-  save-control owner)
+  save-control owner; native exit/save confirmation and shutdown save-idle
+  waits now query the same save-control owner instead of direct
+  `StorageManager` save-existence/save-disabled/save-state calls)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/

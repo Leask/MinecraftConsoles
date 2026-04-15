@@ -964,7 +964,7 @@ int CGameNetworkManager::RunNetworkGameThreadProc( void* lpParameter )
 
 #ifdef __PSVITA__
 	// 4J-JEV: Wait for the loading/saving to finish.
-	while (StorageManager.GetSaveState() != C4JStorage::ESaveGame_Idle)	Sleep(10);
+	while (!NativeDesktopSavesAreIdle()) Sleep(10);
 #endif
 
 	Tile::ReleaseThreadStorage();

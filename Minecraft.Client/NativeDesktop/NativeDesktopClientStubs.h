@@ -3255,7 +3255,7 @@ public:
     {
         if (exists != nullptr)
         {
-            *exists = false;
+            *exists = NativeDesktopDoesSaveExist();
         }
         return ESaveGame_Idle;
     }
@@ -3301,6 +3301,7 @@ public:
         {
             func(lpParam, true, false);
         }
+        NativeDesktopSetSaveExists(true);
         return ESaveGame_LoadCompleteSuccess;
     }
     unsigned int GetSaveSize() const
@@ -3372,6 +3373,7 @@ public:
     ESaveGameState SaveSubfiles(int (*func)(LPVOID, const bool),
                                 LPVOID lpParam)
     {
+        NativeDesktopSetSaveExists(true);
         if (func != nullptr)
         {
             func(lpParam, true);
@@ -3414,6 +3416,7 @@ public:
     }
     ESaveGameState SaveSaveData(int (*func)(LPVOID, const bool), LPVOID lpParam)
     {
+        NativeDesktopSetSaveExists(true);
         if (func != nullptr)
         {
             func(lpParam, true);
@@ -3431,6 +3434,7 @@ public:
         {
             func(lpParam, true);
         }
+        NativeDesktopSetSaveExists(false);
         return ESaveGame_DeleteSuccess;
     }
     ESaveGameState CopySaveData(PSAVE_INFO pSaveInfo,

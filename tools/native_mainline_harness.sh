@@ -298,6 +298,25 @@ run_native_only_contract() {
             Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \
             >/dev/null
 
+        if rg -n -S "StorageManager\\.(GetSaveDisabled|SetSaveDisabled|DoesSaveExist|GetSaveState)\\(" \
+            Minecraft.Client/ClientConnection.cpp \
+            Minecraft.Client/Common/Consoles_App.cpp \
+            Minecraft.Client/Common/Network/GameNetworkManager.cpp \
+            Minecraft.Client/MinecraftServer.cpp \
+            > "$log_root/native-client-save-control-storage.txt"; then
+            echo "Native save-control paths still use StorageManager" >&2
+            cat "$log_root/native-client-save-control-storage.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopDoesSaveExist|NativeDesktopSavesAreIdle" \
+            Minecraft.Client/ClientConnection.cpp \
+            Minecraft.Client/Common/Consoles_App.cpp \
+            Minecraft.Client/Common/Network/GameNetworkManager.cpp \
+            Minecraft.Client/MinecraftServer.cpp \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \
+            >/dev/null
+
         if rg -n -S "CreateFile\\(|GetFileSize\\(|ReadFile\\(|CloseHandle\\(|StorageManager\\.GetMountedPath|_WINDOWS64|_DURANGO" \
             Minecraft.Client/Common/DLC/DLCManager.cpp \
             > "$log_root/native-client-dlc-manager-win32-io.txt"; then
