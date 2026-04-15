@@ -259,6 +259,16 @@ run_native_only_contract() {
             exit 1
         fi
 
+        if rg -n -S "CreateDirectory\\(|GetFileAttributes|DeleteFile\\(|MoveFile\\(|FindFirstFile\\(|FindNextFile\\(|WIN32_FILE_ATTRIBUTE_DATA|StorageManager" \
+            Minecraft.World/File.cpp \
+            > "$log_root/native-world-file-adapter-win32-glue.txt"; then
+            echo "Native world file adapter still uses Win32/platform storage glue" >&2
+            cat "$log_root/native-world-file-adapter-win32-glue.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "std::filesystem" Minecraft.World/File.cpp >/dev/null
+
         rg -n -S "Windows compatibility maintenance has stopped" \
             README.md COMPILE.md CONTRIBUTING.md docs/native-port-plan.md >/dev/null
         git diff --check

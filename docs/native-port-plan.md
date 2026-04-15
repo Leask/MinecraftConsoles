@@ -223,6 +223,10 @@ Direction:
 - keep native world zone storage on native file channels
   (`ZoneFile`, `ZoneIo`, `NbtSlotFile`, and `ZonedChunkStorage` now use C
   stdio for zone/entity chunk storage instead of direct Win32 file handles)
+- keep the native world file adapter on portable filesystem primitives
+  (`File` now routes delete, mkdir, exists, rename, list, length, and
+  last-modified queries through `std::filesystem` instead of Win32-shaped
+  platform/storage glue)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 
