@@ -207,6 +207,10 @@ Direction:
 - keep native desktop asset/font loading on native UTF-8 file reads
   (`ArchiveFile` and `UITTFFont` no longer use locale path conversion or
   direct Win32-shaped file I/O in the active native client loader path)
+- keep active native client input/UI/gameplay guards native-only
+  (`Minecraft`, `Screen`, UI controller, crafting/load menu, audio, and
+  platform-network active paths no longer share `_WINDOWS64` and
+  `_NATIVE_DESKTOP` preprocessor guards)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

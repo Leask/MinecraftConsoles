@@ -102,7 +102,7 @@ private:
 		eLibrary_Tooltips,
 		eLibrary_Default,
 
-#if defined(_NATIVE_DESKTOP) || defined(_WINDOWS64)
+#if defined(_NATIVE_DESKTOP)
 		// Non-HD skin libraries needed by 720p/480p scene SWFs.
 		eLibraryFallback_Platform,
 		eLibraryFallback_GraphicsDefault,

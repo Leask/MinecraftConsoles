@@ -6,7 +6,7 @@
 #include "UIScene_CraftingMenu.h"
 UIScene_CraftingMenu::UIScene_CraftingMenu(int iPad, void *_initData, UILayer *parentLayer) : UIScene(iPad, parentLayer)
 {
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	m_hSlotBoundsValid = false;
 	m_hSlotX0 = m_hSlotY0 = m_hSlotY1 = 0;
 	m_hSlotSpacing = 0;
@@ -253,7 +253,7 @@ wstring UIScene_CraftingMenu::getMoviePath()
 	}
 }
 
-#if defined(__PSVITA__) || defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(__PSVITA__) || defined(_NATIVE_DESKTOP)
 UIControl* UIScene_CraftingMenu::GetMainPanel()
 {
 	return &m_controlMainPanel;
@@ -402,7 +402,7 @@ void UIScene_CraftingMenu::updateNativeDesktopHSlotBounds()
 }
 #endif
 
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 bool UIScene_CraftingMenu::handleMouseClick(F32 x, F32 y)
 {
 #if defined(_NATIVE_DESKTOP)

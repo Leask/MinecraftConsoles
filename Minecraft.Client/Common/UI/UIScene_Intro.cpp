@@ -22,7 +22,7 @@ UIScene_Intro::UIScene_Intro(int iPad, void *initData, UILayer *parentLayer) : U
 	bChina = ProfileManager.LocaleIsChina();
 #endif
 	// 4J Stu - These map to values in the Actionscript
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
     int platformIdx = 0;
 #elif defined(_XBOX)
     int platformIdx = 1;

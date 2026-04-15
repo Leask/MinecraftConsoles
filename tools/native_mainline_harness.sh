@@ -195,6 +195,24 @@ run_native_only_contract() {
             Minecraft.Client/NativeDesktop/NativeDesktopClientStubs.h \
             Minecraft.Client/ArchiveFile.cpp >/dev/null
 
+        if rg -n -S "_WINDOWS64.*_NATIVE_DESKTOP|_NATIVE_DESKTOP.*_WINDOWS64" \
+            Minecraft.Client/Minecraft.cpp \
+            Minecraft.Client/Minecraft.h \
+            Minecraft.Client/Screen.cpp \
+            Minecraft.Client/Common/Audio/SoundEngine.h \
+            Minecraft.Client/Common/Network/PlatformNetworkManagerStub.cpp \
+            Minecraft.Client/Common/UI/UIController.cpp \
+            Minecraft.Client/Common/UI/UIController.h \
+            Minecraft.Client/Common/UI/UIScene_CraftingMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_CraftingMenu.h \
+            Minecraft.Client/Common/UI/UIScene_Intro.cpp \
+            Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
+            > "$log_root/native-client-shared-windows-native-guards.txt"; then
+            echo "Active native client code still shares Windows/native guards" >&2
+            cat "$log_root/native-client-shared-windows-native-guards.txt" >&2
+            exit 1
+        fi
+
         rg -n -S "Windows compatibility maintenance has stopped" \
             README.md COMPILE.md CONTRIBUTING.md docs/native-port-plan.md >/dev/null
         git diff --check

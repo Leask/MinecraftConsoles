@@ -127,7 +127,7 @@ void Screen::init()
 
 void Screen::updateEvents()
 {
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	// Poll mouse button state and dispatch click/release events
 	for (int btn = 0; btn < 3; btn++)
 	{
@@ -247,8 +247,8 @@ void Screen::updateEvents()
 
 void Screen::mouseEvent()
 {
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
-	// Mouse event dispatching is handled directly in updateEvents() for Windows
+#if defined(_NATIVE_DESKTOP)
+	// Mouse event dispatching is handled directly in updateEvents().
 #else
 	/* 4J - TODO
     if (Mouse.getEventButtonState()) {

@@ -549,7 +549,7 @@ void Minecraft::setScreen(Screen *screen)
 		this->screen->removed();
 	}
 
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	if (screen != nullptr && g_KBMInput.IsMouseGrabbed())
 	{
 		g_KBMInput.SetMouseGrabbed(false);
@@ -1237,7 +1237,7 @@ void Minecraft::createPrimaryLocalPlayer(int iPad)
 	}
 }
 
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 void Minecraft::applyFrameMouseLook()
 {
 	// Per-frame mouse look: consume mouse deltas every frame instead of waiting
@@ -1513,7 +1513,7 @@ void Minecraft::run_middle()
 					if(InputManager.ButtonPressed(i, MINECRAFT_ACTION_RENDER_THIRD_PERSON))		localplayers[i]->ullButtonsPressed|=1LL<<MINECRAFT_ACTION_RENDER_THIRD_PERSON;
 					if(InputManager.ButtonPressed(i, MINECRAFT_ACTION_GAME_INFO))				localplayers[i]->ullButtonsPressed|=1LL<<MINECRAFT_ACTION_GAME_INFO;
 
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 					// Keyboard/mouse button presses for player 0
 					if (i == 0)
 					{
@@ -2415,7 +2415,7 @@ void Minecraft::tick(bool bFirst, bool bUpdateTextures)
 		}
 	}
 
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	// Mouse grab/release only for the primary (KBM) player — splitscreen
 	// players use controllers and must never fight over the cursor state.
 	if (iPad == ProfileManager.GetPrimaryPad())
@@ -2429,7 +2429,7 @@ void Minecraft::tick(bool bFirst, bool bUpdateTextures)
 
 	if (screen == nullptr && !ui.GetMenuDisplayed(iPad) )
 	{
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 		if (iPad == ProfileManager.GetPrimaryPad() && !g_KBMInput.IsMouseGrabbed() && g_KBMInput.IsWindowFocused())
 		{
 			g_KBMInput.SetMouseGrabbed(true);

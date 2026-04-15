@@ -578,7 +578,7 @@ void UIController::loadSkins()
 	m_iggyLibraries[eLibrary_Tooltips] = loadSkin(L"skinTooltips.swf", L"skinTooltips.swf");
 	m_iggyLibraries[eLibrary_Default] = loadSkin(L"skin.swf", L"skin.swf");
 
-#elif defined(_NATIVE_DESKTOP) || defined _WINDOWS64
+#elif defined(_NATIVE_DESKTOP)
 	// Native desktop uses the existing desktop SWF asset names from the
 	// MediaNativeDesktop archive. The names are resource IDs, not platform
 	// policy.

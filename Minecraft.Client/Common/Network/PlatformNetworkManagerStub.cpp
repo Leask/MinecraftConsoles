@@ -849,7 +849,7 @@ wstring CPlatformNetworkManagerStub::GatherRTTStats()
 
 void CPlatformNetworkManagerStub::TickSearch()
 {
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	if (m_SessionsUpdatedCallback == nullptr)
 		return;
 
@@ -865,7 +865,7 @@ void CPlatformNetworkManagerStub::TickSearch()
 
 void CPlatformNetworkManagerStub::SearchForGames()
 {
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 	std::vector<NativeDesktopLANSession> lanSessions = NativeDesktopNetLayer::GetDiscoveredSessions();
 
 	//THEY GET DELETED HERE DAMMIT
