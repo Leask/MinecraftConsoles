@@ -33,6 +33,7 @@
 #include "../Minecraft.World/net.minecraft.world.damagesource.h"
 #if defined(_NATIVE_DESKTOP)
 #include "NativeDesktop/Network/NativeDesktopNetLayer.h"
+#include "NativeDesktop/NativeDesktopClientSaveControl.h"
 #endif
 #include <sstream>
 #ifdef SPLIT_SAVES
@@ -1431,7 +1432,9 @@ void MinecraftServer::Suspend()
 	float fSecsPerTick = 1.0f / static_cast<float>(qwTicksPerSec.QuadPart);
 	// Save the start time
 	QueryPerformanceCounter( &qwTime );
-	if(m_bLoaded && ProfileManager.IsFullVersion() && (!StorageManager.GetSaveDisabled()))
+	if(m_bLoaded &&
+		ProfileManager.IsFullVersion() &&
+		(!NativeDesktopSavesAreDisabled()))
 	{
 		if (players != nullptr)
 		{
@@ -1506,7 +1509,10 @@ void MinecraftServer::stopServer(bool didInit)
 		if(!saveOnExitAnswered()) m_saveOnExit = true;
 #endif
 		// if trial version or saving is disabled, then don't save anything. Also don't save anything if we didn't actually get through the server initialisation.
-		if(m_saveOnExit && ProfileManager.IsFullVersion() && (!StorageManager.GetSaveDisabled()) && didInit)
+		if(m_saveOnExit &&
+			ProfileManager.IsFullVersion() &&
+			(!NativeDesktopSavesAreDisabled()) &&
+			didInit)
 		{
 			if (players != nullptr)
 			{

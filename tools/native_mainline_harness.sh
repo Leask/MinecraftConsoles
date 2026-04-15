@@ -257,6 +257,21 @@ run_native_only_contract() {
         rg -n -S "FillNativeUniqueMapName" \
             Minecraft.Client/PendingConnection.cpp >/dev/null
 
+        if rg -n -S "StorageManager\\.GetSaveDisabled\\(\\)" \
+            Minecraft.Client/ServerLevel.cpp \
+            Minecraft.Client/MinecraftServer.cpp \
+            Minecraft.Client/Minecraft.cpp \
+            > "$log_root/native-client-gameplay-save-disabled-storage.txt"; then
+            echo "Native gameplay save-disabled gates still use StorageManager" >&2
+            cat "$log_root/native-client-gameplay-save-disabled-storage.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopSavesAreDisabled" \
+            Minecraft.Client/ServerLevel.cpp \
+            Minecraft.Client/MinecraftServer.cpp \
+            Minecraft.Client/Minecraft.cpp >/dev/null
+
         if rg -n -S "CreateFile\\(|GetFileSize\\(|ReadFile\\(|CloseHandle\\(|StorageManager\\.GetMountedPath|_WINDOWS64|_DURANGO" \
             Minecraft.Client/Common/DLC/DLCManager.cpp \
             > "$log_root/native-client-dlc-manager-win32-io.txt"; then

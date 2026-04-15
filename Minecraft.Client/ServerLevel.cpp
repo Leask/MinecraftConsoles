@@ -36,6 +36,7 @@
 #include "../Minecraft.World/WeighedTreasure.h"
 #include "TexturePackRepository.h"
 #include "DLCTexturePack.h"
+#include "NativeDesktop/NativeDesktopClientSaveControl.h"
 #include "../Minecraft.World/ProgressListener.h"
 #include "NativeDesktop/Legacy/ShutdownManager.h"
 #include "PlayerChunkMap.h"
@@ -946,7 +947,7 @@ Pos *ServerLevel::getDimensionSpecificSpawn()
 // 4j Added for XboxOne PLM
 void ServerLevel::Suspend()
 {
-	if(StorageManager.GetSaveDisabled()) return;
+	if(NativeDesktopSavesAreDisabled()) return;
 	saveLevelData();
 	chunkSource->saveAllEntities();
 }
@@ -956,7 +957,7 @@ void ServerLevel::save(bool force, ProgressListener *progressListener, bool bAut
 	if (!chunkSource->shouldSave()) return;
 
 	// 4J-PB - check that saves are enabled
-	if(StorageManager.GetSaveDisabled()) return;
+	if(NativeDesktopSavesAreDisabled()) return;
 
 
 	if (progressListener != nullptr)
@@ -1017,7 +1018,7 @@ void ServerLevel::save(bool force, ProgressListener *progressListener, bool bAut
 void ServerLevel::saveToDisc(ProgressListener *progressListener, bool autosave)
 {
 	// 4J-PB - check that saves are enabled
-	if(StorageManager.GetSaveDisabled()) return;
+	if(NativeDesktopSavesAreDisabled()) return;
 
 	// Check if we are using a trial version of a texture pack (which will be the case for going into the mash-up pack world with a trial version)
 	if(!Minecraft::GetInstance()->skins->isUsingDefaultSkin())

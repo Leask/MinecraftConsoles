@@ -72,6 +72,7 @@
 #include "Common/UI/IUIScene_CreativeMenu.h"
 #include "Common/UI/UIFontData.h"
 #include "DLCTexturePack.h"
+#include "NativeDesktop/NativeDesktopClientSaveControl.h"
 
 // #define DISABLE_SPU_CODE
 // 4J Turning this on will change the graph at the bottom of the debug overlay to show the number of packets of each type added per fram
@@ -1329,7 +1330,8 @@ void Minecraft::run_middle()
 				{
 					// if the pause menu is up for the primary player, don't autosave
 					// If saving isn't disabled, and the main player has a app action running , or has any crafting or containers open, don't autosave
-					if(!StorageManager.GetSaveDisabled() && (app.GetXuiAction(ProfileManager.GetPrimaryPad())==eAppAction_Idle) )
+					if(!NativeDesktopSavesAreDisabled() &&
+						(app.GetXuiAction(ProfileManager.GetPrimaryPad()) == eAppAction_Idle) )
 					{
 						if(!ui.IsPauseMenuDisplayed(ProfileManager.GetPrimaryPad()) && !ui.IsIgnoreAutosaveMenuDisplayed(ProfileManager.GetPrimaryPad()))
 						{

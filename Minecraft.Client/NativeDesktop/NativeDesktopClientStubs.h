@@ -14,6 +14,7 @@
 #include <lce_abi/lce_abi.h>
 
 #include "../Common/NativeRendererTypes.h"
+#include "NativeDesktopClientSaveControl.h"
 #include "GameConfig/Minecraft.spa.h"
 #include "Sentient/SentientTelemetryCommon.h"
 #include "TelemetryEnum.h"
@@ -3240,8 +3241,11 @@ public:
         (void)func;
         (void)param;
     }
-    void SetSaveDisabled(bool disabled) { m_saveDisabled = disabled; }
-    bool GetSaveDisabled() const { return m_saveDisabled; }
+    void SetSaveDisabled(bool disabled)
+    {
+        NativeDesktopSetSavesDisabled(disabled);
+    }
+    bool GetSaveDisabled() const { return NativeDesktopSavesAreDisabled(); }
     void ResetSaveData()
     {
         m_saveData.clear();
@@ -3792,7 +3796,6 @@ private:
         }
     }
 
-    bool m_saveDisabled = false;
     ESaveGameState m_saveState = ESaveGame_Idle;
     std::vector<BYTE> m_saveData;
     SAVE_DETAILS m_saveDetails = {};

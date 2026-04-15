@@ -220,7 +220,9 @@ Direction:
   helper for tutorial base-save bootstrap data instead of console
   `GAME:`/`UPDATE:` paths or Win32 file handles; `PendingConnection` now
   fills the native pre-login map identity directly instead of asking
-  `StorageManager` for a console save filename)
+  `StorageManager` for a console save filename; active gameplay save-disabled
+  checks now read `NativeDesktopClientSaveControl` instead of reaching into
+  `StorageManager`)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/
