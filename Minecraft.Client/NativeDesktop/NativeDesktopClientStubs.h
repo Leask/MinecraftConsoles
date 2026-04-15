@@ -3248,7 +3248,7 @@ public:
     bool GetSaveDisabled() const { return NativeDesktopSavesAreDisabled(); }
     void ResetSaveData()
     {
-        m_saveData.clear();
+        NativeDesktopResetSaveData();
         m_saveState = ESaveGame_Idle;
     }
     ESaveGameState DoesSaveExist(bool* exists)
@@ -3305,18 +3305,11 @@ public:
     }
     unsigned int GetSaveSize() const
     {
-        return static_cast<unsigned int>(m_saveData.size());
+        return NativeDesktopGetSaveDataSize();
     }
     void GetSaveData(void* data, unsigned int* bytes)
     {
-        if (bytes != nullptr)
-        {
-            *bytes = static_cast<unsigned int>(m_saveData.size());
-        }
-        if (data != nullptr && !m_saveData.empty())
-        {
-            std::memcpy(data, m_saveData.data(), m_saveData.size());
-        }
+        NativeDesktopCopySaveData(data, bytes);
     }
     bool GetSaveUniqueNumber(INT* value)
     {
@@ -3385,14 +3378,22 @@ public:
         }
         return ESaveGame_SaveSubfilesCompleteSuccess;
     }
-    void SetSaveTitle(const wchar_t* value) { (void)value; }
-    void SetSaveTitleExtraFileSuffix(const wchar_t* value) { (void)value; }
+    void SetSaveTitle(const wchar_t* value)
+    {
+        NativeDesktopSetSaveTitle(value);
+    }
+    void SetSaveTitleExtraFileSuffix(const wchar_t* value)
+    {
+        NativeDesktopSetSaveTitleExtraFileSuffix(value);
+    }
     PVOID AllocateSaveData(unsigned int bytes)
     {
-        m_saveData.assign(bytes, 0);
-        return m_saveData.data();
+        return NativeDesktopAllocateSaveData(bytes);
     }
-    void SetSaveDataSize(unsigned int bytes) { m_saveData.resize(bytes); }
+    void SetSaveDataSize(unsigned int bytes)
+    {
+        NativeDesktopSetSaveDataSize(bytes);
+    }
     void GetDefaultSaveImage(PBYTE* image, DWORD* bytes)
     {
         setNullBuffer(image, bytes);
@@ -3797,7 +3798,6 @@ private:
     }
 
     ESaveGameState m_saveState = ESaveGame_Idle;
-    std::vector<BYTE> m_saveData;
     SAVE_DETAILS m_saveDetails = {};
     PROFILESETTINGS m_profileSettings = {};
     XCONTENT_DATA m_content = {};

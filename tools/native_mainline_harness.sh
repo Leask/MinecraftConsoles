@@ -285,6 +285,19 @@ run_native_only_contract() {
             Minecraft.Client/Common/Network/GameNetworkManager.cpp \
             Minecraft.Client/NativeDesktop/NativeDesktopClientRuntime.cpp >/dev/null
 
+        if rg -n -S "StorageManager\\.(ResetSaveData|SetSaveTitle)\\(" \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientRuntime.cpp \
+            > "$log_root/native-client-save-identity-storage.txt"; then
+            echo "Native local-game save identity still uses StorageManager" >&2
+            cat "$log_root/native-client-save-identity-storage.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopResetSaveData|NativeDesktopSetSaveTitle" \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientRuntime.cpp \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \
+            >/dev/null
+
         if rg -n -S "CreateFile\\(|GetFileSize\\(|ReadFile\\(|CloseHandle\\(|StorageManager\\.GetMountedPath|_WINDOWS64|_DURANGO" \
             Minecraft.Client/Common/DLC/DLCManager.cpp \
             > "$log_root/native-client-dlc-manager-win32-io.txt"; then

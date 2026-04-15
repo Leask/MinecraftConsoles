@@ -1481,8 +1481,8 @@ namespace
         app.SetCorruptSaveDeleted(false);
         app.ClearTerrainFeaturePosition();
 
-        StorageManager.ResetSaveData();
-        StorageManager.SetSaveTitle(L"NativeDesktopTestWorld");
+        NativeDesktopResetSaveData();
+        NativeDesktopSetSaveTitle(L"NativeDesktopTestWorld");
 
         NetworkGameInitData* param = new NetworkGameInitData();
         NativeDesktopConfigureLocalWorld(param);

@@ -223,7 +223,9 @@ Direction:
   `StorageManager` for a console save filename; active gameplay save-disabled
   checks now read `NativeDesktopClientSaveControl` instead of reaching into
   `StorageManager`, and runtime/network wait loops tick native save-control
-  directly instead of pumping `StorageManager`)
+  directly instead of pumping `StorageManager`; native local-game bootstrap
+  also resets save data and sets the active save title through the same
+  save-control owner)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/
