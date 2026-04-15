@@ -234,6 +234,17 @@ run_native_only_contract() {
         rg -n -S "NativeDesktopReadFileBytes" \
             Minecraft.Client/Common/GameRules/LevelGenerationOptions.cpp >/dev/null
 
+        if rg -n -S "HANDLE|CreateFile\\(|ReadFile\\(|WriteFile\\(|SetFilePointer\\(|CloseHandle\\(" \
+            Minecraft.World/FileInputStream.h \
+            Minecraft.World/FileInputStream.cpp \
+            Minecraft.World/FileOutputStream.h \
+            Minecraft.World/FileOutputStream.cpp \
+            > "$log_root/native-world-file-stream-win32-io.txt"; then
+            echo "Native world file streams still use Win32-shaped I/O" >&2
+            cat "$log_root/native-world-file-stream-win32-io.txt" >&2
+            exit 1
+        fi
+
         rg -n -S "Windows compatibility maintenance has stopped" \
             README.md COMPILE.md CONTRIBUTING.md docs/native-port-plan.md >/dev/null
         git diff --check

@@ -1,6 +1,8 @@
 #pragma once
 // 4J Stu - Represents Java standard lib abstract
 
+#include <cstdio>
+
 #include "OutputStream.h"
 
 class FileOutputStream : public OutputStream
@@ -15,5 +17,5 @@ public:
 	virtual void flush() {}
 
 private:
-	HANDLE m_fileHandle;
+	std::FILE *m_fileHandle;
 };

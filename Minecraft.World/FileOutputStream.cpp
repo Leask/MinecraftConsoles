@@ -1,4 +1,7 @@
 #include "stdafx.h"
+
+#include <cstdio>
+
 #include "File.h"
 #include "FileOutputStream.h"
 
@@ -11,7 +14,7 @@
 //
 //Parameters:
 //file - the file to be opened for writing.
-FileOutputStream::FileOutputStream(const File &file) : m_fileHandle( INVALID_HANDLE_VALUE )
+FileOutputStream::FileOutputStream(const File &file) : m_fileHandle( nullptr )
 {
 	if( file.exists() && file.isDirectory())
 	{
@@ -19,39 +22,23 @@ FileOutputStream::FileOutputStream(const File &file) : m_fileHandle( INVALID_HAN
 		return;
 	}
 
-#ifdef _DURANGO
-	m_fileHandle = CreateFile(
-		file.getPath().c_str() , // file name
-		GENERIC_WRITE, // access mode
-		0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-		nullptr, // Unused
-		OPEN_ALWAYS , // how to create
-		FILE_ATTRIBUTE_NORMAL , // file attributes
-		nullptr // Unsupported
-		);
-#else
-	m_fileHandle = CreateFile(
-		wstringtofilename(file.getPath()) , // file name
-		GENERIC_WRITE, // access mode
-		0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-		nullptr, // Unused
-		OPEN_ALWAYS , // how to create
-		FILE_ATTRIBUTE_NORMAL , // file attributes
-		nullptr // Unsupported
-		);
-#endif
-
-	if( m_fileHandle == INVALID_HANDLE_VALUE )
+	const char *pchFilename=wstringtofilename(file.getPath());
+	m_fileHandle = std::fopen(pchFilename, "r+b");
+	if( m_fileHandle == nullptr )
 	{
-		DWORD error = GetLastError();
+		m_fileHandle = std::fopen(pchFilename, "w+b");
+	}
+
+	if( m_fileHandle == nullptr )
+	{
 		// TODO 4J Stu - Any form of error/exception handling
 	}
 }
 
 FileOutputStream::~FileOutputStream()
 {
-	if( m_fileHandle != INVALID_HANDLE_VALUE )
-		CloseHandle( m_fileHandle );
+	if( m_fileHandle != nullptr )
+		std::fclose( m_fileHandle );
 }
 
 //Writes the specified byte to this file output stream. Implements the write method of OutputStream.
@@ -59,25 +46,18 @@ FileOutputStream::~FileOutputStream()
 //b - the byte to be written.
 void FileOutputStream::write(unsigned int b)
 {	
-	DWORD numberOfBytesWritten;
+	if( m_fileHandle == nullptr )
+	{
+		return;
+	}
 
 	byte value = static_cast<byte>(b);
 
-	BOOL result = WriteFile(
-		m_fileHandle, // handle to file
-		&value, // data buffer
-		1, // number of bytes to write
-		&numberOfBytesWritten, // number of bytes written
-		nullptr // overlapped buffer
-		);
+	int result = std::fputc(value, m_fileHandle);
 
-	if( result == 0 )
+	if( result == EOF )
 	{
 		// TODO 4J Stu - Some kind of error handling
-	}
-	else if( numberOfBytesWritten == 0 )
-	{
-		// File pointer is past the end of the file
 	}
 }
 
@@ -86,23 +66,21 @@ void FileOutputStream::write(unsigned int b)
 //b - the data.
 void FileOutputStream::write(byteArray b)
 {
-	DWORD numberOfBytesWritten;
+	if( m_fileHandle == nullptr || b.length == 0 )
+	{
+		return;
+	}
 
-	BOOL result = WriteFile(
-		m_fileHandle, // handle to file
-		&b.data, // data buffer
-		b.length, // number of bytes to write
-		&numberOfBytesWritten, // number of bytes written
-		nullptr // overlapped buffer
+	size_t numberOfBytesWritten = std::fwrite(
+		b.data,
+		1,
+		b.length,
+		m_fileHandle
 		);
 
-	if( result == 0 )
+	if( numberOfBytesWritten != b.length  )
 	{
 		// TODO 4J Stu - Some kind of error handling
-	}
-	else if( numberOfBytesWritten == 0 || numberOfBytesWritten != b.length  )
-	{
-		// File pointer is past the end of the file
 	}
 }
 
@@ -116,23 +94,21 @@ void FileOutputStream::write(byteArray b, unsigned int offset, unsigned int leng
 	// 4J Stu - We don't want to write any more than the array buffer holds
 	assert( length <= ( b.length - offset ) );
 
-	DWORD numberOfBytesWritten;
+	if( m_fileHandle == nullptr || length == 0 )
+	{
+		return;
+	}
 
-	BOOL result = WriteFile(
-		m_fileHandle, // handle to file
-		&b[offset], // data buffer
-		length, // number of bytes to write
-		&numberOfBytesWritten, // number of bytes written
-		nullptr // overlapped buffer
+	size_t numberOfBytesWritten = std::fwrite(
+		&b[offset],
+		1,
+		length,
+		m_fileHandle
 		);
 
-	if( result == 0 )
+	if( numberOfBytesWritten != length  )
 	{
 		// TODO 4J Stu - Some kind of error handling
-	}
-	else if( numberOfBytesWritten == 0 || numberOfBytesWritten != length  )
-	{
-		// File pointer is past the end of the file
 	}
 }
 //
@@ -141,13 +117,18 @@ void FileOutputStream::write(byteArray b, unsigned int offset, unsigned int leng
 //If this stream has an associated channel then the channel is closed as well.
 void FileOutputStream::close()
 {
-	BOOL result = CloseHandle( m_fileHandle );
+	if( m_fileHandle == nullptr )
+	{
+		return;
+	}
 
-	if( result == 0 )
+	int result = std::fclose( m_fileHandle );
+
+	if( result != 0 )
 	{
 		// TODO 4J Stu - Some kind of error handling
 	}
 
 	// Stop the dtor from trying to close it again
-	m_fileHandle = INVALID_HANDLE_VALUE;
+	m_fileHandle = nullptr;
 }

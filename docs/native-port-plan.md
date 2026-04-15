@@ -216,6 +216,10 @@ Direction:
   `NativeDesktopGetClientAreaSize`, and `LevelGenerationOptions` reads native
   desktop game-rule/base-save bytes through `NativeDesktopReadFileBytes`
   instead of direct Win32-shaped file handles)
+- keep native world stream primitives on native file handles
+  (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
+  instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/
+  `WriteFile` paths)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

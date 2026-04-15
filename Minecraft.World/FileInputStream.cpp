@@ -1,5 +1,8 @@
 #include "stdafx.h"
 
+#include <cstdio>
+#include <limits>
+
 #include "File.h"
 #include "FileInputStream.h"
 
@@ -17,31 +20,12 @@
 //opened for reading.
 //SecurityException - if a security manager exists and its checkRead method denies read access to the file.
 FileInputStream::FileInputStream(const File &file)
+	: m_fileHandle(nullptr)
 {
 	const char *pchFilename=wstringtofilename(file.getPath());
-#ifdef _UNICODE
-	m_fileHandle = CreateFile(
-		file.getPath().c_str(), // file name
-		GENERIC_READ, // access mode
-		0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-		nullptr, // Unused
-		OPEN_EXISTING , // how to create // TODO 4J Stu - Assuming that the file already exists if we are opening to read from it
-		FILE_FLAG_SEQUENTIAL_SCAN, // file attributes
-		nullptr // Unsupported
-		);
-#else
-	m_fileHandle = CreateFile(
-		pchFilename, // file name
-		GENERIC_READ, // access mode
-		0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-		nullptr, // Unused
-		OPEN_EXISTING , // how to create // TODO 4J Stu - Assuming that the file already exists if we are opening to read from it
-		FILE_FLAG_SEQUENTIAL_SCAN, // file attributes
-		nullptr // Unsupported
-		);
-#endif
+	m_fileHandle = std::fopen(pchFilename, "rb");
 
-	if( m_fileHandle == INVALID_HANDLE_VALUE )
+	if( m_fileHandle == nullptr )
 	{
 		// TODO 4J Stu - Any form of error/exception handling
 		//__debugbreak();
@@ -51,8 +35,8 @@ FileInputStream::FileInputStream(const File &file)
 
 FileInputStream::~FileInputStream()
 {
-	if( m_fileHandle != INVALID_HANDLE_VALUE )
-		CloseHandle( m_fileHandle );
+	if( m_fileHandle != nullptr )
+		std::fclose( m_fileHandle );
 }
 
 //Reads a byte of data from this input stream. This method blocks if no input is yet available.
@@ -60,26 +44,16 @@ FileInputStream::~FileInputStream()
 //the next byte of data, or -1 if the end of the file is reached.
 int FileInputStream::read()
 {
-	byte byteRead = 0;
-	DWORD numberOfBytesRead;
+	int byteRead = std::fgetc(m_fileHandle);
 
-	BOOL bSuccess = ReadFile(
-		m_fileHandle, // handle to file
-		&byteRead, // data buffer
-		1, // number of bytes to read
-		&numberOfBytesRead, // number of bytes read
-		nullptr // overlapped buffer
-		);
+	if( byteRead == EOF )
+	{
+		if( std::ferror(m_fileHandle) != 0 )
+		{
+			// TODO 4J Stu - Some kind of error handling
+			app.FatalLoadError();
+		}
 
-	if( bSuccess==FALSE )
-	{
-		// TODO 4J Stu - Some kind of error handling
-		app.FatalLoadError();
-		//return -1;
-	}
-	else if( numberOfBytesRead == 0 )
-	{
-		// File pointer is past the end of the file
 		return -1;
 	}
 
@@ -93,29 +67,31 @@ int FileInputStream::read()
 //the total number of bytes read into the buffer, or -1 if there is no more data because the end of the file has been reached.
 int FileInputStream::read(byteArray b)
 {
-	DWORD numberOfBytesRead;
+	if( b.length == 0 )
+	{
+		return 0;
+	}
 
-	BOOL bSuccess = ReadFile(
-		m_fileHandle, // handle to file
-		b.data, // data buffer
-		b.length, // number of bytes to read
-		&numberOfBytesRead, // number of bytes read
-		nullptr // overlapped buffer
+	size_t numberOfBytesRead = std::fread(
+		b.data,
+		1,
+		b.length,
+		m_fileHandle
 		);
 
-	if( bSuccess==FALSE )
+	if( numberOfBytesRead == 0 )
 	{
-		// TODO 4J Stu - Some kind of error handling
-		app.FatalLoadError();
-		//return -1;
-	}
-	else if( numberOfBytesRead == 0 )
-	{
+		if( std::ferror(m_fileHandle) != 0 )
+		{
+			// TODO 4J Stu - Some kind of error handling
+			app.FatalLoadError();
+		}
+
 		// File pointer is past the end of the file
 		return -1;
 	}
 
-	return numberOfBytesRead;
+	return static_cast<int>(numberOfBytesRead);
 }
 
 //Reads up to len bytes of data from this input stream into an array of bytes. If len is not zero, the method blocks until some input
@@ -131,50 +107,52 @@ int FileInputStream::read(byteArray b, unsigned int offset, unsigned int length)
 	// 4J Stu - We don't want to read any more than the array buffer can hold
 	assert( length <= ( b.length - offset ) );
 
-	DWORD numberOfBytesRead;
+	if( length == 0 )
+	{
+		return 0;
+	}
 
-	BOOL bSuccess = ReadFile(
-		m_fileHandle, // handle to file
-		&b[offset], // data buffer
-		length, // number of bytes to read
-		&numberOfBytesRead, // number of bytes read
-		nullptr // overlapped buffer
+	size_t numberOfBytesRead = std::fread(
+		&b[offset],
+		1,
+		length,
+		m_fileHandle
 		);
 
-	if( bSuccess==FALSE )
+	if( numberOfBytesRead == 0 )
 	{
-		// TODO 4J Stu - Some kind of error handling
-		app.FatalLoadError();
-		//return -1;
-	}
-	else if( numberOfBytesRead == 0 )
-	{
+		if( std::ferror(m_fileHandle) != 0 )
+		{
+			// TODO 4J Stu - Some kind of error handling
+			app.FatalLoadError();
+		}
+
 		// File pointer is past the end of the file
 		return -1;
 	}
 
-	return numberOfBytesRead;
+	return static_cast<int>(numberOfBytesRead);
 }
 
 //Closes this file input stream and releases any system resources associated with the stream.
 //If this stream has an associated channel then the channel is closed as well.
 void FileInputStream::close()
 {
-	if(m_fileHandle==INVALID_HANDLE_VALUE)
+	if(m_fileHandle==nullptr)
 	{
-		//printf("\n\nFileInputStream::close - TRYING TO CLOSE AN INVALID FILE HANDLE\n\n");
+		//printf("\n\nFileInputStream::close - TRYING TO CLOSE AN INVALID FILE\n\n");
 		return;
 	}
 
-	BOOL result = CloseHandle( m_fileHandle );
+	int result = std::fclose( m_fileHandle );
 
-	if( result == 0 )
+	if( result != 0 )
 	{
 		// TODO 4J Stu - Some kind of error handling
 	}
 
 	// Stop the dtor from trying to close it again
-	m_fileHandle = INVALID_HANDLE_VALUE;
+	m_fileHandle = nullptr;
 }
 
 
@@ -187,18 +165,28 @@ void FileInputStream::close()
 //the actual number of bytes skipped.
 int64_t FileInputStream::skip(int64_t n)
 {
-#ifdef _XBOX
-	LARGE_INTEGER li;
-	li.QuadPart = n;
-	li.LowPart = SetFilePointer(m_fileHandle, li.LowPart, &li.HighPart, FILE_CURRENT);
-
-	if (li.LowPart == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+	if( n <= 0 ||
+		n > static_cast<int64_t>(std::numeric_limits<long>::max()) )
 	{
-		li.QuadPart = 0;
+		return 0;
 	}
 
-	return li.QuadPart;
-#else
-	return 0;
-#endif
+	long initialPos = std::ftell(m_fileHandle);
+	if( initialPos < 0 )
+	{
+		return 0;
+	}
+
+	if( std::fseek(m_fileHandle, static_cast<long>(n), SEEK_CUR) != 0 )
+	{
+		return 0;
+	}
+
+	long finalPos = std::ftell(m_fileHandle);
+	if( finalPos < initialPos )
+	{
+		return 0;
+	}
+
+	return static_cast<int64_t>(finalPos - initialPos);
 }
