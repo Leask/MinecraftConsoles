@@ -6,6 +6,8 @@
 #include "../../TexturePackRepository.h"
 #include "../../Options.h"
 #include "../../MinecraftServer.h"
+#include "../../NativeDesktop/NativeDesktopClientSaveControl.h"
+#include "../../NativeDesktop/NativeDesktopClientStorageControl.h"
 #include "../../../Minecraft.World/LevelSettings.h"
 #include "../../../Minecraft.World/StringHelpers.h"
 #include "../../DLCTexturePack.h"
@@ -872,7 +874,7 @@ void UIScene_LoadMenu::StartSharedLaunchFlow()
 #endif
 
 #if defined _XBOX_ONE || defined __ORBIS__
-				StorageManager.SetSaveDisabled(true);
+				NativeDesktopSetSavesDisabled(true);
 #endif
 				return;
 			}
@@ -882,7 +884,7 @@ void UIScene_LoadMenu::StartSharedLaunchFlow()
 
 #if defined _XBOX_ONE || defined __ORBIS__
 	app.SetGameHostOption(eGameHostOption_DisableSaving, m_MoreOptionsParams.bDisableSaving?1:0);
-	StorageManager.SetSaveDisabled(m_MoreOptionsParams.bDisableSaving);
+	NativeDesktopSetSavesDisabled(m_MoreOptionsParams.bDisableSaving);
 
 	int newWorldSize = 0;
 	int newHellScale = 0;
@@ -1122,8 +1124,8 @@ void UIScene_LoadMenu::LaunchGame(void)
 						if(eLoadStatus==C4JStorage::ELoadGame_DeviceRemoved)
 						{
 							// disable saving 
-							StorageManager.SetSaveDisabled(true);
-							StorageManager.SetSaveDeviceSelected(m_iPad,false);
+							NativeDesktopSetSavesDisabled(true);
+							NativeDesktopSetSaveDeviceSelected(m_iPad,false);
 							UINT uiIDA[1];
 							uiIDA[0]=IDS_OK;
 							ui.RequestErrorMessage(IDS_STORAGEDEVICEPROBLEM_TITLE, IDS_FAILED_TO_LOADSAVE_TEXT, uiIDA, 1, m_iPad,&CScene_LoadGameSettings::DeviceRemovedDialogReturned,this);
@@ -1164,8 +1166,8 @@ void UIScene_LoadMenu::LaunchGame(void)
 			if(eLoadStatus==C4JStorage::ELoadGame_DeviceRemoved)
 			{
 				// disable saving 
-				StorageManager.SetSaveDisabled(true);
-				StorageManager.SetSaveDeviceSelected(m_iPad,false);
+				NativeDesktopSetSavesDisabled(true);
+				NativeDesktopSetSaveDeviceSelected(m_iPad,false);
 				UINT uiIDA[1];
 				uiIDA[0]=IDS_OK;
 				ui.RequestErrorMessage(IDS_STORAGEDEVICEPROBLEM_TITLE, IDS_FAILED_TO_LOADSAVE_TEXT, uiIDA, 1, m_iPad,&CScene_LoadGameSettings::DeviceRemovedDialogReturned,this);
@@ -1224,8 +1226,8 @@ int UIScene_LoadMenu::ConfirmLoadReturned(void *pParam,int iPad,C4JStorage::EMes
 			if(eLoadStatus==C4JStorage::ELoadGame_DeviceRemoved)
 			{
 				// disable saving 
-				StorageManager.SetSaveDisabled(true);
-				StorageManager.SetSaveDeviceSelected(m_iPad,false);
+				NativeDesktopSetSavesDisabled(true);
+				NativeDesktopSetSaveDeviceSelected(m_iPad,false);
 				UINT uiIDA[1];
 				uiIDA[0]=IDS_OK;
 				ui.RequestErrorMessage(IDS_STORAGEDEVICEPROBLEM_TITLE, IDS_FAILED_TO_LOADSAVE_TEXT, uiIDA, 1, m_iPad,&CScene_LoadGameSettings::DeviceRemovedDialogReturned,this);
@@ -1553,14 +1555,14 @@ void UIScene_LoadMenu::StartGameFromSave(UIScene_LoadMenu* pClass, DWORD dwLocal
 	if(pClass->m_levelGen == nullptr)
 	{
 		INT saveOrCheckpointId = 0;
-		bool validSave = StorageManager.GetSaveUniqueNumber(&saveOrCheckpointId);
+		bool validSave = NativeDesktopGetSaveUniqueNumber(&saveOrCheckpointId);
 		TelemetryManager->RecordLevelResume(pClass->m_iPad, eSen_FriendOrMatch_Playing_With_Invited_Friends, eSen_CompeteOrCoop_Coop_and_Competitive, app.GetGameSettings(pClass->m_iPad,eGameSetting_Difficulty), app.GetLocalPlayerCount(), g_NetworkManager.GetOnlinePlayerCount(), saveOrCheckpointId);
 	}
 	else
 	{		
-		StorageManager.ResetSaveData();
+		NativeDesktopResetSaveData();
 		// Make our next save default to the name of the level
-		StorageManager.SetSaveTitle(pClass->m_levelGen->getDefaultSaveName().c_str());
+		NativeDesktopSetSaveTitle(pClass->m_levelGen->getDefaultSaveName().c_str());
 	}
 
 	bool isClientSide = ProfileManager.IsSignedInLive(ProfileManager.GetPrimaryPad()) && pClass->m_MoreOptionsParams.bOnlineGame;

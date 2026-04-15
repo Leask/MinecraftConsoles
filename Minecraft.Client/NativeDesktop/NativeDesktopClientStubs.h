@@ -3315,11 +3315,7 @@ public:
     }
     bool GetSaveUniqueNumber(INT* value)
     {
-        if (value != nullptr)
-        {
-            *value = 0;
-        }
-        return true;
+        return NativeDesktopGetSaveUniqueNumber(value);
     }
     bool GetSaveUniqueFilename(char* name)
     {

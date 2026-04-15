@@ -8,6 +8,7 @@ bool NativeDesktopSavesAreIdle();
 void NativeDesktopResetSaveData();
 void NativeDesktopSetSaveTitle(const wchar_t* title);
 void NativeDesktopSetSaveTitleExtraFileSuffix(const wchar_t* suffix);
+bool NativeDesktopGetSaveUniqueNumber(int* value);
 unsigned int NativeDesktopGetSaveDataSize();
 void NativeDesktopCopySaveData(void* data, unsigned int* bytes);
 void* NativeDesktopAllocateSaveData(unsigned int bytes);

@@ -64,6 +64,15 @@ void NativeDesktopSetSaveTitleExtraFileSuffix(const wchar_t* suffix)
     g_saveTitleExtraFileSuffix = (suffix != nullptr) ? suffix : L"";
 }
 
+bool NativeDesktopGetSaveUniqueNumber(int* value)
+{
+    if (value != nullptr)
+    {
+        *value = 0;
+    }
+    return true;
+}
+
 unsigned int NativeDesktopGetSaveDataSize()
 {
     std::lock_guard<std::mutex> lock(g_saveMutex);

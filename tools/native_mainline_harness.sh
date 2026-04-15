@@ -287,13 +287,23 @@ run_native_only_contract() {
 
         if rg -n -S "StorageManager\\.(ResetSaveData|SetSaveTitle)\\(" \
             Minecraft.Client/NativeDesktop/NativeDesktopClientRuntime.cpp \
+            Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
             > "$log_root/native-client-save-identity-storage.txt"; then
             echo "Native local-game save identity still uses StorageManager" >&2
             cat "$log_root/native-client-save-identity-storage.txt" >&2
             exit 1
         fi
 
-        rg -n -S "NativeDesktopResetSaveData|NativeDesktopSetSaveTitle" \
+        if rg -n -S "StorageManager\\.GetSaveUniqueNumber\\(" \
+            Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
+            > "$log_root/native-client-save-unique-storage.txt"; then
+            echo "Native load-menu save telemetry still uses StorageManager" >&2
+            cat "$log_root/native-client-save-unique-storage.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopResetSaveData|NativeDesktopSetSaveTitle|NativeDesktopGetSaveUniqueNumber" \
+            Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
             Minecraft.Client/NativeDesktop/NativeDesktopClientRuntime.cpp \
             Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \
             >/dev/null
@@ -302,6 +312,7 @@ run_native_only_contract() {
             Minecraft.Client/ClientConnection.cpp \
             Minecraft.Client/Common/Consoles_App.cpp \
             Minecraft.Client/Common/Network/GameNetworkManager.cpp \
+            Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
             Minecraft.Client/MinecraftServer.cpp \
             > "$log_root/native-client-save-control-storage.txt"; then
             echo "Native save-control paths still use StorageManager" >&2
@@ -320,6 +331,7 @@ run_native_only_contract() {
         if rg -n -S "StorageManager\\.(GetGameDefinedProfileData|GetDashboardProfileSettings|WriteToProfile|ForceQueuedProfileWrites|ReadFromProfile|SetSaveDeviceSelected|GetSaveDeviceSelected|SetSaveDevice)\\(" \
             Minecraft.Client/Common/Consoles_App.cpp \
             Minecraft.Client/Common/Tutorial/Tutorial.cpp \
+            Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
             Minecraft.Client/StatsCounter.cpp \
             > "$log_root/native-client-app-profile-storage.txt"; then
             echo "Native app profile/save-device paths still use StorageManager" >&2

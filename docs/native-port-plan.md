@@ -234,7 +234,10 @@ Direction:
   sign-out save-device clearing now route through native profile/storage
   helpers, and `StatsCounter` plus tutorial progress now read/write profile
   data through the same native profile helper instead of console
-  `StorageManager` profile calls)
+  `StorageManager` profile calls; `UIScene_LoadMenu` save-disabled,
+  save-device, new-world save-title/reset, and save telemetry id paths now
+  use the native save/profile owners instead of direct `StorageManager`
+  state calls)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/
