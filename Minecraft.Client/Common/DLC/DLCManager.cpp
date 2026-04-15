@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include <algorithm>
+#include <cstdio>
 #include <cstring>
+#include <limits>
 #include "DLCManager.h"
 #include "DLCPack.h"
 #include "DLCFile.h"
@@ -11,6 +13,14 @@
 
 namespace
 {
+	enum class NativeReadResult
+	{
+		Ok,
+		Missing,
+		TooLarge,
+		Error,
+	};
+
 	unsigned int SwapUInt32(unsigned int value)
 	{
 		return ((value & 0x000000FF) << 24) |
@@ -33,6 +43,67 @@ namespace
 			char16_t c = buffer[i];
 			buffer[i] = static_cast<char16_t>((c >> 8) | (c << 8));
 		}
+	}
+
+	string NormalizeNativePath(string path)
+	{
+		std::replace(path.begin(), path.end(), '\\', '/');
+		return path;
+	}
+
+	NativeReadResult ReadNativeDLCFileBytes(
+		const string &path,
+		PBYTE *outData,
+		DWORD *outLength)
+	{
+		if(outData == nullptr || outLength == nullptr)
+		{
+			return NativeReadResult::Error;
+		}
+
+		*outData = nullptr;
+		*outLength = 0;
+
+		const string nativePath = NormalizeNativePath(path);
+		FILE *file = std::fopen(nativePath.c_str(), "rb");
+		if(file == nullptr)
+		{
+			return NativeReadResult::Missing;
+		}
+
+		NativeReadResult result = NativeReadResult::Error;
+		if(std::fseek(file, 0, SEEK_END) == 0)
+		{
+			const long fileSize = std::ftell(file);
+			if(fileSize >= 0 &&
+				static_cast<unsigned long>(fileSize) >
+					std::numeric_limits<DWORD>::max())
+			{
+				result = NativeReadResult::TooLarge;
+			}
+			else if(fileSize >= 0 && std::fseek(file, 0, SEEK_SET) == 0)
+			{
+				const DWORD byteCount = static_cast<DWORD>(fileSize);
+				PBYTE data = new BYTE[byteCount];
+				const std::size_t bytesRead =
+					byteCount == 0
+						? 0
+						: std::fread(data, 1, byteCount, file);
+				if(bytesRead == byteCount)
+				{
+					*outData = data;
+					*outLength = byteCount;
+					result = NativeReadResult::Ok;
+				}
+				else
+				{
+					delete [] data;
+				}
+			}
+		}
+
+		std::fclose(file);
+		return result;
 	}
 }
 
@@ -357,39 +428,18 @@ bool DLCManager::readDLCDataFile(DWORD &dwFilesProcessed, const string &path, DL
 	}
 	else if (fromArchive) return false;
 
-#ifdef _WINDOWS64
-	string finalPath = StorageManager.GetMountedPath(path.c_str());
-	if(finalPath.size() == 0) finalPath = path;
-	HANDLE file = CreateFile(finalPath.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-#elif defined(_DURANGO)
-	wstring finalPath = StorageManager.GetMountedPath(wPath.c_str());
-	if(finalPath.size() == 0) finalPath = wPath;
-	HANDLE file = CreateFile(finalPath.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-#else
-	HANDLE file = CreateFile(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-#endif
-	if( file == INVALID_HANDLE_VALUE )
+	PBYTE pbData = nullptr;
+	DWORD bytesRead = 0;
+	const NativeReadResult readResult =
+		ReadNativeDLCFileBytes(path, &pbData, &bytesRead);
+	if( readResult == NativeReadResult::Missing )
 	{
-		DWORD error = GetLastError();
-		app.DebugPrintf("Failed to open DLC data file with error code %d (%x)\n", error, error);
+		app.DebugPrintf("Failed to open DLC data file %s\n", path.c_str());
 		if( dwFilesProcessed == 0 ) removePack(pack);
 		assert(false);
 		return false;
 	}
-
-	DWORD bytesRead,dwFileSize = GetFileSize(file,nullptr);
-	PBYTE pbData =  (PBYTE) new BYTE[dwFileSize];
-	BOOL bSuccess = ReadFile(file,pbData,dwFileSize,&bytesRead,nullptr);
-	if(bSuccess==FALSE)
-	{
-		// need to treat the file as corrupt, and flag it, so can't call fatal error
-		//app.FatalLoadError();
-	}
-	else
-	{
-		CloseHandle(file);
-	}
-	if(bSuccess==FALSE)
+	if( readResult != NativeReadResult::Ok )
 	{
 		// Corrupt or some other error. In any case treat as corrupt
 		app.DebugPrintf("Failed to read %s from DLC content package\n", path.c_str());
@@ -609,41 +659,19 @@ bool DLCManager::processDLCDataFile(DWORD &dwFilesProcessed, PBYTE pbData, DWORD
 DWORD DLCManager::retrievePackIDFromDLCDataFile(const string &path, DLCPack *pack)
 {
 	DWORD packId = 0;
-	wstring wPath = convStringToWstring(path);
 
-#ifdef _WINDOWS64
-	string finalPath = StorageManager.GetMountedPath(path.c_str());
-	if(finalPath.size() == 0) finalPath = path;
-	HANDLE file = CreateFile(finalPath.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-#elif defined(_DURANGO)
-	wstring finalPath = StorageManager.GetMountedPath(wPath.c_str());
-	if(finalPath.size() == 0) finalPath = wPath;
-	HANDLE file = CreateFile(finalPath.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-#else
-	HANDLE file = CreateFile(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-#endif
-	if( file == INVALID_HANDLE_VALUE )
+	PBYTE pbData = nullptr;
+	DWORD bytesRead = 0;
+	const NativeReadResult readResult =
+		ReadNativeDLCFileBytes(path, &pbData, &bytesRead);
+	if( readResult == NativeReadResult::Missing )
 	{
 		return 0;
 	}
-
-	DWORD bytesRead,dwFileSize = GetFileSize(file,nullptr);
-	PBYTE pbData =  (PBYTE) new BYTE[dwFileSize];
-	BOOL bSuccess = ReadFile(file,pbData,dwFileSize,&bytesRead,nullptr);
-	if(bSuccess==FALSE)
-	{
-		// need to treat the file as corrupt, and flag it, so can't call fatal error
-		//app.FatalLoadError();
-	}
-	else
-	{
-		CloseHandle(file);
-	}
-	if(bSuccess==FALSE)
+	if( readResult != NativeReadResult::Ok )
 	{
 		// Corrupt or some other error. In any case treat as corrupt
 		app.DebugPrintf("Failed to read %s from DLC content package\n", path.c_str());
-		delete [] pbData;
 		return 0;
 	}
 	packId=retrievePackID(pbData, bytesRead, pack);
