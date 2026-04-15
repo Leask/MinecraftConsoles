@@ -1,3 +1,5 @@
+#include "../stdafx.h"
+
 #include "NativeDesktopClientStorageControl.h"
 
 #include <atomic>
@@ -33,6 +35,25 @@ void NativeDesktopSetSystemUIDisplaying(bool displaying)
 bool NativeDesktopIsSystemUIDisplaying()
 {
     return g_systemUIDisplaying.load(std::memory_order_acquire);
+}
+
+void* NativeDesktopGetGameDefinedProfileData(int pad)
+{
+    return ProfileManager.GetGameDefinedProfileData(pad);
+}
+
+void NativeDesktopWriteProfile(int pad, bool gameDefinedDataChanged,
+                               bool override5MinuteTimer)
+{
+    ProfileManager.WriteToProfile(
+        pad,
+        gameDefinedDataChanged,
+        override5MinuteTimer);
+}
+
+void NativeDesktopForceQueuedProfileWrites(int pad)
+{
+    ProfileManager.ForceQueuedProfileWrites(pad);
 }
 
 void NativeDesktopSetSaveDeviceSelected(unsigned int pad, bool selected)

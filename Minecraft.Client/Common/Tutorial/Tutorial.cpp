@@ -18,6 +18,9 @@
 #include "TutorialConstraints.h"
 #include "TutorialHints.h"
 #include "Common/UI/UI.h"
+#if defined _NATIVE_DESKTOP
+#include "../../NativeDesktop/NativeDesktopClientStorageControl.h"
+#endif
 
 vector<int> Tutorial::s_completableTasks;
 
@@ -29,6 +32,20 @@ int Tutorial::m_iTutorialExtraReminderTime = 13000;
 int Tutorial::m_iTutorialReminderTime = m_iTutorialDisplayMessageTime + m_iTutorialExtraReminderTime;
 int Tutorial::m_iTutorialConstraintDelayRemoveTicks = 15;
 int Tutorial::m_iTutorialFreezeTimeValue = 8000;
+
+namespace
+{
+	GAME_SETTINGS *GetTutorialProfileGameSettings(int iPad)
+	{
+#if defined _NATIVE_DESKTOP
+		return static_cast<GAME_SETTINGS *>(
+			NativeDesktopGetGameDefinedProfileData(iPad));
+#else
+		return static_cast<GAME_SETTINGS *>(
+			ProfileManager.GetGameDefinedProfileData(iPad));
+#endif
+	}
+}
 
 bool Tutorial::PopupMessageDetails::isSameContent(PopupMessageDetails *other)
 {
@@ -1171,11 +1188,7 @@ Tutorial::~Tutorial()
 
 void Tutorial::debugResetPlayerSavedProgress(int iPad)
 {
-#if ( defined  __PS3__ || defined __ORBIS__ || defined _DURANGO || defined __PSVITA__)
-	GAME_SETTINGS *pGameSettings = (GAME_SETTINGS *)StorageManager.GetGameDefinedProfileData(iPad);
-#else
-	GAME_SETTINGS *pGameSettings = static_cast<GAME_SETTINGS *>(ProfileManager.GetGameDefinedProfileData(iPad));
-#endif
+	GAME_SETTINGS *pGameSettings = GetTutorialProfileGameSettings(iPad);
 	ZeroMemory( pGameSettings->ucTutorialCompletion, TUTORIAL_PROFILE_STORAGE_BYTES );
 	pGameSettings->uiSpecialTutorialBitmask = 0;
 }
@@ -1200,11 +1213,7 @@ void Tutorial::setCompleted( int completableId )
 	if( completableIndex >= 0 && completableIndex < TUTORIAL_PROFILE_STORAGE_BITS )
 	{
 		// Set the bit for this position
-#if (defined __PS3__ || defined __ORBIS__ || defined _DURANGO  || defined __PSVITA__)
-		GAME_SETTINGS *pGameSettings = (GAME_SETTINGS *)StorageManager.GetGameDefinedProfileData(m_iPad);
-#else
-		GAME_SETTINGS *pGameSettings = static_cast<GAME_SETTINGS *>(ProfileManager.GetGameDefinedProfileData(m_iPad));
-#endif
+		GAME_SETTINGS *pGameSettings = GetTutorialProfileGameSettings(m_iPad);
 		int arrayIndex = completableIndex >> 3;
 		int bitIndex = 7 - (completableIndex % 8);
 		pGameSettings->ucTutorialCompletion[arrayIndex] |= 1<<bitIndex;
@@ -1233,11 +1242,7 @@ bool Tutorial::getCompleted( int completableId )
 	{
 		// Read the bit for this position
 		//Retrieve the data pointer from the profile
-#if ( defined __PS3__ || defined __ORBIS__ || defined _DURANGO  || defined __PSVITA__)
-		GAME_SETTINGS *pGameSettings = (GAME_SETTINGS *)StorageManager.GetGameDefinedProfileData(m_iPad);
-#else
-		GAME_SETTINGS *pGameSettings = static_cast<GAME_SETTINGS *>(ProfileManager.GetGameDefinedProfileData(m_iPad));
-#endif
+		GAME_SETTINGS *pGameSettings = GetTutorialProfileGameSettings(m_iPad);
 		int arrayIndex = completableIndex >> 3;
 		int bitIndex = 7 - (completableIndex % 8);
 		return (pGameSettings->ucTutorialCompletion[arrayIndex] & 1<<bitIndex) == (1<<bitIndex);

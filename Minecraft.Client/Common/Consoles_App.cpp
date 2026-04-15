@@ -890,20 +890,6 @@ namespace
         return settings;
     }
 
-    void NativeDesktopWriteProfile(int pad, bool gameDefinedDataChanged,
-                                   bool override5MinuteTimer)
-    {
-        ProfileManager.WriteToProfile(
-            pad,
-            gameDefinedDataChanged,
-            override5MinuteTimer);
-    }
-
-    void NativeDesktopForceQueuedProfileWrites(int pad = XUSER_INDEX_ANY)
-    {
-        ProfileManager.ForceQueuedProfileWrites(pad);
-    }
-
 }
 #endif
 
@@ -3295,7 +3281,7 @@ void CMinecraftApp::HandleXuiActions(void)
 
 				// Since the player forced the exit, let's flush any profile writes, and hope we're not breaking TCR 136...
 #if (defined __PS3__ || defined __ORBIS__  || defined _DURANGO  || defined __PSVITA__)
-				NativeDesktopForceQueuedProfileWrites();
+				NativeDesktopForceQueuedProfileWrites(XUSER_INDEX_ANY);
 				LeaderboardManager::Instance()->OpenSession();
 				for (int j = 0; j < XUSER_MAX_COUNT; j++)
 				{
@@ -3307,7 +3293,7 @@ void CMinecraftApp::HandleXuiActions(void)
 				}
 				LeaderboardManager::Instance()->CloseSession();
 #elif (defined _XBOX)
-				NativeDesktopForceQueuedProfileWrites();
+				NativeDesktopForceQueuedProfileWrites(XUSER_INDEX_ANY);
 #endif
 
 				// 4J-PB - cancel any possible string verifications queued with LIVE

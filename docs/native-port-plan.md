@@ -232,7 +232,9 @@ Direction:
   `ClientConnection`, `GameNetworkManager`, or native desktop shutdown
   handling; `Consoles_App` profile writes, queued profile flushes, and
   sign-out save-device clearing now route through native profile/storage
-  helpers instead of console `StorageManager` profile/save-device calls)
+  helpers, and `StatsCounter` plus tutorial progress now read/write profile
+  data through the same native profile helper instead of console
+  `StorageManager` profile calls)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/

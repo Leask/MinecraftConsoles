@@ -10,6 +10,9 @@
 #include "../Minecraft.World/net.minecraft.world.item.h"
 
 #include "../Minecraft.Client/Common/Leaderboards/LeaderboardManager.h"
+#if defined _NATIVE_DESKTOP
+#include "NativeDesktop/NativeDesktopClientStorageControl.h"
+#endif
 
 Stat** StatsCounter::LARGE_STATS[] = {
 	&Stats::walkOneM,
@@ -23,6 +26,29 @@ Stat** StatsCounter::LARGE_STATS[] = {
 };
 
 unordered_map<Stat*, int> StatsCounter::statBoards;
+
+namespace
+{
+    PBYTE GetStatsProfileData(int player)
+    {
+#if defined _NATIVE_DESKTOP
+        return static_cast<PBYTE>(
+            NativeDesktopGetGameDefinedProfileData(player));
+#else
+        return static_cast<PBYTE>(
+            ProfileManager.GetGameDefinedProfileData(player));
+#endif
+    }
+
+    void WriteStatsProfile(int player, bool force)
+    {
+#if defined _NATIVE_DESKTOP
+        NativeDesktopWriteProfile(player, true, force);
+#else
+        ProfileManager.WriteToProfile(player, true, force);
+#endif
+    }
+}
 
 StatsCounter::StatsCounter()
 {
@@ -214,11 +240,7 @@ void StatsCounter::save(int player, bool force)
 	assert( uiTotalStatsSize <= (CConsoleMinecraftApp::GAME_DEFINED_PROFILE_DATA_BYTES-sizeof(GAME_SETTINGS)) );
 
 	//Retrieve the data pointer from the profile
-#if ( defined __PS3__ || defined __ORBIS__ || defined _DURANGO || defined __PSVITA__ )
-	PBYTE pbData = (PBYTE)StorageManager.GetGameDefinedProfileData(player);
-#else
-	PBYTE pbData = static_cast<PBYTE>(ProfileManager.GetGameDefinedProfileData(player));
-#endif
+	PBYTE pbData = GetStatsProfileData(player);
 	pbData+=sizeof(GAME_SETTINGS);
 	
 	//Pointer to current position in stat array
@@ -272,11 +294,7 @@ void StatsCounter::save(int player, bool force)
 		}
 	}
 
-#if ( defined __PS3__ || defined __ORBIS__ || defined _DURANGO || defined __PSVITA__ )
-	StorageManager.WriteToProfile(player, true, force);
-#else
-	ProfileManager.WriteToProfile(player, true, force);
-#endif
+	WriteStatsProfile(player, force);
 
 	saveCounter = SAVE_DELAY;
 #endif
