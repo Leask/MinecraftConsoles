@@ -216,7 +216,9 @@ Direction:
   `NativeDesktopGetClientAreaSize`, and `LevelGenerationOptions` reads native
   desktop game-rule/base-save bytes through `NativeDesktopReadFileBytes`
   instead of direct Win32-shaped file handles or `WPACK:`/`StorageManager`
-  mount callbacks)
+  mount callbacks; `GameNetworkManager` uses the same native byte-read
+  helper for tutorial base-save bootstrap data instead of console
+  `GAME:`/`UPDATE:` paths or Win32 file handles)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/

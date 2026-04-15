@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <limits>
 #include "../../../Minecraft.World/StringHelpers.h"
 #include "../../../Minecraft.World/AABB.h"
 #include "../../../Minecraft.World/Vec3.h"
@@ -47,6 +48,46 @@
 #include "../../NativeDesktop/Network/NativeDesktopNetLayer.h"
 #include "../../NativeDesktop/NativeDesktop_Xuid.h"
 #endif
+
+namespace
+{
+	bool ReadNativeDesktopNetworkFileBytes(
+		const File& file,
+		PBYTE* outData,
+		DWORD* outLength)
+	{
+		if(outData == nullptr || outLength == nullptr)
+		{
+			return false;
+		}
+
+		*outData = nullptr;
+		*outLength = 0;
+
+		vector<BYTE> bytes;
+		if(!NativeDesktopReadFileBytes(wstringtofilename(file.getPath()), &bytes))
+		{
+			return false;
+		}
+
+		if(bytes.size() > static_cast<size_t>(std::numeric_limits<DWORD>::max()))
+		{
+			return false;
+		}
+
+		const DWORD byteCount = static_cast<DWORD>(bytes.size());
+		PBYTE data = nullptr;
+		if(byteCount > 0)
+		{
+			data = new BYTE[byteCount];
+			memcpy(data, bytes.data(), byteCount);
+		}
+
+		*outData = data;
+		*outLength = byteCount;
+		return true;
+	}
+}
 
 // Global instance
 CGameNetworkManager g_NetworkManager;
@@ -232,62 +273,25 @@ bool	CGameNetworkManager::StartNetworkGame(Minecraft *minecraft, LPVOID lpParame
 					// Load the tutorial save data here
 					if(param->levelGen->requiresBaseSave() && !param->levelGen->getBaseSavePath().empty() )
 					{
-#ifdef _XBOX
-#ifdef _TU_BUILD
-						wstring fileRoot = L"UPDATE:\\res\\GameRules\\" + param->levelGen->getBaseSavePath();
-#else
-						wstring fileRoot = L"GAME:\\res\\TitleUpdate\\GameRules\\" + param->levelGen->getBaseSavePath();
-#endif
-#else
-#if defined(_NATIVE_DESKTOP)
 						wstring fileRoot = L"NativeDesktopMedia\\Tutorial\\" + param->levelGen->getBaseSavePath();
 						File root(fileRoot);
 						if(!root.exists()) fileRoot = L"NativeDesktop\\Tutorial\\" + param->levelGen->getBaseSavePath();
-#else
-						wstring fileRoot = L"Tutorial\\" + param->levelGen->getBaseSavePath();
-#endif
-#endif
+
 						File grf(fileRoot);
 						if (grf.exists())
 						{
-#ifdef _UNICODE
-							wstring path = grf.getPath();
-							const WCHAR *pchFilename=path.c_str();
-							HANDLE fileHandle = CreateFile(
-								pchFilename, // file name
-								GENERIC_READ, // access mode
-								0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-								nullptr, // Unused
-								OPEN_EXISTING , // how to create // TODO 4J Stu - Assuming that the file already exists if we are opening to read from it
-								FILE_FLAG_SEQUENTIAL_SCAN, // file attributes
-								nullptr // Unsupported
-								);
-#else
-							const char *pchFilename=wstringtofilename(grf.getPath());
-							HANDLE fileHandle = CreateFile(
-								pchFilename, // file name
-								GENERIC_READ, // access mode
-								0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-								nullptr, // Unused
-								OPEN_EXISTING , // how to create // TODO 4J Stu - Assuming that the file already exists if we are opening to read from it
-								FILE_FLAG_SEQUENTIAL_SCAN, // file attributes
-								nullptr // Unsupported
-								);
-#endif
-
-							if( fileHandle != INVALID_HANDLE_VALUE )
+							PBYTE pbData = nullptr;
+							DWORD dwFileSize = 0;
+							if(ReadNativeDesktopNetworkFileBytes(
+								grf,
+								&pbData,
+								&dwFileSize))
 							{
-								DWORD bytesRead,dwFileSize = GetFileSize(fileHandle,nullptr);
-								PBYTE pbData =  (PBYTE) new BYTE[dwFileSize];
-								BOOL bSuccess = ReadFile(fileHandle,pbData,dwFileSize,&bytesRead,nullptr);
-								if(bSuccess==FALSE)
-								{
-									app.FatalLoadError();
-								}
-								CloseHandle(fileHandle);
-
-								// 4J-PB - is it possible that we can get here after a read fail and it's not an error?
 								param->levelGen->setBaseSaveData(pbData, dwFileSize);
+							}
+							else
+							{
+								app.FatalLoadError();
 							}
 						}
 					}

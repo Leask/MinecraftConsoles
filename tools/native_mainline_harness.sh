@@ -235,6 +235,17 @@ run_native_only_contract() {
         rg -n -S "NativeDesktopReadFileBytes" \
             Minecraft.Client/Common/GameRules/LevelGenerationOptions.cpp >/dev/null
 
+        if rg -n -S "HANDLE fileHandle|GetFileSize\\(|ReadFile\\(|CloseHandle\\(|GAME:\\\\|UPDATE:\\\\|_TU_BUILD" \
+            Minecraft.Client/Common/Network/GameNetworkManager.cpp \
+            > "$log_root/native-client-network-tutorial-win32-io.txt"; then
+            echo "Native network tutorial save loading still uses Win32-shaped I/O" >&2
+            cat "$log_root/native-client-network-tutorial-win32-io.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "ReadNativeDesktopNetworkFileBytes" \
+            Minecraft.Client/Common/Network/GameNetworkManager.cpp >/dev/null
+
         if rg -n -S "CreateFile\\(|GetFileSize\\(|ReadFile\\(|CloseHandle\\(|StorageManager\\.GetMountedPath|_WINDOWS64|_DURANGO" \
             Minecraft.Client/Common/DLC/DLCManager.cpp \
             > "$log_root/native-client-dlc-manager-win32-io.txt"; then
