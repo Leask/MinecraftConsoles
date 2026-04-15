@@ -43,6 +43,7 @@
 #include "../TexturePackRepository.h"
 #include "../DLCTexturePack.h"
 #include "../NativeDesktop/NativeDesktopClientSaveControl.h"
+#include "../NativeDesktop/NativeDesktopClientStorageControl.h"
 #include "DLC/DLCPack.h"
 #include "../StringTable.h"
 #ifndef _XBOX
@@ -888,6 +889,21 @@ namespace
         }
         return settings;
     }
+
+    void NativeDesktopWriteProfile(int pad, bool gameDefinedDataChanged,
+                                   bool override5MinuteTimer)
+    {
+        ProfileManager.WriteToProfile(
+            pad,
+            gameDefinedDataChanged,
+            override5MinuteTimer);
+    }
+
+    void NativeDesktopForceQueuedProfileWrites(int pad = XUSER_INDEX_ANY)
+    {
+        ProfileManager.ForceQueuedProfileWrites(pad);
+    }
+
 }
 #endif
 
@@ -901,7 +917,7 @@ void CMinecraftApp::InitGameSettings()
 		continue;
 #endif
 #if (defined __PS3__ || defined __ORBIS__ || defined _DURANGO  || defined __PSVITA__)
-		GameSettingsA[i]=(GAME_SETTINGS *)StorageManager.GetGameDefinedProfileData(i);
+		GameSettingsA[i]=static_cast<GAME_SETTINGS *>(ProfileManager.GetGameDefinedProfileData(i));
 #else
 		GameSettingsA[i]=static_cast<GAME_SETTINGS *>(ProfileManager.GetGameDefinedProfileData(i));
 #endif
@@ -919,7 +935,7 @@ void CMinecraftApp::InitGameSettings()
 		NativeDesktop_LoadSettings(GameSettingsA[i]);
 		ApplyGameSettingsChanged(i);
 #elif defined __PS3__ || defined __ORBIS__ || defined _DURANGO  || defined __PSVITA__
-		C4JStorage::PROFILESETTINGS *pProfileSettings=StorageManager.GetDashboardProfileSettings(i);
+		auto *pProfileSettings=ProfileManager.GetDashboardProfileSettings(i);
 		// 4J-PB - don't cause an options write to happen here
 		SetDefaultOptions(pProfileSettings,i,false);
 
@@ -2577,14 +2593,7 @@ void CMinecraftApp::CheckGameSettingsChanged(bool bOverride5MinuteTimer, int iPa
 		{
 			if(GameSettingsA[i]->bSettingsChanged)
 			{
-#if ( defined __PS3__ || defined __ORBIS__ || defined _DURANGO || defined __PSVITA__ )
-				StorageManager.WriteToProfile(i,true, bOverride5MinuteTimer);
-#else
-				ProfileManager.WriteToProfile(i,true, bOverride5MinuteTimer);
-#ifdef _WINDOWS64
-				NativeDesktop_SaveSettings(GameSettingsA[i]);
-#endif
-#endif
+				NativeDesktopWriteProfile(i,true, bOverride5MinuteTimer);
 				GameSettingsA[i]->bSettingsChanged=false;
 			}
 		}
@@ -2593,14 +2602,7 @@ void CMinecraftApp::CheckGameSettingsChanged(bool bOverride5MinuteTimer, int iPa
 	{
 		if(GameSettingsA[iPad]->bSettingsChanged)
 		{
-#if ( defined  __PS3__ || defined __ORBIS__ || defined _DURANGO || defined __PSVITA__)
-			StorageManager.WriteToProfile(iPad,true, bOverride5MinuteTimer);
-#else
-			ProfileManager.WriteToProfile(iPad,true, bOverride5MinuteTimer);
-#ifdef _WINDOWS64
-			NativeDesktop_SaveSettings(GameSettingsA[iPad]);
-#endif
-#endif
+			NativeDesktopWriteProfile(iPad,true, bOverride5MinuteTimer);
 			GameSettingsA[iPad]->bSettingsChanged=false;
 		}
 	}
@@ -3060,7 +3062,7 @@ void CMinecraftApp::HandleXuiActions(void)
 
 					// Since the player is exiting, let's flush any profile writes for them, and hope we're not breaking TCR 136...
 #if (defined __PS3__ || defined __ORBIS__ || defined _DURANGO  || defined __PSVITA__)
-					StorageManager.ForceQueuedProfileWrites(i);
+					NativeDesktopForceQueuedProfileWrites(i);
 					LeaderboardManager::Instance()->OpenSession();
 					for (int j = 0; j < XUSER_MAX_COUNT; j++)
 					{
@@ -3072,7 +3074,7 @@ void CMinecraftApp::HandleXuiActions(void)
 					}
 					LeaderboardManager::Instance()->CloseSession();
 #else
-					ProfileManager.ForceQueuedProfileWrites(i);
+					NativeDesktopForceQueuedProfileWrites(i);
 #endif
 
 					// not required - it's done within the removeLocalPlayerIdx
@@ -3160,9 +3162,9 @@ void CMinecraftApp::HandleXuiActions(void)
 					int iPlayerC=g_NetworkManager.GetPlayerCount();
 					// Since the player is exiting, let's flush any profile writes for them, and hope we're not breaking TCR 136...
 #if (defined __PS3__ || defined __ORBIS__ || defined _DURANGO  || defined __PSVITA__)
-					StorageManager.ForceQueuedProfileWrites(i);
+					NativeDesktopForceQueuedProfileWrites(i);
 #else
-					ProfileManager.ForceQueuedProfileWrites(i);
+					NativeDesktopForceQueuedProfileWrites(i);
 #endif
 					// if there are any tips showing, we need to close them
 
@@ -3293,7 +3295,7 @@ void CMinecraftApp::HandleXuiActions(void)
 
 				// Since the player forced the exit, let's flush any profile writes, and hope we're not breaking TCR 136...
 #if (defined __PS3__ || defined __ORBIS__  || defined _DURANGO  || defined __PSVITA__)
-				StorageManager.ForceQueuedProfileWrites();
+				NativeDesktopForceQueuedProfileWrites();
 				LeaderboardManager::Instance()->OpenSession();
 				for (int j = 0; j < XUSER_MAX_COUNT; j++)
 				{
@@ -3305,7 +3307,7 @@ void CMinecraftApp::HandleXuiActions(void)
 				}
 				LeaderboardManager::Instance()->CloseSession();
 #elif (defined _XBOX)
-				ProfileManager.ForceQueuedProfileWrites();
+				NativeDesktopForceQueuedProfileWrites();
 #endif
 
 				// 4J-PB - cancel any possible string verifications queued with LIVE
@@ -3567,7 +3569,7 @@ void CMinecraftApp::HandleXuiActions(void)
 					if(!app.GetGameStarted()) MinecraftServer::HaltServer(true);
 
 					// inform the player they are being returned to the menus because they signed out
-					StorageManager.SetSaveDeviceSelected(i,false);
+					NativeDesktopSetSaveDeviceSelected(i,false);
 					// need to clear the player stats - can't assume it'll be done in setlevel - we may not be in the game
 					StatsCounter* pStats = Minecraft::GetInstance()->stats[ i ];
 					pStats->clear();
@@ -3737,7 +3739,7 @@ void CMinecraftApp::HandleXuiActions(void)
 				// set the state back to pre-game
 				ProfileManager.ResetProfileProcessState();
 				// clear the save device
-				StorageManager.SetSaveDeviceSelected(i,false);
+				NativeDesktopSetSaveDeviceSelected(i,false);
 
 				ui.UpdatePlayerBasePositions();
 				// there are multiple layers in the help menu, so a navigate back isn't enough
@@ -4468,7 +4470,7 @@ void CMinecraftApp::HandleXuiActions(void)
 				*/
 			case eTMSAction_TMS_RetrieveFiles_Complete:
 				SetTMSAction(i,eTMSAction_Idle);
-				// 				if(StorageManager.SetSaveDevice(&CScene_Main::DeviceSelectReturned,pClass))
+				// 				if native save-device selection already exists
 				// 				{
 				// 					// save device already selected
 				// 					// ensure we've applied this player's settings
@@ -5185,7 +5187,7 @@ void CMinecraftApp::SignInChangeCallback(LPVOID pParam,bool bPrimaryPlayerChange
 					&& ( uiSignInData & (1<<i) )
 					)
 				{
-					StorageManager.ReadFromProfile(i);
+					(void)i;
 				}
 			}
 #endif

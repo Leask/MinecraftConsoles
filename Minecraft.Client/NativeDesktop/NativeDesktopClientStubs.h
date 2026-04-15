@@ -15,6 +15,7 @@
 
 #include "../Common/NativeRendererTypes.h"
 #include "NativeDesktopClientSaveControl.h"
+#include "NativeDesktopClientStorageControl.h"
 #include "GameConfig/Minecraft.spa.h"
 #include "Sentient/SentientTelemetryCommon.h"
 #include "TelemetryEnum.h"
@@ -3526,13 +3527,11 @@ public:
     void ForceQueuedProfileWrites(int iPad = XUSER_INDEX_ANY) { (void)iPad; }
     void SetSaveDeviceSelected(unsigned int pad, bool selected)
     {
-        (void)pad;
-        (void)selected;
+        NativeDesktopSetSaveDeviceSelected(pad, selected);
     }
     bool GetSaveDeviceSelected(unsigned int pad)
     {
-        (void)pad;
-        return true;
+        return NativeDesktopGetSaveDeviceSelected(pad);
     }
     void ClearDLCOffers() {}
     XMARKETPLACE_CONTENTOFFER_INFO& GetOffer(DWORD offerIndex)

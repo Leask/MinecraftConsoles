@@ -230,7 +230,9 @@ Direction:
   `StorageManager` save-existence/save-disabled/save-state calls; active
   runtime/network glue no longer mentions `StorageManager` directly in
   `ClientConnection`, `GameNetworkManager`, or native desktop shutdown
-  handling)
+  handling; `Consoles_App` profile writes, queued profile flushes, and
+  sign-out save-device clearing now route through native profile/storage
+  helpers instead of console `StorageManager` profile/save-device calls)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/

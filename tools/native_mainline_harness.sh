@@ -317,6 +317,20 @@ run_native_only_contract() {
             Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \
             >/dev/null
 
+        if rg -n -S "StorageManager\\.(GetGameDefinedProfileData|GetDashboardProfileSettings|WriteToProfile|ForceQueuedProfileWrites|ReadFromProfile|SetSaveDeviceSelected|GetSaveDeviceSelected|SetSaveDevice)\\(" \
+            Minecraft.Client/Common/Consoles_App.cpp \
+            > "$log_root/native-client-app-profile-storage.txt"; then
+            echo "Native app profile/save-device paths still use StorageManager" >&2
+            cat "$log_root/native-client-app-profile-storage.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopWriteProfile|NativeDesktopForceQueuedProfileWrites|NativeDesktopSetSaveDeviceSelected|NativeDesktopGetSaveDeviceSelected" \
+            Minecraft.Client/Common/Consoles_App.cpp \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientStorageControl.cpp \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientStubs.h \
+            >/dev/null
+
         if rg -n -S "StorageManager\\." \
             Minecraft.Client/ClientConnection.cpp \
             Minecraft.Client/Common/Network/GameNetworkManager.cpp \
