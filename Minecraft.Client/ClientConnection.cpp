@@ -272,12 +272,7 @@ void ClientConnection::handleLogin(shared_ptr<LoginPacket> packet)
 				bRes=app.IsFileInMemoryTextures(wstr);
 				if(!bRes)
 				{
-#ifdef _XBOX
-					C4JStorage::ETMSStatus eTMSStatus;
-					eTMSStatus=StorageManager.ReadTMSFile(iUserID,C4JStorage::eGlobalStorage_Title,C4JStorage::eTMS_FileType_Graphic,pMojangData->wchSkin,&pBuffer, &dwSize);
-
-					bRes=(eTMSStatus==C4JStorage::ETMSStatus_Idle);
-#endif
+					bRes = false;
 				}
 
 				if(bRes)
@@ -294,11 +289,7 @@ void ClientConnection::handleLogin(shared_ptr<LoginPacket> packet)
 				bRes=app.IsFileInMemoryTextures(wstr);
 				if(!bRes)
 				{
-#ifdef _XBOX
-					C4JStorage::ETMSStatus eTMSStatus;
-					eTMSStatus=StorageManager.ReadTMSFile(iUserID,C4JStorage::eGlobalStorage_Title,C4JStorage::eTMS_FileType_Graphic,pMojangData->wchCape,&pBuffer, &dwSize);
-					bRes=(eTMSStatus==C4JStorage::ETMSStatus_Idle);
-#endif
+					bRes = false;
 				}
 
 				if(bRes)
@@ -3894,7 +3885,7 @@ int ClientConnection::ExitGameAndSaveReturned(void *pParam,int iPad,C4JStorage::
 	if(result==C4JStorage::EMessage_ResultDecline)
 	{
 		//INT saveOrCheckpointId = 0;
-		//bool validSave = StorageManager.GetSaveUniqueNumber(&saveOrCheckpointId);
+		//bool validSave = false;
 		//SentientManager.RecordLevelSaveOrCheckpoint(ProfileManager.GetPrimaryPad(), saveOrCheckpointId);
 #if defined(_XBOX_ONE) || defined(__ORBIS__)
 				NativeDesktopSetSavesDisabled(false);

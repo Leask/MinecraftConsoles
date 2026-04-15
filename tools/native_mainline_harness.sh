@@ -317,6 +317,21 @@ run_native_only_contract() {
             Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \
             >/dev/null
 
+        if rg -n -S "StorageManager\\." \
+            Minecraft.Client/ClientConnection.cpp \
+            Minecraft.Client/Common/Network/GameNetworkManager.cpp \
+            Minecraft.Client/NativeDesktop/Legacy/ShutdownManager.cpp \
+            > "$log_root/native-runtime-network-storage-manager.txt"; then
+            echo "Native runtime/network paths still mention StorageManager" >&2
+            cat "$log_root/native-runtime-network-storage-manager.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopRequestStorageExit|NativeDesktopSetSystemUIDisplaying" \
+            Minecraft.Client/NativeDesktop/Legacy/ShutdownManager.cpp \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientStorageControl.cpp \
+            >/dev/null
+
         if rg -n -S "CreateFile\\(|GetFileSize\\(|ReadFile\\(|CloseHandle\\(|StorageManager\\.GetMountedPath|_WINDOWS64|_DURANGO" \
             Minecraft.Client/Common/DLC/DLCManager.cpp \
             > "$log_root/native-client-dlc-manager-win32-io.txt"; then

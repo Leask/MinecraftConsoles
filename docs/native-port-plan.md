@@ -227,7 +227,10 @@ Direction:
   also resets save data and sets the active save title through the same
   save-control owner; native exit/save confirmation and shutdown save-idle
   waits now query the same save-control owner instead of direct
-  `StorageManager` save-existence/save-disabled/save-state calls)
+  `StorageManager` save-existence/save-disabled/save-state calls; active
+  runtime/network glue no longer mentions `StorageManager` directly in
+  `ClientConnection`, `GameNetworkManager`, or native desktop shutdown
+  handling)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/

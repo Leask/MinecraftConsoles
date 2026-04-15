@@ -5,6 +5,8 @@ set(_MINECRAFT_CLIENT_NATIVE_DESKTOP_NATIVE
   "${BASE_DIR}/NativeDesktopClientApp.h"
   "${BASE_DIR}/NativeDesktopClientSaveControl.cpp"
   "${BASE_DIR}/NativeDesktopClientSaveControl.h"
+  "${BASE_DIR}/NativeDesktopClientStorageControl.cpp"
+  "${BASE_DIR}/NativeDesktopClientStorageControl.h"
   "${BASE_DIR}/NativeDesktopClientStubs.h"
   "${BASE_DIR}/NativeDesktop_UIController.h"
 )

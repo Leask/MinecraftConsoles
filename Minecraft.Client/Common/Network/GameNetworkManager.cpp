@@ -1873,7 +1873,7 @@ void CGameNetworkManager::GameInviteReceived( int userIndex, const INVITE_INFO *
 		uiIDA[0]=IDS_CONFIRM_OK;
 
 		// 4J-PB - it's possible there is no primary pad here, when accepting an invite from the dashboard
-		//StorageManager.RequestMessageBox( IDS_NO_MULTIPLAYER_PRIVILEGE_TITLE, IDS_NO_MULTIPLAYER_PRIVILEGE_JOIN_TEXT, uiIDA,1,ProfileManager.GetPrimaryPad(),nullptr,nullptr, app.GetStringTable());
+		// Native desktop does not use a platform storage-backed message box.
 		ui.RequestErrorMessage( IDS_NO_MULTIPLAYER_PRIVILEGE_TITLE, IDS_NO_MULTIPLAYER_PRIVILEGE_JOIN_TEXT, uiIDA,1,XUSER_INDEX_ANY);
 	}
 	else

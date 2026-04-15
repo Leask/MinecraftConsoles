@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "ShutdownManager.h"
+#include "../NativeDesktopClientStorageControl.h"
 #include "../../Common/Leaderboards/LeaderboardManager.h"
 #include "../../MinecraftServer.h"
 #ifdef __PS3__
@@ -23,7 +24,8 @@ void ShutdownManager::Initialise()
 		s_threadRunning[i] = 0;
 		s_eventArray[i] = nullptr;
 	}
-	// Special case for storage manager, which we will manually set now to be considered as running - this will be unset by StorageManager.ExitRequest if required
+	// Native storage is synchronous, but the legacy shutdown sequence still
+	// waits on this thread id.
 	s_threadRunning[eStorageManagerThreads] = true;
 	InitializeCriticalSection(&s_threadRunningCS);
 #endif
@@ -69,7 +71,7 @@ void ShutdownManager::MainThreadHandleShutdown()
 
 	//And shut down the storage manager
 	RequestThreadToStop( eStorageManagerThreads );
-	StorageManager.ExitRequest(&StorageManagerCompleteFn);
+	NativeDesktopRequestStorageExit(&StorageManagerCompleteFn);
 	app.DebugPrintf("Shutdown manager: waiting on storage manager to terminate...\n");
 	WaitForSignalledToComplete();
 	app.DebugPrintf("Shutdown manager: terminated.\n");
@@ -142,10 +144,10 @@ void ShutdownManager::SysUtilCallback(uint64_t status, uint64_t param, void *use
 		break;
 	case CELL_SYSUTIL_SYSTEM_MENU_OPEN:
 		// Tell the game UI to stop processing
-		StorageManager.SetSystemUIDisplaying(true);
+		NativeDesktopSetSystemUIDisplaying(true);
 		break;
 	case CELL_SYSUTIL_DRAWING_END:
-		StorageManager.SetSystemUIDisplaying(false);
+		NativeDesktopSetSystemUIDisplaying(false);
 		break;
 	case CELL_SYSUTIL_DRAWING_BEGIN:
 	case CELL_SYSUTIL_SYSTEM_MENU_CLOSE:
