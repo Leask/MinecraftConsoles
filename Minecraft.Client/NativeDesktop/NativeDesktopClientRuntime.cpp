@@ -19,6 +19,7 @@
 #include "../Common/Leaderboards/LeaderboardManager.h"
 #include "../Common/Network/GameNetworkManager.h"
 #include "Network/NativeDesktopNetLayer.h"
+#include "NativeDesktopClientSaveControl.h"
 #include "NativeDesktop_Xuid.h"
 #include "SocialManager.h"
 #include "../../Minecraft.World/AABB.h"
@@ -1627,7 +1628,7 @@ namespace
             }
 
             ProfileManager.Tick();
-            StorageManager.Tick();
+            NativeDesktopTickSaves();
             InputManager.Tick();
             RenderManager.Tick();
             g_NetworkManager.DoWork();

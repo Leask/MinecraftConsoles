@@ -272,6 +272,19 @@ run_native_only_contract() {
             Minecraft.Client/MinecraftServer.cpp \
             Minecraft.Client/Minecraft.cpp >/dev/null
 
+        if rg -n -S "StorageManager\\.Tick\\(\\)" \
+            Minecraft.Client/Common/Network/GameNetworkManager.cpp \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientRuntime.cpp \
+            > "$log_root/native-client-save-tick-storage.txt"; then
+            echo "Native runtime/network save pumping still uses StorageManager" >&2
+            cat "$log_root/native-client-save-tick-storage.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopTickSaves" \
+            Minecraft.Client/Common/Network/GameNetworkManager.cpp \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientRuntime.cpp >/dev/null
+
         if rg -n -S "CreateFile\\(|GetFileSize\\(|ReadFile\\(|CloseHandle\\(|StorageManager\\.GetMountedPath|_WINDOWS64|_DURANGO" \
             Minecraft.Client/Common/DLC/DLCManager.cpp \
             > "$log_root/native-client-dlc-manager-win32-io.txt"; then

@@ -1806,7 +1806,7 @@ public:
         (void)actions;
         (void)menuActions;
     }
-    void Tick() {}
+    void Tick() { NativeDesktopTickSaves(); }
     void Resume() {}
     void SetDeadzoneAndMovementRange(unsigned int deadzone,
                                      unsigned int movementRangeMax)

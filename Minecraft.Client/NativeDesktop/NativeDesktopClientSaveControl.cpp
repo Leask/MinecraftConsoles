@@ -16,3 +16,7 @@ void NativeDesktopSetSavesDisabled(bool disabled)
 {
     g_savesDisabled.store(disabled, std::memory_order_release);
 }
+
+void NativeDesktopTickSaves()
+{
+}

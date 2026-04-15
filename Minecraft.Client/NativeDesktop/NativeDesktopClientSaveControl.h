@@ -2,3 +2,4 @@
 
 bool NativeDesktopSavesAreDisabled();
 void NativeDesktopSetSavesDisabled(bool disabled);
+void NativeDesktopTickSaves();

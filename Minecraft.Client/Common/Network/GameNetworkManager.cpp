@@ -46,6 +46,7 @@
 
 #if defined(_NATIVE_DESKTOP)
 #include "../../NativeDesktop/Network/NativeDesktopNetLayer.h"
+#include "../../NativeDesktop/NativeDesktopClientSaveControl.h"
 #include "../../NativeDesktop/NativeDesktop_Xuid.h"
 #endif
 
@@ -2130,7 +2131,7 @@ bool CGameNetworkManager::ServerStoppedWaitFor(int timeoutMs)
 		}
 
 		ProfileManager.Tick();
-		StorageManager.Tick();
+		NativeDesktopTickSaves();
 		InputManager.Tick();
 		RenderManager.Tick();
 		elapsedMs += 20;
@@ -2155,7 +2156,7 @@ void CGameNetworkManager::ServerStoppedWait()
 			result = m_hServerStoppedEvent->WaitForSignal(20);
 			// Tick some simple things
 			ProfileManager.Tick();
-			StorageManager.Tick();
+			NativeDesktopTickSaves();
 			InputManager.Tick();
 			RenderManager.Tick();
 			ui.tick();

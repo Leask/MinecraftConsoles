@@ -222,7 +222,8 @@ Direction:
   fills the native pre-login map identity directly instead of asking
   `StorageManager` for a console save filename; active gameplay save-disabled
   checks now read `NativeDesktopClientSaveControl` instead of reaching into
-  `StorageManager`)
+  `StorageManager`, and runtime/network wait loops tick native save-control
+  directly instead of pumping `StorageManager`)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/
