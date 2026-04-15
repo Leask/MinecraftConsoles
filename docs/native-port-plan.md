@@ -238,12 +238,13 @@ Direction:
   save-device, new-world save-title/reset, and save telemetry id paths now
   use the native save/profile owners instead of direct `StorageManager`
   state calls; `UIScene_LoadMenu` save catalog, thumbnail, load, and corrupt
-  delete actions now drive `NativeDesktopClientSaveControl` primitives, with
-  the native `C4JStorage` stub only projecting that same save catalog for
-  legacy callers; `UIScene_LoadOrJoinMenu` save listing, thumbnail loading,
+  delete actions now drive `NativeDesktopClientSaveCatalog`, which centralizes
+  the UI `SAVE_DETAILS` projection over `NativeDesktopClientSaveControl`; the
+  native `C4JStorage` stub remains a legacy projection of the same underlying
+  save-control state; `UIScene_LoadOrJoinMenu` save listing, thumbnail loading,
   save-disabled/space gates, and local tutorial/load-from-disk save identity
-  now read the same native save-control catalog instead of direct
-  `StorageManager` save-list state)
+  now read the shared native save catalog instead of direct `StorageManager`
+  save-list state)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/

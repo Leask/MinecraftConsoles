@@ -6,6 +6,7 @@
 #include "../../TexturePackRepository.h"
 #include "../../Options.h"
 #include "../../MinecraftServer.h"
+#include "../../NativeDesktop/NativeDesktopClientSaveCatalog.h"
 #include "../../NativeDesktop/NativeDesktopClientSaveControl.h"
 #include "../../NativeDesktop/NativeDesktopClientStorageControl.h"
 #include "../../../Minecraft.World/LevelSettings.h"
@@ -30,36 +31,44 @@ int UIScene_LoadMenu::m_iDifficultyTitleSettingA[4]=
 
 namespace
 {
+	NativeDesktopClientSaveCatalog g_NativeDesktopLoadMenuSaveCatalog;
+
 	C4JStorage::ESaveGameState NativeDesktopLoadMenuLoadSaveData(
 		int saveIndex,
 		NativeDesktopLoadSaveDataCallback callback,
 		void* param)
 	{
-		return static_cast<C4JStorage::ESaveGameState>(
-			NativeDesktopLoadSaveDataByIndex(saveIndex, callback, param));
+		return g_NativeDesktopLoadMenuSaveCatalog.LoadSaveData(
+			saveIndex,
+			callback,
+			param);
 	}
 
+#if defined(__PS3__) || defined(__ORBIS__) || defined(_DURANGO) || \
+	defined(__PSVITA__)
 	C4JStorage::ESaveGameState NativeDesktopLoadMenuLoadSaveThumbnail(
 		int saveIndex,
 		NativeDesktopLoadSaveDataThumbnailCallback callback,
 		void* param,
 		bool force)
 	{
-		return static_cast<C4JStorage::ESaveGameState>(
-			NativeDesktopLoadSaveDataThumbnailByIndex(
-				saveIndex,
-				callback,
-				param,
-				force));
+		return g_NativeDesktopLoadMenuSaveCatalog.LoadSaveDataThumbnail(
+			saveIndex,
+			callback,
+			param,
+			force);
 	}
+#endif
 
 	C4JStorage::ESaveGameState NativeDesktopLoadMenuDeleteSaveData(
 		int saveIndex,
 		NativeDesktopDeleteSaveDataCallback callback,
 		void* param)
 	{
-		return static_cast<C4JStorage::ESaveGameState>(
-			NativeDesktopDeleteSaveDataByIndex(saveIndex, callback, param));
+		return g_NativeDesktopLoadMenuSaveCatalog.DeleteSaveData(
+			saveIndex,
+			callback,
+			param);
 	}
 
 	void NativeDesktopDebugPrintLoadMenuSave(
@@ -68,20 +77,12 @@ namespace
 	{
 		char title[MAX_DISPLAYNAME_LENGTH];
 		char filename[MAX_SAVEFILENAME_LENGTH];
-		if (NativeDesktopGetSaveInfo(
+		if (g_NativeDesktopLoadMenuSaveCatalog.CopySaveInfo(
 			saveIndex,
 			title,
 			sizeof(title),
 			filename,
-			sizeof(filename),
-			nullptr,
-			0,
-			nullptr,
-			0,
-			nullptr,
-			nullptr,
-			nullptr,
-			nullptr))
+			sizeof(filename)))
 		{
 			app.DebugPrintf("%s %s [%s]\n", prefix, title, filename);
 			return;

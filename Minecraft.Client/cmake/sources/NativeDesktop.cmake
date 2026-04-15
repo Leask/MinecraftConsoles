@@ -3,6 +3,7 @@ set(BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/NativeDesktop/")
 set(_MINECRAFT_CLIENT_NATIVE_DESKTOP_NATIVE
   "${BASE_DIR}/NativeDesktopClientRuntime.cpp"
   "${BASE_DIR}/NativeDesktopClientApp.h"
+  "${BASE_DIR}/NativeDesktopClientSaveCatalog.h"
   "${BASE_DIR}/NativeDesktopClientSaveControl.cpp"
   "${BASE_DIR}/NativeDesktopClientSaveControl.h"
   "${BASE_DIR}/NativeDesktopClientStorageControl.cpp"

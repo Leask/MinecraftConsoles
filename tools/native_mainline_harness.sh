@@ -316,8 +316,23 @@ run_native_only_contract() {
             Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \
             >/dev/null
 
-        rg -n -S "NativeDesktopLoadSaveDataByIndex|NativeDesktopLoadSaveDataThumbnailByIndex|NativeDesktopDeleteSaveDataByIndex|NativeDesktopGetSaveInfo" \
+        if rg -n -S "NativeDesktop(GetSaveInfo|LoadSaveDataByIndex|LoadSaveDataThumbnailByIndex|DeleteSaveDataByIndex)" \
             Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_LoadOrJoinMenu.cpp \
+            > "$log_root/native-client-ui-save-catalog-bypass.txt"; then
+            echo "Native UI save lifecycle paths bypass NativeDesktopClientSaveCatalog" >&2
+            cat "$log_root/native-client-ui-save-catalog-bypass.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopClientSaveCatalog|g_NativeDesktopLoad(Menu|OrJoin)SaveCatalog" \
+            Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_LoadOrJoinMenu.cpp \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientSaveCatalog.h \
+            >/dev/null
+
+        rg -n -S "NativeDesktopLoadSaveDataByIndex|NativeDesktopLoadSaveDataThumbnailByIndex|NativeDesktopDeleteSaveDataByIndex|NativeDesktopGetSaveInfo" \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientSaveCatalog.h \
             Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \
             Minecraft.Client/NativeDesktop/NativeDesktopClientStubs.h \
             >/dev/null

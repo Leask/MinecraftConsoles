@@ -12,6 +12,7 @@
 #include "../../MinecraftServer.h"
 #include "../../TexturePackRepository.h"
 #include "../../TexturePack.h"
+#include "../../NativeDesktop/NativeDesktopClientSaveCatalog.h"
 #include "../../NativeDesktop/NativeDesktopClientSaveControl.h"
 #include "../../NativeDesktop/NativeDesktopClientStorageControl.h"
 #include "../Network/SessionInfo.h"
@@ -21,73 +22,25 @@
 #include "../../../Minecraft.World/NbtIo.h"
 #include "../../../Minecraft.World/compression.h"
 
-static SAVE_INFO g_NativeDesktopLoadOrJoinSaveInfoA[1] = {};
-static SAVE_DETAILS g_NativeDesktopLoadOrJoinSaveDetails = {};
+static NativeDesktopClientSaveCatalog g_NativeDesktopLoadOrJoinSaveCatalog;
 
 static PSAVE_DETAILS NativeDesktopLoadOrJoinReturnSavesInfo()
 {
-    memset(
-        &g_NativeDesktopLoadOrJoinSaveInfoA,
-        0,
-        sizeof(g_NativeDesktopLoadOrJoinSaveInfoA));
-    g_NativeDesktopLoadOrJoinSaveDetails = {};
-
-    if (NativeDesktopGetSaveCount() <= 0)
-    {
-        return &g_NativeDesktopLoadOrJoinSaveDetails;
-    }
-
-    unsigned char* thumbnailData = nullptr;
-    unsigned int thumbnailBytes = 0;
-    int blocksUsed = 0;
-    NativeDesktopGetSaveInfo(
-        0,
-        g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF8SaveTitle,
-        sizeof(g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF8SaveTitle),
-        g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF8SaveFilename,
-        sizeof(g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF8SaveFilename),
-        g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF16SaveTitle,
-        sizeof(g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF16SaveTitle) /
-            sizeof(g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF16SaveTitle[0]),
-        g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF16SaveFilename,
-        sizeof(g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF16SaveFilename) /
-            sizeof(g_NativeDesktopLoadOrJoinSaveInfoA[0].UTF16SaveFilename[0]),
-        &g_NativeDesktopLoadOrJoinSaveInfoA[0].modifiedTime,
-        &thumbnailData,
-        &thumbnailBytes,
-        &blocksUsed);
-
-    g_NativeDesktopLoadOrJoinSaveInfoA[0].thumbnailData = thumbnailData;
-    g_NativeDesktopLoadOrJoinSaveInfoA[0].thumbnailSize = thumbnailBytes;
-    g_NativeDesktopLoadOrJoinSaveInfoA[0].blocksUsed = blocksUsed;
-    g_NativeDesktopLoadOrJoinSaveDetails.iSaveC = 1;
-    g_NativeDesktopLoadOrJoinSaveDetails.SaveInfoA =
-        g_NativeDesktopLoadOrJoinSaveInfoA;
-    g_NativeDesktopLoadOrJoinSaveDetails.pCurrentSaveInfo =
-        g_NativeDesktopLoadOrJoinSaveInfoA;
-    g_NativeDesktopLoadOrJoinSaveDetails.totalBlocksUsed = blocksUsed;
-    return &g_NativeDesktopLoadOrJoinSaveDetails;
+    return g_NativeDesktopLoadOrJoinSaveCatalog.ReturnSavesInfo();
 }
 
 static C4JStorage::ESaveGameState NativeDesktopLoadOrJoinGetSavesInfo(
     int (*callback)(LPVOID, SAVE_DETAILS*, const bool),
     LPVOID param)
 {
-    PSAVE_DETAILS saveDetails = NativeDesktopLoadOrJoinReturnSavesInfo();
-    if (callback != nullptr)
-    {
-        callback(param, saveDetails, true);
-    }
-    return C4JStorage::ESaveGame_Idle;
+    return g_NativeDesktopLoadOrJoinSaveCatalog.GetSavesInfo(
+        callback,
+        param);
 }
 
 static void NativeDesktopLoadOrJoinClearSavesInfo()
 {
-    memset(
-        &g_NativeDesktopLoadOrJoinSaveInfoA,
-        0,
-        sizeof(g_NativeDesktopLoadOrJoinSaveInfoA));
-    g_NativeDesktopLoadOrJoinSaveDetails = {};
+    g_NativeDesktopLoadOrJoinSaveCatalog.ClearSavesInfo();
 }
 
 static C4JStorage::ESaveGameState NativeDesktopLoadOrJoinLoadThumbnail(
@@ -95,17 +48,16 @@ static C4JStorage::ESaveGameState NativeDesktopLoadOrJoinLoadThumbnail(
     int (*callback)(LPVOID, PBYTE, DWORD),
     LPVOID param)
 {
-    return static_cast<C4JStorage::ESaveGameState>(
-        NativeDesktopLoadSaveDataThumbnailByIndex(
-            saveIndex,
-            callback,
-            param,
-            false));
+    return g_NativeDesktopLoadOrJoinSaveCatalog.LoadSaveDataThumbnail(
+        saveIndex,
+        callback,
+        param,
+        false);
 }
 
 static bool NativeDesktopLoadOrJoinEnoughSpaceForMinSave()
 {
-    return true;
+    return g_NativeDesktopLoadOrJoinSaveCatalog.EnoughSpaceForMinSave();
 }
 
 static std::filesystem::path NativeDesktop_MakePortablePath(
