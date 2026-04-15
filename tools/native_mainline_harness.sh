@@ -269,6 +269,19 @@ run_native_only_contract() {
 
         rg -n -S "std::filesystem" Minecraft.World/File.cpp >/dev/null
 
+        if rg -n -S "HANDLE|CreateFile\\(|GetFileSize\\(|ReadFile\\(|CloseHandle\\(|_WINDOWS64|_DURANGO|GAME:\\\\" \
+            Minecraft.World/CustomLevelSource.cpp \
+            Minecraft.World/BiomeOverrideLayer.cpp \
+            > "$log_root/native-world-generation-override-win32-io.txt"; then
+            echo "Native world generation overrides still use Win32/console file I/O" >&2
+            cat "$log_root/native-world-generation-override-win32-io.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "ReadOverrideBytes" \
+            Minecraft.World/CustomLevelSource.cpp \
+            Minecraft.World/BiomeOverrideLayer.cpp >/dev/null
+
         rg -n -S "Windows compatibility maintenance has stopped" \
             README.md COMPILE.md CONTRIBUTING.md docs/native-port-plan.md >/dev/null
         git diff --check

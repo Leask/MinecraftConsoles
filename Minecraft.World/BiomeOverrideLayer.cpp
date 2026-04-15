@@ -4,52 +4,78 @@
 #include "net.minecraft.world.level.h"
 #include "BiomeOverrideLayer.h"
 
+#include <cstddef>
+#include <cstdio>
+
+namespace
+{
+	enum class OverrideReadResult
+	{
+		Ok,
+		Missing,
+		TooLarge,
+		Error,
+	};
+
+	OverrideReadResult ReadOverrideBytes(
+		const char* path,
+		byteArray output)
+	{
+		FILE* file = std::fopen(path, "rb");
+		if( file == nullptr )
+		{
+			return OverrideReadResult::Missing;
+		}
+
+		OverrideReadResult result = OverrideReadResult::Error;
+		if( std::fseek(file, 0, SEEK_END) == 0 )
+		{
+			const long fileSize = std::ftell(file);
+			if( fileSize >= 0 &&
+				static_cast<unsigned long>(fileSize) > output.length )
+			{
+				result = OverrideReadResult::TooLarge;
+			}
+			else if( fileSize >= 0 && std::fseek(file, 0, SEEK_SET) == 0 )
+			{
+				const std::size_t bytesToRead =
+					static_cast<std::size_t>(fileSize);
+				const std::size_t bytesRead =
+					bytesToRead == 0
+						? 0
+						: std::fread(output.data, 1, bytesToRead, file);
+				result =
+					bytesRead == bytesToRead
+						? OverrideReadResult::Ok
+						: OverrideReadResult::Error;
+			}
+		}
+
+		std::fclose(file);
+		return result;
+	}
+}
 
 BiomeOverrideLayer::BiomeOverrideLayer(int seedMixup) : Layer(seedMixup)
 {
 	m_biomeOverride = byteArray( width * height );
 
-#ifdef _UNICODE
-	wstring path = L"GAME:\\GameRules\\biomemap.bin";
-	HANDLE file = CreateFile(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-#else
-#ifdef _WINDOWS64
-	string path = "GameRules\\biomemap.bin";
-#else
-	string path = "GAME:\\GameRules\\biomemap.bin";
-#endif
-	HANDLE file = CreateFile(path.c_str(), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-#endif
-	if( file == INVALID_HANDLE_VALUE )
+	const OverrideReadResult result =
+		ReadOverrideBytes("GameRules/biomemap.bin", m_biomeOverride);
+	if( result == OverrideReadResult::Missing )
 	{
-		DWORD error = GetLastError();
-		//assert(false);
 		app.DebugPrintf("Biome override not found, using plains as default\n");
 
 		memset(m_biomeOverride.data,Biome::plains->id,m_biomeOverride.length);
 	}
-	else
+	else if( result == OverrideReadResult::TooLarge )
 	{
-
-#ifdef _DURANGO
-		__debugbreak();	// TODO
-		DWORD bytesRead,dwFileSize = 0;
-#else
-		DWORD bytesRead,dwFileSize = GetFileSize(file,nullptr);
-#endif
-		if(dwFileSize > m_biomeOverride.length)
-		{
-			app.DebugPrintf("Biomemap binary is too large!!\n");
-			__debugbreak();
-		}
-		BOOL bSuccess = ReadFile(file,m_biomeOverride.data,dwFileSize,&bytesRead,nullptr);
-
-		if(bSuccess==FALSE)
-		{
-			app.FatalLoadError();
-		}
-
-		CloseHandle(file);
+		app.DebugPrintf("Biomemap binary is too large!!\n");
+		__debugbreak();
+	}
+	else if( result == OverrideReadResult::Error )
+	{
+		app.FatalLoadError();
 	}
 }
 

@@ -227,6 +227,10 @@ Direction:
   (`File` now routes delete, mkdir, exists, rename, list, length, and
   last-modified queries through `std::filesystem` instead of Win32-shaped
   platform/storage glue)
+- keep native world-generation override assets on portable file reads
+  (`CustomLevelSource` and `BiomeOverrideLayer` now load `GameRules/*.bin`
+  override data through C stdio instead of `CreateFile`/`GetFileSize`/
+  `ReadFile` console paths)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 
