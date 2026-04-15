@@ -245,6 +245,17 @@ run_native_only_contract() {
         rg -n -S "ReadNativeDLCFileBytes" \
             Minecraft.Client/Common/DLC/DLCManager.cpp >/dev/null
 
+        if rg -n -S "CreateFile\\(|GetFileSize\\(|ReadFile\\(|CloseHandle\\(|_UNICODE" \
+            Minecraft.Client/DLCTexturePack.cpp \
+            > "$log_root/native-client-dlc-texturepack-win32-io.txt"; then
+            echo "Native DLC texture pack loading still uses Win32-shaped file I/O" >&2
+            cat "$log_root/native-client-dlc-texturepack-win32-io.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "ReadNativeTexturePackFileBytes" \
+            Minecraft.Client/DLCTexturePack.cpp >/dev/null
+
         if rg -n -S "HANDLE|CreateFile\\(|ReadFile\\(|WriteFile\\(|SetFilePointer\\(|CloseHandle\\(" \
             Minecraft.World/FileInputStream.h \
             Minecraft.World/FileInputStream.cpp \

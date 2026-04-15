@@ -1,4 +1,7 @@
 #include "stdafx.h"
+#include <algorithm>
+#include <cstdio>
+#include <limits>
 #include "Common/DLC/DLCGameRulesFile.h"
 #include "Common/DLC/DLCGameRulesHeader.h"
 #include "Common/DLC/DLCGameRules.h"
@@ -12,10 +15,85 @@
 #include "Common/UI/UI.h"
 #include "Common/DLC/DLCAudioFile.h"
 
+namespace
+{
+enum class NativeTexturePackReadResult
+{
+    Ok,
+    Missing,
+    TooLarge,
+    Error,
+};
+
+string NormalizeNativeTexturePackPath(const wstring &path)
+{
+    string nativePath = wstringtofilename(path);
+    std::replace(nativePath.begin(), nativePath.end(), '\\', '/');
+    return nativePath;
+}
+
+NativeTexturePackReadResult ReadNativeTexturePackFileBytes(
+    const File &filePath,
+    PBYTE *outData,
+    DWORD *outLength)
+{
+    if (outData == nullptr || outLength == nullptr)
+    {
+        return NativeTexturePackReadResult::Error;
+    }
+
+    *outData = nullptr;
+    *outLength = 0;
+
+    const string nativePath =
+        NormalizeNativeTexturePackPath(filePath.getPath());
+    FILE *file = std::fopen(nativePath.c_str(), "rb");
+    if (file == nullptr)
+    {
+        return NativeTexturePackReadResult::Missing;
+    }
+
+    NativeTexturePackReadResult result =
+        NativeTexturePackReadResult::Error;
+    if (std::fseek(file, 0, SEEK_END) == 0)
+    {
+        const long fileSize = std::ftell(file);
+        if (fileSize >= 0 &&
+            static_cast<unsigned long>(fileSize) >
+                std::numeric_limits<DWORD>::max())
+        {
+            result = NativeTexturePackReadResult::TooLarge;
+        }
+        else if (fileSize >= 0 && std::fseek(file, 0, SEEK_SET) == 0)
+        {
+            const DWORD byteCount = static_cast<DWORD>(fileSize);
+            PBYTE data = new BYTE[byteCount];
+            const std::size_t bytesRead =
+                byteCount == 0
+                    ? 0
+                    : std::fread(data, 1, byteCount, file);
+            if (bytesRead == byteCount)
+            {
+                *outData = data;
+                *outLength = byteCount;
+                result = NativeTexturePackReadResult::Ok;
+            }
+            else
+            {
+                delete[] data;
+            }
+        }
+    }
+
+    std::fclose(file);
+    return result;
+}
+} // namespace
+
 DLCTexturePack::DLCTexturePack(DWORD id, DLCPack *pack, TexturePack *fallback) : AbstractTexturePack(id, nullptr, pack->getName(), fallback)
 {
-	m_dlcInfoPack = pack;
-	m_dlcDataPack = nullptr;
+    m_dlcInfoPack = pack;
+    m_dlcDataPack = nullptr;
 	bUILoaded = false;
 	m_bLoadingData = false;
 	m_bHasLoadedData = false;
@@ -279,174 +357,112 @@ int DLCTexturePack::packMounted(LPVOID pParam,int iPad,DWORD dwErr,DWORD dwLicen
 	}
 	else
 	{
-		app.DebugPrintf("Mounted DLC for texture pack, attempting to load data\n");
-		texturePack->m_dlcDataPack = new DLCPack(texturePack->m_dlcInfoPack->getName(), dwLicenceMask);
-		texturePack->setHasAudio(false);
-		DWORD dwFilesProcessed = 0;
-		// Load the DLC textures
-		wstring dataFilePath = texturePack->m_dlcInfoPack->getFullDataPath();
-		if(!dataFilePath.empty())
-		{
-			if(!app.m_dlcManager.readDLCDataFile(dwFilesProcessed, getFilePath(texturePack->m_dlcInfoPack->GetPackID(), dataFilePath),texturePack->m_dlcDataPack))
-			{
-				delete texturePack->m_dlcDataPack;
-				texturePack->m_dlcDataPack = nullptr;
-			}
+        app.DebugPrintf("Mounted DLC for texture pack, attempting to load data\n");
+        texturePack->m_dlcDataPack = new DLCPack(texturePack->m_dlcInfoPack->getName(), dwLicenceMask);
+        texturePack->setHasAudio(false);
+        DWORD dwFilesProcessed = 0;
+        // Load the DLC textures
+        wstring dataFilePath = texturePack->m_dlcInfoPack->getFullDataPath();
+        if (!dataFilePath.empty())
+        {
+            if (!app.m_dlcManager.readDLCDataFile(dwFilesProcessed, getFilePath(texturePack->m_dlcInfoPack->GetPackID(), dataFilePath), texturePack->m_dlcDataPack))
+            {
+                delete texturePack->m_dlcDataPack;
+                texturePack->m_dlcDataPack = nullptr;
+            }
 
-			// Load the UI data
-			if(texturePack->m_dlcDataPack != nullptr)
-			{
+            // Load the UI data
+            if (texturePack->m_dlcDataPack != nullptr)
+            {
 #ifdef _XBOX
-				File xzpPath(getFilePath(texturePack->m_dlcInfoPack->GetPackID(), wstring(L"TexturePack.xzp") ) );
+                File xzpPath(getFilePath(texturePack->m_dlcInfoPack->GetPackID(), wstring(L"TexturePack.xzp")));
 
-				if(xzpPath.exists())
-				{
-					const char *pchFilename=wstringtofilename(xzpPath.getPath());
-					HANDLE fileHandle = CreateFile(
-						pchFilename, // file name
-						GENERIC_READ, // access mode
-						0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-						nullptr, // Unused
-						OPEN_EXISTING , // how to create // TODO 4J Stu - Assuming that the file already exists if we are opening to read from it
-						FILE_FLAG_SEQUENTIAL_SCAN, // file attributes
-						nullptr // Unsupported
-						);
-
-					if( fileHandle != INVALID_HANDLE_VALUE )
-					{
-						DWORD dwFileSize = xzpPath.length();
-						DWORD bytesRead;
-						PBYTE pbData =  (PBYTE) new BYTE[dwFileSize];
-						BOOL success = ReadFile(fileHandle,pbData,dwFileSize,&bytesRead,nullptr);
-						CloseHandle(fileHandle);
-						if(success)
-						{
-							DLCUIDataFile *uiDLCFile = (DLCUIDataFile *)texturePack->m_dlcDataPack->addFile(DLCManager::e_DLCType_UIData,L"TexturePack.xzp");
-							uiDLCFile->addData(pbData,bytesRead,true);
-						
-						}
-					}
-				}
+                if (xzpPath.exists())
+                {
+                    PBYTE pbData = nullptr;
+                    DWORD bytesRead = 0;
+                    if (ReadNativeTexturePackFileBytes(
+                            xzpPath,
+                            &pbData,
+                            &bytesRead) == NativeTexturePackReadResult::Ok)
+                    {
+                        DLCUIDataFile *uiDLCFile = (DLCUIDataFile *)texturePack->m_dlcDataPack->addFile(DLCManager::e_DLCType_UIData, L"TexturePack.xzp");
+                        uiDLCFile->addData(pbData, bytesRead, true);
+                    }
+                }
 #else
-				File archivePath(getFilePath(texturePack->m_dlcInfoPack->GetPackID(), wstring(L"media.arc") ) );
-				if(archivePath.exists()) texturePack->m_archiveFile = new ArchiveFile(archivePath);
+                File archivePath(getFilePath(texturePack->m_dlcInfoPack->GetPackID(), wstring(L"media.arc")));
+                if (archivePath.exists())
+                {
+                    texturePack->m_archiveFile = new ArchiveFile(archivePath);
+                }
 #endif
 
-				/**
-					4J-JEV:
-						For all the GameRuleHeader files we find
-				*/
-				DLCPack *pack = texturePack->m_dlcInfoPack->GetParentPack();
-				LevelGenerationOptions *levelGen = app.getLevelGenerationOptions();
-				if (levelGen != nullptr && !levelGen->hasLoadedData())
-				{
-					int gameRulesCount = pack->getDLCItemsCount(DLCManager::e_DLCType_GameRulesHeader);
-					for(int i = 0; i < gameRulesCount; ++i)
-					{
-						DLCGameRulesHeader *dlcFile = static_cast<DLCGameRulesHeader *>(pack->getFile(DLCManager::e_DLCType_GameRulesHeader, i));
-					
-						if (!dlcFile->getGrfPath().empty())
-						{
-							File grf( getFilePath(texturePack->m_dlcInfoPack->GetPackID(), dlcFile->getGrfPath() ) );
-							if (grf.exists())
-							{
-#ifdef _UNICODE
-								wstring path = grf.getPath();
-								const WCHAR *pchFilename=path.c_str();
-								HANDLE fileHandle = CreateFile(
-									pchFilename, // file name
-									GENERIC_READ, // access mode
-									0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-									nullptr, // Unused
-									OPEN_EXISTING , // how to create // TODO 4J Stu - Assuming that the file already exists if we are opening to read from it
-									FILE_FLAG_SEQUENTIAL_SCAN, // file attributes
-									nullptr // Unsupported
-									);
-#else
-								const char *pchFilename=wstringtofilename(grf.getPath());
-								HANDLE fileHandle = CreateFile(
-									pchFilename, // file name
-									GENERIC_READ, // access mode
-									0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-									nullptr, // Unused
-									OPEN_EXISTING , // how to create // TODO 4J Stu - Assuming that the file already exists if we are opening to read from it
-									FILE_FLAG_SEQUENTIAL_SCAN, // file attributes
-									nullptr // Unsupported
-									);
-#endif
+                /**
+                4J-JEV:
+                    For all the GameRuleHeader files we find
+            */
+                DLCPack *pack = texturePack->m_dlcInfoPack->GetParentPack();
+                LevelGenerationOptions *levelGen = app.getLevelGenerationOptions();
+                if (levelGen != nullptr && !levelGen->hasLoadedData())
+                {
+                    int gameRulesCount = pack->getDLCItemsCount(DLCManager::e_DLCType_GameRulesHeader);
+                    for (int i = 0; i < gameRulesCount; ++i)
+                    {
+                        DLCGameRulesHeader *dlcFile = static_cast<DLCGameRulesHeader *>(pack->getFile(DLCManager::e_DLCType_GameRulesHeader, i));
 
-								if( fileHandle != INVALID_HANDLE_VALUE )
-								{
-									DWORD dwFileSize = grf.length();
-									DWORD bytesRead;
-									PBYTE pbData =  (PBYTE) new BYTE[dwFileSize];
-									BOOL bSuccess = ReadFile(fileHandle,pbData,dwFileSize,&bytesRead,nullptr);
-									if(bSuccess==FALSE)
-									{
-										app.FatalLoadError();
-									}
-									CloseHandle(fileHandle);
+                        if (!dlcFile->getGrfPath().empty())
+                        {
+                            File grf(getFilePath(texturePack->m_dlcInfoPack->GetPackID(), dlcFile->getGrfPath()));
+                            if (grf.exists())
+                            {
+                                PBYTE pbData = nullptr;
+                                DWORD bytesRead = 0;
+                                if (ReadNativeTexturePackFileBytes(
+                                        grf,
+                                        &pbData,
+                                        &bytesRead) ==
+                                    NativeTexturePackReadResult::Ok)
+                                {
+                                    // 4J-PB - is it possible that we can get here after a read fail and it's not an error?
+                                    dlcFile->setGrfData(pbData, bytesRead, texturePack->m_stringTable);
 
-									// 4J-PB - is it possible that we can get here after a read fail and it's not an error?
-									dlcFile->setGrfData(pbData, dwFileSize, texturePack->m_stringTable);
+                                    delete[] pbData;
 
-									delete [] pbData;
+                                    app.m_gameRules.setLevelGenerationOptions(dlcFile->lgo);
+                                }
+                                else
+                                {
+                                    app.FatalLoadError();
+                                }
+                            }
+                        }
+                    }
+                    if (levelGen->requiresBaseSave() && !levelGen->getBaseSavePath().empty())
+                    {
+                        File grf(getFilePath(texturePack->m_dlcInfoPack->GetPackID(), levelGen->getBaseSavePath()));
+                        if (grf.exists())
+                        {
+                            PBYTE pbData = nullptr;
+                            DWORD bytesRead = 0;
+                            if (ReadNativeTexturePackFileBytes(
+                                    grf,
+                                    &pbData,
+                                    &bytesRead) ==
+                                NativeTexturePackReadResult::Ok)
+                            {
+                                // 4J-PB - is it possible that we can get here after a read fail and it's not an error?
+                                levelGen->setBaseSaveData(pbData, bytesRead);
+                            }
+                            else
+                            {
+                                app.FatalLoadError();
+                            }
+                        }
+                    }
+                }
 
-									app.m_gameRules.setLevelGenerationOptions( dlcFile->lgo );
-								}
-							}
-						}
-					}
-					if(levelGen->requiresBaseSave() && !levelGen->getBaseSavePath().empty() )
-					{
-						File grf(getFilePath(texturePack->m_dlcInfoPack->GetPackID(), levelGen->getBaseSavePath() ));
-						if (grf.exists())
-						{
-#ifdef _UNICODE
-							wstring path = grf.getPath();
-							const WCHAR *pchFilename=path.c_str();
-							HANDLE fileHandle = CreateFile(
-								pchFilename, // file name
-								GENERIC_READ, // access mode
-								0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-								nullptr, // Unused
-								OPEN_EXISTING , // how to create // TODO 4J Stu - Assuming that the file already exists if we are opening to read from it
-								FILE_FLAG_SEQUENTIAL_SCAN, // file attributes
-								nullptr // Unsupported
-								);
-#else
-							const char *pchFilename=wstringtofilename(grf.getPath());
-							HANDLE fileHandle = CreateFile(
-								pchFilename, // file name
-								GENERIC_READ, // access mode
-								0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-								nullptr, // Unused
-								OPEN_EXISTING , // how to create // TODO 4J Stu - Assuming that the file already exists if we are opening to read from it
-								FILE_FLAG_SEQUENTIAL_SCAN, // file attributes
-								nullptr // Unsupported
-								);
-#endif
-
-							if( fileHandle != INVALID_HANDLE_VALUE )
-							{
-								DWORD bytesRead,dwFileSize = GetFileSize(fileHandle,nullptr);
-								PBYTE pbData =  (PBYTE) new BYTE[dwFileSize];
-								BOOL bSuccess = ReadFile(fileHandle,pbData,dwFileSize,&bytesRead,nullptr);
-								if(bSuccess==FALSE)
-								{
-									app.FatalLoadError();
-								}
-								CloseHandle(fileHandle);
-
-								// 4J-PB - is it possible that we can get here after a read fail and it's not an error?
-								levelGen->setBaseSaveData(pbData, dwFileSize);
-							}
-						}
-					}
-				}
-				
-
-				// any audio data?
+                // any audio data?
 #ifdef _XBOX				
 				File audioXSBPath(getFilePath(texturePack->m_dlcInfoPack->GetPackID(), wstring(L"MashUp.xsb") ) );
 				File audioXWBPath(getFilePath(texturePack->m_dlcInfoPack->GetPackID(), wstring(L"MashUp.xwb") ) );
@@ -482,11 +498,11 @@ int DLCTexturePack::packMounted(LPVOID pParam,int iPad,DWORD dwErr,DWORD dwLicen
 						iNetherStart,iNetherStart+iNetherC-1,iEndStart,iEndStart+iEndC-1,iEndStart+iEndC); // push the CD start to after
 				}
 #endif
-}
-			texturePack->loadColourTable();
-		}
+            }
+            texturePack->loadColourTable();
+        }
 
-		// 4J-PB - we need to leave the texture pack mounted if it contained streaming audio
+        // 4J-PB - we need to leave the texture pack mounted if it contained streaming audio
 		if(texturePack->hasAudio()==false)
 		{
 #ifdef _XBOX

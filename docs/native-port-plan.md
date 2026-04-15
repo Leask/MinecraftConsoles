@@ -235,6 +235,10 @@ Direction:
   (`DLCManager` now reads DLC data and pack-id metadata through normalized
   C stdio paths instead of `StorageManager.GetMountedPath` plus
   Win32-shaped `CreateFile`/`ReadFile` calls)
+- keep native DLC texture-pack payload loading on portable file reads
+  (`DLCTexturePack` now reads texture-pack UI payloads, game-rule files, and
+  base-save bytes through normalized C stdio paths instead of Win32-shaped file
+  handles)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 
