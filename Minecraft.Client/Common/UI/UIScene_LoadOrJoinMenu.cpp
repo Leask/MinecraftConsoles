@@ -4252,9 +4252,18 @@ void UIScene_LoadOrJoinMenu::AppendServerToFile(const wstring& ip, const wstring
     char narrowIP[256] = {};
     char narrowPort[16] = {};
     char narrowName[256] = {};
-    wcstombs(narrowIP, ip.c_str(), sizeof(narrowIP) - 1);
-    wcstombs(narrowPort, port.c_str(), sizeof(narrowPort) - 1);
-    wcstombs(narrowName, name.c_str(), sizeof(narrowName) - 1);
+    NativeDesktopWideToUtf8Buffer(
+        ip.c_str(),
+        narrowIP,
+        sizeof(narrowIP));
+    NativeDesktopWideToUtf8Buffer(
+        port.c_str(),
+        narrowPort,
+        sizeof(narrowPort));
+    NativeDesktopWideToUtf8Buffer(
+        name.c_str(),
+        narrowName,
+        sizeof(narrowName));
 
     uint16_t portNum = static_cast<uint16_t>(atoi(narrowPort));
 

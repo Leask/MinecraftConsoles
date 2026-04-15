@@ -734,7 +734,10 @@ void UIScene_JoinMenu::BeginEditServer()
 	m_editServerPort.clear();
 
 	wchar_t wDefaultIP[64] = {};
-	mbstowcs(wDefaultIP, m_selectedSession->data.hostIP, 63);
+	NativeDesktopUtf8ToWideBuffer(
+		m_selectedSession->data.hostIP,
+		wDefaultIP,
+		64);
 
 	UIKeyboardInitData kbData;
 	kbData.title       = L"Server Address";
@@ -836,9 +839,18 @@ void UIScene_JoinMenu::UpdateServerInFile(const wstring& newIP, const wstring& n
 	char narrowNewIP[256] = {};
 	char narrowNewPort[16] = {};
 	char narrowNewName[256] = {};
-	wcstombs(narrowNewIP, newIP.c_str(), sizeof(narrowNewIP) - 1);
-	wcstombs(narrowNewPort, newPort.c_str(), sizeof(narrowNewPort) - 1);
-	wcstombs(narrowNewName, newName.c_str(), sizeof(narrowNewName) - 1);
+	NativeDesktopWideToUtf8Buffer(
+		newIP.c_str(),
+		narrowNewIP,
+		sizeof(narrowNewIP));
+	NativeDesktopWideToUtf8Buffer(
+		newPort.c_str(),
+		narrowNewPort,
+		sizeof(narrowNewPort));
+	NativeDesktopWideToUtf8Buffer(
+		newName.c_str(),
+		narrowNewName,
+		sizeof(narrowNewName));
 
 	uint16_t newPortNum = (uint16_t)atoi(narrowNewPort);
 

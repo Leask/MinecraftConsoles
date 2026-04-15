@@ -201,7 +201,9 @@ Direction:
   (`UIScene_LoadOrJoinMenu` and `UIScene_InGameSaveManagementMenu` now route
   native save filename/title/rename buffers through native desktop UTF
   conversion helpers instead of locale-based `mbstowcs` or `_WINDOWS64`
-  thumbnail-only branches)
+  thumbnail-only branches; `UIScene_LoadMenu` and the saved-server add/edit
+  paths now use the same helpers for displayed save titles and `servers.db`
+  UTF-8 round-trips)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

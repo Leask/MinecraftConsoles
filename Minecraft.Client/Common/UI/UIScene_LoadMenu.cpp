@@ -242,12 +242,14 @@ UIScene_LoadMenu::UIScene_LoadMenu(int iPad, void *initData, UILayer *parentLaye
 		m_labelGameName.init(wSaveName);
 #endif
 #endif
-#if defined(_WINDOWS64) || defined(_NATIVE_DESKTOP)
+#if defined(_NATIVE_DESKTOP)
 		if (params->saveDetails != nullptr && params->saveDetails->UTF8SaveName[0] != '\0')
 		{
 			wchar_t wSaveName[128];
-			ZeroMemory(wSaveName, sizeof(wSaveName));
-			mbstowcs(wSaveName, params->saveDetails->UTF8SaveName, 127);
+			NativeDesktopUtf8ToWideBuffer(
+				params->saveDetails->UTF8SaveName,
+				wSaveName,
+				128);
 			m_levelName = wstring(wSaveName);
 			m_labelGameName.init(m_levelName);
 		}

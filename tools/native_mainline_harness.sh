@@ -154,6 +154,31 @@ run_native_only_contract() {
             exit 1
         fi
 
+        if rg -n -S "wcstombs\\(narrow(New)?(IP|Port|Name)" \
+            Minecraft.Client/Common/UI/UIScene_LoadOrJoinMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_JoinMenu.cpp \
+            > "$log_root/native-saved-server-locale-conversion.txt"; then
+            echo "Native saved-server paths still use locale conversion" >&2
+            cat "$log_root/native-saved-server-locale-conversion.txt" >&2
+            exit 1
+        fi
+
+        if rg -n -S "mbstowcs\\(wDefaultIP|mbstowcs\\(wSaveName, params->saveDetails->UTF8SaveName, 127" \
+            Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_JoinMenu.cpp \
+            > "$log_root/native-load-menu-locale-conversion.txt"; then
+            echo "Native load/join paths still use locale conversion" >&2
+            cat "$log_root/native-load-menu-locale-conversion.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopWideToUtf8Buffer" \
+            Minecraft.Client/Common/UI/UIScene_LoadOrJoinMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_JoinMenu.cpp >/dev/null
+        rg -n -S "NativeDesktopUtf8ToWideBuffer" \
+            Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_JoinMenu.cpp >/dev/null
+
         rg -n -S "Windows compatibility maintenance has stopped" \
             README.md COMPILE.md CONTRIBUTING.md docs/native-port-plan.md >/dev/null
         git diff --check
