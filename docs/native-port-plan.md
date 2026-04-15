@@ -215,7 +215,8 @@ Direction:
   (`Mouse::getY` now reads client geometry through
   `NativeDesktopGetClientAreaSize`, and `LevelGenerationOptions` reads native
   desktop game-rule/base-save bytes through `NativeDesktopReadFileBytes`
-  instead of direct Win32-shaped file handles)
+  instead of direct Win32-shaped file handles or `WPACK:`/`StorageManager`
+  mount callbacks)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/

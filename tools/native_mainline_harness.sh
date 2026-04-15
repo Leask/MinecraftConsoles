@@ -221,8 +221,9 @@ run_native_only_contract() {
             exit 1
         fi
 
-        if rg -n -S "CreateFile\\(|GetFileSize\\(|ReadFile\\(|CloseHandle\\(" \
+        if rg -n -S "CreateFile\\(|GetFileSize\\(|ReadFile\\(|CloseHandle\\(|StorageManager\\.|MountInstalledDLC|UnmountInstalledDLC|WPACK|_DURANGO|_WINDOWS64" \
             Minecraft.Client/Common/GameRules/LevelGenerationOptions.cpp \
+            Minecraft.Client/Common/GameRules/LevelGenerationOptions.h \
             > "$log_root/native-client-lgo-win32-io.txt"; then
             echo "Native level-generation option loading still uses Win32-shaped I/O" >&2
             cat "$log_root/native-client-lgo-win32-io.txt" >&2

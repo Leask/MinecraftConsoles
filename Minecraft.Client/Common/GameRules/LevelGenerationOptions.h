@@ -210,7 +210,6 @@ public:
 	unordered_map<wstring, ConsoleSchematicFile *> *getUnfinishedSchematicFiles();
 
 	void loadBaseSaveData();
-	static int packMounted(LPVOID pParam,int iPad,DWORD dwErr,DWORD dwLicenceMask);
 
 	// 4J-JEV:
 	// ApplySchematicRules contain limited state

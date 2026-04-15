@@ -491,8 +491,6 @@ unordered_map<wstring, ConsoleSchematicFile *> *LevelGenerationOptions::getUnfin
 
 void LevelGenerationOptions::loadBaseSaveData()
 {
-#ifdef _NATIVE_DESKTOP
-	
 	int gameRulesCount = m_parentDLCPack ? m_parentDLCPack->getDLCItemsCount(DLCManager::e_DLCType_GameRulesHeader) : 0;
 
 	wstring baseSave = getBaseSavePath();
@@ -543,110 +541,6 @@ void LevelGenerationOptions::loadBaseSaveData()
 
 	setLoadedData();
 	app.SetAction(ProfileManager.GetPrimaryPad(), eAppAction_ReloadTexturePack);
-
-#else
-	int mountIndex = -1;
-	if(m_parentDLCPack != nullptr) mountIndex = m_parentDLCPack->GetDLCMountIndex();
-
-	if(mountIndex > -1)
-	{
-#ifdef _DURANGO
-		if(StorageManager.MountInstalledDLC(ProfileManager.GetPrimaryPad(),mountIndex,&LevelGenerationOptions::packMounted,this,L"WPACK")!=ERROR_IO_PENDING)
-#else
-		if(StorageManager.MountInstalledDLC(ProfileManager.GetPrimaryPad(),mountIndex,&LevelGenerationOptions::packMounted,this,"WPACK")!=ERROR_IO_PENDING)
-#endif
-		{
-			// corrupt DLC
-			setLoadedData();
-			app.DebugPrintf("Failed to mount LGO DLC %d for pad %d\n",mountIndex,ProfileManager.GetPrimaryPad());
-		}
-		else
-		{
-			m_bLoadingData = true;
-			app.DebugPrintf("Attempted to mount DLC data for LGO %d\n", mountIndex);
-		}
-	}
-	else
-	{
-		setLoadedData();
-		app.SetAction(ProfileManager.GetPrimaryPad(), eAppAction_ReloadTexturePack);
-	}
-#endif
-}
-
-int LevelGenerationOptions::packMounted(LPVOID pParam,int iPad,DWORD dwErr,DWORD dwLicenceMask)
-{
-	LevelGenerationOptions *lgo = static_cast<LevelGenerationOptions *>(pParam);
-	lgo->m_bLoadingData = false;
-	if(dwErr!=ERROR_SUCCESS)
-	{
-		// corrupt DLC
-		app.DebugPrintf("Failed to mount LGO DLC for pad %d: %d\n",iPad,dwErr);
-	}
-	else
-	{
-		app.DebugPrintf("Mounted DLC for LGO, attempting to load data\n");
-		int gameRulesCount = lgo->m_parentDLCPack->getDLCItemsCount(DLCManager::e_DLCType_GameRulesHeader);
-		for(int i = 0; i < gameRulesCount; ++i)
-		{
-			DLCGameRulesHeader *dlcFile = static_cast<DLCGameRulesHeader *>(lgo->m_parentDLCPack->getFile(DLCManager::e_DLCType_GameRulesHeader, i));
-
-			if (!dlcFile->getGrfPath().empty())
-			{
-				File grf( app.getFilePath(lgo->m_parentDLCPack->GetPackID(), dlcFile->getGrfPath(),true, L"WPACK:" ) );
-				if (grf.exists())
-				{
-					vector<BYTE> grfData;
-					if(readNativeDesktopFileBytes(grf, &grfData))
-					{
-						dlcFile->setGrfData(
-							grfData.data(),
-							static_cast<DWORD>(grfData.size()),
-							lgo->m_stringTable);
-
-						app.m_gameRules.setLevelGenerationOptions( dlcFile->lgo );
-					}
-					else
-					{
-						app.FatalLoadError();
-					}
-				}
-			}
-		}
-		if(lgo->requiresBaseSave() && !lgo->getBaseSavePath().empty() )
-		{
-			File save(app.getFilePath(lgo->m_parentDLCPack->GetPackID(), lgo->getBaseSavePath(),true, L"WPACK:" ));
-			if (save.exists())
-			{
-				vector<BYTE> saveData;
-				if(readNativeDesktopFileBytes(save, &saveData))
-				{
-					PBYTE pbData = cloneNativeDesktopBytes(saveData);
-					if(pbData != nullptr)
-					{
-						lgo->setBaseSaveData(
-							pbData,
-							static_cast<DWORD>(saveData.size()));
-					}
-				}
-				else
-				{
-					app.FatalLoadError();
-				}
-			}
-
-		}
-#ifdef _DURANGO
-		StorageManager.UnmountInstalledDLC(L"WPACK");
-#else
-		StorageManager.UnmountInstalledDLC("WPACK");
-#endif
-
-	}
-
-	lgo->setLoadedData();
-
-	return 0;
 }
 
 void LevelGenerationOptions::reset_start()
