@@ -211,6 +211,11 @@ Direction:
   (`Minecraft`, `Screen`, UI controller, crafting/load menu, audio, and
   platform-network active paths no longer share `_WINDOWS64` and
   `_NATIVE_DESKTOP` preprocessor guards)
+- keep native client startup/data helpers on native abstractions
+  (`Mouse::getY` now reads client geometry through
+  `NativeDesktopGetClientAreaSize`, and `LevelGenerationOptions` reads native
+  desktop game-rule/base-save bytes through `NativeDesktopReadFileBytes`
+  instead of direct Win32-shaped file handles)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

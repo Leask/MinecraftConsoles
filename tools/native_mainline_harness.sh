@@ -213,6 +213,27 @@ run_native_only_contract() {
             exit 1
         fi
 
+        if rg -n -S "HWND|GetClientRect" \
+            Minecraft.Client/stubs.cpp \
+            > "$log_root/native-client-stub-window-geometry.txt"; then
+            echo "Native client stubs still read Win32-shaped window geometry" >&2
+            cat "$log_root/native-client-stub-window-geometry.txt" >&2
+            exit 1
+        fi
+
+        if rg -n -S "CreateFile\\(|GetFileSize\\(|ReadFile\\(|CloseHandle\\(" \
+            Minecraft.Client/Common/GameRules/LevelGenerationOptions.cpp \
+            > "$log_root/native-client-lgo-win32-io.txt"; then
+            echo "Native level-generation option loading still uses Win32-shaped I/O" >&2
+            cat "$log_root/native-client-lgo-win32-io.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopGetClientAreaSize" \
+            Minecraft.Client/stubs.cpp >/dev/null
+        rg -n -S "NativeDesktopReadFileBytes" \
+            Minecraft.Client/Common/GameRules/LevelGenerationOptions.cpp >/dev/null
+
         rg -n -S "Windows compatibility maintenance has stopped" \
             README.md COMPILE.md CONTRIBUTING.md docs/native-port-plan.md >/dev/null
         git diff --check

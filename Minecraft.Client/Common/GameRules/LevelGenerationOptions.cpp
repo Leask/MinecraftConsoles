@@ -13,6 +13,41 @@
 #include "LevelGenerationOptions.h"
 #include "ConsoleGameRules.h"
 
+#ifdef _NATIVE_DESKTOP
+namespace
+{
+	bool readNativeDesktopFileBytes(const File& file, vector<BYTE>* outBytes)
+	{
+		if (outBytes == nullptr)
+		{
+			return false;
+		}
+
+		const string nativePath =
+			NativeDesktopWideToUtf8String(file.getPath().c_str());
+		if (nativePath.empty())
+		{
+			outBytes->clear();
+			return false;
+		}
+
+		return NativeDesktopReadFileBytes(nativePath.c_str(), outBytes);
+	}
+
+	PBYTE cloneNativeDesktopBytes(const vector<BYTE>& bytes)
+	{
+		if (bytes.empty())
+		{
+			return nullptr;
+		}
+
+		PBYTE clone = new BYTE[bytes.size()];
+		memcpy(clone, bytes.data(), bytes.size());
+		return clone;
+	}
+}
+#endif
+
 JustGrSource::JustGrSource()
 {
 	m_displayName = L"Default_DisplayName";
@@ -473,23 +508,14 @@ void LevelGenerationOptions::loadBaseSaveData()
 
 			if (grf.exists())
 			{
-				wstring path = grf.getPath();
-				HANDLE fileHandle = CreateFile(wstringtofilename(path), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
-
-				if (fileHandle != INVALID_HANDLE_VALUE)
+				vector<BYTE> grfData;
+				if (readNativeDesktopFileBytes(grf, &grfData))
 				{
-					DWORD dwFileSize = grf.length();
-					DWORD bytesRead;
-					PBYTE pbData = new BYTE[dwFileSize];
-					BOOL bSuccess = ReadFile(fileHandle, pbData, dwFileSize, &bytesRead, nullptr);
-					CloseHandle(fileHandle);
-
-					if (bSuccess)
-					{
-						dlcFile->setGrfData(pbData, dwFileSize, m_stringTable);
-						app.m_gameRules.setLevelGenerationOptions(dlcFile->lgo);
-					}
-					delete[] pbData;
+					dlcFile->setGrfData(
+						grfData.data(),
+						static_cast<DWORD>(grfData.size()),
+						m_stringTable);
+					app.m_gameRules.setLevelGenerationOptions(dlcFile->lgo);
 				}
 			}
 		}
@@ -501,21 +527,16 @@ void LevelGenerationOptions::loadBaseSaveData()
 
 		if (save.exists())
 		{
-			wstring path = save.getPath();
-			HANDLE fileHandle = CreateFile(wstringtofilename(path), GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_FLAG_SEQUENTIAL_SCAN, nullptr);
-
-			if (fileHandle != INVALID_HANDLE_VALUE)
+			vector<BYTE> saveData;
+			if (readNativeDesktopFileBytes(save, &saveData))
 			{
-				DWORD dwFileSize = GetFileSize(fileHandle, nullptr);
-				DWORD bytesRead;
-				PBYTE pbData = new BYTE[dwFileSize];
-				BOOL bSuccess = ReadFile(fileHandle, pbData, dwFileSize, &bytesRead, nullptr);
-				CloseHandle(fileHandle);
-
-				if (bSuccess)
-					setBaseSaveData(pbData, dwFileSize);
-				else
-					delete[] pbData;
+				PBYTE pbData = cloneNativeDesktopBytes(saveData);
+				if (pbData != nullptr)
+				{
+					setBaseSaveData(
+						pbData,
+						static_cast<DWORD>(saveData.size()));
+				}
 			}
 		}
 	}
@@ -565,7 +586,6 @@ int LevelGenerationOptions::packMounted(LPVOID pParam,int iPad,DWORD dwErr,DWORD
 	else
 	{
 		app.DebugPrintf("Mounted DLC for LGO, attempting to load data\n");
-		DWORD dwFilesProcessed = 0;
 		int gameRulesCount = lgo->m_parentDLCPack->getDLCItemsCount(DLCManager::e_DLCType_GameRulesHeader);
 		for(int i = 0; i < gameRulesCount; ++i)
 		{
@@ -576,49 +596,19 @@ int LevelGenerationOptions::packMounted(LPVOID pParam,int iPad,DWORD dwErr,DWORD
 				File grf( app.getFilePath(lgo->m_parentDLCPack->GetPackID(), dlcFile->getGrfPath(),true, L"WPACK:" ) );
 				if (grf.exists())
 				{
-#ifdef _UNICODE
-					wstring path = grf.getPath();
-					const WCHAR *pchFilename=path.c_str();
-					HANDLE fileHandle = CreateFile(
-						pchFilename, // file name
-						GENERIC_READ, // access mode
-						0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-						nullptr, // Unused
-						OPEN_EXISTING , // how to create // TODO 4J Stu - Assuming that the file already exists if we are opening to read from it
-						FILE_FLAG_SEQUENTIAL_SCAN, // file attributes
-						nullptr // Unsupported
-						);
-#else
-					const char *pchFilename=wstringtofilename(grf.getPath());
-					HANDLE fileHandle = CreateFile(
-						pchFilename, // file name
-						GENERIC_READ, // access mode
-						0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-						nullptr, // Unused
-						OPEN_EXISTING , // how to create // TODO 4J Stu - Assuming that the file already exists if we are opening to read from it
-						FILE_FLAG_SEQUENTIAL_SCAN, // file attributes
-						nullptr // Unsupported
-						);
-#endif
-
-					if( fileHandle != INVALID_HANDLE_VALUE )
+					vector<BYTE> grfData;
+					if(readNativeDesktopFileBytes(grf, &grfData))
 					{
-						DWORD dwFileSize = grf.length();
-						DWORD bytesRead;
-						PBYTE pbData =  (PBYTE) new BYTE[dwFileSize];
-						BOOL bSuccess = ReadFile(fileHandle,pbData,dwFileSize,&bytesRead,nullptr);
-						if(bSuccess==FALSE)
-						{
-							app.FatalLoadError();
-						}
-						CloseHandle(fileHandle);
-
-						// 4J-PB - is it possible that we can get here after a read fail and it's not an error?
-						dlcFile->setGrfData(pbData, dwFileSize, lgo->m_stringTable);
-
-						delete [] pbData;
+						dlcFile->setGrfData(
+							grfData.data(),
+							static_cast<DWORD>(grfData.size()),
+							lgo->m_stringTable);
 
 						app.m_gameRules.setLevelGenerationOptions( dlcFile->lgo );
+					}
+					else
+					{
+						app.FatalLoadError();
 					}
 				}
 			}
@@ -628,52 +618,28 @@ int LevelGenerationOptions::packMounted(LPVOID pParam,int iPad,DWORD dwErr,DWORD
 			File save(app.getFilePath(lgo->m_parentDLCPack->GetPackID(), lgo->getBaseSavePath(),true, L"WPACK:" ));
 			if (save.exists())
 			{
-#ifdef _UNICODE
-				wstring path = save.getPath();
-				const WCHAR *pchFilename=path.c_str();
-				HANDLE fileHandle = CreateFile(
-					pchFilename, // file name
-					GENERIC_READ, // access mode
-					0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-					nullptr, // Unused
-					OPEN_EXISTING , // how to create // TODO 4J Stu - Assuming that the file already exists if we are opening to read from it
-					FILE_FLAG_SEQUENTIAL_SCAN, // file attributes
-					nullptr // Unsupported
-					);
-#else
-				const char *pchFilename=wstringtofilename(save.getPath());
-				HANDLE fileHandle = CreateFile(
-					pchFilename, // file name
-					GENERIC_READ, // access mode
-					0, // share mode // TODO 4J Stu - Will we need to share file? Probably not but...
-					nullptr, // Unused
-					OPEN_EXISTING , // how to create // TODO 4J Stu - Assuming that the file already exists if we are opening to read from it
-					FILE_FLAG_SEQUENTIAL_SCAN, // file attributes
-					nullptr // Unsupported
-					);
-#endif
-
-				if( fileHandle != INVALID_HANDLE_VALUE )
+				vector<BYTE> saveData;
+				if(readNativeDesktopFileBytes(save, &saveData))
 				{
-					DWORD bytesRead,dwFileSize = GetFileSize(fileHandle,nullptr);
-					PBYTE pbData =  (PBYTE) new BYTE[dwFileSize];
-					BOOL bSuccess = ReadFile(fileHandle,pbData,dwFileSize,&bytesRead,nullptr);
-					if(bSuccess==FALSE)
+					PBYTE pbData = cloneNativeDesktopBytes(saveData);
+					if(pbData != nullptr)
 					{
-						app.FatalLoadError();
+						lgo->setBaseSaveData(
+							pbData,
+							static_cast<DWORD>(saveData.size()));
 					}
-					CloseHandle(fileHandle);
-
-					// 4J-PB - is it possible that we can get here after a read fail and it's not an error?
-					lgo->setBaseSaveData(pbData, dwFileSize);
+				}
+				else
+				{
+					app.FatalLoadError();
 				}
 			}
 
 		}
 #ifdef _DURANGO
-		DWORD result = StorageManager.UnmountInstalledDLC(L"WPACK");
+		StorageManager.UnmountInstalledDLC(L"WPACK");
 #else
-		DWORD result = StorageManager.UnmountInstalledDLC("WPACK");
+		StorageManager.UnmountInstalledDLC("WPACK");
 #endif
 
 	}
@@ -765,7 +731,7 @@ bool LevelGenerationOptions::ready() { return info()->ready(); }
 void LevelGenerationOptions::setBaseSaveData(PBYTE pbData, DWORD dwSize) { m_pbBaseSaveData = pbData; m_dwBaseSaveSize = dwSize; }
 PBYTE LevelGenerationOptions::getBaseSaveData(DWORD &size) { size = m_dwBaseSaveSize; return m_pbBaseSaveData; }
 bool LevelGenerationOptions::hasBaseSaveData() { return m_dwBaseSaveSize > 0 && m_pbBaseSaveData != nullptr; }
-void LevelGenerationOptions::deleteBaseSaveData() { if(m_pbBaseSaveData) delete m_pbBaseSaveData; m_pbBaseSaveData = nullptr; m_dwBaseSaveSize = 0; }
+void LevelGenerationOptions::deleteBaseSaveData() { if(m_pbBaseSaveData) delete[] m_pbBaseSaveData; m_pbBaseSaveData = nullptr; m_dwBaseSaveSize = 0; }
 
 bool LevelGenerationOptions::hasLoadedData() { return m_hasLoadedData; }
 void LevelGenerationOptions::setLoadedData() { m_hasLoadedData = true; }

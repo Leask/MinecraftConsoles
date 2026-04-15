@@ -85,11 +85,9 @@ int Mouse::getX()
 
 int Mouse::getY()
 {
-	// Return Y in bottom-up coordinates (OpenGL convention, matching original Java LWJGL Mouse)
-	extern HWND g_hWnd;
-	RECT rect;
-	GetClientRect(g_hWnd, &rect);
-	return (rect.bottom - 1) - g_KBMInput.GetMouseY();
+	// Return Y in bottom-up coordinates, matching original Java LWJGL Mouse.
+	NativeRendererSize clientArea = NativeDesktopGetClientAreaSize();
+	return (clientArea.height - 1) - g_KBMInput.GetMouseY();
 }
 
 bool Mouse::isButtonDown(int button)
