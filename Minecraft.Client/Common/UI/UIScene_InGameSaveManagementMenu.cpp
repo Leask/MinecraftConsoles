@@ -269,26 +269,36 @@ void UIScene_InGameSaveManagementMenu::tick()
 			m_bSaveThumbnailReady = false;
 
 			// check we're not waiting to exit the scene
-			if(!m_bExitScene)
-			{
-				// convert to utf16
-				uint16_t u16Message[MAX_SAVEFILENAME_LENGTH];
-#ifdef _DURANGO
-				// Already utf16 on durango
-				memcpy(u16Message, m_saveDetails[m_iRequestingThumbnailId].UTF16SaveFilename, MAX_SAVEFILENAME_LENGTH);
-#elif defined(_WINDOWS64)
-				int result = ::MultiByteToWideChar(
-					CP_UTF8,                // convert from UTF-8
-					MB_ERR_INVALID_CHARS,   // error on invalid chars
-					m_saveDetails[m_iRequestingThumbnailId].UTF8SaveFilename,            // source UTF-8 string
-					MAX_SAVEFILENAME_LENGTH,                 // total length of source UTF-8 string,
-					// in CHAR's (= bytes), including end-of-string \0
-					(wchar_t *)u16Message,               // destination buffer
-					MAX_SAVEFILENAME_LENGTH                // size of destination buffer, in WCHAR's
-					);
-#else
-#ifdef __PS3
-				size_t srcmax,dstmax;
+				if(!m_bExitScene)
+				{
+					// convert to utf16
+					uint16_t u16Message[MAX_SAVEFILENAME_LENGTH] = {};
+					wchar_t nativeWideMessage[MAX_SAVEFILENAME_LENGTH] = {};
+					wchar_t *thumbnailName = nullptr;
+	#ifdef _DURANGO
+					// Already utf16 on durango
+					memcpy(u16Message, m_saveDetails[m_iRequestingThumbnailId].UTF16SaveFilename, MAX_SAVEFILENAME_LENGTH);
+					thumbnailName = (wchar_t *)u16Message;
+	#elif defined(_WINDOWS64)
+					::MultiByteToWideChar(
+						CP_UTF8,                // convert from UTF-8
+						MB_ERR_INVALID_CHARS,   // error on invalid chars
+						m_saveDetails[m_iRequestingThumbnailId].UTF8SaveFilename,            // source UTF-8 string
+						MAX_SAVEFILENAME_LENGTH,                 // total length of source UTF-8 string,
+						// in CHAR's (= bytes), including end-of-string \0
+						nativeWideMessage,               // destination buffer
+						MAX_SAVEFILENAME_LENGTH                // size of destination buffer, in WCHAR's
+						);
+					thumbnailName = nativeWideMessage;
+	#elif defined(_NATIVE_DESKTOP)
+					NativeDesktopUtf8ToWideBuffer(
+						m_saveDetails[m_iRequestingThumbnailId].UTF8SaveFilename,
+						nativeWideMessage,
+						MAX_SAVEFILENAME_LENGTH);
+					thumbnailName = nativeWideMessage;
+	#else
+	#ifdef __PS3
+					size_t srcmax,dstmax;
 #else
 				uint32_t srcmax,dstmax;
 				uint32_t srclen,dstlen;
@@ -296,22 +306,25 @@ void UIScene_InGameSaveManagementMenu::tick()
 				srcmax=MAX_SAVEFILENAME_LENGTH;
 				dstmax=MAX_SAVEFILENAME_LENGTH;
 
-#if defined(__PS3__)
-				L10nResult lres= UTF8stoUTF16s((uint8_t *)m_saveDetails[m_iRequestingThumbnailId].UTF8SaveFilename,&srcmax,u16Message,&dstmax);
-#else
+	#if defined(__PS3__)
+					L10nResult lres= UTF8stoUTF16s((uint8_t *)m_saveDetails[m_iRequestingThumbnailId].UTF8SaveFilename,&srcmax,u16Message,&dstmax);
+	#else
 				SceCesUcsContext context;
 				sceCesUcsContextInit(&context);
 
-				sceCesUtf8StrToUtf16Str(&context, (uint8_t *)m_saveDetails[m_iRequestingThumbnailId].UTF8SaveFilename,srcmax,&srclen,u16Message,dstmax,&dstlen);
-#endif
-#endif
-				if( m_saveDetails[m_iRequestingThumbnailId].pbThumbnailData )
-				{
-					registerSubstitutionTexture((wchar_t *)u16Message,m_saveDetails[m_iRequestingThumbnailId].pbThumbnailData,m_saveDetails[m_iRequestingThumbnailId].dwThumbnailSize);
-				}
-				m_buttonListSaves.setTextureName(m_iRequestingThumbnailId, (wchar_t *)u16Message);
+					sceCesUtf8StrToUtf16Str(&context, (uint8_t *)m_saveDetails[m_iRequestingThumbnailId].UTF8SaveFilename,srcmax,&srclen,u16Message,dstmax,&dstlen);
+	#endif
+					thumbnailName = (wchar_t *)u16Message;
+	#endif
+					if( m_saveDetails[m_iRequestingThumbnailId].pbThumbnailData )
+					{
+						registerSubstitutionTexture(thumbnailName,m_saveDetails[m_iRequestingThumbnailId].pbThumbnailData,m_saveDetails[m_iRequestingThumbnailId].dwThumbnailSize);
+					}
+					m_buttonListSaves.setTextureName(
+						m_iRequestingThumbnailId,
+						thumbnailName);
 
-				++m_iRequestingThumbnailId;
+					++m_iRequestingThumbnailId;
 				if( m_iRequestingThumbnailId < (m_buttonListSaves.getItemCount() ))
 				{
 					app.DebugPrintf("Requesting another thumbnail\n");

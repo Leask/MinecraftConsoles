@@ -45,7 +45,10 @@ static wstring ReadLevelNameFromSaveFile(const wstring& filePath)
                 if (len > 0)
                 {
                     wchar_t wbuf[128] = {};
-                    mbstowcs(wbuf, buf, 127);
+                    NativeDesktopUtf8ToWideBuffer(
+                        buf,
+                        wbuf,
+                        128);
                     return wstring(wbuf);
                 }
             }
@@ -770,11 +773,10 @@ void UIScene_LoadOrJoinMenu::tick()
                     {
                         int origIdx = sortedIdx[i];
                         wchar_t wFilename[MAX_SAVEFILENAME_LENGTH];
-                        ZeroMemory(wFilename, sizeof(wFilename));
-                        mbstowcs(
-                            wFilename,
+                        NativeDesktopUtf8ToWideBuffer(
                             m_pSaveDetails->SaveInfoA[origIdx].UTF8SaveFilename,
-                            MAX_SAVEFILENAME_LENGTH - 1);
+                            wFilename,
+                            MAX_SAVEFILENAME_LENGTH);
                         wstring filePath =
                             wstring(L"NativeDesktop\\GameHDD\\") +
                             wstring(wFilename) +
@@ -784,8 +786,10 @@ void UIScene_LoadOrJoinMenu::tick()
                         if (!levelName.empty())
                         {
                             m_buttonListSaves.addItem(levelName, wstring(L""));
-                            wcstombs(m_saveDetails[i].UTF8SaveName, levelName.c_str(), 127);
-                            m_saveDetails[i].UTF8SaveName[127] = '\0';
+                            NativeDesktopWideToUtf8Buffer(
+                                levelName.c_str(),
+                                m_saveDetails[i].UTF8SaveName,
+                                128);
                         }
                         else
                         {
@@ -843,20 +847,19 @@ void UIScene_LoadOrJoinMenu::tick()
             if(!m_bExitScene)
             {
                 // convert to utf16
-                uint16_t u16Message[MAX_SAVEFILENAME_LENGTH];
+                uint16_t u16Message[MAX_SAVEFILENAME_LENGTH] = {};
+                wchar_t nativeWideMessage[MAX_SAVEFILENAME_LENGTH] = {};
+                wchar_t *thumbnailName = nullptr;
 #ifdef _DURANGO
                 // Already utf16 on durango
                 memcpy(u16Message, m_saveDetails[m_iRequestingThumbnailId].UTF16SaveFilename, MAX_SAVEFILENAME_LENGTH);
+                thumbnailName = (wchar_t *)u16Message;
 #elif defined(_NATIVE_DESKTOP)
-                ::MultiByteToWideChar(
-                    CP_UTF8,                // convert from UTF-8
-                    0,
-                    m_saveDetails[m_iRequestingThumbnailId].UTF8SaveFilename,            // source UTF-8 string
-                    MAX_SAVEFILENAME_LENGTH,                 // total length of source UTF-8 string,
-                    // in CHAR's (= bytes), including end-of-string \0
-                    (wchar_t *)u16Message,               // destination buffer
-                    MAX_SAVEFILENAME_LENGTH                // size of destination buffer, in WCHAR's
-                    );
+                NativeDesktopUtf8ToWideBuffer(
+                    m_saveDetails[m_iRequestingThumbnailId].UTF8SaveFilename,
+                    nativeWideMessage,
+                    MAX_SAVEFILENAME_LENGTH);
+                thumbnailName = nativeWideMessage;
 #else
 #ifdef __PS3
                 size_t srcmax,dstmax;
@@ -875,12 +878,18 @@ void UIScene_LoadOrJoinMenu::tick()
 
                 sceCesUtf8StrToUtf16Str(&context, (uint8_t *)m_saveDetails[m_iRequestingThumbnailId].UTF8SaveFilename,srcmax,&srclen,u16Message,dstmax,&dstlen);
 #endif
+                thumbnailName = (wchar_t *)u16Message;
 #endif
                 if( m_saveDetails[m_iRequestingThumbnailId].pbThumbnailData )
                 {
-                    registerSubstitutionTexture((wchar_t *)u16Message,m_saveDetails[m_iRequestingThumbnailId].pbThumbnailData,m_saveDetails[m_iRequestingThumbnailId].dwThumbnailSize);
+                    registerSubstitutionTexture(
+                        thumbnailName,
+                        m_saveDetails[m_iRequestingThumbnailId].pbThumbnailData,
+                        m_saveDetails[m_iRequestingThumbnailId].dwThumbnailSize);
                 }
-                m_buttonListSaves.setTextureName(m_iRequestingThumbnailId + m_iDefaultButtonsC, (wchar_t *)u16Message);
+                m_buttonListSaves.setTextureName(
+                    m_iRequestingThumbnailId + m_iDefaultButtonsC,
+                    thumbnailName);
 
                 ++m_iRequestingThumbnailId;
                 if( m_iRequestingThumbnailId < (m_buttonListSaves.getItemCount() - m_iDefaultButtonsC ))
@@ -1432,11 +1441,17 @@ int UIScene_LoadOrJoinMenu::KeyboardCompleteWorldNameCallback(LPVOID lpParam,boo
 
                 // Convert to narrow for storage and in-memory update
                 char narrowName[128] = {};
-                wcstombs(narrowName, wNewName, 127);
+                NativeDesktopWideToUtf8Buffer(
+                    wNewName,
+                    narrowName,
+                    128);
 
                 // Build the sidecar path: NativeDesktop\GameHDD\{folder}\worldname.txt
                 wchar_t wFilename[MAX_SAVEFILENAME_LENGTH] = {};
-                mbstowcs(wFilename, pClass->m_saveDetails[listPos].UTF8SaveFilename, MAX_SAVEFILENAME_LENGTH - 1);
+                NativeDesktopUtf8ToWideBuffer(
+                    pClass->m_saveDetails[listPos].UTF8SaveFilename,
+                    wFilename,
+                    MAX_SAVEFILENAME_LENGTH);
                 wstring sidecarPath = wstring(L"NativeDesktop\\GameHDD\\") + wstring(wFilename) + wstring(L"\\worldname.txt");
 
                 FILE *fw = nullptr;
@@ -2413,7 +2428,10 @@ int UIScene_LoadOrJoinMenu::DeleteSaveDialogReturned(void *pParam,int iPad,C4JSt
                 if (pClass->m_saveDetails && displayIdx >= 0 && pClass->m_saveDetails[displayIdx].UTF8SaveFilename[0])
                 {
                     wchar_t wFilename[MAX_SAVEFILENAME_LENGTH] = {};
-                    mbstowcs_s(nullptr, wFilename, MAX_SAVEFILENAME_LENGTH, pClass->m_saveDetails[displayIdx].UTF8SaveFilename, MAX_SAVEFILENAME_LENGTH - 1);
+                    NativeDesktopUtf8ToWideBuffer(
+                        pClass->m_saveDetails[displayIdx].UTF8SaveFilename,
+                        wFilename,
+                        MAX_SAVEFILENAME_LENGTH);
                     wchar_t wFolderPath[MAX_PATH] = {};
                     swprintf_s(wFolderPath, MAX_PATH, L"NativeDesktop\\GameHDD\\%s", wFilename);
                     bSuccess = NativeDesktop_DeleteSaveDirectory(wFolderPath);
@@ -2501,8 +2519,13 @@ int UIScene_LoadOrJoinMenu::SaveOptionsDialogReturned(void *pParam,int iPad,C4JS
 #if defined(_NATIVE_DESKTOP)
             {
                 wchar_t wSaveName[128];
-                ZeroMemory(wSaveName, 128 * sizeof(wchar_t));
-                mbstowcs_s(nullptr, wSaveName, 128, pClass->m_saveDetails[pClass->m_iSaveListIndex - pClass->m_iDefaultButtonsC].UTF8SaveName, _TRUNCATE);
+                NativeDesktopUtf8ToWideBuffer(
+                    pClass->m_saveDetails[
+                        pClass->m_iSaveListIndex -
+                        pClass->m_iDefaultButtonsC]
+                        .UTF8SaveName,
+                    wSaveName,
+                    128);
                 UIKeyboardInitData kbData;
                 kbData.title       = app.GetString(IDS_RENAME_WORLD_TITLE);
                 kbData.defaultText = wSaveName;

@@ -196,6 +196,12 @@ Direction:
 - keep native client input repeat/callback timing on a monotonic native clock
   (`Screen` and `UIController` now use `NativeDesktopGetMonotonicMilliseconds`
   instead of reaching for `GetTickCount` semantics on the native path)
+- keep native desktop save-list UTF-8/wide conversion on native desktop
+  ABI helpers
+  (`UIScene_LoadOrJoinMenu` and `UIScene_InGameSaveManagementMenu` now route
+  native save filename/title/rename buffers through native desktop UTF
+  conversion helpers instead of locale-based `mbstowcs` or `_WINDOWS64`
+  thumbnail-only branches)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

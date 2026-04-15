@@ -454,6 +454,77 @@ inline DWORD NativeDesktopGetMonotonicMilliseconds()
     return static_cast<DWORD>(elapsed.count() & 0xFFFFFFFFu);
 }
 
+inline bool NativeDesktopUtf8ToWideBuffer(
+    char const* sourceUtf8,
+    wchar_t* destinationWide,
+    std::size_t destinationCount)
+{
+    if (destinationWide == nullptr || destinationCount == 0)
+    {
+        return false;
+    }
+
+    std::memset(
+        destinationWide,
+        0,
+        destinationCount * sizeof(wchar_t));
+    if (sourceUtf8 == nullptr || sourceUtf8[0] == '\0')
+    {
+        return true;
+    }
+
+    const int converted = MultiByteToWideChar(
+        CP_UTF8,
+        0,
+        sourceUtf8,
+        -1,
+        destinationWide,
+        static_cast<int>(destinationCount));
+    if (converted <= 0)
+    {
+        destinationWide[0] = L'\0';
+        return false;
+    }
+
+    destinationWide[destinationCount - 1] = L'\0';
+    return true;
+}
+
+inline bool NativeDesktopWideToUtf8Buffer(
+    wchar_t const* sourceWide,
+    char* destinationUtf8,
+    std::size_t destinationCount)
+{
+    if (destinationUtf8 == nullptr || destinationCount == 0)
+    {
+        return false;
+    }
+
+    std::memset(destinationUtf8, 0, destinationCount);
+    if (sourceWide == nullptr || sourceWide[0] == L'\0')
+    {
+        return true;
+    }
+
+    const int converted = WideCharToMultiByte(
+        CP_UTF8,
+        0,
+        sourceWide,
+        -1,
+        destinationUtf8,
+        static_cast<int>(destinationCount),
+        nullptr,
+        nullptr);
+    if (converted <= 0)
+    {
+        destinationUtf8[0] = '\0';
+        return false;
+    }
+
+    destinationUtf8[destinationCount - 1] = '\0';
+    return true;
+}
+
 inline std::wstring& NativeDesktopClipboardText()
 {
     static std::wstring clipboardText;
