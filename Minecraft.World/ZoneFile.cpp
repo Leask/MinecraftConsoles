@@ -1,4 +1,7 @@
 #include "stdafx.h"
+
+#include <cstdio>
+
 #include "ByteBuffer.h"
 #include "File.h"
 #include "ZoneFile.h"
@@ -23,7 +26,12 @@ ZoneFile::ZoneFile(int64_t key, File file, File entityFile) : slots(slotsLength)
 //        this.entityFile = new NbtSlotFile(entityFile);
 //    }
 
-    channel = CreateFile(wstringtofilename(file.getPath()), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+    const char *path = wstringtofilename(file.getPath());
+    channel = std::fopen(path, "r+b");
+    if (channel == nullptr)
+	{
+        channel = std::fopen(path, "w+b");
+    }
 	// 4J - try/catch removed
 //    try {
         readHeader();
@@ -71,7 +79,11 @@ void ZoneFile::writeHeader()
 
 void ZoneFile::close()
 {
-	CloseHandle(channel);
+	if (channel != nullptr)
+	{
+		std::fclose(channel);
+		channel = nullptr;
+	}
     entityFile->close();
 }
 

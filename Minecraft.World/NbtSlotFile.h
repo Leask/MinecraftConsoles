@@ -1,4 +1,7 @@
 #pragma once
+
+#include <cstdio>
+
 #include "CompoundTag.h"
 #include "ZonedChunkStorage.h"
 #include "com.mojang.nbt.h"
@@ -14,7 +17,7 @@ private:
     static const int FILE_SLOT_HEADER_SIZE = 12;
     static const int FILE_SLOT_SIZE = 500;
 
-    HANDLE raf;
+    std::FILE *raf;
     vector<int> **fileSlotMap;
 	int fileSlotMapLength;
     vector<int> freeFileSlots;

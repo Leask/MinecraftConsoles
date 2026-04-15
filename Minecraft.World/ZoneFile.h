@@ -1,4 +1,7 @@
 #pragma once
+
+#include <cstdio>
+
 #include "ZonedChunkStorage.h"
 #include "NbtSlotFile.h"
 #include "ZoneIo.h"
@@ -20,7 +23,7 @@ public:
     int64_t lastUse;
 
 private:
-    HANDLE channel;
+    std::FILE *channel;
 
 public:
     int64_t key;

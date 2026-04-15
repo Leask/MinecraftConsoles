@@ -1,4 +1,5 @@
 #include "stdafx.h"
+
 #include "File.h"
 #include "ByteBuffer.h"
 #include "net.minecraft.world.entity.h"
@@ -63,8 +64,6 @@ ZoneFile *ZonedChunkStorage::getZoneFile(int x, int z, bool create)
 		if ( !file.exists() )
 		{
             if (!create) return nullptr;
-			HANDLE ch = CreateFile(wstringtofilename(file.getPath()), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-			CloseHandle(ch);
         }
 
 		File entityFile = File(dir, wstring( L"entities_") + std::wstring( xRadix36 ) + L"_" + std::wstring( zRadix36 ) + L".dat" );

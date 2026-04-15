@@ -220,6 +220,9 @@ Direction:
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/
   `WriteFile` paths)
+- keep native world zone storage on native file channels
+  (`ZoneFile`, `ZoneIo`, `NbtSlotFile`, and `ZonedChunkStorage` now use C
+  stdio for zone/entity chunk storage instead of direct Win32 file handles)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

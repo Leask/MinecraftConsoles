@@ -1,6 +1,44 @@
 #include "stdafx.h"
+
+#include <cstdio>
+
 #include "File.h"
 #include "NbtSlotFile.h"
+
+namespace
+{
+    void ReadBytes(std::FILE *file, void *data, size_t size)
+    {
+        if (file == nullptr)
+        {
+            return;
+        }
+
+        std::fread(data, 1, size, file);
+    }
+
+    template <class T>
+    void ReadValue(std::FILE *file, T &value)
+    {
+        ReadBytes(file, &value, sizeof(value));
+    }
+
+    void WriteBytes(std::FILE *file, const void *data, size_t size)
+    {
+        if (file == nullptr)
+        {
+            return;
+        }
+
+        std::fwrite(data, 1, size, file);
+    }
+
+    template <class T>
+    void WriteValue(std::FILE *file, const T &value)
+    {
+        WriteBytes(file, &value, sizeof(value));
+    }
+}
 
 
 byteArray NbtSlotFile::READ_BUFFER(1024*1024);
@@ -12,15 +50,23 @@ NbtSlotFile::NbtSlotFile(File file)
 	fileSlotMapLength = ZonedChunkStorage::CHUNKS_PER_ZONE * ZonedChunkStorage::CHUNKS_PER_ZONE;
 	fileSlotMap = new vector<int> *[fileSlotMapLength];
 
-	if ( !file.exists() || file.length() )
+	const bool needsHeader = !file.exists() || file.length() == 0;
+	const char *path = wstringtofilename(file.getPath());
+	raf = std::fopen(path, "r+b");
+	if (raf == nullptr)
 	{
-		raf = CreateFile(wstringtofilename(file.getPath()), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-        writeHeader();
+		raf = std::fopen(path, "w+b");
     }
-	else
+
+	if (raf == nullptr)
 	{
-		raf = CreateFile(wstringtofilename(file.getPath()), GENERIC_READ | GENERIC_WRITE, 0, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-    }
+		app.FatalLoadError();
+	}
+
+	if (needsHeader)
+	{
+		writeHeader();
+	}
 
     readHeader();
 
@@ -29,12 +75,11 @@ NbtSlotFile::NbtSlotFile(File file)
         fileSlotMap[i] = new vector<int>;
     }
 
-	DWORD numberofBytesRead;
     for (int fileSlot = 0; fileSlot < totalFileSlots; fileSlot++)
 	{
         seekSlotHeader(fileSlot);
-		short slot;
-		ReadFile(raf,&slot,2,&numberofBytesRead,nullptr);
+		short slot = 0;
+		ReadValue(raf, slot);
         if (slot == 0)
 		{
 			freeFileSlots.push_back(fileSlot);
@@ -49,42 +94,40 @@ NbtSlotFile::NbtSlotFile(File file)
 
 void NbtSlotFile::readHeader()
 {
-	DWORD numberOfBytesRead;
-	SetFilePointer(raf,0,0,FILE_BEGIN);
-    int magic;
-	ReadFile(raf,&magic,4,&numberOfBytesRead,nullptr);
+	std::fseek(raf,0,SEEK_SET);
+    int magic = 0;
+	ReadValue(raf, magic);
 //    if (magic != MAGIC_NUMBER) throw new IOException("Bad magic number: " + magic);		// 4J - TODO
-    short version;
-	ReadFile(raf,&version,2,&numberOfBytesRead,nullptr);
+    short version = 0;
+	ReadValue(raf, version);
 //    if (version != 0) throw new IOException("Bad version number: " + version);		// 4J - TODO
-	ReadFile(raf,&totalFileSlots,4,&numberOfBytesRead,nullptr);
+	ReadValue(raf, totalFileSlots);
 }
 
 void NbtSlotFile::writeHeader()
 {
-	DWORD numberOfBytesWritten;
+	const int magic = MAGIC_NUMBER;
 	short version = 0;
-	SetFilePointer(raf,0,0,FILE_BEGIN);
-	WriteFile(raf,&MAGIC_NUMBER,4,&numberOfBytesWritten,nullptr);
-	WriteFile(raf,&version,2,&numberOfBytesWritten,nullptr);
-	WriteFile(raf,&totalFileSlots,4,&numberOfBytesWritten,nullptr);
+	std::fseek(raf,0,SEEK_SET);
+	WriteValue(raf, magic);
+	WriteValue(raf, version);
+	WriteValue(raf, totalFileSlots);
 }
 
 void NbtSlotFile::seekSlotHeader(int fileSlot)
 {
     int target = FILE_HEADER_SIZE + fileSlot * (FILE_SLOT_SIZE + FILE_SLOT_HEADER_SIZE);
-	SetFilePointer(raf,target,0,FILE_BEGIN);
+	std::fseek(raf,target,SEEK_SET);
 }
 
 void NbtSlotFile::seekSlot(int fileSlot)
 {
     int target = FILE_HEADER_SIZE + fileSlot * (FILE_SLOT_SIZE + FILE_SLOT_HEADER_SIZE);
-	SetFilePointer(raf,target+FILE_SLOT_HEADER_SIZE,0,FILE_BEGIN);
+	std::fseek(raf,target+FILE_SLOT_HEADER_SIZE,SEEK_SET);
 }
 
 vector<CompoundTag *> *NbtSlotFile::readAll(int slot)
 {
-	DWORD numberOfBytesRead;
     vector<CompoundTag *> *tags = new vector<CompoundTag *>;
     vector<int> *fileSlots = fileSlotMap[slot];
     int skipped = 0;
@@ -97,13 +140,13 @@ vector<CompoundTag *> *NbtSlotFile::readAll(int slot)
         do
 		{
             seekSlotHeader(c);
-            short oldSlot;
-			ReadFile(raf,&oldSlot,2,&numberOfBytesRead,nullptr);
-            short size;
-			ReadFile(raf,&size,2,&numberOfBytesRead,nullptr);
-			ReadFile(raf,&continuesAt,4,&numberOfBytesRead,nullptr);
-			int lastSlot;
-			ReadFile(raf,&lastSlot,4,&numberOfBytesRead,nullptr);
+            short oldSlot = 0;
+			ReadValue(raf, oldSlot);
+            short size = 0;
+			ReadValue(raf, size);
+			ReadValue(raf, continuesAt);
+			int lastSlot = 0;
+			ReadValue(raf, lastSlot);
 
             seekSlot(c);
             if (expectedSlot > 0 && oldSlot == -expectedSlot)
@@ -112,7 +155,7 @@ vector<CompoundTag *> *NbtSlotFile::readAll(int slot)
                 goto fileSlotLoop;	// 4J - used to be continue fileSlotLoop, with for loop labelled as fileSlotLoop
             }
 
-			ReadFile(raf,READ_BUFFER.data + pos,size,&numberOfBytesRead,nullptr);
+			ReadBytes(raf, READ_BUFFER.data + pos, size);
 
             if (continuesAt >= 0)
 			{
@@ -156,7 +199,6 @@ int NbtSlotFile::getFreeSlot()
 }
 void NbtSlotFile::replaceSlot(int slot, vector<CompoundTag *> *tags)
 {
-	DWORD numberOfBytesWritten;
 	toReplace = fileSlotMap[slot];
     fileSlotMap[slot] = new vector<int>();
 
@@ -203,13 +245,13 @@ void NbtSlotFile::replaceSlot(int slot, vector<CompoundTag *> *tags)
             }
 
             seekSlotHeader(fileSlot);
-			WriteFile(raf,&currentSlot,2,&numberOfBytesWritten,nullptr);
-			WriteFile(raf,&toWrite,2,&numberOfBytesWritten,nullptr);
-			WriteFile(raf,&nextFileSlot,4,&numberOfBytesWritten,nullptr);
-			WriteFile(raf,&lastFileSlot,4,&numberOfBytesWritten,nullptr);
+			WriteValue(raf, currentSlot);
+			WriteValue(raf, toWrite);
+			WriteValue(raf, nextFileSlot);
+			WriteValue(raf, lastFileSlot);
 
             seekSlot(fileSlot);
-			WriteFile(raf,compressed.data+pos,toWrite,&numberOfBytesWritten,nullptr);
+			WriteBytes(raf, compressed.data + pos, toWrite);
 
             if (remaining > 0)
 			{
@@ -227,7 +269,7 @@ void NbtSlotFile::replaceSlot(int slot, vector<CompoundTag *> *tags)
 
         seekSlotHeader(c);
 		short zero = 0;
-		WriteFile(raf,&zero,2,&numberOfBytesWritten,nullptr);
+		WriteValue(raf, zero);
     }
 
     toReplace->clear();
@@ -236,5 +278,9 @@ void NbtSlotFile::replaceSlot(int slot, vector<CompoundTag *> *tags)
 
 void NbtSlotFile::close()
 {
-	CloseHandle(raf);
+	if (raf != nullptr)
+	{
+		std::fclose(raf);
+		raf = nullptr;
+	}
 }

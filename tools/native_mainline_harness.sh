@@ -245,6 +245,20 @@ run_native_only_contract() {
             exit 1
         fi
 
+        if rg -n -S "HANDLE|CreateFile\\(|ReadFile\\(|WriteFile\\(|SetFilePointer\\(|CloseHandle\\(" \
+            Minecraft.World/ZoneFile.h \
+            Minecraft.World/ZoneFile.cpp \
+            Minecraft.World/ZoneIo.h \
+            Minecraft.World/ZoneIo.cpp \
+            Minecraft.World/NbtSlotFile.h \
+            Minecraft.World/NbtSlotFile.cpp \
+            Minecraft.World/ZonedChunkStorage.cpp \
+            > "$log_root/native-world-zone-storage-win32-io.txt"; then
+            echo "Native world zone storage still uses Win32-shaped I/O" >&2
+            cat "$log_root/native-world-zone-storage-win32-io.txt" >&2
+            exit 1
+        fi
+
         rg -n -S "Windows compatibility maintenance has stopped" \
             README.md COMPILE.md CONTRIBUTING.md docs/native-port-plan.md >/dev/null
         git diff --check
