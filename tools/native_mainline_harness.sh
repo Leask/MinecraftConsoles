@@ -294,6 +294,15 @@ run_native_only_contract() {
             exit 1
         fi
 
+        if rg -n -S "StorageManager\\.(SetSaveDisabled|ResetSaveData|SetSaveTitle)\\(" \
+            Minecraft.Client/Common/UI/UIScene_CreateWorldMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_MainMenu.cpp \
+            > "$log_root/native-client-startup-save-control-storage.txt"; then
+            echo "Native create/trial startup save-control paths still use StorageManager" >&2
+            cat "$log_root/native-client-startup-save-control-storage.txt" >&2
+            exit 1
+        fi
+
         if rg -n -S "StorageManager\\.GetSaveUniqueNumber\\(" \
             Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
             > "$log_root/native-client-save-unique-storage.txt"; then
@@ -314,6 +323,11 @@ run_native_only_contract() {
             Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
             Minecraft.Client/NativeDesktop/NativeDesktopClientRuntime.cpp \
             Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \
+            >/dev/null
+
+        rg -n -S "NativeDesktop(ResetSaveData|SetSaveTitle|SetSavesDisabled)" \
+            Minecraft.Client/Common/UI/UIScene_CreateWorldMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_MainMenu.cpp \
             >/dev/null
 
         if rg -n -S "NativeDesktop(GetSaveInfo|LoadSaveDataByIndex|LoadSaveDataThumbnailByIndex|DeleteSaveDataByIndex)" \

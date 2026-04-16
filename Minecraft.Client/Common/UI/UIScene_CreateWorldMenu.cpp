@@ -12,6 +12,7 @@
 #include "../../../Minecraft.World/IntCache.h"
 #include "../../../Minecraft.World/LevelType.h"
 #include "../../DLCTexturePack.h"
+#include "../../NativeDesktop/NativeDesktopClientSaveControl.h"
 
 #define GAME_CREATE_ONLINE_TIMER_ID 0
 #define GAME_CREATE_ONLINE_TIMER_TIME 100
@@ -622,7 +623,7 @@ void UIScene_CreateWorldMenu::StartSharedLaunchFlow()
 #endif
 
 #if defined _XBOX_ONE || defined __ORBIS__
-				StorageManager.SetSaveDisabled(true);
+				NativeDesktopSetSavesDisabled(true);
 #endif
 				return;
 			}
@@ -630,7 +631,7 @@ void UIScene_CreateWorldMenu::StartSharedLaunchFlow()
 	}
 #if defined _XBOX_ONE || defined __ORBIS__
 	app.SetGameHostOption(eGameHostOption_DisableSaving, m_MoreOptionsParams.bDisableSaving?1:0);
-	StorageManager.SetSaveDisabled(m_MoreOptionsParams.bDisableSaving);
+	NativeDesktopSetSavesDisabled(m_MoreOptionsParams.bDisableSaving);
 #endif
 	checkStateAndStartGame();
 }
@@ -1100,9 +1101,9 @@ void UIScene_CreateWorldMenu::CreateGame(UIScene_CreateWorldMenu* pClass, DWORD 
 	// create the world and launch
 	wstring wWorldName = pClass->m_worldName;
 
-	StorageManager.ResetSaveData();
+	NativeDesktopResetSaveData();
 	// Make our next save default to the name of the level
-	StorageManager.SetSaveTitle((wchar_t *)wWorldName.c_str());
+	NativeDesktopSetSaveTitle(wWorldName.c_str());
 
 	wstring wSeed;
 	if(!pClass->m_MoreOptionsParams.seed.empty() )

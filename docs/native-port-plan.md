@@ -225,8 +225,9 @@ Direction:
   `StorageManager`, and runtime/network wait loops tick native save-control
   directly instead of pumping `StorageManager`; native local-game bootstrap
   also resets save data and sets the active save title through the same
-  save-control owner; native exit/save confirmation and shutdown save-idle
-  waits now query the same save-control owner instead of direct
+  save-control owner, with create-world and tutorial/trial startup now using
+  that owner for save-disabled, reset, and title setup; native exit/save
+  confirmation and shutdown save-idle waits now query the same owner instead of direct
   `StorageManager` save-existence/save-disabled/save-state calls; active
   runtime/network glue no longer mentions `StorageManager` directly in
   `ClientConnection`, `GameNetworkManager`, or native desktop shutdown

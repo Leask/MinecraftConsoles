@@ -4,6 +4,7 @@
 #include "../../../Minecraft.World/Random.h"
 #include "../../User.h"
 #include "../../MinecraftServer.h"
+#include "../../NativeDesktop/NativeDesktopClientSaveControl.h"
 #include "UI.h"
 #include "UIScene_MainMenu.h"
 #ifdef __ORBIS__
@@ -2076,19 +2077,19 @@ void UIScene_MainMenu::LoadTrial(void)
 	// clear out the app's terrain features list
 	app.ClearTerrainFeaturePosition();
 
-	StorageManager.ResetSaveData();
+	NativeDesktopResetSaveData();
 
 	// Need to set the mode as trial
 	ProfileManager.StartTrialGame();
 
 	// No saving in the trial
-	StorageManager.SetSaveDisabled(true);
+	NativeDesktopSetSavesDisabled(true);
 	app.SetGameHostOption(eGameHostOption_WasntSaveOwner, false); 
 
 	// Set the global flag, so that we don't disable saving again once the save is complete
 	app.SetGameHostOption(eGameHostOption_DisableSaving, 1);
 
-	StorageManager.SetSaveTitle(L"Tutorial");
+	NativeDesktopSetSaveTitle(L"Tutorial");
 
 	// Reset the autosave time
 	app.SetAutosaveTimerTime();
