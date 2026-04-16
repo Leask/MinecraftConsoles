@@ -243,8 +243,10 @@ Direction:
   native `C4JStorage` stub remains a legacy projection of the same underlying
   save-control state; `UIScene_LoadOrJoinMenu` save listing, thumbnail loading,
   save-disabled/space gates, and local tutorial/load-from-disk save identity
-  now read the shared native save catalog instead of direct `StorageManager`
-  save-list state)
+  now read the shared native save catalog instead of direct `StorageManager`;
+  the dormant transfer/download save-buffer, image, load/delete, state, and
+  copy-save branches now use the same native catalog primitives instead of
+  reaching back into `StorageManager` local-save operations)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/

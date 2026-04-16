@@ -349,6 +349,18 @@ run_native_only_contract() {
             Minecraft.Client/Common/UI/UIScene_LoadOrJoinMenu.cpp \
             >/dev/null
 
+        if rg -n -S "StorageManager\\.(AllocateSaveData|GetDefaultSaveImage|GetDefaultSaveThumbnail|SetSaveImages|SaveSaveData|GetSaveUniqueFileDir|LoadSaveData|GetSaveSize|GetSaveData|SetSaveUniqueFilename|GetSaveState|Tick|CopySaveData)\\(" \
+            Minecraft.Client/Common/UI/UIScene_LoadOrJoinMenu.cpp \
+            > "$log_root/native-client-load-or-join-transfer-storage.txt"; then
+            echo "Native load-or-join transfer save paths still use StorageManager" >&2
+            cat "$log_root/native-client-load-or-join-transfer-storage.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopLoadOrJoin(AllocateSaveData|SetSaveImages|SaveSaveData|LoadSaveData|CopySaveData)" \
+            Minecraft.Client/Common/UI/UIScene_LoadOrJoinMenu.cpp \
+            >/dev/null
+
         if rg -n -S "StorageManager\\.(GetSaveDisabled|SetSaveDisabled|DoesSaveExist|GetSaveState)\\(" \
             Minecraft.Client/ClientConnection.cpp \
             Minecraft.Client/Common/Consoles_App.cpp \

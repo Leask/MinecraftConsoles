@@ -66,6 +66,99 @@ public:
             NativeDesktopDeleteSaveDataByIndex(saveIndex, callback, param));
     }
 
+    C4JStorage::ESaveGameState CopySaveData(
+        int saveIndex,
+        int (*callback)(LPVOID, const bool, C4JStorage::ESaveGameState),
+        bool (*progress)(LPVOID, const int),
+        LPVOID param)
+    {
+        (void)saveIndex;
+        if (progress != nullptr)
+        {
+            progress(param, 100);
+        }
+        if (callback != nullptr)
+        {
+            callback(param, true, C4JStorage::ESaveGame_CopyCompleteSuccess);
+        }
+        return C4JStorage::ESaveGame_CopyCompleteSuccess;
+    }
+
+    unsigned int GetSaveSize() const
+    {
+        return NativeDesktopGetSaveDataSize();
+    }
+
+    void CopySaveData(void* data, unsigned int* bytes)
+    {
+        NativeDesktopCopySaveData(data, bytes);
+    }
+
+    void* AllocateSaveData(unsigned int bytes)
+    {
+        return NativeDesktopAllocateSaveData(bytes);
+    }
+
+    void GetDefaultSaveImage(PBYTE* image, DWORD* bytes)
+    {
+        SetNullBuffer(image, bytes);
+    }
+
+    void GetDefaultSaveThumbnail(PBYTE* thumbnail, DWORD* bytes)
+    {
+        SetNullBuffer(thumbnail, bytes);
+    }
+
+    void SetSaveImages(PBYTE thumbnail,
+                       DWORD thumbnailBytes,
+                       PBYTE image,
+                       DWORD imageBytes,
+                       PBYTE textData,
+                       DWORD textDataBytes)
+    {
+        (void)image;
+        (void)imageBytes;
+        (void)textData;
+        (void)textDataBytes;
+        NativeDesktopSetSaveImages(thumbnail, thumbnailBytes);
+    }
+
+    C4JStorage::ESaveGameState SaveSaveData(
+        int (*callback)(LPVOID, const bool),
+        LPVOID param)
+    {
+        NativeDesktopSetSaveExists(true);
+        if (callback != nullptr)
+        {
+            callback(param, true);
+        }
+        return C4JStorage::ESaveGame_SaveCompleteSuccess;
+    }
+
+    bool GetSaveUniqueFileDir(char* name)
+    {
+        if (name != nullptr)
+        {
+            strcpy_s(name, MAX_SAVEFILENAME_LENGTH, "native");
+        }
+        return true;
+    }
+
+    void SetSaveUniqueFilename(char* name)
+    {
+        (void)name;
+    }
+
+    C4JStorage::ESaveGameState GetSaveState() const
+    {
+        return C4JStorage::ESaveGame_Idle;
+    }
+
+    void Tick()
+    {
+        NativeDesktopTickSaves();
+    }
+
     bool EnoughSpaceForMinSave() const
     {
         return true;
@@ -95,6 +188,18 @@ public:
     }
 
 private:
+    static void SetNullBuffer(PBYTE* data, DWORD* bytes)
+    {
+        if (data != nullptr)
+        {
+            *data = nullptr;
+        }
+        if (bytes != nullptr)
+        {
+            *bytes = 0;
+        }
+    }
+
     void Refresh()
     {
         ClearSavesInfo();

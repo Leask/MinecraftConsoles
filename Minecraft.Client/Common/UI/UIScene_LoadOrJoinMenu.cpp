@@ -55,6 +55,125 @@ static C4JStorage::ESaveGameState NativeDesktopLoadOrJoinLoadThumbnail(
         false);
 }
 
+#if defined(SONY_REMOTE_STORAGE_DOWNLOAD) || defined(_XBOX_ONE) || \
+    defined(__ORBIS__) || defined(_DURANGO) || defined(__PS3__)
+static C4JStorage::ESaveGameState NativeDesktopLoadOrJoinLoadSaveData(
+    int saveIndex,
+    int (*callback)(LPVOID, const bool, const bool),
+    LPVOID param,
+    bool ignoreCRC = false)
+{
+    return g_NativeDesktopLoadOrJoinSaveCatalog.LoadSaveData(
+        saveIndex,
+        callback,
+        param,
+        ignoreCRC);
+}
+
+static C4JStorage::ESaveGameState NativeDesktopLoadOrJoinDeleteSaveData(
+    int saveIndex,
+    int (*callback)(LPVOID, const bool),
+    LPVOID param)
+{
+    return g_NativeDesktopLoadOrJoinSaveCatalog.DeleteSaveData(
+        saveIndex,
+        callback,
+        param);
+}
+
+static C4JStorage::ESaveGameState NativeDesktopLoadOrJoinCopySaveData(
+    int saveIndex,
+    int (*callback)(LPVOID, const bool, C4JStorage::ESaveGameState),
+    bool (*progress)(LPVOID, const int),
+    LPVOID param)
+{
+    return g_NativeDesktopLoadOrJoinSaveCatalog.CopySaveData(
+        saveIndex,
+        callback,
+        progress,
+        param);
+}
+
+static void* NativeDesktopLoadOrJoinAllocateSaveData(unsigned int bytes)
+{
+    return g_NativeDesktopLoadOrJoinSaveCatalog.AllocateSaveData(bytes);
+}
+
+static void NativeDesktopLoadOrJoinGetDefaultSaveImage(
+    PBYTE* image,
+    DWORD* bytes)
+{
+    g_NativeDesktopLoadOrJoinSaveCatalog.GetDefaultSaveImage(image, bytes);
+}
+
+static void NativeDesktopLoadOrJoinGetDefaultSaveThumbnail(
+    PBYTE* thumbnail,
+    DWORD* bytes)
+{
+    g_NativeDesktopLoadOrJoinSaveCatalog.GetDefaultSaveThumbnail(
+        thumbnail,
+        bytes);
+}
+
+static void NativeDesktopLoadOrJoinSetSaveImages(
+    PBYTE thumbnail,
+    DWORD thumbnailBytes,
+    PBYTE image,
+    DWORD imageBytes,
+    PBYTE textData,
+    DWORD textDataBytes)
+{
+    g_NativeDesktopLoadOrJoinSaveCatalog.SetSaveImages(
+        thumbnail,
+        thumbnailBytes,
+        image,
+        imageBytes,
+        textData,
+        textDataBytes);
+}
+
+static C4JStorage::ESaveGameState NativeDesktopLoadOrJoinSaveSaveData(
+    int (*callback)(LPVOID, const bool),
+    LPVOID param)
+{
+    return g_NativeDesktopLoadOrJoinSaveCatalog.SaveSaveData(
+        callback,
+        param);
+}
+
+static unsigned int NativeDesktopLoadOrJoinGetSaveSize()
+{
+    return g_NativeDesktopLoadOrJoinSaveCatalog.GetSaveSize();
+}
+
+static void NativeDesktopLoadOrJoinGetSaveData(
+    void* data,
+    unsigned int* bytes)
+{
+    g_NativeDesktopLoadOrJoinSaveCatalog.CopySaveData(data, bytes);
+}
+
+static bool NativeDesktopLoadOrJoinGetSaveUniqueFileDir(char* name)
+{
+    return g_NativeDesktopLoadOrJoinSaveCatalog.GetSaveUniqueFileDir(name);
+}
+
+static void NativeDesktopLoadOrJoinSetSaveUniqueFilename(char* name)
+{
+    g_NativeDesktopLoadOrJoinSaveCatalog.SetSaveUniqueFilename(name);
+}
+
+static C4JStorage::ESaveGameState NativeDesktopLoadOrJoinGetSaveState()
+{
+    return g_NativeDesktopLoadOrJoinSaveCatalog.GetSaveState();
+}
+
+static void NativeDesktopLoadOrJoinTickSaves()
+{
+    g_NativeDesktopLoadOrJoinSaveCatalog.Tick();
+}
+#endif
+
 static bool NativeDesktopLoadOrJoinEnoughSpaceForMinSave()
 {
     return g_NativeDesktopLoadOrJoinSaveCatalog.EnoughSpaceForMinSave();
@@ -3050,7 +3169,8 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 		case eSaveTransfer_CreateDummyFile:
 			{
 				NativeDesktopResetSaveData();
-				byte *compData = (byte *)StorageManager.AllocateSaveData( app.getRemoteStorage()->getSaveFilesize() );
+				byte *compData = (byte *)NativeDesktopLoadOrJoinAllocateSaveData(
+					app.getRemoteStorage()->getSaveFilesize());
 				// Make our next save default to the name of the level
 				const char* pNameUTF8 = app.getRemoteStorage()->getSaveNameUTF8();
 				mbstowcs(wSaveName, pNameUTF8, strlen(pNameUTF8)+1); // plus null
@@ -3061,8 +3181,12 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 				PBYTE pbDataSaveImage=nullptr;
 				DWORD dwDataSizeSaveImage=0;
 
-				StorageManager.GetDefaultSaveImage(&pbDataSaveImage, &dwDataSizeSaveImage);			// Get the default save thumbnail (as set by SetDefaultImages) for use on saving games t
-				StorageManager.GetDefaultSaveThumbnail(&pbThumbnailData,&dwThumbnailDataSize);		// Get the default save image (as set by SetDefaultImages) for use on saving games that
+				NativeDesktopLoadOrJoinGetDefaultSaveImage(
+					&pbDataSaveImage,
+					&dwDataSizeSaveImage);
+				NativeDesktopLoadOrJoinGetDefaultSaveThumbnail(
+					&pbThumbnailData,
+					&dwThumbnailDataSize);
 
 				BYTE bTextMetadata[88];
 				ZeroMemory(bTextMetadata,88);
@@ -3073,15 +3197,24 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 				int iTextMetadataBytes = app.CreateImageTextData(bTextMetadata, app.getRemoteStorage()->getSaveSeed(), true, hostOptions, app.getRemoteStorage()->getSaveTexturePack() );
 
 				// set the icon and save image
-				StorageManager.SetSaveImages(pbThumbnailData,dwThumbnailDataSize,pbDataSaveImage,dwDataSizeSaveImage,bTextMetadata,iTextMetadataBytes);
+				NativeDesktopLoadOrJoinSetSaveImages(
+					pbThumbnailData,
+					dwThumbnailDataSize,
+					pbDataSaveImage,
+					dwDataSizeSaveImage,
+					bTextMetadata,
+					iTextMetadataBytes);
 
 				app.getRemoteStorage()->waitForStorageManagerIdle();
-				C4JStorage::ESaveGameState saveState = StorageManager.SaveSaveData( &UIScene_LoadOrJoinMenu::CreateDummySaveDataCallback, lpParameter );
+				C4JStorage::ESaveGameState saveState =
+					NativeDesktopLoadOrJoinSaveSaveData(
+						&UIScene_LoadOrJoinMenu::CreateDummySaveDataCallback,
+						lpParameter);
 				if(saveState == C4JStorage::ESaveGame_Save)
 				{
 					pClass->m_eSaveTransferState = eSaveTransfer_CreatingDummyFile;
 				}
-				else
+				else if(saveState != C4JStorage::ESaveGame_SaveCompleteSuccess)
 				{
 					app.DebugPrintf("Failed to create dummy save file\n");
 					pClass->m_eSaveTransferState = eSaveTransfer_Error;
@@ -3123,7 +3256,7 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 		case eSaveTransfer_GetFileData:
 		{
 			bSaveFileCreated = true;
-			StorageManager.GetSaveUniqueFileDir(pClass->m_downloadedUniqueFilename);
+			NativeDesktopLoadOrJoinGetSaveUniqueFileDir(pClass->m_downloadedUniqueFilename);
 
 			if(pClass->m_saveTransferDownloadCancelled)
 			{
@@ -3196,15 +3329,24 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 			{
 #ifdef __PS3__
 				// ignore the CRC on PS3
-				C4JStorage::ESaveGameState eLoadStatus=StorageManager.LoadSaveData(&pSaveDetails->SaveInfoA[saveInfoIndex],&LoadCrossSaveDataCallback,pClass, true);
+				C4JStorage::ESaveGameState eLoadStatus =
+					NativeDesktopLoadOrJoinLoadSaveData(
+						saveInfoIndex,
+						&LoadCrossSaveDataCallback,
+						pClass,
+						true);
 #else
-				C4JStorage::ESaveGameState eLoadStatus=StorageManager.LoadSaveData(&pSaveDetails->SaveInfoA[saveInfoIndex],&LoadCrossSaveDataCallback,pClass);
+				C4JStorage::ESaveGameState eLoadStatus =
+					NativeDesktopLoadOrJoinLoadSaveData(
+						saveInfoIndex,
+						&LoadCrossSaveDataCallback,
+						pClass);
 #endif
 				if(eLoadStatus == C4JStorage::ESaveGame_Load)
 				{
 					pClass->m_eSaveTransferState = eSaveTransfer_LoadingSaveFromDisc;
 				}
-				else
+				else if(eLoadStatus != C4JStorage::ESaveGame_LoadCompleteSuccess)
 				{
 					pClass->m_eSaveTransferState = eSaveTransfer_Error;
 				}
@@ -3216,9 +3358,9 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 			break;
         case eSaveTransfer_CreatingNewSave:
 			{
-				unsigned int fileSize = StorageManager.GetSaveSize();
+				unsigned int fileSize = NativeDesktopLoadOrJoinGetSaveSize();
 				byteArray ba(fileSize);
-				StorageManager.GetSaveData(ba.data, &fileSize);
+				NativeDesktopLoadOrJoinGetSaveData(ba.data, &fileSize);
 				assert(ba.length == fileSize);
 
 
@@ -3230,8 +3372,12 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 					PBYTE pbDataSaveImage=nullptr;
 					DWORD dwDataSizeSaveImage=0;
 
-					StorageManager.GetDefaultSaveImage(&pbDataSaveImage, &dwDataSizeSaveImage);			// Get the default save thumbnail (as set by SetDefaultImages) for use on saving games t
-					StorageManager.GetDefaultSaveThumbnail(&pbThumbnailData,&dwThumbnailDataSize);		// Get the default save image (as set by SetDefaultImages) for use on saving games that
+					NativeDesktopLoadOrJoinGetDefaultSaveImage(
+						&pbDataSaveImage,
+						&dwDataSizeSaveImage);
+					NativeDesktopLoadOrJoinGetDefaultSaveThumbnail(
+						&pbThumbnailData,
+						&dwThumbnailDataSize);
 
 					BYTE bTextMetadata[88];
 					ZeroMemory(bTextMetadata,88);
@@ -3240,7 +3386,13 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 					int iTextMetadataBytes = app.CreateImageTextData(bTextMetadata, app.getRemoteStorage()->getSaveSeed(), true, remoteHostOptions, app.getRemoteStorage()->getSaveTexturePack() );
 
 					// set the icon and save image
-					StorageManager.SetSaveImages(pbThumbnailData,dwThumbnailDataSize,pbDataSaveImage,dwDataSizeSaveImage,bTextMetadata,iTextMetadataBytes);
+					NativeDesktopLoadOrJoinSetSaveImages(
+						pbThumbnailData,
+						dwThumbnailDataSize,
+						pbDataSaveImage,
+						dwDataSizeSaveImage,
+						bTextMetadata,
+						iTextMetadataBytes);
 				}
 
 
@@ -3265,7 +3417,7 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
             pClass->m_eSaveTransferState = eSaveTransfer_Saving;
             pMinecraft->progressRenderer->progressStage(IDS_SAVETRANSFER_STAGE_SAVING);
 			NativeDesktopSetSaveTitle(wSaveName);
-			StorageManager.SetSaveUniqueFilename(pClass->m_downloadedUniqueFilename);
+			NativeDesktopLoadOrJoinSetSaveUniqueFilename(pClass->m_downloadedUniqueFilename);
 
 			app.getRemoteStorage()->waitForStorageManagerIdle();	// we need to wait for the save system to be idle here, as Flush doesn't check for it.
             pSave->Flush(false, false);
@@ -3276,10 +3428,10 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 				// Wait for asynchronous saving processes to complete before destroying the levels, as that will ultimately delete
 				// the directory level storage & therefore the ConsoleSaveSplit instance, which needs to be around until all the sub files have completed saving.
 #if defined(_DURANGO) || defined(__ORBIS__)
-				while(StorageManager.GetSaveState() != C4JStorage::ESaveGame_Idle )
+				while(NativeDesktopLoadOrJoinGetSaveState() != C4JStorage::ESaveGame_Idle )
 				{
 					Sleep(10);
-					StorageManager.Tick();
+					NativeDesktopLoadOrJoinTickSaves();
 				}
 #endif
 
@@ -3343,14 +3495,18 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 					{
 						// delete the save file
 						app.getRemoteStorage()->waitForStorageManagerIdle();
-							C4JStorage::ESaveGameState eDeleteStatus = StorageManager.DeleteSaveData(&pSaveDetails->SaveInfoA[saveInfoIndex],UIScene_LoadOrJoinMenu::CrossSaveDeleteOnErrorReturned,pClass);
+							C4JStorage::ESaveGameState eDeleteStatus =
+								NativeDesktopLoadOrJoinDeleteSaveData(
+									saveInfoIndex,
+									UIScene_LoadOrJoinMenu::CrossSaveDeleteOnErrorReturned,
+									pClass);
 						if(eDeleteStatus == C4JStorage::ESaveGame_Delete)
 						{
 							pClass->m_eSaveTransferState = eSaveTransfer_ErrorDeletingSave;
 						}
-						else
+						else if(eDeleteStatus != C4JStorage::ESaveGame_DeleteSuccess)
 						{
-							app.DebugPrintf("StorageManager.DeleteSaveData failed!!\n");
+							app.DebugPrintf("NativeDesktopLoadOrJoinDeleteSaveData failed!!\n");
 							pClass->m_eSaveTransferState = eSaveTransfer_ErrorMesssage;
 						}
 					}
@@ -3732,7 +3888,7 @@ int UIScene_LoadOrJoinMenu::DownloadXbox360SaveThreadProc( LPVOID lpParameter )
 					// 4J Stu - Don't set this any more. We added it so that we could share the ban list data for this save
 					// However if the player downloads the same save multiple times, it will overwrite the previous version
 					// with that filname, and they could have made changes to it.
-                    //StorageManager.SetSaveUniqueFilename((wchar_t *)saveUniqueName.c_str());
+                    // Legacy storage used the remote unique filename here.
 
                     int thumbnailSize = dis.readInt();
                     if(thumbnailSize > 0)
@@ -3761,7 +3917,13 @@ int UIScene_LoadOrJoinMenu::DownloadXbox360SaveThreadProc( LPVOID lpParameter )
 
 						int iTextMetadataBytes = app.CreateImageTextData(bTextMetadata, seedVal, true, uiHostOptions, dwTexturePack);
 						// set the icon and save image
-						StorageManager.SetSaveImages(ba.data, ba.length, nullptr, 0, bTextMetadata, iTextMetadataBytes);
+						NativeDesktopLoadOrJoinSetSaveImages(
+							ba.data,
+							ba.length,
+							nullptr,
+							0,
+							bTextMetadata,
+							iTextMetadataBytes);
 
                         delete [] ba.data;
                     }
@@ -3819,12 +3981,12 @@ int UIScene_LoadOrJoinMenu::DownloadXbox360SaveThreadProc( LPVOID lpParameter )
 #if defined(_DURANGO) || defined(__ORBIS__)
 			pMinecraft->progressRenderer->progressStage(IDS_PROGRESS_SAVING_TO_DISC);
 
-			while(StorageManager.GetSaveState() != C4JStorage::ESaveGame_Idle )
+			while(NativeDesktopLoadOrJoinGetSaveState() != C4JStorage::ESaveGame_Idle )
             {
                 Sleep(10);
 
 				// 4J Stu - DO NOT tick this here. The main thread should be the only place ticking the StorageManager. You WILL get crashes.
-                //StorageManager.Tick();
+                //NativeDesktopLoadOrJoinTickSaves();
             }
 #endif
 
@@ -4100,7 +4262,11 @@ int UIScene_LoadOrJoinMenu::CopySaveThreadProc( LPVOID lpParameter )
 		pClass->m_bCopyingCancelled = false;
 		ui.LeaveCallbackIdCriticalSection();
 		// Copy save data takes two callbacks - one for completion, and one for progress. The progress callback also lets us cancel the operation, if we return false.
-		StorageManager.CopySaveData(&pClass->m_pSaveDetails->SaveInfoA[pClass->m_iSaveListIndex - pClass->m_iDefaultButtonsC],UIScene_LoadOrJoinMenu::CopySaveDataReturned,UIScene_LoadOrJoinMenu::CopySaveDataProgress,lpParameter);
+		NativeDesktopLoadOrJoinCopySaveData(
+			pClass->m_iSaveListIndex - pClass->m_iDefaultButtonsC,
+			UIScene_LoadOrJoinMenu::CopySaveDataReturned,
+			UIScene_LoadOrJoinMenu::CopySaveDataProgress,
+			lpParameter);
 
 		bool bContinue = true;
 		do
