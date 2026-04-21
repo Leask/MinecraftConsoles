@@ -245,6 +245,13 @@ Direction:
   save-control state; `UIScene_LoadOrJoinMenu` save listing, thumbnail loading,
   save-disabled/space gates, and local tutorial/load-from-disk save identity
   now read the shared native save catalog instead of direct `StorageManager`;
+  `UIScene_InGameSaveManagementMenu` save listing, thumbnail fetch, delete,
+  and save-disabled cleanup now use the same native save catalog/save-control
+  projection instead of direct `StorageManager` state mutation;
+  `UIScene_PauseMenu` and `IUIScene_PauseMenu` save-disabled prompts,
+  save-on-exit checks, and autosave re-enable cleanup now read/write the same
+  native save-control owner instead of mutating `StorageManager` state
+  directly;
   the dormant transfer/download save-buffer, image, load/delete, state, and
   copy-save branches now use the same native catalog primitives instead of
   reaching back into `StorageManager` local-save operations)

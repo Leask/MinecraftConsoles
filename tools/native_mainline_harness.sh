@@ -363,6 +363,18 @@ run_native_only_contract() {
             Minecraft.Client/Common/UI/UIScene_LoadOrJoinMenu.cpp \
             >/dev/null
 
+        if rg -n -S "StorageManager\\.(ClearSavesInfo|SetSaveDisabled|ContinueIncompleteOperation|GetSaveDisabled|EnoughSpaceForAMinSaveGame|ReturnSavesInfo|LoadSaveDataThumbnail|GetSavesInfo|DeleteSaveData)\\(" \
+            Minecraft.Client/Common/UI/UIScene_InGameSaveManagementMenu.cpp \
+            > "$log_root/native-client-ingame-save-storage.txt"; then
+            echo "Native in-game save management paths still use StorageManager" >&2
+            cat "$log_root/native-client-ingame-save-storage.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopInGame(ReturnSavesInfo|ClearSavesInfo|GetSavesInfo|LoadSaveThumbnail|DeleteSaveData|SavesAreDisabled|SetSavesDisabled|ContinueIncompleteOperation|EnoughSpaceForMinSave)" \
+            Minecraft.Client/Common/UI/UIScene_InGameSaveManagementMenu.cpp \
+            >/dev/null
+
         if rg -n -S "StorageManager\\.(AllocateSaveData|GetDefaultSaveImage|GetDefaultSaveThumbnail|SetSaveImages|SaveSaveData|GetSaveUniqueFileDir|LoadSaveData|GetSaveSize|GetSaveData|SetSaveUniqueFilename|GetSaveState|Tick|CopySaveData)\\(" \
             Minecraft.Client/Common/UI/UIScene_LoadOrJoinMenu.cpp \
             > "$log_root/native-client-load-or-join-transfer-storage.txt"; then
@@ -379,7 +391,9 @@ run_native_only_contract() {
             Minecraft.Client/ClientConnection.cpp \
             Minecraft.Client/Common/Consoles_App.cpp \
             Minecraft.Client/Common/Network/GameNetworkManager.cpp \
+            Minecraft.Client/Common/UI/IUIScene_PauseMenu.cpp \
             Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_PauseMenu.cpp \
             Minecraft.Client/MinecraftServer.cpp \
             > "$log_root/native-client-save-control-storage.txt"; then
             echo "Native save-control paths still use StorageManager" >&2
@@ -387,10 +401,12 @@ run_native_only_contract() {
             exit 1
         fi
 
-        rg -n -S "NativeDesktopDoesSaveExist|NativeDesktopSavesAreIdle" \
+        rg -n -S "NativeDesktopDoesSaveExist|NativeDesktopSavesAreIdle|NativeDesktopPauseMenu(DoesSaveExist|SavesAreDisabled|SetSavesDisabled)" \
             Minecraft.Client/ClientConnection.cpp \
             Minecraft.Client/Common/Consoles_App.cpp \
             Minecraft.Client/Common/Network/GameNetworkManager.cpp \
+            Minecraft.Client/Common/UI/IUIScene_PauseMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_PauseMenu.cpp \
             Minecraft.Client/MinecraftServer.cpp \
             Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \
             >/dev/null

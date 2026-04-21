@@ -6,7 +6,34 @@
 #include "../../TexturePackRepository.h"
 #include "../../TexturePack.h"
 #include "../../DLCTexturePack.h"
+#include "../../NativeDesktop/NativeDesktopClientSaveControl.h"
 #include "../../../Minecraft.World/StringHelpers.h"
+
+namespace
+{
+	C4JStorage::ESaveGameState NativeDesktopPauseMenuDoesSaveExist(
+		bool* saveExists)
+	{
+		if(saveExists != nullptr)
+		{
+			*saveExists = NativeDesktopDoesSaveExist();
+		}
+		return C4JStorage::ESaveGame_Idle;
+	}
+
+	bool NativeDesktopPauseMenuSavesAreDisabled()
+	{
+		return NativeDesktopSavesAreDisabled();
+	}
+
+#if defined(_XBOX_ONE) || defined(__ORBIS__)
+	void NativeDesktopPauseMenuSetSavesDisabled(bool disabled)
+	{
+		NativeDesktopSetSavesDisabled(disabled);
+	}
+#endif
+}
+
 UIScene_PauseMenu::UIScene_PauseMenu(int iPad, void *initData, UILayer *parentLayer) : UIScene(iPad, parentLayer)
 {
 	// Setup all the Iggy references we need for this scene
@@ -182,7 +209,7 @@ void UIScene_PauseMenu::updateTooltips()
 
 	if(ProfileManager.IsFullVersion())
 	{
-		if(StorageManager.GetSaveDisabled())
+		if(NativeDesktopPauseMenuSavesAreDisabled())
 		{
 			iX = bIsisPrimaryHost?IDS_TOOLTIPS_SELECTDEVICE:-1;
 #ifdef _XBOX_ONE
@@ -304,7 +331,7 @@ void UIScene_PauseMenu::updateControlsVisibility()
 	}
 
 	// is saving disabled?
-	if(StorageManager.GetSaveDisabled())
+	if(NativeDesktopPauseMenuSavesAreDisabled())
 	{
 #ifdef _XBOX
 		// disable save button
@@ -647,7 +674,8 @@ void UIScene_PauseMenu::handlePress(F64 controlId, F64 childId)
 					uiIDA[0]=IDS_CONFIRM_CANCEL;
 					uiIDA[1]=IDS_CONFIRM_OK;
 
-					if(g_NetworkManager.IsHost() && StorageManager.GetSaveDisabled())
+					if(g_NetworkManager.IsHost() &&
+						NativeDesktopPauseMenuSavesAreDisabled())
 					{
 						uiIDA[0]=IDS_CONFIRM_CANCEL;
 						uiIDA[1]=IDS_EXIT_GAME_SAVE;
@@ -671,7 +699,7 @@ void UIScene_PauseMenu::handlePress(F64 controlId, F64 childId)
 						ui.RequestAlertMessage(IDS_EXIT_GAME, IDS_CONFIRM_EXIT_GAME, uiIDA, 2, m_iPad,&IUIScene_PauseMenu::ExitGameDialogReturned, (LPVOID)GetCallbackUniqueId());
 					}
 #else
-					if(StorageManager.GetSaveDisabled())
+					if(NativeDesktopPauseMenuSavesAreDisabled())
 					{
 						uiIDA[0]=IDS_CONFIRM_CANCEL;
 						uiIDA[1]=IDS_CONFIRM_OK;
@@ -861,8 +889,13 @@ void UIScene_PauseMenu::PerformActionSaveGame()
 	}
 
 	// does the save exist?
-	bool bSaveExists;
-	C4JStorage::ESaveGameState result=StorageManager.DoesSaveExist(&bSaveExists);
+	bool bSaveExists = false;
+#ifdef _XBOX
+	C4JStorage::ESaveGameState result =
+		NativeDesktopPauseMenuDoesSaveExist(&bSaveExists);
+#else
+	NativeDesktopPauseMenuDoesSaveExist(&bSaveExists);
+#endif
 
 #ifdef _XBOX
 	if(result == C4JStorage::ELoadGame_DeviceRemoved)
@@ -1373,7 +1406,7 @@ int UIScene_PauseMenu::ExitGameSaveDialogReturned(void *pParam,int iPad,C4JStora
 
 			// does the save exist?
 			bool bSaveExists;
-			StorageManager.DoesSaveExist(&bSaveExists);
+			NativeDesktopPauseMenuDoesSaveExist(&bSaveExists);
 			// 4J-PB - we check if the save exists inside the libs
 			// we need to ask if they are sure they want to overwrite the existing game
 			if(bSaveExists)
@@ -1387,7 +1420,7 @@ int UIScene_PauseMenu::ExitGameSaveDialogReturned(void *pParam,int iPad,C4JStora
 			else
 			{
 #if defined(_XBOX_ONE) || defined(__ORBIS__)
-				StorageManager.SetSaveDisabled(false);
+				NativeDesktopPauseMenuSetSavesDisabled(false);
 #endif
 				MinecraftServer::getInstance()->setSaveOnExit( true );
 			}

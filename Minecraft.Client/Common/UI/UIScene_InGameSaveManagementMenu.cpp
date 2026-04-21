@@ -1,10 +1,74 @@
 #include "stdafx.h"
 #include "UI.h"
 #include "UIScene_InGameSaveManagementMenu.h"
+#include "../../NativeDesktop/NativeDesktopClientSaveCatalog.h"
+#include "../../NativeDesktop/NativeDesktopClientSaveControl.h"
 
 #if defined(__ORBIS__) || defined(__PSVITA__)
 #include <ces.h>
 #endif
+
+namespace
+{
+	NativeDesktopClientSaveCatalog g_NativeDesktopInGameSaveCatalog;
+
+	PSAVE_DETAILS NativeDesktopInGameReturnSavesInfo()
+	{
+		return g_NativeDesktopInGameSaveCatalog.ReturnSavesInfo();
+	}
+
+	void NativeDesktopInGameClearSavesInfo()
+	{
+		g_NativeDesktopInGameSaveCatalog.ClearSavesInfo();
+	}
+
+	C4JStorage::ESaveGameState NativeDesktopInGameGetSavesInfo(
+		LPVOID param)
+	{
+		return g_NativeDesktopInGameSaveCatalog.GetSavesInfo(nullptr, param);
+	}
+
+	C4JStorage::ESaveGameState NativeDesktopInGameLoadSaveThumbnail(
+		int saveIndex,
+		NativeDesktopLoadSaveDataThumbnailCallback callback,
+		LPVOID param)
+	{
+		return g_NativeDesktopInGameSaveCatalog.LoadSaveDataThumbnail(
+			saveIndex,
+			callback,
+			param);
+	}
+
+	C4JStorage::ESaveGameState NativeDesktopInGameDeleteSaveData(
+		int saveIndex,
+		NativeDesktopDeleteSaveDataCallback callback,
+		LPVOID param)
+	{
+		return g_NativeDesktopInGameSaveCatalog.DeleteSaveData(
+			saveIndex,
+			callback,
+			param);
+	}
+
+	bool NativeDesktopInGameSavesAreDisabled()
+	{
+		return NativeDesktopSavesAreDisabled();
+	}
+
+	void NativeDesktopInGameSetSavesDisabled(bool disabled)
+	{
+		NativeDesktopSetSavesDisabled(disabled);
+	}
+
+	void NativeDesktopInGameContinueIncompleteOperation()
+	{
+	}
+
+	bool NativeDesktopInGameEnoughSpaceForMinSave()
+	{
+		return g_NativeDesktopInGameSaveCatalog.EnoughSpaceForMinSave();
+	}
+}
 
 int UIScene_InGameSaveManagementMenu::LoadSaveDataThumbnailReturned(LPVOID lpParam,PBYTE pbThumbnail,DWORD dwThumbnailBytes)
 {
@@ -62,7 +126,7 @@ UIScene_InGameSaveManagementMenu::UIScene_InGameSaveManagementMenu(int iPad, voi
 
 #if defined(__PS3__) || defined(__ORBIS__) || defined(__PSVITA__) || defined(_DURANGO)
 	// Always clear the saves when we enter this menu
-	StorageManager.ClearSavesInfo();
+	NativeDesktopInGameClearSavesInfo();
 #endif
 
 	// block input if we're waiting for DLC to install, and wipe the saves list. The end of dlc mounting custom message will fill the list again
@@ -107,8 +171,8 @@ UIScene_InGameSaveManagementMenu::~UIScene_InGameSaveManagementMenu()
 		delete [] m_saveDetails;
 	}
 	app.LeaveSaveNotificationSection();
-	StorageManager.SetSaveDisabled(false);
-	StorageManager.ContinueIncompleteOperation();
+	NativeDesktopInGameSetSavesDisabled(false);
+	NativeDesktopInGameContinueIncompleteOperation();
 }
 
 void UIScene_InGameSaveManagementMenu::updateTooltips()
@@ -130,14 +194,14 @@ void UIScene_InGameSaveManagementMenu::Initialise()
 	if(ProfileManager.IsFullVersion()==false)
 	{
 	}
-	else if(StorageManager.GetSaveDisabled())
+	else if(NativeDesktopInGameSavesAreDisabled())
 	{
 		GetSaveInfo();
 	}
 	else
 	{
 		// 4J-PB - we need to check that there is enough space left to create a copy of the save (for a rename)
-		bool bCanRename = StorageManager.EnoughSpaceForAMinSaveGame();
+		bool bCanRename = NativeDesktopInGameEnoughSpaceForMinSave();
 
 		GetSaveInfo();
 	}
@@ -197,7 +261,7 @@ void UIScene_InGameSaveManagementMenu::tick()
 		// Display the saves if we have them
 		if(!m_bSavesDisplayed)
 		{
-			m_pSaveDetails=StorageManager.ReturnSavesInfo();
+			m_pSaveDetails=NativeDesktopInGameReturnSavesInfo();
 			if(m_pSaveDetails!=nullptr)
 			{
 				m_spaceIndicatorSaves.reset();
@@ -253,8 +317,11 @@ void UIScene_InGameSaveManagementMenu::tick()
 				m_bRetrievingSaveThumbnails = true;
 				app.DebugPrintf("Requesting the first thumbnail\n");
 				// set the save to load
-				PSAVE_DETAILS pSaveDetails=StorageManager.ReturnSavesInfo();
-				C4JStorage::ESaveGameState eLoadStatus=StorageManager.LoadSaveDataThumbnail(&pSaveDetails->SaveInfoA[(int)m_iRequestingThumbnailId],&LoadSaveDataThumbnailReturned,this);
+				C4JStorage::ESaveGameState eLoadStatus =
+					NativeDesktopInGameLoadSaveThumbnail(
+						m_iRequestingThumbnailId,
+						&LoadSaveDataThumbnailReturned,
+						this);
 
 				if(eLoadStatus!=C4JStorage::ESaveGame_GetSaveThumbnail)
 				{
@@ -329,8 +396,11 @@ void UIScene_InGameSaveManagementMenu::tick()
 				{
 					app.DebugPrintf("Requesting another thumbnail\n");
 					// set the save to load
-					PSAVE_DETAILS pSaveDetails=StorageManager.ReturnSavesInfo();
-					C4JStorage::ESaveGameState eLoadStatus=StorageManager.LoadSaveDataThumbnail(&pSaveDetails->SaveInfoA[(int)m_iRequestingThumbnailId],&LoadSaveDataThumbnailReturned,this);
+					C4JStorage::ESaveGameState eLoadStatus =
+						NativeDesktopInGameLoadSaveThumbnail(
+							m_iRequestingThumbnailId,
+							&LoadSaveDataThumbnailReturned,
+							this);
 					if(eLoadStatus!=C4JStorage::ESaveGame_GetSaveThumbnail)
 					{
 						// something went wrong
@@ -364,8 +434,6 @@ void UIScene_InGameSaveManagementMenu::tick()
 		m_bSavesDisplayed=false;
 		m_iSaveInfoC=0;
 		m_buttonListSaves.clearList();
-		//StorageManager.ClearSavesInfo();
-		//GetSaveInfo();
 		m_iState=e_SavesIdle;
 		break;
 	}
@@ -383,10 +451,11 @@ void UIScene_InGameSaveManagementMenu::GetSaveInfo(  )
 	m_iSaveInfoC=0;
 	m_controlSavesTimer.setVisible(true);
 
-	m_pSaveDetails=StorageManager.ReturnSavesInfo();
+	m_pSaveDetails=NativeDesktopInGameReturnSavesInfo();
 	if(m_pSaveDetails==nullptr)
 	{
-		C4JStorage::ESaveGameState eSGIStatus= StorageManager.GetSavesInfo(m_iPad,nullptr,this,"save"); 
+		C4JStorage::ESaveGameState eSGIStatus =
+			NativeDesktopInGameGetSavesInfo(this);
 	}
 
 
@@ -476,7 +545,10 @@ int UIScene_InGameSaveManagementMenu::DeleteSaveDialogReturned(void *pParam,int 
 		}
 		else
 		{
-			StorageManager.DeleteSaveData(&pClass->m_pSaveDetails->SaveInfoA[pClass->m_iSaveListIndex],UIScene_InGameSaveManagementMenu::DeleteSaveDataReturned,pClass);
+			NativeDesktopInGameDeleteSaveData(
+				pClass->m_iSaveListIndex,
+				UIScene_InGameSaveManagementMenu::DeleteSaveDataReturned,
+				pClass);
 			pClass->m_controlSavesTimer.setVisible( true );
 		}
 	}

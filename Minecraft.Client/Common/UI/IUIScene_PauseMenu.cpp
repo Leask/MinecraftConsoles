@@ -9,11 +9,30 @@
 #include "../../TexturePackRepository.h"
 #include "../../TexturePack.h"
 #include "../../DLCTexturePack.h"
+#include "../../NativeDesktop/NativeDesktopClientSaveControl.h"
 #include "../../../Minecraft.World/StringHelpers.h"
 
 #ifndef _XBOX
 #include "UI.h"
 #endif
+
+namespace
+{
+	C4JStorage::ESaveGameState NativeDesktopPauseMenuDoesSaveExist(
+		bool* saveExists)
+	{
+		if(saveExists != nullptr)
+		{
+			*saveExists = NativeDesktopDoesSaveExist();
+		}
+		return C4JStorage::ESaveGame_Idle;
+	}
+
+	void NativeDesktopPauseMenuSetSavesDisabled(bool disabled)
+	{
+		NativeDesktopSetSavesDisabled(disabled);
+	}
+}
 
 
 int IUIScene_PauseMenu::ExitGameDialogReturned(void *pParam,int iPad,C4JStorage::EMessageResult result)
@@ -82,7 +101,7 @@ int IUIScene_PauseMenu::ExitGameSaveDialogReturned(void *pParam,int iPad,C4JStor
 
 			// does the save exist?
 			bool bSaveExists;
-			StorageManager.DoesSaveExist(&bSaveExists);
+			NativeDesktopPauseMenuDoesSaveExist(&bSaveExists);
 			// 4J-PB - we check if the save exists inside the libs
 			// we need to ask if they are sure they want to overwrite the existing game
 			if(bSaveExists)
@@ -96,7 +115,7 @@ int IUIScene_PauseMenu::ExitGameSaveDialogReturned(void *pParam,int iPad,C4JStor
 			else
 			{
 #if defined(_XBOX_ONE) || defined(__ORBIS__)
-				StorageManager.SetSaveDisabled(false);
+				NativeDesktopPauseMenuSetSavesDisabled(false);
 #endif
 				MinecraftServer::getInstance()->setSaveOnExit( true );
 			}
@@ -135,7 +154,7 @@ int IUIScene_PauseMenu::ExitGameAndSaveReturned(void *pParam,int iPad,C4JStorage
 		//bool validSave = StorageManager.GetSaveUniqueNumber(&saveOrCheckpointId);
 		//SentientManager.RecordLevelSaveOrCheckpoint(ProfileManager.GetPrimaryPad(), saveOrCheckpointId);
 #if defined(_XBOX_ONE) || defined(__ORBIS__)
-		StorageManager.SetSaveDisabled(false);
+		NativeDesktopPauseMenuSetSavesDisabled(false);
 #endif
 		if(pScene) pScene->SetIgnoreInput(true);
 		MinecraftServer::getInstance()->setSaveOnExit( true );
@@ -181,7 +200,7 @@ int IUIScene_PauseMenu::ExitGameDeclineSaveReturned(void *pParam,int iPad,C4JSto
 	{
 #if defined(_XBOX_ONE) || defined(__ORBIS__)
 		// Don't do this here, as it will still try and save some things even though it shouldn't!
-		//StorageManager.SetSaveDisabled(false);
+		// Native save-disabled state must stay unchanged on decline.
 #endif
 		if(pScene) pScene->SetIgnoreInput(true);
 		MinecraftServer::getInstance()->setSaveOnExit( false );
@@ -383,7 +402,10 @@ int IUIScene_PauseMenu::SaveWorldThreadProc( LPVOID lpParameter )
 		if(!MinecraftServer::serverHalted() && !app.GetChangingSessionType() ) app.SetGameStarted(true);
 
 #if defined(_XBOX_ONE) || defined(__ORBIS__)
-		if(app.GetGameHostOption(eGameHostOption_DisableSaving)) StorageManager.SetSaveDisabled(true);
+		if(app.GetGameHostOption(eGameHostOption_DisableSaving))
+		{
+			NativeDesktopPauseMenuSetSavesDisabled(true);
+		}
 #endif
 	}
 
@@ -650,7 +672,7 @@ void IUIScene_PauseMenu::_ExitWorld(LPVOID lpParameter)
 
 #if defined(_XBOX_ONE) || defined(__ORBIS__)
 	// Make sure we don't think saving is disabled in the menus
-	StorageManager.SetSaveDisabled(false);
+	NativeDesktopPauseMenuSetSavesDisabled(false);
 #endif
 }
 
@@ -688,7 +710,7 @@ int IUIScene_PauseMenu::EnableAutosaveDialogReturned(void *pParam,int iPad,C4JSt
 		app.SetGameHostOption(eGameHostOption_DisableSaving, 1);
 	}
 	// Re-enable saving temporarily
-	StorageManager.SetSaveDisabled(false);
+	NativeDesktopPauseMenuSetSavesDisabled(false);
 
 	// flag a app action of save game
 	app.SetAction(iPad,eAppAction_SaveGame);
@@ -702,7 +724,7 @@ int IUIScene_PauseMenu::DisableAutosaveDialogReturned(void *pParam,int iPad,C4JS
 	{
 		// Set the global flag, so that we disable saving again once the save is complete
 		app.SetGameHostOption(eGameHostOption_DisableSaving, 1);
-		StorageManager.SetSaveDisabled(false);
+		NativeDesktopPauseMenuSetSavesDisabled(false);
 		
 		// flag a app action of save game
 		app.SetAction(iPad,eAppAction_SaveGame);
