@@ -251,7 +251,8 @@ Direction:
   `UIScene_PauseMenu` and `IUIScene_PauseMenu` save-disabled prompts,
   save-on-exit checks, and autosave re-enable cleanup now read/write the same
   native save-control owner instead of mutating `StorageManager` state
-  directly;
+  directly; `UIScene_DeathMenu` exit prompts now consult that same native
+  save-disabled owner instead of reading `StorageManager` state directly;
   the dormant transfer/download save-buffer, image, load/delete, state, and
   copy-save branches now use the same native catalog primitives instead of
   reaching back into `StorageManager` local-save operations)

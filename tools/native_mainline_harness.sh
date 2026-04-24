@@ -392,6 +392,7 @@ run_native_only_contract() {
             Minecraft.Client/Common/Consoles_App.cpp \
             Minecraft.Client/Common/Network/GameNetworkManager.cpp \
             Minecraft.Client/Common/UI/IUIScene_PauseMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_DeathMenu.cpp \
             Minecraft.Client/Common/UI/UIScene_LoadMenu.cpp \
             Minecraft.Client/Common/UI/UIScene_PauseMenu.cpp \
             Minecraft.Client/MinecraftServer.cpp \
@@ -401,11 +402,12 @@ run_native_only_contract() {
             exit 1
         fi
 
-        rg -n -S "NativeDesktopDoesSaveExist|NativeDesktopSavesAreIdle|NativeDesktopPauseMenu(DoesSaveExist|SavesAreDisabled|SetSavesDisabled)" \
+        rg -n -S "NativeDesktopDoesSaveExist|NativeDesktopSavesAreIdle|NativeDesktopDeathMenuSavesAreDisabled|NativeDesktopPauseMenu(DoesSaveExist|SavesAreDisabled|SetSavesDisabled)" \
             Minecraft.Client/ClientConnection.cpp \
             Minecraft.Client/Common/Consoles_App.cpp \
             Minecraft.Client/Common/Network/GameNetworkManager.cpp \
             Minecraft.Client/Common/UI/IUIScene_PauseMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_DeathMenu.cpp \
             Minecraft.Client/Common/UI/UIScene_PauseMenu.cpp \
             Minecraft.Client/MinecraftServer.cpp \
             Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \

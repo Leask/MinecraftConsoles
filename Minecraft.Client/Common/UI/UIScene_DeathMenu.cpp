@@ -4,6 +4,15 @@
 #include "IUIScene_PauseMenu.h"
 #include "../../Minecraft.h"
 #include "../../MultiPlayerLocalPlayer.h"
+#include "../../NativeDesktop/NativeDesktopClientSaveControl.h"
+
+namespace
+{
+	bool NativeDesktopDeathMenuSavesAreDisabled()
+	{
+		return NativeDesktopSavesAreDisabled();
+	}
+}
 
 UIScene_DeathMenu::UIScene_DeathMenu(int iPad, void *initData, UILayer *parentLayer) : UIScene(iPad, parentLayer)
 {
@@ -111,7 +120,8 @@ void UIScene_DeathMenu::handlePress(F64 controlId, F64 childId)
 					TelemetryManager->RecordLevelExit(m_iPad, eSen_LevelExitStatus_Failed);
 					
 #if defined (_XBOX_ONE) || defined(__ORBIS__)
-					if(g_NetworkManager.IsHost() && StorageManager.GetSaveDisabled())
+					if(g_NetworkManager.IsHost() &&
+						NativeDesktopDeathMenuSavesAreDisabled())
 					{
 						uiIDA[0]=IDS_CONFIRM_CANCEL;
 						uiIDA[1]=IDS_EXIT_GAME_SAVE;
@@ -127,7 +137,7 @@ void UIScene_DeathMenu::handlePress(F64 controlId, F64 childId)
 					}
 
 #else
-					if(StorageManager.GetSaveDisabled())
+					if(NativeDesktopDeathMenuSavesAreDisabled())
 					{
 						uiIDA[0]=IDS_CONFIRM_CANCEL;
 						uiIDA[1]=IDS_CONFIRM_OK;
