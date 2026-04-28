@@ -256,8 +256,11 @@ Direction:
   the dormant transfer/download save-buffer, image, load/delete, rename, and
   save-transfer state entry points in `UIScene_LoadOrJoinMenu` now route
   through native desktop wrappers instead of calling `StorageManager`
-  directly, while the remaining remote-transfer/device-picker behavior stays
-  isolated behind those wrappers for later native substitution)
+  directly, and the remaining save-device picker entry points in
+  `UIScene_LoadOrJoinMenu`, `UIScene_MainMenu`, and `UIScene_PauseMenu` now
+  resolve through a native storage-control substitute that treats the native
+  save device as already selected, leaving only remote-transfer/store-facing
+  behavior isolated for later native substitution)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/

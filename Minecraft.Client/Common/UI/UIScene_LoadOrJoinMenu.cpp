@@ -1437,7 +1437,10 @@ void UIScene_LoadOrJoinMenu::handleInput(int iPad, int key, bool repeat, bool pr
         // Fix for #12531 - TCR 001: BAS Game Stability: When a player selects to change a storage
         // device, and repeatedly backs out of the SD screen, disconnects from LIVE, and then selects a SD, the title crashes.
         m_bIgnoreInput=true;
-        StorageManager.SetSaveDevice(&CScene_MultiGameJoinLoad::DeviceSelectReturned,this,true);
+        NativeDesktopSelectSaveDevice(
+            &CScene_MultiGameJoinLoad::DeviceSelectReturned,
+            this,
+            true);
         ui.PlayUISFX(eSFX_Press);
 #endif
         // Save Transfer

@@ -7,6 +7,7 @@
 #include "../../TexturePack.h"
 #include "../../DLCTexturePack.h"
 #include "../../NativeDesktop/NativeDesktopClientSaveControl.h"
+#include "../../NativeDesktop/NativeDesktopClientStorageControl.h"
 #include "../../../Minecraft.World/StringHelpers.h"
 
 namespace
@@ -411,7 +412,10 @@ void UIScene_PauseMenu::handleInput(int iPad, int key, bool repeat, bool pressed
 			// device, and repeatedly backs out of the SD screen, disconnects from LIVE, and then selects a SD, the title crashes.
 			m_bIgnoreInput=true;
 
-			StorageManager.SetSaveDevice(&UIScene_PauseMenu::DeviceSelectReturned,this,true);
+			NativeDesktopSelectSaveDevice(
+                &UIScene_PauseMenu::DeviceSelectReturned,
+                this,
+                true);
 		}
 		rfHandled = TRUE;
 		break;

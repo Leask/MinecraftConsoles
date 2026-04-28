@@ -5,6 +5,7 @@
 #include "../../User.h"
 #include "../../MinecraftServer.h"
 #include "../../NativeDesktop/NativeDesktopClientSaveControl.h"
+#include "../../NativeDesktop/NativeDesktopClientStorageControl.h"
 #include "UI.h"
 #include "UIScene_MainMenu.h"
 #ifdef __ORBIS__
@@ -806,7 +807,9 @@ int UIScene_MainMenu::CreateLoad_SignInReturned(void *pParam, bool bContinue, in
 						// check if all the TMS files are loaded
 						if(app.GetTMSDLCInfoRead() && app.GetTMSXUIDsFileRead() && app.GetBanListRead(iPad))
 						{
-							if(StorageManager.SetSaveDevice(&UIScene_MainMenu::DeviceSelectReturned,pClass)==true)
+							if(NativeDesktopSelectSaveDevice(
+                                &UIScene_MainMenu::DeviceSelectReturned,
+                                pClass) == true)
 							{
 								// save device already selected
 
@@ -1451,7 +1454,9 @@ void UIScene_MainMenu::RunPlayGame(int iPad)
 				// check if all the TMS files are loaded
 				if(app.GetTMSDLCInfoRead() && app.GetTMSXUIDsFileRead() && app.GetBanListRead(iPad))
 				{
-					if(StorageManager.SetSaveDevice(&CScene_Main::DeviceSelectReturned,this)==true)
+					if(NativeDesktopSelectSaveDevice(
+                        &CScene_Main::DeviceSelectReturned,
+                        this) == true)
 					{
 						// change the minecraft player name
 						pMinecraft->user->name = convStringToWstring( ProfileManager.GetGamertag(ProfileManager.GetPrimaryPad()));

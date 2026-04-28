@@ -413,6 +413,23 @@ run_native_only_contract() {
             Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \
             >/dev/null
 
+        if rg -n -S "StorageManager\\.SetSaveDevice\\(" \
+            Minecraft.Client/Common/UI/UIScene_LoadOrJoinMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_MainMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_PauseMenu.cpp \
+            > "$log_root/native-client-device-picker-storage.txt"; then
+            echo "Native device-picker UI paths still use StorageManager" >&2
+            cat "$log_root/native-client-device-picker-storage.txt" >&2
+            exit 1
+        fi
+
+        rg -n -S "NativeDesktopSelectSaveDevice" \
+            Minecraft.Client/Common/UI/UIScene_LoadOrJoinMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_MainMenu.cpp \
+            Minecraft.Client/Common/UI/UIScene_PauseMenu.cpp \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientStorageControl.h \
+            >/dev/null
+
         if rg -n -S "StorageManager\\.(GetGameDefinedProfileData|GetDashboardProfileSettings|WriteToProfile|ForceQueuedProfileWrites|ReadFromProfile|SetSaveDeviceSelected|GetSaveDeviceSelected|SetSaveDevice)\\(" \
             Minecraft.Client/Common/Consoles_App.cpp \
             Minecraft.Client/Common/Tutorial/Tutorial.cpp \
