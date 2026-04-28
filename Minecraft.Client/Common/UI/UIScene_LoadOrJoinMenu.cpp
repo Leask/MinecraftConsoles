@@ -179,6 +179,94 @@ static bool NativeDesktopLoadOrJoinEnoughSpaceForMinSave()
     return g_NativeDesktopLoadOrJoinSaveCatalog.EnoughSpaceForMinSave();
 }
 
+[[maybe_unused]] static C4JStorage::ESaveGameState
+NativeDesktopLoadOrJoinRenameSaveData(
+    int renameIndex,
+    uint16_t* newName,
+    int (*callback)(LPVOID, const bool),
+    LPVOID param)
+{
+    (void)renameIndex;
+    (void)newName;
+    if (callback != nullptr)
+    {
+        callback(param, true);
+    }
+    return C4JStorage::ESaveGame_RenameSuccess;
+}
+
+[[maybe_unused]] static C4JStorage::ESaveGameState
+NativeDesktopLoadOrJoinDeleteSaveDataByIndex(
+    int saveIndex,
+    int (*callback)(LPVOID, const bool),
+    LPVOID param)
+{
+    (void)saveIndex;
+    if (callback != nullptr)
+    {
+        callback(param, true);
+    }
+    return C4JStorage::ESaveGame_DeleteSuccess;
+}
+
+[[maybe_unused]] static void
+NativeDesktopLoadOrJoinSetSaveTransferInProgress(bool inProgress)
+{
+    (void)inProgress;
+}
+
+[[maybe_unused]] static C4JStorage::eSaveTransferState
+NativeDesktopLoadOrJoinSaveTransferClearState()
+{
+    return C4JStorage::eSaveTransfer_Idle;
+}
+
+[[maybe_unused]] static C4JStorage::eSaveTransferState
+NativeDesktopLoadOrJoinSaveTransferGetDetails(
+    int pad,
+    C4JStorage::eGlobalStorage storage,
+    WCHAR* filename,
+    int (*callback)(LPVOID, C4JStorage::SAVETRANSFER_FILE_DETAILS*),
+    LPVOID param)
+{
+    (void)pad;
+    (void)storage;
+    (void)filename;
+    (void)callback;
+    (void)param;
+    return C4JStorage::eSaveTransfer_Idle;
+}
+
+[[maybe_unused]] static C4JStorage::eSaveTransferState
+NativeDesktopLoadOrJoinSaveTransferGetData(
+    int pad,
+    C4JStorage::eGlobalStorage storage,
+    WCHAR* filename,
+    int (*callback)(LPVOID, C4JStorage::SAVETRANSFER_FILE_DETAILS*),
+    bool (*progress)(LPVOID, const int),
+    LPVOID callbackParam,
+    LPVOID progressParam)
+{
+    (void)pad;
+    (void)storage;
+    (void)filename;
+    (void)callback;
+    (void)progress;
+    (void)callbackParam;
+    (void)progressParam;
+    return C4JStorage::eSaveTransfer_Idle;
+}
+
+[[maybe_unused]] static void NativeDesktopLoadOrJoinCancelSaveTransfer(
+    int (*callback)(LPVOID),
+    LPVOID param)
+{
+    if (callback != nullptr)
+    {
+        callback(param);
+    }
+}
+
 static std::filesystem::path NativeDesktop_MakePortablePath(
     const wstring& path)
 {
@@ -1608,7 +1696,11 @@ int UIScene_LoadOrJoinMenu::KeyboardCompleteWorldNameCallback(LPVOID lpParam,boo
         {
 #if (defined __PS3__ || defined __ORBIS__ || defined _DURANGO  || defined(__PSVITA__))
             // open the save and overwrite the metadata
-            StorageManager.RenameSaveData(pClass->m_iSaveListIndex - pClass->m_iDefaultButtonsC, ui16Text,&UIScene_LoadOrJoinMenu::RenameSaveDataReturned,pClass);
+            NativeDesktopLoadOrJoinRenameSaveData(
+                pClass->m_iSaveListIndex - pClass->m_iDefaultButtonsC,
+                ui16Text,
+                &UIScene_LoadOrJoinMenu::RenameSaveDataReturned,
+                pClass);
 #elif defined(_NATIVE_DESKTOP)
             {
                 int listPos = pClass->m_iSaveListIndex - pClass->m_iDefaultButtonsC;
@@ -2618,7 +2710,10 @@ int UIScene_LoadOrJoinMenu::DeleteSaveDialogReturned(void *pParam,int iPad,C4JSt
                 UIScene_LoadOrJoinMenu::DeleteSaveDataReturned((LPVOID)pClass->GetCallbackUniqueId(), bSuccess);
             }
 #else
-			StorageManager.DeleteSaveData(&pClass->m_pSaveDetails->SaveInfoA[pClass->m_iSaveListIndex - pClass->m_iDefaultButtonsC], UIScene_LoadOrJoinMenu::DeleteSaveDataReturned, (LPVOID)pClass->GetCallbackUniqueId());
+            NativeDesktopLoadOrJoinDeleteSaveDataByIndex(
+                pClass->m_iSaveListIndex - pClass->m_iDefaultButtonsC,
+                UIScene_LoadOrJoinMenu::DeleteSaveDataReturned,
+                (LPVOID)pClass->GetCallbackUniqueId());
 #endif
             pClass->m_controlSavesTimer.setVisible( true );
         }
@@ -3103,7 +3198,7 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
 {
 	m_bSaveTransferRunning = true;
 #ifdef __PS3__
-	StorageManager.SetSaveTransferInProgress(true);
+	NativeDesktopLoadOrJoinSetSaveTransferInProgress(true);
 #endif
     Compression::UseDefaultThreadStorage();
     UIScene_LoadOrJoinMenu* pClass = (UIScene_LoadOrJoinMenu *) lpParameter;
@@ -3569,7 +3664,7 @@ int UIScene_LoadOrJoinMenu::DownloadSonyCrossSaveThreadProc( LPVOID lpParameter 
     }
 	m_bSaveTransferRunning = false;
 #ifdef __PS3__
-	StorageManager.SetSaveTransferInProgress(false);
+	NativeDesktopLoadOrJoinSetSaveTransferInProgress(false);
 #endif
     return 0;
 
@@ -3817,7 +3912,7 @@ int UIScene_LoadOrJoinMenu::DownloadXbox360SaveThreadProc( LPVOID lpParameter )
     Minecraft *pMinecraft=Minecraft::GetInstance();
     ConsoleSaveFile* pSave = nullptr;
 
-	while(StorageManager.SaveTransferClearState()!=C4JStorage::eSaveTransfer_Idle)
+	while(NativeDesktopLoadOrJoinSaveTransferClearState()!=C4JStorage::eSaveTransfer_Idle)
 	{
 		Sleep(5);
 	}
@@ -4062,7 +4157,13 @@ void UIScene_LoadOrJoinMenu::RequestFileSize( SaveTransferStateContainer *pClass
 			pMinecraft->progressRenderer->progressStart(IDS_SAVETRANSFER_TITLE_GET);
 			pMinecraft->progressRenderer->progressStage( IDS_SAVETRANSFER_STAGE_GET_DETAILS );
 			Sleep(1);
-			pClass->m_eSaveTransferState=StorageManager.SaveTransferGetDetails(pClass->m_iPad,C4JStorage::eGlobalStorage_TitleUser,filename,&UIScene_LoadOrJoinMenu::SaveTransferReturned,pClass);
+            pClass->m_eSaveTransferState =
+                NativeDesktopLoadOrJoinSaveTransferGetDetails(
+                    pClass->m_iPad,
+                    C4JStorage::eGlobalStorage_TitleUser,
+                    filename,
+                    &UIScene_LoadOrJoinMenu::SaveTransferReturned,
+                    pClass);
 		}
 		while(pClass->m_eSaveTransferState == C4JStorage::eSaveTransfer_Busy && !pClass->m_bSaveTransferCancelled );
     }
@@ -4107,7 +4208,15 @@ void UIScene_LoadOrJoinMenu::RequestFileData( SaveTransferStateContainer *pClass
 			pMinecraft->progressRenderer->progressStart(IDS_SAVETRANSFER_TITLE_GET);
 			pMinecraft->progressRenderer->progressStage( -1 );
 			Sleep(1);
-			pClass->m_eSaveTransferState=StorageManager.SaveTransferGetData(pClass->m_iPad,C4JStorage::eGlobalStorage_TitleUser,filename,&UIScene_LoadOrJoinMenu::SaveTransferReturned,&UIScene_LoadOrJoinMenu::SaveTransferUpdateProgress,pClass,pClass);
+            pClass->m_eSaveTransferState =
+                NativeDesktopLoadOrJoinSaveTransferGetData(
+                    pClass->m_iPad,
+                    C4JStorage::eGlobalStorage_TitleUser,
+                    filename,
+                    &UIScene_LoadOrJoinMenu::SaveTransferReturned,
+                    &UIScene_LoadOrJoinMenu::SaveTransferUpdateProgress,
+                    pClass,
+                    pClass);
 		}
 		while(pClass->m_eSaveTransferState == C4JStorage::eSaveTransfer_Busy && !pClass->m_bSaveTransferCancelled );
     }
@@ -4167,7 +4276,9 @@ void UIScene_LoadOrJoinMenu::CancelSaveTransferCallback(LPVOID lpParam)
 
     if(!pClass->m_bSaveTransferCancelled)
     {
-        StorageManager.CancelSaveTransfer(UIScene_LoadOrJoinMenu::CancelSaveTransferCompleteCallback,pClass);
+        NativeDesktopLoadOrJoinCancelSaveTransfer(
+            UIScene_LoadOrJoinMenu::CancelSaveTransferCompleteCallback,
+            pClass);
 
         pClass->m_bSaveTransferCancelled=true;
     }

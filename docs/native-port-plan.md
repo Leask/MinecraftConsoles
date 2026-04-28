@@ -253,9 +253,11 @@ Direction:
   native save-control owner instead of mutating `StorageManager` state
   directly; `UIScene_DeathMenu` exit prompts now consult that same native
   save-disabled owner instead of reading `StorageManager` state directly;
-  the dormant transfer/download save-buffer, image, load/delete, state, and
-  copy-save branches now use the same native catalog primitives instead of
-  reaching back into `StorageManager` local-save operations)
+  the dormant transfer/download save-buffer, image, load/delete, rename, and
+  save-transfer state entry points in `UIScene_LoadOrJoinMenu` now route
+  through native desktop wrappers instead of calling `StorageManager`
+  directly, while the remaining remote-transfer/device-picker behavior stays
+  isolated behind those wrappers for later native substitution)
 - keep native world stream primitives on native file handles
   (`FileInputStream` and `FileOutputStream` now use C stdio on macOS/Linux
   instead of exposing Win32 `HANDLE` or direct `CreateFile`/`ReadFile`/
