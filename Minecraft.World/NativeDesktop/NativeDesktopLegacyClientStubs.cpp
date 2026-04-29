@@ -1,7 +1,12 @@
 #include "stdafx.h"
 
 #include <algorithm>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <filesystem>
 #include <mutex>
+#include <string>
 #include <unordered_map>
 
 #include "../Connection.h"
@@ -28,10 +33,15 @@
 
 namespace
 {
+    constexpr std::uint32_t kNativeSaveMagic = 0x3153564eU;
+    constexpr std::uint32_t kNativeSaveVersion = 1U;
+    constexpr std::uint32_t kNativeSaveMaxFiles = 4096U;
+    constexpr std::uint32_t kNativeSaveMaxFileBytes = 64U * 1024U * 1024U;
+
     struct NativeSaveFileData
     {
         std::vector<FileEntry*> files;
-    std::unordered_map<FileEntry*, std::vector<BYTE>> data;
+        std::unordered_map<FileEntry*, std::vector<BYTE>> data;
     };
 
     std::unordered_map<ConsoleSaveFileOriginal*, NativeSaveFileData> g_saveData;
@@ -47,6 +57,288 @@ namespace
     NativeSaveFileData& SaveData(ConsoleSaveFileOriginal* save)
     {
         return g_saveData[save];
+    }
+
+    std::string NativeWideToStorageText(const wstring& value)
+    {
+        std::string text;
+        text.reserve(value.size());
+        for (wchar_t ch : value)
+        {
+            text.push_back((ch >= 0 && ch <= 0x7f) ? static_cast<char>(ch) : '?');
+        }
+        return text;
+    }
+
+    wstring NativeStorageTextToWide(const std::string& value)
+    {
+        wstring text;
+        text.reserve(value.size());
+        for (char ch : value)
+        {
+            text.push_back(static_cast<unsigned char>(ch));
+        }
+        return text;
+    }
+
+    std::string NativeSaveStem(const wstring& fileName)
+    {
+        std::string stem = NativeWideToStorageText(fileName);
+        if (stem.empty())
+        {
+            stem = "native";
+        }
+
+        for (char& ch : stem)
+        {
+            const bool alpha =
+                (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+            const bool digit = ch >= '0' && ch <= '9';
+            const bool safe = alpha || digit || ch == '-' || ch == '_';
+            if (!safe)
+            {
+                ch = '_';
+            }
+        }
+        return stem;
+    }
+
+    std::filesystem::path NativeSaveRoot()
+    {
+        const char* configuredRoot =
+            std::getenv("MINECRAFT_NATIVE_DESKTOP_SAVE_ROOT");
+        if (configuredRoot != nullptr && configuredRoot[0] != '\0')
+        {
+            return std::filesystem::path(configuredRoot);
+        }
+
+        std::error_code error;
+        std::filesystem::path root = std::filesystem::current_path(error);
+        if (error)
+        {
+            root = std::filesystem::path(".");
+        }
+        root /= "NativeDesktopSaves";
+        return root;
+    }
+
+    std::filesystem::path NativeSavePath(const wstring& fileName)
+    {
+        return NativeSaveRoot() / (NativeSaveStem(fileName) + ".savebin");
+    }
+
+    bool NativeReadExact(FILE* file, void* data, std::size_t bytes)
+    {
+        return bytes == 0 || std::fread(data, 1, bytes, file) == bytes;
+    }
+
+    bool NativeWriteExact(FILE* file, const void* data, std::size_t bytes)
+    {
+        return bytes == 0 || std::fwrite(data, 1, bytes, file) == bytes;
+    }
+
+    void NativeClearSaveData(NativeSaveFileData& save)
+    {
+        for (FileEntry* file : save.files)
+        {
+            delete file;
+        }
+        save.files.clear();
+        save.data.clear();
+    }
+
+    FileEntry* NativeFindSaveFile(
+        NativeSaveFileData& save,
+        const wstring& fileName)
+    {
+        for (FileEntry* file : save.files)
+        {
+            if (file != nullptr && fileName == file->data.filename)
+            {
+                return file;
+            }
+        }
+        return nullptr;
+    }
+
+    FileEntry* NativeCreateSaveFile(
+        NativeSaveFileData& save,
+        const wstring& fileName)
+    {
+        FileEntry* existing = NativeFindSaveFile(save, fileName);
+        if (existing != nullptr)
+        {
+            existing->currentFilePointer = 0;
+            return existing;
+        }
+
+        FileEntry* file = new FileEntry();
+        std::wmemset(file->data.filename, 0, 64);
+        wcsncpy_s(file->data.filename, fileName.c_str(), _TRUNCATE);
+        file->data.length = 0;
+        file->data.startOffset = 0;
+        file->data.lastModifiedTime = 0;
+        file->currentFilePointer = 0;
+        save.files.push_back(file);
+        save.data[file] = {};
+        return file;
+    }
+
+    bool NativeLoadSaveData(
+        const std::filesystem::path& path,
+        NativeSaveFileData& save)
+    {
+        FILE* file = std::fopen(path.string().c_str(), "rb");
+        if (file == nullptr)
+        {
+            return false;
+        }
+
+        std::uint32_t magic = 0;
+        std::uint32_t version = 0;
+        std::uint32_t fileCount = 0;
+        bool ok =
+            NativeReadExact(file, &magic, sizeof(magic)) &&
+            NativeReadExact(file, &version, sizeof(version)) &&
+            NativeReadExact(file, &fileCount, sizeof(fileCount)) &&
+            magic == kNativeSaveMagic &&
+            version == kNativeSaveVersion &&
+            fileCount <= kNativeSaveMaxFiles;
+
+        NativeSaveFileData loaded;
+        unsigned int totalBytes = 0;
+        for (std::uint32_t index = 0; ok && index < fileCount; ++index)
+        {
+            std::uint32_t nameBytes = 0;
+            std::uint32_t dataBytes = 0;
+            std::uint64_t modifiedTime = 0;
+            ok =
+                NativeReadExact(file, &nameBytes, sizeof(nameBytes)) &&
+                NativeReadExact(file, &dataBytes, sizeof(dataBytes)) &&
+                NativeReadExact(file, &modifiedTime, sizeof(modifiedTime)) &&
+                nameBytes > 0 &&
+                nameBytes < 1024 &&
+                dataBytes <= kNativeSaveMaxFileBytes;
+            if (!ok)
+            {
+                break;
+            }
+
+            std::string name(nameBytes, '\0');
+            std::vector<BYTE> bytes(dataBytes);
+            ok =
+                NativeReadExact(file, name.data(), name.size()) &&
+                NativeReadExact(file, bytes.data(), bytes.size());
+            if (!ok)
+            {
+                break;
+            }
+
+            FileEntry* entry =
+                NativeCreateSaveFile(loaded, NativeStorageTextToWide(name));
+            entry->data.length = dataBytes;
+            entry->data.lastModifiedTime = modifiedTime;
+            loaded.data[entry] = std::move(bytes);
+            totalBytes += dataBytes;
+        }
+
+        std::fclose(file);
+        if (!ok)
+        {
+            NativeClearSaveData(loaded);
+            std::fprintf(
+                stderr,
+                "NativeDesktop save: failed to load %s\n",
+                path.string().c_str());
+            return false;
+        }
+
+        NativeClearSaveData(save);
+        save = std::move(loaded);
+        std::fprintf(
+            stderr,
+            "NativeDesktop save: loaded path=%s files=%u bytes=%u\n",
+            path.string().c_str(),
+            fileCount,
+            totalBytes);
+        return true;
+    }
+
+    bool NativeFlushSaveData(
+        const std::filesystem::path& path,
+        NativeSaveFileData& save)
+    {
+        std::error_code error;
+        std::filesystem::create_directories(path.parent_path(), error);
+        if (error)
+        {
+            return false;
+        }
+
+        const std::filesystem::path tempPath = path.string() + ".tmp";
+        FILE* file = std::fopen(tempPath.string().c_str(), "wb");
+        if (file == nullptr)
+        {
+            return false;
+        }
+
+        const std::uint32_t magic = kNativeSaveMagic;
+        const std::uint32_t version = kNativeSaveVersion;
+        const std::uint32_t fileCount =
+            static_cast<std::uint32_t>(save.files.size());
+        bool ok =
+            NativeWriteExact(file, &magic, sizeof(magic)) &&
+            NativeWriteExact(file, &version, sizeof(version)) &&
+            NativeWriteExact(file, &fileCount, sizeof(fileCount));
+
+        unsigned int totalBytes = 0;
+        for (FileEntry* entry : save.files)
+        {
+            const std::string name =
+                NativeWideToStorageText(entry->data.filename);
+            const std::vector<BYTE>& bytes = save.data[entry];
+            const std::uint32_t nameBytes =
+                static_cast<std::uint32_t>(name.size());
+            const std::uint32_t dataBytes =
+                static_cast<std::uint32_t>(bytes.size());
+            const std::uint64_t modifiedTime = entry->data.lastModifiedTime;
+            ok = ok &&
+                NativeWriteExact(file, &nameBytes, sizeof(nameBytes)) &&
+                NativeWriteExact(file, &dataBytes, sizeof(dataBytes)) &&
+                NativeWriteExact(file, &modifiedTime, sizeof(modifiedTime)) &&
+                NativeWriteExact(file, name.data(), name.size()) &&
+                NativeWriteExact(file, bytes.data(), bytes.size());
+            totalBytes += dataBytes;
+        }
+
+        ok = ok && std::fclose(file) == 0;
+        if (!ok)
+        {
+            std::remove(tempPath.string().c_str());
+            return false;
+        }
+
+        std::filesystem::rename(tempPath, path, error);
+        if (error)
+        {
+            std::filesystem::remove(path, error);
+            error.clear();
+            std::filesystem::rename(tempPath, path, error);
+        }
+
+        if (error)
+        {
+            std::filesystem::remove(tempPath, error);
+            return false;
+        }
+
+        std::fprintf(
+            stderr,
+            "NativeDesktop save: flushed path=%s files=%u bytes=%u\n",
+            path.string().c_str(),
+            fileCount,
+            totalBytes);
+        return true;
     }
 }
 
@@ -300,11 +592,14 @@ ConsoleSaveFileOriginal::ConsoleSaveFileOriginal(
 {
     (void)pvSaveData;
     (void)fileSize;
-    (void)forceCleanSave;
     InitializeCriticalSectionAndSpinCount(&m_lock, 5120);
     m_fileName = fileName;
     pvSaveMem = nullptr;
     header.setPlatform(plat);
+    if (!forceCleanSave && pvSaveData == nullptr && fileSize == 0)
+    {
+        NativeLoadSaveData(NativeSavePath(m_fileName), SaveData(this));
+    }
 }
 
 ConsoleSaveFileOriginal::~ConsoleSaveFileOriginal()
@@ -323,14 +618,7 @@ ConsoleSaveFileOriginal::~ConsoleSaveFileOriginal()
 
 FileEntry* ConsoleSaveFileOriginal::createFile(const ConsoleSavePath& fileName)
 {
-    FileEntry* file = new FileEntry();
-    wcsncpy_s(file->data.filename, fileName.getName().c_str(), _TRUNCATE);
-    file->data.length = 0;
-    file->data.startOffset = 0;
-    file->currentFilePointer = 0;
-    SaveData(this).files.push_back(file);
-    SaveData(this).data[file] = {};
-    return file;
+    return NativeCreateSaveFile(SaveData(this), fileName.getName());
 }
 
 void ConsoleSaveFileOriginal::deleteFile(FileEntry* file)
@@ -476,6 +764,7 @@ void ConsoleSaveFileOriginal::Flush(bool autosave, bool updateThumbnail)
 {
     (void)autosave;
     (void)updateThumbnail;
+    NativeFlushSaveData(NativeSavePath(m_fileName), SaveData(this));
 }
 
 #ifndef _CONTENT_PACKAGE

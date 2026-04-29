@@ -15,6 +15,12 @@ endif()
 if(NOT DEFINED WAIT_MS)
   set(WAIT_MS 90000)
 endif()
+if(NOT DEFINED TEST_NAME)
+  set(TEST_NAME "native_desktop_client_smoke")
+endif()
+if(NOT DEFINED SAVE_RESTART)
+  set(SAVE_RESTART 0)
+endif()
 
 if(BOOTSTRAP_FRAMES LESS 1)
   message(FATAL_ERROR "BOOTSTRAP_FRAMES must be greater than zero")
@@ -27,6 +33,9 @@ if(WAIT_MS LESS 1000)
 endif()
 
 get_filename_component(EXECUTABLE_DIR "${EXECUTABLE}" DIRECTORY)
+set(SAVE_ROOT "${EXECUTABLE_DIR}/${TEST_NAME}-save-root")
+file(REMOVE_RECURSE "${SAVE_ROOT}")
+file(MAKE_DIRECTORY "${SAVE_ROOT}")
 
 set(INPUT_SCRIPT "bootstrap:0:focus:true")
 string(APPEND INPUT_SCRIPT "|bootstrap:0:mouse-move:80,60")
@@ -61,6 +70,7 @@ execute_process(
     "MINECRAFT_NATIVE_DESKTOP_GAMEPLAY_FRAMES=${GAMEPLAY_FRAMES}"
     "MINECRAFT_NATIVE_DESKTOP_WAIT_MS=${WAIT_MS}"
     "MINECRAFT_NATIVE_DESKTOP_INPUT_SCRIPT=${INPUT_SCRIPT}"
+    "MINECRAFT_NATIVE_DESKTOP_SAVE_ROOT=${SAVE_ROOT}"
     "${EXECUTABLE}"
   WORKING_DIRECTORY "${EXECUTABLE_DIR}"
   TIMEOUT 120
@@ -131,6 +141,9 @@ set(expected_summary_markers
   "shutdownComplete=1"
   "loopComplete=1"
   "runtimeHealthy=1"
+  "save.requested=1"
+  "save.completed=1"
+  "save.persisted=1"
   "runtime.gameStarted=1"
   "runtime.levelReady=1"
   "runtime.playerReady=1"
@@ -163,6 +176,27 @@ foreach(expected_summary_marker IN LISTS expected_summary_markers)
       "output:\n${combined_output_tail}\n")
   endif()
 endforeach()
+
+string(FIND "${combined_output}" "save.loadedAtStartup=0" first_save_marker)
+if(first_save_marker LESS 0)
+  native_desktop_output_tail(combined_output_tail "${combined_output}")
+  message(FATAL_ERROR
+    "NativeDesktop client startup smoke output did not report a clean "
+    "first-run save state\n"
+    "output:\n${combined_output_tail}\n")
+endif()
+
+string(REGEX MATCH
+  "save[.]persistedBytes=[1-9][0-9]*"
+  persisted_save_bytes_marker
+  "${combined_output}")
+if(persisted_save_bytes_marker STREQUAL "")
+  native_desktop_output_tail(combined_output_tail "${combined_output}")
+  message(FATAL_ERROR
+    "NativeDesktop client startup smoke output did not contain a positive "
+    "persisted save byte count\n"
+    "output:\n${combined_output_tail}\n")
+endif()
 
 string(REGEX MATCH
   "startup[.]uiSkinLibraries=[1-9][0-9]*"
@@ -198,6 +232,93 @@ if(gameplay_ready_after_marker STREQUAL "")
     "NativeDesktop client startup smoke output did not contain a valid "
     "gameplayReadyAfterMs summary value\n"
     "output:\n${combined_output_tail}\n")
+endif()
+
+if(SAVE_RESTART)
+  execute_process(
+    COMMAND
+      ${CMAKE_COMMAND} -E env
+      "MINECRAFT_NATIVE_DESKTOP_BOOTSTRAP_FRAMES=${BOOTSTRAP_FRAMES}"
+      "MINECRAFT_NATIVE_DESKTOP_GAMEPLAY_FRAMES=${GAMEPLAY_FRAMES}"
+      "MINECRAFT_NATIVE_DESKTOP_WAIT_MS=${WAIT_MS}"
+      "MINECRAFT_NATIVE_DESKTOP_INPUT_SCRIPT=${INPUT_SCRIPT}"
+      "MINECRAFT_NATIVE_DESKTOP_SAVE_ROOT=${SAVE_ROOT}"
+      "${EXECUTABLE}"
+    WORKING_DIRECTORY "${EXECUTABLE_DIR}"
+    TIMEOUT 120
+    RESULT_VARIABLE restart_result
+    OUTPUT_VARIABLE restart_output
+    ERROR_VARIABLE restart_error
+  )
+
+  set(restart_combined_output "${restart_output}\n${restart_error}")
+
+  if(NOT restart_result EQUAL 0)
+    native_desktop_output_tail(restart_output_tail "${restart_output}")
+    native_desktop_output_tail(restart_error_tail "${restart_error}")
+    message(FATAL_ERROR
+      "NativeDesktop client restart smoke failed with exit "
+      "${restart_result}\n"
+      "stdout:\n${restart_output_tail}\n"
+      "stderr:\n${restart_error_tail}\n")
+  endif()
+
+  foreach(expected_marker IN LISTS expected_markers)
+    string(FIND "${restart_combined_output}" "${expected_marker}" marker_index)
+    if(marker_index LESS 0)
+      native_desktop_output_tail(
+        restart_combined_output_tail
+        "${restart_combined_output}")
+      message(FATAL_ERROR
+        "NativeDesktop client restart smoke output did not contain marker: "
+        "${expected_marker}\n"
+        "output:\n${restart_combined_output_tail}\n")
+    endif()
+  endforeach()
+
+  foreach(expected_summary_marker IN LISTS expected_summary_markers)
+    string(FIND
+      "${restart_combined_output}"
+      "${expected_summary_marker}"
+      summary_marker_index)
+    if(summary_marker_index LESS 0)
+      native_desktop_output_tail(
+        restart_combined_output_tail
+        "${restart_combined_output}")
+      message(FATAL_ERROR
+        "NativeDesktop client restart smoke output did not contain summary "
+        "marker: ${expected_summary_marker}\n"
+        "output:\n${restart_combined_output_tail}\n")
+    endif()
+  endforeach()
+
+  string(FIND
+    "${restart_combined_output}"
+    "save.loadedAtStartup=1"
+    restart_save_marker)
+  if(restart_save_marker LESS 0)
+    native_desktop_output_tail(
+      restart_combined_output_tail
+      "${restart_combined_output}")
+    message(FATAL_ERROR
+      "NativeDesktop client restart smoke output did not report an existing "
+      "save at startup\n"
+      "output:\n${restart_combined_output_tail}\n")
+  endif()
+
+  string(FIND
+    "${restart_combined_output}"
+    "NativeDesktop save: loaded"
+    restart_load_marker)
+  if(restart_load_marker LESS 0)
+    native_desktop_output_tail(
+      restart_combined_output_tail
+      "${restart_combined_output}")
+    message(FATAL_ERROR
+      "NativeDesktop client restart smoke output did not report loading the "
+      "persisted native save slot\n"
+      "output:\n${restart_combined_output_tail}\n")
+  endif()
 endif()
 
 message(STATUS "NativeDesktop client startup smoke passed")

@@ -61,13 +61,18 @@ setup_asset_file_copy(Minecraft.Client "${ASSET_FILE_PAIRS}")
 # Copy redist files
 add_copyredist_target(Minecraft.Client)
 
-function(add_native_desktop_client_smoke_test test_name gameplay_frames)
+function(add_native_desktop_client_smoke_test
+  test_name
+  gameplay_frames
+  save_restart)
   add_test(
     NAME ${test_name}
     COMMAND
       ${CMAKE_COMMAND}
       -DEXECUTABLE=$<TARGET_FILE:Minecraft.Client>
+      -DTEST_NAME=${test_name}
       -DGAMEPLAY_FRAMES=${gameplay_frames}
+      -DSAVE_RESTART=${save_restart}
       -P
       "${CMAKE_CURRENT_SOURCE_DIR}/NativeDesktop/RunNativeDesktopClientSmoke.cmake"
   )
@@ -80,10 +85,16 @@ endfunction()
 if(BUILD_TESTING AND PLATFORM_NAME STREQUAL "NativeDesktop")
   add_native_desktop_client_smoke_test(
     minecraft_native_desktop_client_startup_smoke
-    10)
+    10
+    0)
   add_native_desktop_client_smoke_test(
     minecraft_native_desktop_client_extended_gameplay_smoke
-    60)
+    60
+    0)
+  add_native_desktop_client_smoke_test(
+    minecraft_native_desktop_client_save_restart_smoke
+    12
+    1)
 
   add_custom_target(Minecraft.NativeDesktop.Check
     COMMAND ${CMAKE_CTEST_COMMAND}

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cerrno>
 #include <cctype>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -712,6 +713,11 @@ namespace
         bool shutdownComplete = false;
         bool loopComplete = false;
         bool runtimeHealthy = false;
+        bool saveLoadedAtStartup = false;
+        bool saveRequested = false;
+        bool saveCompleted = false;
+        bool savePersisted = false;
+        unsigned long long savePersistedBytes = 0;
         bool gameplayGameStarted = false;
         bool gameplayLevelReady = false;
         bool gameplayPlayerReady = false;
@@ -1380,6 +1386,61 @@ namespace
         }
     }
 
+    std::filesystem::path NativeDesktopSaveRootPath()
+    {
+        const char* configuredRoot =
+            std::getenv("MINECRAFT_NATIVE_DESKTOP_SAVE_ROOT");
+        if (configuredRoot != nullptr && configuredRoot[0] != '\0')
+        {
+            return std::filesystem::path(configuredRoot);
+        }
+
+        std::error_code error;
+        std::filesystem::path root = std::filesystem::current_path(error);
+        if (error)
+        {
+            root = std::filesystem::path(".");
+        }
+        root /= "NativeDesktopSaves";
+        return root;
+    }
+
+    std::filesystem::path NativeDesktopSaveSlotPath()
+    {
+        return NativeDesktopSaveRootPath() / "native.savebin";
+    }
+
+    bool NativeDesktopPersistedSaveStats(unsigned long long* bytes)
+    {
+        std::error_code error;
+        const std::filesystem::path savePath = NativeDesktopSaveSlotPath();
+        if (!std::filesystem::exists(savePath, error) || error)
+        {
+            if (bytes != nullptr)
+            {
+                *bytes = 0;
+            }
+            return false;
+        }
+
+        const std::uintmax_t saveBytes =
+            std::filesystem::file_size(savePath, error);
+        if (error || saveBytes == 0)
+        {
+            if (bytes != nullptr)
+            {
+                *bytes = 0;
+            }
+            return false;
+        }
+
+        if (bytes != nullptr)
+        {
+            *bytes = static_cast<unsigned long long>(saveBytes);
+        }
+        return true;
+    }
+
     class NativeDesktopLeaderboardManager : public LeaderboardManager
     {
     public:
@@ -1611,6 +1672,66 @@ namespace
         }
     }
 
+    bool NativeDesktopRequestGameplaySave(
+        int waitMs,
+        NativeDesktopRuntimeSummary* summary)
+    {
+        if (summary != nullptr)
+        {
+            summary->saveRequested = true;
+        }
+
+        int primaryPad = ProfileManager.GetPrimaryPad();
+        if (primaryPad < 0 || primaryPad >= XUSER_MAX_COUNT)
+        {
+            primaryPad = 0;
+        }
+
+        std::fprintf(stderr, "NativeDesktop save: request begin\n");
+        app.SetXuiServerAction(primaryPad, eXuiServerAction_SaveGame);
+
+        int elapsedMs = 0;
+        const int clampedWaitMs = std::max(waitMs, 1000);
+        while (elapsedMs < clampedWaitMs && !MinecraftServer::serverHalted())
+        {
+            NativeDesktopTickSaves();
+            NativeDesktopUpdateRuntimeObservation(summary);
+            if (app.GetXuiServerAction(primaryPad) == eXuiServerAction_Idle)
+            {
+                if (summary != nullptr)
+                {
+                    summary->saveCompleted = true;
+                }
+                break;
+            }
+
+            C4JThread::Sleep(10);
+            elapsedMs += 10;
+        }
+
+        unsigned long long persistedBytes = 0;
+        const bool persisted =
+            NativeDesktopPersistedSaveStats(&persistedBytes);
+        if (summary != nullptr)
+        {
+            summary->savePersisted = persisted;
+            summary->savePersistedBytes = persistedBytes;
+        }
+
+        std::fprintf(
+            stderr,
+            "NativeDesktop save: request %s persisted=%d bytes=%llu\n",
+            summary != nullptr && summary->saveCompleted
+                ? "complete"
+                : "timeout",
+            persisted ? 1 : 0,
+            persistedBytes);
+        return summary != nullptr &&
+            summary->saveCompleted &&
+            persisted &&
+            persistedBytes > 0;
+    }
+
     bool NativeDesktopWaitForGameplayThread(
         C4JThread* gameplayThread,
         int waitMs)
@@ -1740,6 +1861,11 @@ namespace
             "shutdownComplete=%d "
             "loopComplete=%d "
             "runtimeHealthy=%d "
+            "save.loadedAtStartup=%d "
+            "save.requested=%d "
+            "save.completed=%d "
+            "save.persisted=%d "
+            "save.persistedBytes=%llu "
             "runtime.gameStarted=%d "
             "runtime.levelReady=%d "
             "runtime.playerReady=%d "
@@ -1789,6 +1915,11 @@ namespace
             summary.shutdownComplete ? 1 : 0,
             summary.loopComplete ? 1 : 0,
             summary.runtimeHealthy ? 1 : 0,
+            summary.saveLoadedAtStartup ? 1 : 0,
+            summary.saveRequested ? 1 : 0,
+            summary.saveCompleted ? 1 : 0,
+            summary.savePersisted ? 1 : 0,
+            summary.savePersistedBytes,
             summary.gameplayGameStarted ? 1 : 0,
             summary.gameplayLevelReady ? 1 : 0,
             summary.gameplayPlayerReady ? 1 : 0,
@@ -1831,6 +1962,8 @@ namespace
                 summary->clipboardReady &&
                 summary->startupComplete &&
                 summary->gameplayReady &&
+                summary->saveCompleted &&
+                summary->savePersisted &&
                 summary->shutdownComplete &&
                 summary->loopComplete;
             NativeDesktopPrintRuntimeSummary(*summary);
@@ -1914,6 +2047,8 @@ int main(int argc, char** argv)
         runtimeConfig.gameplayFrames,
         runtimeConfig.gameplayWaitMs);
     NativeDesktopSetWorkingDirectory(argv[0]);
+    runtimeSummary.saveLoadedAtStartup =
+        NativeDesktopPersistedSaveStats(&runtimeSummary.savePersistedBytes);
     app.loadMediaArchive();
     runtimeSummary.mediaArchiveReady = true;
     std::fprintf(stderr, "NativeDesktop bootstrap: media archive ready\n");
@@ -1985,6 +2120,17 @@ int main(int argc, char** argv)
     NativeDesktopRunGameplayFrames(
         runtimeConfig.gameplayFrames,
         &runtimeSummary);
+    if (!NativeDesktopRequestGameplaySave(
+            runtimeConfig.gameplayWaitMs,
+            &runtimeSummary))
+    {
+        (void)NativeDesktopShutdownLocalGame(gameplayThread, &runtimeSummary);
+        return NativeDesktopFinishRuntime(
+            &runtimeSummary,
+            1,
+            "save",
+            "savePersisted");
+    }
     if (!NativeDesktopShutdownLocalGame(gameplayThread, &runtimeSummary))
     {
         return NativeDesktopFinishRuntime(

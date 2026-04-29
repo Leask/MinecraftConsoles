@@ -511,8 +511,19 @@ run_native_only_contract() {
         rg -n -S "startup\\.texturePacks|startup\\.bundledDLC|texturePackCountMax" \
             Minecraft.Client/NativeDesktop/NativeDesktopClientRuntime.cpp \
             >/dev/null
+        rg -n -S "save\\.loadedAtStartup|save\\.persisted|NativeDesktopRequestGameplaySave" \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientRuntime.cpp \
+            >/dev/null
         rg -n -S "startup[.]texturePacks|startup[.]bundledDLC" \
             Minecraft.Client/NativeDesktop/RunNativeDesktopClientSmoke.cmake \
+            >/dev/null
+        rg -n -S "SAVE_RESTART|save[.]loadedAtStartup|NativeDesktop save: loaded" \
+            Minecraft.Client/NativeDesktop/RunNativeDesktopClientSmoke.cmake \
+            >/dev/null
+        rg -n -S "minecraft_native_desktop_client_save_restart_smoke" \
+            Minecraft.Client/CMakeLists.txt >/dev/null
+        rg -n -S "MINECRAFT_NATIVE_DESKTOP_SAVE_ROOT|NativeFlushSaveData|NativeLoadSaveData" \
+            Minecraft.World/NativeDesktop/NativeDesktopLegacyClientStubs.cpp \
             >/dev/null
         rg -n -S "offline local DLC only|no storefront|no online purchase/update|no platform license/install flow" \
             docs/native-port-plan.md >/dev/null
