@@ -13,6 +13,7 @@
 #include "../MinecraftServer.h"
 #include "../Screen.h"
 #include "../Tesselator.h"
+#include "../TexturePackRepository.h"
 #include "../User.h"
 #include "../Common/UI/IUIScene_CreativeMenu.h"
 #include "../Common/UI/UIStructs.h"
@@ -695,6 +696,8 @@ namespace
         bool minecraftRuntimeReady = false;
         bool uiReady = false;
         int uiSkinLibrariesCreated = 0;
+        int texturePackCountMax = 0;
+        bool bundledDLCReady = false;
         bool startupComplete = false;
         int bootstrapFramesRequested = 0;
         int bootstrapFramesCompleted = 0;
@@ -1293,6 +1296,12 @@ namespace
         const bool menuClosed =
             menuStateObserved && !ui.GetMenuDisplayed(primaryPad);
         const QNET_STATE qnetState = ::_iQNetStubState;
+        int texturePackCount = 0;
+        if (minecraft != nullptr && minecraft->skins != nullptr)
+        {
+            texturePackCount =
+                static_cast<int>(minecraft->skins->getTexturePackCount());
+        }
 
         summary->gameplayGameStarted =
             summary->gameplayGameStarted || gameStarted;
@@ -1315,6 +1324,11 @@ namespace
             summary->qnetPlayerCountMax,
             static_cast<int>(IQNet::s_playerCount));
         summary->qnetLastState = static_cast<int>(qnetState);
+        summary->texturePackCountMax = std::max(
+            summary->texturePackCountMax,
+            texturePackCount);
+        summary->bundledDLCReady =
+            summary->bundledDLCReady || texturePackCount > 1;
     }
 
     NativeDesktopRuntimeConfig NativeDesktopLoadRuntimeConfig()
@@ -1712,6 +1726,8 @@ namespace
             "startup.minecraftRuntime=%d "
             "startup.ui=%d "
             "startup.uiSkinLibraries=%d "
+            "startup.texturePacks=%d "
+            "startup.bundledDLC=%d "
             "startupComplete=%d "
             "bootstrapFrames=%d/%d "
             "gameplayThreadStarted=%d "
@@ -1757,6 +1773,8 @@ namespace
             summary.minecraftRuntimeReady ? 1 : 0,
             summary.uiReady ? 1 : 0,
             summary.uiSkinLibrariesCreated,
+            summary.texturePackCountMax,
+            summary.bundledDLCReady ? 1 : 0,
             summary.startupComplete ? 1 : 0,
             summary.bootstrapFramesCompleted,
             summary.bootstrapFramesRequested,
@@ -1938,6 +1956,9 @@ int main(int argc, char** argv)
             "minecraftRuntime");
     }
     runtimeSummary.minecraftRuntimeReady = true;
+    app.StartInstallDLCProcess(0);
+    NativeDesktopUpdateRuntimeObservation(&runtimeSummary);
+    std::fprintf(stderr, "NativeDesktop bootstrap: bundled DLC checked\n");
     ui.init(g_iScreenWidth, g_iScreenHeight);
     runtimeSummary.uiReady = true;
     runtimeSummary.uiSkinLibrariesCreated =

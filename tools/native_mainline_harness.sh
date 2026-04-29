@@ -474,6 +474,21 @@ run_native_only_contract() {
 
         rg -n -S "ReadNativeDLCFileBytes" \
             Minecraft.Client/Common/DLC/DLCManager.cpp >/dev/null
+        rg -n -S "ReadDLCUTF16String|DLCParamRecordBytes" \
+            Minecraft.Client/Common/DLC/DLCManager.cpp >/dev/null
+        rg -n -S "ReadDLCUTF16String|DLCParamRecordBytes" \
+            Minecraft.Client/Common/DLC/DLCAudioFile.cpp >/dev/null
+
+        if rg -n -S "sizeof\\(WCHAR\\)|\\(WCHAR \\*\\)pParams->wchData|static_cast<WCHAR \\*>" \
+            Minecraft.Client/Common/DLC/DLCManager.cpp \
+            Minecraft.Client/Common/DLC/DLCAudioFile.cpp \
+            > "$log_root/native-client-dlc-wchar-disk-format.txt"; then
+            echo "Native DLC parser still uses native WCHAR for disk format" >&2
+            cat "$log_root/native-client-dlc-wchar-disk-format.txt" >&2
+            exit 1
+        fi
+        rg -n -S "__PS3__\\) \\|\\| defined\\(_NATIVE_DESKTOP\\)" \
+            Minecraft.Client/Common/DLC/DLCSkinFile.cpp >/dev/null
 
         if rg -n -S "CreateFile\\(|GetFileSize\\(|ReadFile\\(|CloseHandle\\(|StorageManager\\.|MountInstalledDLC|UnmountInstalledDLC|_DURANGO|_WINDOWS64|_UNICODE" \
             Minecraft.Client/DLCTexturePack.cpp \
@@ -493,6 +508,12 @@ run_native_only_contract() {
             Minecraft.Client/Common/UI/UIScene_DLCMainMenu.cpp >/dev/null
         rg -n -S "_NATIVE_DESKTOP|IDS_NO_DLCOFFERS" \
             Minecraft.Client/Common/UI/UIScene_DLCOffersMenu.cpp >/dev/null
+        rg -n -S "startup\\.texturePacks|startup\\.bundledDLC|texturePackCountMax" \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientRuntime.cpp \
+            >/dev/null
+        rg -n -S "startup[.]texturePacks|startup[.]bundledDLC" \
+            Minecraft.Client/NativeDesktop/RunNativeDesktopClientSmoke.cmake \
+            >/dev/null
         rg -n -S "offline local DLC only|no storefront|no online purchase/update|no platform license/install flow" \
             docs/native-port-plan.md >/dev/null
 

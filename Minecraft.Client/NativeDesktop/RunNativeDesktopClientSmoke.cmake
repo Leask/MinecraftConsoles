@@ -119,6 +119,7 @@ set(expected_summary_markers
   "startup.localPlayer=1"
   "startup.minecraftRuntime=1"
   "startup.ui=1"
+  "startup.bundledDLC=1"
   "startupComplete=1"
   "bootstrapFrames=${BOOTSTRAP_FRAMES}/${BOOTSTRAP_FRAMES}"
   "gameplayThreadStarted=1"
@@ -172,6 +173,18 @@ if(ui_skin_libraries_marker STREQUAL "")
   message(FATAL_ERROR
     "NativeDesktop client startup smoke output did not contain a positive "
     "startup.uiSkinLibraries summary value\n"
+    "output:\n${combined_output_tail}\n")
+endif()
+
+string(REGEX MATCH
+  "startup[.]texturePacks=([2-9]|[1-9][0-9]+)"
+  texture_pack_count_marker
+  "${combined_output}")
+if(texture_pack_count_marker STREQUAL "")
+  native_desktop_output_tail(combined_output_tail "${combined_output}")
+  message(FATAL_ERROR
+    "NativeDesktop client startup smoke output did not contain a bundled "
+    "texture pack summary value greater than one\n"
     "output:\n${combined_output_tail}\n")
 endif()
 

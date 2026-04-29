@@ -284,6 +284,10 @@ Direction:
   (`DLCTexturePack` now reads texture-pack UI payloads, game-rule files, and
   base-save bytes through normalized C stdio paths instead of Win32-shaped file
   handles)
+- keep native DLC metadata parsing independent of host `WCHAR` width
+  (`DLCManager` and `DLCAudioFile` parse `.pck` string records as 2-byte
+  UTF-16 disk data before converting to native `wstring`, and native skin
+  parameter parsing avoids Windows `swscanf_s` argument conventions)
 - keep native DLC texture-pack loading off console mount drives
   (`DLCTexturePack` now enters its native load callback directly, and native
   title-update texture pack roots resolve to `Common/res/TitleUpdate/DLC`
@@ -292,7 +296,8 @@ Direction:
   (native desktop now loads bundled `TexturePack.pck` metadata from the
   checked-in title-update DLC tree synchronously; no storefront, no online
   purchase/update, and no platform license/install flow are part of the native
-  contract)
+  contract; startup smoke must report `startup.bundledDLC=1` and a
+  `startup.texturePacks` value greater than one)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 
