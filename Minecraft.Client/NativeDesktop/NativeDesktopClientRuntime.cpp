@@ -718,6 +718,10 @@ namespace
         bool saveCompleted = false;
         bool savePersisted = false;
         unsigned long long savePersistedBytes = 0;
+        int saveCatalogAtStartup = 0;
+        unsigned int saveCatalogBytesAtStartup = 0;
+        int saveCatalogAfterSave = 0;
+        unsigned int saveCatalogBytesAfterSave = 0;
         bool gameplayGameStarted = false;
         bool gameplayLevelReady = false;
         bool gameplayPlayerReady = false;
@@ -1441,6 +1445,29 @@ namespace
         return true;
     }
 
+    void NativeDesktopUpdateSaveCatalogSummary(
+        NativeDesktopRuntimeSummary* summary,
+        bool startup)
+    {
+        if (summary == nullptr)
+        {
+            return;
+        }
+
+        NativeDesktopRefreshPersistedSaveCatalog();
+        const int saveCount = NativeDesktopGetSaveCount();
+        const unsigned int saveBytes = NativeDesktopGetSaveDataSize();
+        if (startup)
+        {
+            summary->saveCatalogAtStartup = saveCount;
+            summary->saveCatalogBytesAtStartup = saveBytes;
+            return;
+        }
+
+        summary->saveCatalogAfterSave = saveCount;
+        summary->saveCatalogBytesAfterSave = saveBytes;
+    }
+
     class NativeDesktopLeaderboardManager : public LeaderboardManager
     {
     public:
@@ -1717,6 +1744,11 @@ namespace
             summary->savePersisted = persisted;
             summary->savePersistedBytes = persistedBytes;
         }
+        if (persisted)
+        {
+            NativeDesktopSetSaveExists(true);
+        }
+        NativeDesktopUpdateSaveCatalogSummary(summary, false);
 
         std::fprintf(
             stderr,
@@ -1866,6 +1898,10 @@ namespace
             "save.completed=%d "
             "save.persisted=%d "
             "save.persistedBytes=%llu "
+            "save.catalogAtStartup=%d "
+            "save.catalogBytesAtStartup=%u "
+            "save.catalogAfterSave=%d "
+            "save.catalogBytesAfterSave=%u "
             "runtime.gameStarted=%d "
             "runtime.levelReady=%d "
             "runtime.playerReady=%d "
@@ -1920,6 +1956,10 @@ namespace
             summary.saveCompleted ? 1 : 0,
             summary.savePersisted ? 1 : 0,
             summary.savePersistedBytes,
+            summary.saveCatalogAtStartup,
+            summary.saveCatalogBytesAtStartup,
+            summary.saveCatalogAfterSave,
+            summary.saveCatalogBytesAfterSave,
             summary.gameplayGameStarted ? 1 : 0,
             summary.gameplayLevelReady ? 1 : 0,
             summary.gameplayPlayerReady ? 1 : 0,
@@ -2049,6 +2089,7 @@ int main(int argc, char** argv)
     NativeDesktopSetWorkingDirectory(argv[0]);
     runtimeSummary.saveLoadedAtStartup =
         NativeDesktopPersistedSaveStats(&runtimeSummary.savePersistedBytes);
+    NativeDesktopUpdateSaveCatalogSummary(&runtimeSummary, true);
     app.loadMediaArchive();
     runtimeSummary.mediaArchiveReady = true;
     std::fprintf(stderr, "NativeDesktop bootstrap: media archive ready\n");

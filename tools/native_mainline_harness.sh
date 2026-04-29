@@ -511,14 +511,18 @@ run_native_only_contract() {
         rg -n -S "startup\\.texturePacks|startup\\.bundledDLC|texturePackCountMax" \
             Minecraft.Client/NativeDesktop/NativeDesktopClientRuntime.cpp \
             >/dev/null
-        rg -n -S "save\\.loadedAtStartup|save\\.persisted|NativeDesktopRequestGameplaySave" \
+        rg -n -S "save\\.loadedAtStartup|save\\.catalogAtStartup|save\\.catalogAfterSave|NativeDesktopRequestGameplaySave" \
             Minecraft.Client/NativeDesktop/NativeDesktopClientRuntime.cpp \
             >/dev/null
         rg -n -S "startup[.]texturePacks|startup[.]bundledDLC" \
             Minecraft.Client/NativeDesktop/RunNativeDesktopClientSmoke.cmake \
             >/dev/null
-        rg -n -S "SAVE_RESTART|save[.]loadedAtStartup|NativeDesktop save: loaded" \
+        rg -n -S "SAVE_RESTART|save[.]loadedAtStartup|save[.]catalogAtStartup|NativeDesktop save: loaded" \
             Minecraft.Client/NativeDesktop/RunNativeDesktopClientSmoke.cmake \
+            >/dev/null
+        rg -n -S "NativeDesktopRefreshPersistedSaveCatalog|native[.]meta|native[.]savebin" \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.cpp \
+            Minecraft.Client/NativeDesktop/NativeDesktopClientSaveControl.h \
             >/dev/null
         rg -n -S "minecraft_native_desktop_client_save_restart_smoke" \
             Minecraft.Client/CMakeLists.txt >/dev/null

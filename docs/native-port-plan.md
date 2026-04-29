@@ -304,9 +304,12 @@ Direction:
   `MINECRAFT_NATIVE_DESKTOP_SAVE_ROOT`; the client runtime requests a server
   save during gameplay and reports `save.loadedAtStartup`,
   `save.requested`, `save.completed`, `save.persisted`, and
-  `save.persistedBytes`; `minecraft_native_desktop_client_save_restart_smoke`
-  then restarts the executable against the same save root and requires the
-  persisted slot to load before gameplay)
+  `save.persistedBytes`; `NativeDesktopClientSaveControl` also projects that
+  persisted slot back into the native save catalog via `save.catalogAtStartup`
+  and `save.catalogAfterSave`;
+  `minecraft_native_desktop_client_save_restart_smoke` then restarts the
+  executable against the same save root and requires the persisted slot to load
+  before gameplay)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

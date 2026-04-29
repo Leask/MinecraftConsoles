@@ -2,8 +2,13 @@
 
 #include <atomic>
 #include <algorithm>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
 #include <cwchar>
 #include <cstring>
+#include <ctime>
+#include <filesystem>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -27,6 +32,7 @@ namespace
     std::wstring g_saveTitle;
     std::wstring g_saveTitleExtraFileSuffix;
     std::time_t g_saveModifiedTime = 0;
+    unsigned int g_persistedSaveBytes = 0;
 
     void NativeDesktopTouchSaveLocked()
     {
@@ -47,6 +53,181 @@ namespace
             return g_saveTitle;
         }
         return L"NativeDesktopWorld";
+    }
+
+    std::filesystem::path NativeDesktopSaveRootPath()
+    {
+        const char* configuredRoot =
+            std::getenv("MINECRAFT_NATIVE_DESKTOP_SAVE_ROOT");
+        if (configuredRoot != nullptr && configuredRoot[0] != '\0')
+        {
+            return std::filesystem::path(configuredRoot);
+        }
+
+        std::error_code error;
+        std::filesystem::path root = std::filesystem::current_path(error);
+        if (error)
+        {
+            root = std::filesystem::path(".");
+        }
+        root /= "NativeDesktopSaves";
+        return root;
+    }
+
+    std::filesystem::path NativeDesktopSaveSlotPath()
+    {
+        return NativeDesktopSaveRootPath() / "native.savebin";
+    }
+
+    std::filesystem::path NativeDesktopSaveMetadataPath()
+    {
+        return NativeDesktopSaveRootPath() / "native.meta";
+    }
+
+    std::string NativeDesktopWideToStorageText(const std::wstring& value)
+    {
+        std::string text;
+        text.reserve(value.size());
+        for (wchar_t ch : value)
+        {
+            text.push_back((ch >= 0 && ch <= 0x7f)
+                ? static_cast<char>(ch)
+                : '?');
+        }
+        return text;
+    }
+
+    std::wstring NativeDesktopStorageTextToWide(const std::string& value)
+    {
+        std::wstring text;
+        text.reserve(value.size());
+        for (char ch : value)
+        {
+            text.push_back(static_cast<unsigned char>(ch));
+        }
+        return text;
+    }
+
+    void NativeDesktopWriteSaveMetadataLocked()
+    {
+        std::error_code error;
+        const std::filesystem::path metadataPath =
+            NativeDesktopSaveMetadataPath();
+        std::filesystem::create_directories(metadataPath.parent_path(), error);
+        if (error)
+        {
+            return;
+        }
+
+        FILE* file = std::fopen(metadataPath.string().c_str(), "wb");
+        if (file == nullptr)
+        {
+            return;
+        }
+
+        const std::string title =
+            NativeDesktopWideToStorageText(NativeDesktopSaveTitleLocked());
+        std::fprintf(file, "title=%s\n", title.c_str());
+        std::fprintf(file, "modified=%lld\n",
+            static_cast<long long>(g_saveModifiedTime));
+        std::fclose(file);
+    }
+
+    void NativeDesktopReadSaveMetadataLocked()
+    {
+        FILE* file = std::fopen(
+            NativeDesktopSaveMetadataPath().string().c_str(),
+            "rb");
+        if (file == nullptr)
+        {
+            return;
+        }
+
+        char line[512] = {};
+        while (std::fgets(line, sizeof(line), file) != nullptr)
+        {
+            const std::string value(line);
+            const std::string titlePrefix = "title=";
+            if (value.rfind(titlePrefix, 0) == 0)
+            {
+                std::string title = value.substr(titlePrefix.size());
+                while (!title.empty() &&
+                    (title.back() == '\n' || title.back() == '\r'))
+                {
+                    title.pop_back();
+                }
+                if (!title.empty())
+                {
+                    g_saveTitle = NativeDesktopStorageTextToWide(title);
+                }
+            }
+        }
+
+        std::fclose(file);
+    }
+
+    bool NativeDesktopRefreshPersistedSaveCatalogLocked()
+    {
+        std::error_code error;
+        const std::filesystem::path savePath = NativeDesktopSaveSlotPath();
+        if (!std::filesystem::exists(savePath, error) || error)
+        {
+            g_persistedSaveBytes = 0;
+            return false;
+        }
+
+        const std::uintmax_t bytes = std::filesystem::file_size(
+            savePath,
+            error);
+        if (error || bytes == 0)
+        {
+            g_persistedSaveBytes = 0;
+            return false;
+        }
+
+        g_persistedSaveBytes = static_cast<unsigned int>(
+            std::min<std::uintmax_t>(
+                bytes,
+                static_cast<std::uintmax_t>(0xffffffffU)));
+        g_saveExists.store(true, std::memory_order_release);
+        if (g_saveModifiedTime == 0)
+        {
+            g_saveModifiedTime = std::time(nullptr);
+        }
+        NativeDesktopReadSaveMetadataLocked();
+        return true;
+    }
+
+    bool NativeDesktopLoadPersistedSaveBytesLocked()
+    {
+        if (!g_saveData.empty())
+        {
+            return true;
+        }
+        if (!NativeDesktopRefreshPersistedSaveCatalogLocked())
+        {
+            return false;
+        }
+
+        FILE* file = std::fopen(
+            NativeDesktopSaveSlotPath().string().c_str(),
+            "rb");
+        if (file == nullptr)
+        {
+            return false;
+        }
+
+        std::vector<unsigned char> bytes(g_persistedSaveBytes);
+        const bool ok = bytes.empty() ||
+            std::fread(bytes.data(), 1, bytes.size(), file) == bytes.size();
+        std::fclose(file);
+        if (!ok)
+        {
+            return false;
+        }
+
+        g_saveData = std::move(bytes);
+        return true;
     }
 
     void NativeDesktopCopyWide(
@@ -92,13 +273,14 @@ namespace
 
     unsigned int NativeDesktopSaveBlocksUsedLocked()
     {
-        if (g_saveData.empty())
+        const unsigned int bytes = g_saveData.empty()
+            ? g_persistedSaveBytes
+            : static_cast<unsigned int>(g_saveData.size());
+        if (bytes == 0)
         {
             return 0;
         }
 
-        const unsigned int bytes =
-            static_cast<unsigned int>(g_saveData.size());
         return (bytes + kNativeDesktopSaveBlockBytes - 1U) /
             kNativeDesktopSaveBlockBytes;
     }
@@ -116,6 +298,7 @@ void NativeDesktopSetSavesDisabled(bool disabled)
 
 bool NativeDesktopDoesSaveExist()
 {
+    (void)NativeDesktopRefreshPersistedSaveCatalog();
     return g_saveExists.load(std::memory_order_acquire);
 }
 
@@ -125,6 +308,7 @@ void NativeDesktopSetSaveExists(bool exists)
     if (exists)
     {
         NativeDesktopTouchSaveLocked();
+        NativeDesktopWriteSaveMetadataLocked();
     }
     g_saveExists.store(exists, std::memory_order_release);
 }
@@ -142,6 +326,7 @@ void NativeDesktopResetSaveData()
     g_saveTitle.clear();
     g_saveTitleExtraFileSuffix.clear();
     g_saveModifiedTime = 0;
+    g_persistedSaveBytes = 0;
     g_saveExists.store(false, std::memory_order_release);
     g_saveBusy.store(false, std::memory_order_release);
 }
@@ -150,6 +335,7 @@ void NativeDesktopSetSaveTitle(const wchar_t* title)
 {
     std::lock_guard<std::mutex> lock(g_saveMutex);
     g_saveTitle = (title != nullptr) ? title : L"";
+    NativeDesktopWriteSaveMetadataLocked();
 }
 
 void NativeDesktopSetSaveTitleExtraFileSuffix(const wchar_t* suffix)
@@ -170,15 +356,28 @@ bool NativeDesktopGetSaveUniqueNumber(int* value)
 unsigned int NativeDesktopGetSaveDataSize()
 {
     std::lock_guard<std::mutex> lock(g_saveMutex);
-    return static_cast<unsigned int>(g_saveData.size());
+    NativeDesktopRefreshPersistedSaveCatalogLocked();
+    return g_saveData.empty()
+        ? g_persistedSaveBytes
+        : static_cast<unsigned int>(g_saveData.size());
 }
 
 void NativeDesktopCopySaveData(void* data, unsigned int* bytes)
 {
     std::lock_guard<std::mutex> lock(g_saveMutex);
+    if (data != nullptr)
+    {
+        NativeDesktopLoadPersistedSaveBytesLocked();
+    }
+    else
+    {
+        NativeDesktopRefreshPersistedSaveCatalogLocked();
+    }
     if (bytes != nullptr)
     {
-        *bytes = static_cast<unsigned int>(g_saveData.size());
+        *bytes = g_saveData.empty()
+            ? g_persistedSaveBytes
+            : static_cast<unsigned int>(g_saveData.size());
     }
     if (data != nullptr && !g_saveData.empty())
     {
@@ -193,6 +392,7 @@ void* NativeDesktopAllocateSaveData(unsigned int bytes)
     if (bytes > 0)
     {
         NativeDesktopTouchSaveLocked();
+        g_persistedSaveBytes = bytes;
         g_saveExists.store(true, std::memory_order_release);
     }
     return g_saveData.data();
@@ -205,6 +405,7 @@ void NativeDesktopSetSaveDataSize(unsigned int bytes)
     if (bytes > 0)
     {
         NativeDesktopTouchSaveLocked();
+        g_persistedSaveBytes = bytes;
         g_saveExists.store(true, std::memory_order_release);
     }
 }
@@ -212,6 +413,7 @@ void NativeDesktopSetSaveDataSize(unsigned int bytes)
 int NativeDesktopGetSaveCount()
 {
     std::lock_guard<std::mutex> lock(g_saveMutex);
+    NativeDesktopRefreshPersistedSaveCatalogLocked();
     return NativeDesktopSaveSlotExistsLocked() ? 1 : 0;
 }
 
@@ -231,6 +433,7 @@ bool NativeDesktopGetSaveInfo(
     int* blocksUsed)
 {
     std::lock_guard<std::mutex> lock(g_saveMutex);
+    NativeDesktopRefreshPersistedSaveCatalogLocked();
     if (index != 0 || !NativeDesktopSaveSlotExistsLocked())
     {
         return false;
@@ -276,6 +479,7 @@ int NativeDesktopLoadSaveDataByIndex(
     bool loaded = false;
     {
         std::lock_guard<std::mutex> lock(g_saveMutex);
+        NativeDesktopRefreshPersistedSaveCatalogLocked();
         g_saveBusy.store(true, std::memory_order_release);
         loaded = index == 0 && NativeDesktopSaveSlotExistsLocked();
     }
@@ -302,6 +506,7 @@ int NativeDesktopLoadSaveDataThumbnailByIndex(
     unsigned int thumbnailBytes = 0;
     {
         std::lock_guard<std::mutex> lock(g_saveMutex);
+        NativeDesktopRefreshPersistedSaveCatalogLocked();
         if (index == 0 && NativeDesktopSaveSlotExistsLocked() &&
             !g_saveThumbnailData.empty())
         {
@@ -326,14 +531,20 @@ int NativeDesktopDeleteSaveDataByIndex(
     bool deleted = false;
     {
         std::lock_guard<std::mutex> lock(g_saveMutex);
+        NativeDesktopRefreshPersistedSaveCatalogLocked();
         deleted = index == 0 && NativeDesktopSaveSlotExistsLocked();
         if (deleted)
         {
+            std::error_code error;
+            std::filesystem::remove(NativeDesktopSaveSlotPath(), error);
+            error.clear();
+            std::filesystem::remove(NativeDesktopSaveMetadataPath(), error);
             g_saveData.clear();
             g_saveThumbnailData.clear();
             g_saveTitle.clear();
             g_saveTitleExtraFileSuffix.clear();
             g_saveModifiedTime = 0;
+            g_persistedSaveBytes = 0;
             g_saveExists.store(false, std::memory_order_release);
         }
     }
@@ -363,6 +574,13 @@ void NativeDesktopSetSaveImages(
     }
 }
 
+bool NativeDesktopRefreshPersistedSaveCatalog()
+{
+    std::lock_guard<std::mutex> lock(g_saveMutex);
+    return NativeDesktopRefreshPersistedSaveCatalogLocked();
+}
+
 void NativeDesktopTickSaves()
 {
+    (void)NativeDesktopRefreshPersistedSaveCatalog();
 }

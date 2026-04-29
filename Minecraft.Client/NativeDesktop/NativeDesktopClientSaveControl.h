@@ -59,4 +59,5 @@ int NativeDesktopDeleteSaveDataByIndex(
 void NativeDesktopSetSaveImages(
     const unsigned char* thumbnail,
     unsigned int thumbnailBytes);
+bool NativeDesktopRefreshPersistedSaveCatalog();
 void NativeDesktopTickSaves();

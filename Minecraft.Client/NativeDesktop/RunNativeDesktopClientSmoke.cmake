@@ -144,6 +144,7 @@ set(expected_summary_markers
   "save.requested=1"
   "save.completed=1"
   "save.persisted=1"
+  "save.catalogAfterSave=1"
   "runtime.gameStarted=1"
   "runtime.levelReady=1"
   "runtime.playerReady=1"
@@ -186,6 +187,18 @@ if(first_save_marker LESS 0)
     "output:\n${combined_output_tail}\n")
 endif()
 
+string(FIND
+  "${combined_output}"
+  "save.catalogAtStartup=0"
+  first_catalog_marker)
+if(first_catalog_marker LESS 0)
+  native_desktop_output_tail(combined_output_tail "${combined_output}")
+  message(FATAL_ERROR
+    "NativeDesktop client startup smoke output did not report an empty "
+    "first-run save catalog\n"
+    "output:\n${combined_output_tail}\n")
+endif()
+
 string(REGEX MATCH
   "save[.]persistedBytes=[1-9][0-9]*"
   persisted_save_bytes_marker
@@ -195,6 +208,18 @@ if(persisted_save_bytes_marker STREQUAL "")
   message(FATAL_ERROR
     "NativeDesktop client startup smoke output did not contain a positive "
     "persisted save byte count\n"
+    "output:\n${combined_output_tail}\n")
+endif()
+
+string(REGEX MATCH
+  "save[.]catalogBytesAfterSave=[1-9][0-9]*"
+  catalog_bytes_after_save_marker
+  "${combined_output}")
+if(catalog_bytes_after_save_marker STREQUAL "")
+  native_desktop_output_tail(combined_output_tail "${combined_output}")
+  message(FATAL_ERROR
+    "NativeDesktop client startup smoke output did not contain a positive "
+    "post-save catalog byte count\n"
     "output:\n${combined_output_tail}\n")
 endif()
 
@@ -303,6 +328,34 @@ if(SAVE_RESTART)
     message(FATAL_ERROR
       "NativeDesktop client restart smoke output did not report an existing "
       "save at startup\n"
+      "output:\n${restart_combined_output_tail}\n")
+  endif()
+
+  string(FIND
+    "${restart_combined_output}"
+    "save.catalogAtStartup=1"
+    restart_catalog_marker)
+  if(restart_catalog_marker LESS 0)
+    native_desktop_output_tail(
+      restart_combined_output_tail
+      "${restart_combined_output}")
+    message(FATAL_ERROR
+      "NativeDesktop client restart smoke output did not report the "
+      "persisted save in the startup catalog\n"
+      "output:\n${restart_combined_output_tail}\n")
+  endif()
+
+  string(REGEX MATCH
+    "save[.]catalogBytesAtStartup=[1-9][0-9]*"
+    restart_catalog_bytes_marker
+    "${restart_combined_output}")
+  if(restart_catalog_bytes_marker STREQUAL "")
+    native_desktop_output_tail(
+      restart_combined_output_tail
+      "${restart_combined_output}")
+    message(FATAL_ERROR
+      "NativeDesktop client restart smoke output did not contain a positive "
+      "startup catalog byte count\n"
       "output:\n${restart_combined_output_tail}\n")
   endif()
 
