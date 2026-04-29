@@ -14,6 +14,10 @@ UIScene_DLCMainMenu::UIScene_DLCMainMenu(int iPad, void *initData, UILayer *pare
 
 	m_labelOffers.init(IDS_DOWNLOADABLE_CONTENT_OFFERS);
 	m_buttonListOffers.init(eControl_OffersList);
+#if defined(_NATIVE_DESKTOP)
+	m_buttonListOffers.addItem(app.GetString(IDS_NO_DLCOFFERS), -1);
+	m_buttonListOffers.setFocus(true);
+#endif
 
 #if defined _XBOX_ONE || defined __ORBIS__
 	// load any local DLC images
@@ -80,6 +84,10 @@ wstring UIScene_DLCMainMenu::getMoviePath()
 
 void UIScene_DLCMainMenu::updateTooltips()
 {
+#if defined(_NATIVE_DESKTOP)
+	ui.SetTooltips( m_iPad, -1, IDS_TOOLTIPS_BACK );
+	return;
+#endif
 	ui.SetTooltips( m_iPad, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK );
 }
 
@@ -122,6 +130,9 @@ void UIScene_DLCMainMenu::handlePress(F64 controlId, F64 childId)
 	{
 	case eControl_OffersList:
 		{
+#if defined(_NATIVE_DESKTOP)
+			break;
+#endif
 			int iIndex = static_cast<int>(childId);
 			DLCOffersParam *param = new DLCOffersParam();
 			param->iPad = m_iPad;

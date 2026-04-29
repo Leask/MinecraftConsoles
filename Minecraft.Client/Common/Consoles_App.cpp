@@ -46,6 +46,9 @@
 #include "../NativeDesktop/NativeDesktopClientStorageControl.h"
 #include "DLC/DLCPack.h"
 #include "../StringTable.h"
+#if defined(_NATIVE_DESKTOP)
+#include <filesystem>
+#endif
 #ifndef _XBOX
 #include "../ArchiveFile.h"
 #endif
@@ -888,6 +891,142 @@ namespace
             g_NativeDesktopGameSettingsSeeded[pad] = true;
         }
         return settings;
+    }
+
+    std::filesystem::path NativeDesktopResolveBundledTitleUpdateDLCRoot()
+    {
+        static const char *kRootCandidates[] =
+        {
+            "Common/res/TitleUpdate/DLC",
+            "Minecraft.Client/Common/res/TitleUpdate/DLC",
+        };
+
+        std::error_code error;
+        for (const char *candidate : kRootCandidates)
+        {
+            std::filesystem::path root(candidate);
+            if (std::filesystem::exists(root, error) &&
+                std::filesystem::is_directory(root, error))
+            {
+                return root;
+            }
+            error.clear();
+        }
+
+        return std::filesystem::path();
+    }
+
+    bool NativeDesktopBundledTitleUpdateDLCAlreadyLoaded()
+    {
+        Minecraft *minecraft = Minecraft::GetInstance();
+        return minecraft != nullptr &&
+            minecraft->skins != nullptr &&
+            minecraft->skins->getTexturePackCount() > 1;
+    }
+
+    DWORD NativeDesktopLoadBundledTitleUpdateDLC()
+    {
+        if (NativeDesktopBundledTitleUpdateDLCAlreadyLoaded())
+        {
+            app.DebugPrintf(
+                "--- NativeDesktopLoadBundledTitleUpdateDLC: "
+                "bundled texture packs already loaded.\n");
+            return 0;
+        }
+
+        const std::filesystem::path root =
+            NativeDesktopResolveBundledTitleUpdateDLCRoot();
+        if (root.empty())
+        {
+            app.DebugPrintf(
+                "--- NativeDesktopLoadBundledTitleUpdateDLC: "
+                "no bundled DLC root found.\n");
+            return 0;
+        }
+
+        DWORD loadedCount = 0;
+        std::error_code error;
+        std::filesystem::directory_iterator iter(root, error);
+        if (error)
+        {
+            app.DebugPrintf(
+                "--- NativeDesktopLoadBundledTitleUpdateDLC: "
+                "failed to open %s: %s\n",
+                root.string().c_str(),
+                error.message().c_str());
+            return 0;
+        }
+
+        const std::filesystem::directory_iterator end;
+        for (; iter != end; iter.increment(error))
+        {
+            if (error)
+            {
+                app.DebugPrintf(
+                    "--- NativeDesktopLoadBundledTitleUpdateDLC: "
+                    "directory iteration failed: %s\n",
+                    error.message().c_str());
+                break;
+            }
+
+            const std::filesystem::directory_entry &entry = *iter;
+            if (!entry.is_directory(error))
+            {
+                error.clear();
+                continue;
+            }
+
+            const std::filesystem::path packPath =
+                entry.path() / "TexturePack.pck";
+            if (!std::filesystem::exists(packPath, error) ||
+                !std::filesystem::is_regular_file(packPath, error))
+            {
+                error.clear();
+
+                const std::filesystem::path dataPath = entry.path() / "Data";
+                const bool hasTextureData =
+                    std::filesystem::exists(dataPath / "x16Data.pck", error) ||
+                    std::filesystem::exists(dataPath / "x32Data.pck", error);
+                error.clear();
+
+                if (hasTextureData)
+                {
+                    app.DebugPrintf(
+                        "--- NativeDesktopLoadBundledTitleUpdateDLC: "
+                        "skipping incomplete bundled DLC directory %s.\n",
+                        entry.path().filename().string().c_str());
+                }
+                continue;
+            }
+
+            const wstring packName =
+                convStringToWstring(entry.path().filename().string());
+            const string nativePackPath = packPath.generic_string();
+
+            DLCPack *pack = new DLCPack(packName, 0xffffffff);
+            DWORD filesProcessed = 0;
+            const bool loaded = app.m_dlcManager.readDLCDataFile(
+                filesProcessed,
+                nativePackPath,
+                pack);
+            if (!loaded || filesProcessed == 0)
+            {
+                if (filesProcessed > 0)
+                {
+                    delete pack;
+                }
+                continue;
+            }
+
+            app.m_dlcManager.addPack(pack);
+            ++loadedCount;
+        }
+
+        app.DebugPrintf(
+            "--- NativeDesktopLoadBundledTitleUpdateDLC: "
+            "loaded %u bundled pack(s).\n",
+            loadedCount);
+        return loadedCount;
     }
 
 }
@@ -5460,6 +5599,18 @@ bool CMinecraftApp::StartInstallDLCProcess(int iPad)
 		m_bDLCInstallPending = true;
 		m_iTotalDLC = 0;
 		m_iTotalDLCInstalled = 0;
+#if defined(_NATIVE_DESKTOP)
+		const DWORD loadedDLC = NativeDesktopLoadBundledTitleUpdateDLC();
+		m_iTotalDLC = static_cast<int>(loadedDLC);
+		m_iTotalDLCInstalled = static_cast<int>(loadedDLC);
+		m_bDLCInstallPending = false;
+		m_bDLCInstallProcessCompleted = true;
+		app.DebugPrintf(
+			"--- CMinecraftApp::StartInstallDLCProcess - "
+			"native bundled DLC loaded=%u.\n",
+			loadedDLC);
+		return false;
+#endif
 		app.DebugPrintf("--- CMinecraftApp::StartInstallDLCProcess - StorageManager.GetInstalledDLC\n");
 
 		StorageManager.GetInstalledDLC(iPad,&CMinecraftApp::DLCInstalledCallback,this);

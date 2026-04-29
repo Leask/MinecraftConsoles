@@ -487,6 +487,14 @@ run_native_only_contract() {
             Minecraft.Client/DLCTexturePack.cpp >/dev/null
         rg -n -F "Common\\\\res\\\\TitleUpdate\\\\DLC" \
             Minecraft.Client/Common/Consoles_App.cpp >/dev/null
+        rg -n -S "NativeDesktopLoadBundledTitleUpdateDLC" \
+            Minecraft.Client/Common/Consoles_App.cpp >/dev/null
+        rg -n -S "_NATIVE_DESKTOP|IDS_NO_DLCOFFERS" \
+            Minecraft.Client/Common/UI/UIScene_DLCMainMenu.cpp >/dev/null
+        rg -n -S "_NATIVE_DESKTOP|IDS_NO_DLCOFFERS" \
+            Minecraft.Client/Common/UI/UIScene_DLCOffersMenu.cpp >/dev/null
+        rg -n -S "offline local DLC only|no storefront|no online purchase/update|no platform license/install flow" \
+            docs/native-port-plan.md >/dev/null
 
         if rg -n -S "HANDLE|CreateFile\\(|ReadFile\\(|WriteFile\\(|SetFilePointer\\(|CloseHandle\\(" \
             Minecraft.World/FileInputStream.h \

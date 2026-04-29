@@ -288,6 +288,11 @@ Direction:
   (`DLCTexturePack` now enters its native load callback directly, and native
   title-update texture pack roots resolve to `Common/res/TitleUpdate/DLC`
   instead of `TPACK:`/`StorageManager` mount glue)
+- keep native desktop DLC scope as offline local DLC only
+  (native desktop now loads bundled `TexturePack.pck` metadata from the
+  checked-in title-update DLC tree synchronously; no storefront, no online
+  purchase/update, and no platform license/install flow are part of the native
+  contract)
 - keep every convergence step covered by `Minecraft.NativeDesktop.Check`
 - keep `Minecraft.Server.NativeBootstrap` green while client work proceeds
 

@@ -29,6 +29,13 @@ UIScene_DLCOffersMenu::UIScene_DLCOffersMenu(int iPad, void *initData, UILayer *
 	m_buttonListOffers.init(eControl_OffersList);
 	m_labelHTMLSellText.init(L" ");
 	m_labelPriceTag.init(L" ");
+#if defined(_NATIVE_DESKTOP)
+	m_buttonListOffers.addItem(app.GetString(IDS_NO_DLCOFFERS), false, -1);
+	m_buttonListOffers.setFocus(true);
+	m_labelHTMLSellText.setLabel(app.GetString(IDS_NO_DLCOFFERS));
+	m_labelPriceTag.setVisible(false);
+	m_bAddAllDLCButtons = false;
+#endif
 	TelemetryManager->RecordMenuShown(m_iPad, eUIScene_DLCOffersMenu, 0);
 
 	m_bHasPurchased = false;
@@ -113,6 +120,10 @@ wstring UIScene_DLCOffersMenu::getMoviePath()
 
 void UIScene_DLCOffersMenu::updateTooltips()
 {
+#if defined(_NATIVE_DESKTOP)
+	ui.SetTooltips( m_iPad, -1,IDS_TOOLTIPS_BACK);
+	return;
+#endif
 	int iA = -1;
 	if(m_bIsSelected)
 	{
@@ -214,6 +225,9 @@ void UIScene_DLCOffersMenu::handlePress(F64 controlId, F64 childId)
 	{
 	case eControl_OffersList:
 		{
+#if defined(_NATIVE_DESKTOP)
+			break;
+#endif
 #if defined(__PS3__) || defined(__ORBIS__) || defined (__PSVITA__)
 			// buy the DLC
 
